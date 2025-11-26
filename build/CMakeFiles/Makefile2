@@ -63,14 +63,7 @@ CMAKE_BINARY_DIR = /home/user3/npu-nvme/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/kernels_preprocess.dir/all
-all: CMakeFiles/kernels_aic_device.dir/all
-all: CMakeFiles/kernels_aiv_device.dir/all
-all: CMakeFiles/kernels_merge_obj.dir/all
-all: CMakeFiles/kernels_host.dir/all
-all: CMakeFiles/kernels_host_stub_obj.dir/all
-all: CMakeFiles/kernels.dir/all
-all: CMakeFiles/main.dir/all
+all: CMakeFiles/npu_nvme_transfer.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -78,253 +71,34 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/kernels_interface.dir/clean
-clean: CMakeFiles/kernels_preprocess.dir/clean
-clean: CMakeFiles/kernels_aic_device.dir/clean
-clean: CMakeFiles/kernels_aiv_device.dir/clean
-clean: CMakeFiles/kernels_merge_obj.dir/clean
-clean: CMakeFiles/kernels_host.dir/clean
-clean: CMakeFiles/kernels_host_stub_obj.dir/clean
-clean: CMakeFiles/kernels.dir/clean
-clean: CMakeFiles/main.dir/clean
+clean: CMakeFiles/npu_nvme_transfer.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/kernels_interface.dir
+# Target rules for target CMakeFiles/npu_nvme_transfer.dir
 
 # All Build rule for target.
-CMakeFiles/kernels_interface.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_interface.dir/build.make CMakeFiles/kernels_interface.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_interface.dir/build.make CMakeFiles/kernels_interface.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=27,28 "Built target kernels_interface"
-.PHONY : CMakeFiles/kernels_interface.dir/all
+CMakeFiles/npu_nvme_transfer.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=1,2 "Built target npu_nvme_transfer"
+.PHONY : CMakeFiles/npu_nvme_transfer.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/kernels_interface.dir/rule: cmake_check_build_system
+CMakeFiles/npu_nvme_transfer.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kernels_interface.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/npu_nvme_transfer.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/kernels_interface.dir/rule
+.PHONY : CMakeFiles/npu_nvme_transfer.dir/rule
 
 # Convenience name for target.
-kernels_interface: CMakeFiles/kernels_interface.dir/rule
-.PHONY : kernels_interface
+npu_nvme_transfer: CMakeFiles/npu_nvme_transfer.dir/rule
+.PHONY : npu_nvme_transfer
 
 # clean rule for target.
-CMakeFiles/kernels_interface.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_interface.dir/build.make CMakeFiles/kernels_interface.dir/clean
-.PHONY : CMakeFiles/kernels_interface.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/kernels_preprocess.dir
-
-# All Build rule for target.
-CMakeFiles/kernels_preprocess.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_preprocess.dir/build.make CMakeFiles/kernels_preprocess.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_preprocess.dir/build.make CMakeFiles/kernels_preprocess.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=29,30,31,32,33,34,35,36 "Built target kernels_preprocess"
-.PHONY : CMakeFiles/kernels_preprocess.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/kernels_preprocess.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 8
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kernels_preprocess.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/kernels_preprocess.dir/rule
-
-# Convenience name for target.
-kernels_preprocess: CMakeFiles/kernels_preprocess.dir/rule
-.PHONY : kernels_preprocess
-
-# clean rule for target.
-CMakeFiles/kernels_preprocess.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_preprocess.dir/build.make CMakeFiles/kernels_preprocess.dir/clean
-.PHONY : CMakeFiles/kernels_preprocess.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/kernels_aic_device.dir
-
-# All Build rule for target.
-CMakeFiles/kernels_aic_device.dir/all: CMakeFiles/kernels_preprocess.dir/all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_aic_device.dir/build.make CMakeFiles/kernels_aic_device.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_aic_device.dir/build.make CMakeFiles/kernels_aic_device.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=2,3,4,5,6,7,8,9 "Built target kernels_aic_device"
-.PHONY : CMakeFiles/kernels_aic_device.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/kernels_aic_device.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 16
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kernels_aic_device.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/kernels_aic_device.dir/rule
-
-# Convenience name for target.
-kernels_aic_device: CMakeFiles/kernels_aic_device.dir/rule
-.PHONY : kernels_aic_device
-
-# clean rule for target.
-CMakeFiles/kernels_aic_device.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_aic_device.dir/build.make CMakeFiles/kernels_aic_device.dir/clean
-.PHONY : CMakeFiles/kernels_aic_device.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/kernels_aiv_device.dir
-
-# All Build rule for target.
-CMakeFiles/kernels_aiv_device.dir/all: CMakeFiles/kernels_preprocess.dir/all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_aiv_device.dir/build.make CMakeFiles/kernels_aiv_device.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_aiv_device.dir/build.make CMakeFiles/kernels_aiv_device.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=10,11,12,13,14,15,16,17 "Built target kernels_aiv_device"
-.PHONY : CMakeFiles/kernels_aiv_device.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/kernels_aiv_device.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 16
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kernels_aiv_device.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/kernels_aiv_device.dir/rule
-
-# Convenience name for target.
-kernels_aiv_device: CMakeFiles/kernels_aiv_device.dir/rule
-.PHONY : kernels_aiv_device
-
-# clean rule for target.
-CMakeFiles/kernels_aiv_device.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_aiv_device.dir/build.make CMakeFiles/kernels_aiv_device.dir/clean
-.PHONY : CMakeFiles/kernels_aiv_device.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/kernels_merge_obj.dir
-
-# All Build rule for target.
-CMakeFiles/kernels_merge_obj.dir/all: CMakeFiles/kernels_aic_device.dir/all
-CMakeFiles/kernels_merge_obj.dir/all: CMakeFiles/kernels_aiv_device.dir/all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_merge_obj.dir/build.make CMakeFiles/kernels_merge_obj.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_merge_obj.dir/build.make CMakeFiles/kernels_merge_obj.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num= "Built target kernels_merge_obj"
-.PHONY : CMakeFiles/kernels_merge_obj.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/kernels_merge_obj.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 24
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kernels_merge_obj.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/kernels_merge_obj.dir/rule
-
-# Convenience name for target.
-kernels_merge_obj: CMakeFiles/kernels_merge_obj.dir/rule
-.PHONY : kernels_merge_obj
-
-# clean rule for target.
-CMakeFiles/kernels_merge_obj.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_merge_obj.dir/build.make CMakeFiles/kernels_merge_obj.dir/clean
-.PHONY : CMakeFiles/kernels_merge_obj.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/kernels_host.dir
-
-# All Build rule for target.
-CMakeFiles/kernels_host.dir/all: CMakeFiles/kernels_preprocess.dir/all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host.dir/build.make CMakeFiles/kernels_host.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host.dir/build.make CMakeFiles/kernels_host.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=18,19,20,21,22,23,24,25 "Built target kernels_host"
-.PHONY : CMakeFiles/kernels_host.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/kernels_host.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 16
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kernels_host.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/kernels_host.dir/rule
-
-# Convenience name for target.
-kernels_host: CMakeFiles/kernels_host.dir/rule
-.PHONY : kernels_host
-
-# clean rule for target.
-CMakeFiles/kernels_host.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host.dir/build.make CMakeFiles/kernels_host.dir/clean
-.PHONY : CMakeFiles/kernels_host.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/kernels_host_stub_obj.dir
-
-# All Build rule for target.
-CMakeFiles/kernels_host_stub_obj.dir/all: CMakeFiles/kernels_preprocess.dir/all
-CMakeFiles/kernels_host_stub_obj.dir/all: CMakeFiles/kernels_merge_obj.dir/all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host_stub_obj.dir/build.make CMakeFiles/kernels_host_stub_obj.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host_stub_obj.dir/build.make CMakeFiles/kernels_host_stub_obj.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=26 "Built target kernels_host_stub_obj"
-.PHONY : CMakeFiles/kernels_host_stub_obj.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/kernels_host_stub_obj.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 25
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kernels_host_stub_obj.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/kernels_host_stub_obj.dir/rule
-
-# Convenience name for target.
-kernels_host_stub_obj: CMakeFiles/kernels_host_stub_obj.dir/rule
-.PHONY : kernels_host_stub_obj
-
-# clean rule for target.
-CMakeFiles/kernels_host_stub_obj.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host_stub_obj.dir/build.make CMakeFiles/kernels_host_stub_obj.dir/clean
-.PHONY : CMakeFiles/kernels_host_stub_obj.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/kernels.dir
-
-# All Build rule for target.
-CMakeFiles/kernels.dir/all: CMakeFiles/kernels_host.dir/all
-CMakeFiles/kernels.dir/all: CMakeFiles/kernels_host_stub_obj.dir/all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels.dir/build.make CMakeFiles/kernels.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels.dir/build.make CMakeFiles/kernels.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=1 "Built target kernels"
-.PHONY : CMakeFiles/kernels.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/kernels.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 34
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/kernels.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/kernels.dir/rule
-
-# Convenience name for target.
-kernels: CMakeFiles/kernels.dir/rule
-.PHONY : kernels
-
-# clean rule for target.
-CMakeFiles/kernels.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels.dir/build.make CMakeFiles/kernels.dir/clean
-.PHONY : CMakeFiles/kernels.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/main.dir
-
-# All Build rule for target.
-CMakeFiles/main.dir/all: CMakeFiles/kernels.dir/all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=37,38 "Built target main"
-.PHONY : CMakeFiles/main.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/main.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 36
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/main.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/main.dir/rule
-
-# Convenience name for target.
-main: CMakeFiles/main.dir/rule
-.PHONY : main
-
-# clean rule for target.
-CMakeFiles/main.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/clean
-.PHONY : CMakeFiles/main.dir/clean
+CMakeFiles/npu_nvme_transfer.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/clean
+.PHONY : CMakeFiles/npu_nvme_transfer.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

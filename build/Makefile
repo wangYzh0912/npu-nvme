@@ -162,193 +162,41 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named kernels_interface
+# Target rules for targets named npu_nvme_transfer
 
 # Build rule for target.
-kernels_interface: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernels_interface
-.PHONY : kernels_interface
+npu_nvme_transfer: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 npu_nvme_transfer
+.PHONY : npu_nvme_transfer
 
 # fast build rule for target.
-kernels_interface/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_interface.dir/build.make CMakeFiles/kernels_interface.dir/build
-.PHONY : kernels_interface/fast
+npu_nvme_transfer/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/build
+.PHONY : npu_nvme_transfer/fast
 
-#=============================================================================
-# Target rules for targets named kernels_preprocess
-
-# Build rule for target.
-kernels_preprocess: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernels_preprocess
-.PHONY : kernels_preprocess
-
-# fast build rule for target.
-kernels_preprocess/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_preprocess.dir/build.make CMakeFiles/kernels_preprocess.dir/build
-.PHONY : kernels_preprocess/fast
-
-#=============================================================================
-# Target rules for targets named kernels_aic_device
-
-# Build rule for target.
-kernels_aic_device: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernels_aic_device
-.PHONY : kernels_aic_device
-
-# fast build rule for target.
-kernels_aic_device/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_aic_device.dir/build.make CMakeFiles/kernels_aic_device.dir/build
-.PHONY : kernels_aic_device/fast
-
-#=============================================================================
-# Target rules for targets named kernels_aiv_device
-
-# Build rule for target.
-kernels_aiv_device: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernels_aiv_device
-.PHONY : kernels_aiv_device
-
-# fast build rule for target.
-kernels_aiv_device/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_aiv_device.dir/build.make CMakeFiles/kernels_aiv_device.dir/build
-.PHONY : kernels_aiv_device/fast
-
-#=============================================================================
-# Target rules for targets named kernels_merge_obj
-
-# Build rule for target.
-kernels_merge_obj: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernels_merge_obj
-.PHONY : kernels_merge_obj
-
-# fast build rule for target.
-kernels_merge_obj/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_merge_obj.dir/build.make CMakeFiles/kernels_merge_obj.dir/build
-.PHONY : kernels_merge_obj/fast
-
-#=============================================================================
-# Target rules for targets named kernels_host
-
-# Build rule for target.
-kernels_host: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernels_host
-.PHONY : kernels_host
-
-# fast build rule for target.
-kernels_host/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host.dir/build.make CMakeFiles/kernels_host.dir/build
-.PHONY : kernels_host/fast
-
-#=============================================================================
-# Target rules for targets named kernels_host_stub_obj
-
-# Build rule for target.
-kernels_host_stub_obj: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernels_host_stub_obj
-.PHONY : kernels_host_stub_obj
-
-# fast build rule for target.
-kernels_host_stub_obj/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host_stub_obj.dir/build.make CMakeFiles/kernels_host_stub_obj.dir/build
-.PHONY : kernels_host_stub_obj/fast
-
-#=============================================================================
-# Target rules for targets named kernels
-
-# Build rule for target.
-kernels: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernels
-.PHONY : kernels
-
-# fast build rule for target.
-kernels/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels.dir/build.make CMakeFiles/kernels.dir/build
-.PHONY : kernels/fast
-
-#=============================================================================
-# Target rules for targets named main
-
-# Build rule for target.
-main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 main
-.PHONY : main
-
-# fast build rule for target.
-main/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
-.PHONY : main/fast
-
-auto_gen/kernels/host_stub.o: auto_gen/kernels/host_stub.cpp.o
-.PHONY : auto_gen/kernels/host_stub.o
+npu_to_nvme_transfer.o: npu_to_nvme_transfer.c.o
+.PHONY : npu_to_nvme_transfer.o
 
 # target to build an object file
-auto_gen/kernels/host_stub.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host_stub_obj.dir/build.make CMakeFiles/kernels_host_stub_obj.dir/auto_gen/kernels/host_stub.cpp.o
-.PHONY : auto_gen/kernels/host_stub.cpp.o
+npu_to_nvme_transfer.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/npu_to_nvme_transfer.c.o
+.PHONY : npu_to_nvme_transfer.c.o
 
-auto_gen/kernels/host_stub.i: auto_gen/kernels/host_stub.cpp.i
-.PHONY : auto_gen/kernels/host_stub.i
-
-# target to preprocess a source file
-auto_gen/kernels/host_stub.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host_stub_obj.dir/build.make CMakeFiles/kernels_host_stub_obj.dir/auto_gen/kernels/host_stub.cpp.i
-.PHONY : auto_gen/kernels/host_stub.cpp.i
-
-auto_gen/kernels/host_stub.s: auto_gen/kernels/host_stub.cpp.s
-.PHONY : auto_gen/kernels/host_stub.s
-
-# target to generate assembly for a file
-auto_gen/kernels/host_stub.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_host_stub_obj.dir/build.make CMakeFiles/kernels_host_stub_obj.dir/auto_gen/kernels/host_stub.cpp.s
-.PHONY : auto_gen/kernels/host_stub.cpp.s
-
-kernels_stub.o: kernels_stub.cpp.o
-.PHONY : kernels_stub.o
-
-# target to build an object file
-kernels_stub.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_interface.dir/build.make CMakeFiles/kernels_interface.dir/kernels_stub.cpp.o
-.PHONY : kernels_stub.cpp.o
-
-kernels_stub.i: kernels_stub.cpp.i
-.PHONY : kernels_stub.i
+npu_to_nvme_transfer.i: npu_to_nvme_transfer.c.i
+.PHONY : npu_to_nvme_transfer.i
 
 # target to preprocess a source file
-kernels_stub.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_interface.dir/build.make CMakeFiles/kernels_interface.dir/kernels_stub.cpp.i
-.PHONY : kernels_stub.cpp.i
+npu_to_nvme_transfer.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/npu_to_nvme_transfer.c.i
+.PHONY : npu_to_nvme_transfer.c.i
 
-kernels_stub.s: kernels_stub.cpp.s
-.PHONY : kernels_stub.s
-
-# target to generate assembly for a file
-kernels_stub.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/kernels_interface.dir/build.make CMakeFiles/kernels_interface.dir/kernels_stub.cpp.s
-.PHONY : kernels_stub.cpp.s
-
-main.o: main.cpp.o
-.PHONY : main.o
-
-# target to build an object file
-main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.o
-.PHONY : main.cpp.o
-
-main.i: main.cpp.i
-.PHONY : main.i
-
-# target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.i
-.PHONY : main.cpp.i
-
-main.s: main.cpp.s
-.PHONY : main.s
+npu_to_nvme_transfer.s: npu_to_nvme_transfer.c.s
+.PHONY : npu_to_nvme_transfer.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.s
-.PHONY : main.cpp.s
+npu_to_nvme_transfer.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/npu_to_nvme_transfer.c.s
+.PHONY : npu_to_nvme_transfer.c.s
 
 # Help Target
 help:
@@ -362,24 +210,10 @@ help:
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... kernels_aic_device"
-	@echo "... kernels_aiv_device"
-	@echo "... kernels_host"
-	@echo "... kernels_merge_obj"
-	@echo "... kernels_preprocess"
-	@echo "... kernels"
-	@echo "... kernels_host_stub_obj"
-	@echo "... kernels_interface"
-	@echo "... main"
-	@echo "... auto_gen/kernels/host_stub.o"
-	@echo "... auto_gen/kernels/host_stub.i"
-	@echo "... auto_gen/kernels/host_stub.s"
-	@echo "... kernels_stub.o"
-	@echo "... kernels_stub.i"
-	@echo "... kernels_stub.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... npu_nvme_transfer"
+	@echo "... npu_to_nvme_transfer.o"
+	@echo "... npu_to_nvme_transfer.i"
+	@echo "... npu_to_nvme_transfer.s"
 .PHONY : help
 
 
