@@ -11,6 +11,11 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/3.22.0/CMakeCCompiler.cmake"
   "CMakeFiles/3.22.0/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.22.0/CMakeSystem.cmake"
+  "ascendc_runtime.cmake"
+  "/usr/local/Ascend/ascend-toolkit/latest/tools/tikcpp/ascendc_kernel_cmake/ascendc.cmake"
+  "/usr/local/Ascend/ascend-toolkit/latest/tools/tikcpp/ascendc_kernel_cmake/function.cmake"
+  "/usr/local/Ascend/ascend-toolkit/latest/tools/tikcpp/ascendc_kernel_cmake/host_config.cmake"
+  "/usr/local/Ascend/ascend-toolkit/latest/tools/tikcpp/ascendc_kernel_cmake/host_intf.cmake"
   "/usr/share/cmake/Modules/CMakeCCompiler.cmake.in"
   "/usr/share/cmake/Modules/CMakeCCompilerABI.c"
   "/usr/share/cmake/Modules/CMakeCInformation.cmake"
@@ -91,6 +96,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/usr/share/cmake/Modules/Compiler/XLClang-CXX-DetermineCompiler.cmake"
   "/usr/share/cmake/Modules/Compiler/zOS-C-DetermineCompiler.cmake"
   "/usr/share/cmake/Modules/Compiler/zOS-CXX-DetermineCompiler.cmake"
+  "/usr/share/cmake/Modules/ExternalProject.cmake"
   "/usr/share/cmake/Modules/Internal/FeatureTesting.cmake"
   "/usr/share/cmake/Modules/Platform/Linux-Determine-CXX.cmake"
   "/usr/share/cmake/Modules/Platform/Linux-GNU-C.cmake"
@@ -118,5 +124,6 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
-  "CMakeFiles/npu_nvme_transfer.dir/DependInfo.cmake"
+  "CMakeFiles/npu_nvme.dir/DependInfo.cmake"
+  "CMakeFiles/test_npu_nvme.dir/DependInfo.cmake"
   )

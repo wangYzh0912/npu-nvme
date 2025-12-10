@@ -28,6 +28,9 @@ default_target: all
 
 .SUFFIXES: .hpux_make_needs_suffix_list
 
+# Produce verbose output by default.
+VERBOSE = 1
+
 # Command-line flag to silence nested $(MAKE).
 $(VERBOSE)MAKESILENT = -s
 
@@ -63,7 +66,8 @@ CMAKE_BINARY_DIR = /home/user3/npu-nvme/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/npu_nvme_transfer.dir/all
+all: CMakeFiles/npu_nvme.dir/all
+all: CMakeFiles/test_npu_nvme.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -71,34 +75,61 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/npu_nvme_transfer.dir/clean
+clean: CMakeFiles/npu_nvme.dir/clean
+clean: CMakeFiles/test_npu_nvme.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/npu_nvme_transfer.dir
+# Target rules for target CMakeFiles/npu_nvme.dir
 
 # All Build rule for target.
-CMakeFiles/npu_nvme_transfer.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=1,2 "Built target npu_nvme_transfer"
-.PHONY : CMakeFiles/npu_nvme_transfer.dir/all
+CMakeFiles/npu_nvme.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme.dir/build.make CMakeFiles/npu_nvme.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme.dir/build.make CMakeFiles/npu_nvme.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=1,2 "Built target npu_nvme"
+.PHONY : CMakeFiles/npu_nvme.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/npu_nvme_transfer.dir/rule: cmake_check_build_system
+CMakeFiles/npu_nvme.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/npu_nvme_transfer.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/npu_nvme.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
-.PHONY : CMakeFiles/npu_nvme_transfer.dir/rule
+.PHONY : CMakeFiles/npu_nvme.dir/rule
 
 # Convenience name for target.
-npu_nvme_transfer: CMakeFiles/npu_nvme_transfer.dir/rule
-.PHONY : npu_nvme_transfer
+npu_nvme: CMakeFiles/npu_nvme.dir/rule
+.PHONY : npu_nvme
 
 # clean rule for target.
-CMakeFiles/npu_nvme_transfer.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/clean
-.PHONY : CMakeFiles/npu_nvme_transfer.dir/clean
+CMakeFiles/npu_nvme.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme.dir/build.make CMakeFiles/npu_nvme.dir/clean
+.PHONY : CMakeFiles/npu_nvme.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/test_npu_nvme.dir
+
+# All Build rule for target.
+CMakeFiles/test_npu_nvme.dir/all: CMakeFiles/npu_nvme.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_nvme.dir/build.make CMakeFiles/test_npu_nvme.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_nvme.dir/build.make CMakeFiles/test_npu_nvme.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/user3/npu-nvme/build/CMakeFiles --progress-num=3,4 "Built target test_npu_nvme"
+.PHONY : CMakeFiles/test_npu_nvme.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/test_npu_nvme.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 4
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/test_npu_nvme.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/user3/npu-nvme/build/CMakeFiles 0
+.PHONY : CMakeFiles/test_npu_nvme.dir/rule
+
+# Convenience name for target.
+test_npu_nvme: CMakeFiles/test_npu_nvme.dir/rule
+.PHONY : test_npu_nvme
+
+# clean rule for target.
+CMakeFiles/test_npu_nvme.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_nvme.dir/build.make CMakeFiles/test_npu_nvme.dir/clean
+.PHONY : CMakeFiles/test_npu_nvme.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

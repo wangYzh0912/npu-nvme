@@ -31,6 +31,9 @@ default_target: all
 
 .SUFFIXES: .hpux_make_needs_suffix_list
 
+# Produce verbose output by default.
+VERBOSE = 1
+
 # Command-line flag to silence nested $(MAKE).
 $(VERBOSE)MAKESILENT = -s
 
@@ -162,41 +165,78 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named npu_nvme_transfer
+# Target rules for targets named npu_nvme
 
 # Build rule for target.
-npu_nvme_transfer: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 npu_nvme_transfer
-.PHONY : npu_nvme_transfer
+npu_nvme: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 npu_nvme
+.PHONY : npu_nvme
 
 # fast build rule for target.
-npu_nvme_transfer/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/build
-.PHONY : npu_nvme_transfer/fast
+npu_nvme/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme.dir/build.make CMakeFiles/npu_nvme.dir/build
+.PHONY : npu_nvme/fast
 
-npu_to_nvme_transfer.o: npu_to_nvme_transfer.c.o
-.PHONY : npu_to_nvme_transfer.o
+#=============================================================================
+# Target rules for targets named test_npu_nvme
+
+# Build rule for target.
+test_npu_nvme: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_npu_nvme
+.PHONY : test_npu_nvme
+
+# fast build rule for target.
+test_npu_nvme/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_nvme.dir/build.make CMakeFiles/test_npu_nvme.dir/build
+.PHONY : test_npu_nvme/fast
+
+npu_nvme.o: npu_nvme.c.o
+.PHONY : npu_nvme.o
 
 # target to build an object file
-npu_to_nvme_transfer.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/npu_to_nvme_transfer.c.o
-.PHONY : npu_to_nvme_transfer.c.o
+npu_nvme.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme.dir/build.make CMakeFiles/npu_nvme.dir/npu_nvme.c.o
+.PHONY : npu_nvme.c.o
 
-npu_to_nvme_transfer.i: npu_to_nvme_transfer.c.i
-.PHONY : npu_to_nvme_transfer.i
+npu_nvme.i: npu_nvme.c.i
+.PHONY : npu_nvme.i
 
 # target to preprocess a source file
-npu_to_nvme_transfer.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/npu_to_nvme_transfer.c.i
-.PHONY : npu_to_nvme_transfer.c.i
+npu_nvme.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme.dir/build.make CMakeFiles/npu_nvme.dir/npu_nvme.c.i
+.PHONY : npu_nvme.c.i
 
-npu_to_nvme_transfer.s: npu_to_nvme_transfer.c.s
-.PHONY : npu_to_nvme_transfer.s
+npu_nvme.s: npu_nvme.c.s
+.PHONY : npu_nvme.s
 
 # target to generate assembly for a file
-npu_to_nvme_transfer.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme_transfer.dir/build.make CMakeFiles/npu_nvme_transfer.dir/npu_to_nvme_transfer.c.s
-.PHONY : npu_to_nvme_transfer.c.s
+npu_nvme.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/npu_nvme.dir/build.make CMakeFiles/npu_nvme.dir/npu_nvme.c.s
+.PHONY : npu_nvme.c.s
+
+test_npu_nvme.o: test_npu_nvme.c.o
+.PHONY : test_npu_nvme.o
+
+# target to build an object file
+test_npu_nvme.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_nvme.dir/build.make CMakeFiles/test_npu_nvme.dir/test_npu_nvme.c.o
+.PHONY : test_npu_nvme.c.o
+
+test_npu_nvme.i: test_npu_nvme.c.i
+.PHONY : test_npu_nvme.i
+
+# target to preprocess a source file
+test_npu_nvme.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_nvme.dir/build.make CMakeFiles/test_npu_nvme.dir/test_npu_nvme.c.i
+.PHONY : test_npu_nvme.c.i
+
+test_npu_nvme.s: test_npu_nvme.c.s
+.PHONY : test_npu_nvme.s
+
+# target to generate assembly for a file
+test_npu_nvme.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_nvme.dir/build.make CMakeFiles/test_npu_nvme.dir/test_npu_nvme.c.s
+.PHONY : test_npu_nvme.c.s
 
 # Help Target
 help:
@@ -210,10 +250,14 @@ help:
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... npu_nvme_transfer"
-	@echo "... npu_to_nvme_transfer.o"
-	@echo "... npu_to_nvme_transfer.i"
-	@echo "... npu_to_nvme_transfer.s"
+	@echo "... npu_nvme"
+	@echo "... test_npu_nvme"
+	@echo "... npu_nvme.o"
+	@echo "... npu_nvme.i"
+	@echo "... npu_nvme.s"
+	@echo "... test_npu_nvme.o"
+	@echo "... test_npu_nvme.i"
+	@echo "... test_npu_nvme.s"
 .PHONY : help
 
 
