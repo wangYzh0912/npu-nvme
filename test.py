@@ -2,32 +2,35 @@ import time
 import torch
 import torch_npu
 from transformers import GPT2Tokenizer, OPTForCausalLM
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
+from transformers import BloomTokenizerFast, BloomForCausalLM
 from datasets import load_dataset
 from direct_checkpoint import DirectCheckpoint
 import os
+import acl
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
 
 # ============================
 # 配置
 # ============================
-MODEL_NAME = "facebook/opt-125m"
+MODEL_NAME = "facebook/opt-2.7b"
 DEVICE = "npu:7"
 CHECKPOINT_INTERVAL = 50
+MAX_STEPS = 200
 BATCH_SIZE = 4
 SEQ_LEN = 128
 NVME_DEVICE = "0000:83:00.0"
-USE_CPU_PATH = False
+USE_CPU_PATH = False # False 使用NPU-NVMe保存检查点，True使用torch.save
+PIPELINE_DEPTH = 4
+CHUNK_SIZE = 4 * 1024 * 1024 # 4 MB
 
-# ============================
-# 加载模型（使用 safetensors）
-# ============================
+
 print("Loading model...")
 model = OPTForCausalLM.from_pretrained(
     MODEL_NAME,
-    use_safetensors=True  # 强制使用 safetensors 格式
+    use_safetensors=True
 ).to(DEVICE)
-
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
 
 print("Loading tokenizer and dataset...")
@@ -53,9 +56,7 @@ dataloader = torch.utils.data. DataLoader(
     shuffle=True
 )
 
-# ============================
-# 训练函数
-# ============================
+
 def train_with_checkpoints():
     print("Initializing checkpointing system...")
     
@@ -64,7 +65,7 @@ def train_with_checkpoints():
         checkpoint_path = "opt_checkpoint_cpu.pt"
     else:
         print("[INFO] Using NPU-to-NVMe zero-copy checkpointing...")
-        checkpoint = DirectCheckpoint(NVME_DEVICE, use_pipeline=True, pipeline_depth=4)
+        checkpoint = DirectCheckpoint(NVME_DEVICE, use_pipeline=True)
     
     step = 0
     checkpoint_times = []
@@ -102,7 +103,7 @@ def train_with_checkpoints():
                     print(f"[Checkpoint] Size: {os.path.getsize(checkpoint_path) / 1024 / 1024:.2f} MB")
                     checkpoint_size.append(os.path.getsize(checkpoint_path))
                 else:
-                    size = checkpoint.save(model)
+                    size = checkpoint.save(model, pipeline_depth=PIPELINE_DEPTH, chunk_size=CHUNK_SIZE)
                     print(f"[Checkpoint] Saved directly to NVMe (Step {step})")
                     print(f"[Checkpoint] Size: {size / 1024 / 1024:.2f} MB")
                     checkpoint_size.append(size)
@@ -111,7 +112,7 @@ def train_with_checkpoints():
                 checkpoint_times.append(elapsed)
                 print(f"[Checkpoint] Time: {elapsed:.2f}s")
             
-            if step >= 200:
+            if step >= MAX_STEPS:
                 print("\n=== Checkpoint Statistics ===")
                 print(f"Total checkpoints: {len(checkpoint_times)}")
                 print(f"Average time: {sum(checkpoint_times)/len(checkpoint_times):.2f}s")
@@ -126,9 +127,7 @@ def train_with_checkpoints():
     if not USE_CPU_PATH:
         checkpoint.cleanup()
 
-# ============================
-# 运行测试
-# ============================
+
 if __name__ == "__main__":
     print("Starting training with checkpointing...")
     train_with_checkpoints()

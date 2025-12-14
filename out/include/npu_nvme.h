@@ -34,7 +34,8 @@ int npu_nvme_init(npu_nvme_context_t **ctx, const char *nvme_pci_addr);
 int npu_nvme_write(npu_nvme_context_t *ctx,
                    void *npu_buffer,
                    uint64_t nvme_offset,
-                   size_t size);
+                   size_t size,
+                   size_t chunk_size_max);
 
 /**
  * @brief Read data from NVMe to NPU
@@ -48,7 +49,8 @@ int npu_nvme_write(npu_nvme_context_t *ctx,
 int npu_nvme_read(npu_nvme_context_t *ctx,
                   void *npu_buffer,
                   uint64_t nvme_offset,
-                  size_t size);
+                  size_t size,
+                  size_t chunk_size_max);
 
 /**
  * @brief Cleanup and release all resources
@@ -57,17 +59,35 @@ int npu_nvme_read(npu_nvme_context_t *ctx,
  */
 void npu_nvme_cleanup(npu_nvme_context_t *ctx);
 
+int npu_nvme_write_batch(npu_nvme_context_t *ctx,
+                         void **npu_buffers,
+                         uint64_t *nvme_offsets,
+                         size_t *sizes,
+                         int num_items,
+                         int pipeline_depth,
+                         size_t chunk_size_max);
+
 int npu_nvme_write_pipeline(npu_nvme_context_t *ctx,
                             void *npu_buffer,
                             uint64_t nvme_offset,
                             size_t size,
-                            int pipeline_depth);  // 并发深度，建议4-8
+                            int pipeline_depth,
+                            size_t chunk_size_max);  // 并发深度，建议4-8
 
 int npu_nvme_read_pipeline(npu_nvme_context_t *ctx,
                            void *npu_buffer,
                            uint64_t nvme_offset,
                            size_t size,
-                           int pipeline_depth);
+                           int pipeline_depth,
+                           size_t chunk_size_max);
+
+int npu_nvme_write_batch_async(npu_nvme_context_t *ctx,
+                                void **npu_buffers,
+                                uint64_t *nvme_offsets,
+                                size_t *sizes,
+                                int num_items,
+                                int pipeline_depth, 
+                                size_t chunk_size_max);
 
 #ifdef __cplusplus
 }

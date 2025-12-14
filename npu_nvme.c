@@ -25,26 +25,17 @@ typedef enum {
     SLOT_COPYING,         // 正在从NPU拷贝
     SLOT_READY,          // 拷贝完成，准备提交
     SLOT_SUBMITTED,      // 已提交到NVMe
-    SLOT_COMPLETED       // NVMe写完成
+    SLOT_COMPLETED,       // NVMe写完成
 } slot_state_t;
 
-// Pipeline中的一个slot
-struct pipeline_slot {
-    void *host_buffer;           // SPDK DMA buffer
-    size_t buffer_size;          // Buffer大小
-    
-    // 当前chunk信息
-    size_t chunk_size;           // 实际数据大小
-    uint64_t nvme_lba;          // NVMe起始LBA
-    uint32_t num_blocks;         // 块数量
-    
-    // 状态
-    slot_state_t state;
-    int error;
-    
-    // 用于回调识别
-    int slot_id;
-};
+typedef enum {
+    SLOT_STATE_FREE = 0,
+    SLOT_STATE_COPYING_NPU,
+    SLOT_STATE_COPY_DONE,
+    SLOT_STATE_NVME_SUBMITTED,
+    SLOT_STATE_NVME_COMPLETED
+} pipeline_slot_state_t;
+
 
 struct npu_nvme_context {
     // SPDK/NVMe
@@ -68,11 +59,65 @@ struct npu_nvme_context {
     struct pipeline_slot *pipeline_slots;
     int pipeline_depth;
     volatile int *slot_completed;  // 每个slot的完成标志
+
+
 };
+
+typedef struct {
+    void *npu_buffer;      // NPU地址
+    uint64_t nvme_offset;  // NVMe偏移
+    size_t size;           // 大小
+    int status;            // 0=pending, 1=done, -1=error
+} batch_transfer_item_t;
+
+typedef struct {
+    batch_transfer_item_t *items;
+    int num_items;
+    int current_item;              // 当前处理的item
+    size_t current_item_offset;    // 当前item内的偏移
+    int total_chunks;
+    int chunks_prepared;
+    int chunks_submitted;
+    int chunks_completed;
+} batch_context_t;
+
+typedef struct pipeline_slot {
+    // Buffer
+    void *host_buffer;
+    size_t buffer_size;
+    
+    // Chunk info
+    size_t chunk_size;
+    uint64_t nvme_lba;
+    uint32_t num_blocks;
+    
+    // ACL async
+    aclrtStream acl_stream;
+    aclrtEvent acl_event;
+    
+    // State
+    pipeline_slot_state_t state;
+    int error;
+    int slot_id;
+} pipeline_slot_t;
 
 // ==================================================
 // Helper Functions
 // ==================================================
+
+static void async_pipeline_write_complete(void *arg, const struct spdk_nvme_cpl *cpl) {
+    pipeline_slot_t *slot = (pipeline_slot_t *)arg;
+    
+    printf("[Callback] Slot %d:  write completed\n", slot->slot_id);
+    
+    if (spdk_nvme_cpl_is_error(cpl)) {
+        fprintf(stderr, "[Callback] Slot %d:  NVMe error\n", slot->slot_id);
+        slot->error = 1;
+    }
+    
+    // 更新状态
+    slot->state = SLOT_STATE_NVME_COMPLETED;
+}
 
 static void pipeline_write_complete(void *arg, const struct spdk_nvme_cpl *cpl) {
     struct pipeline_slot *slot = (struct pipeline_slot *)arg;
@@ -233,7 +278,8 @@ int npu_nvme_init(npu_nvme_context_t **ctx, const char *nvme_pci_addr) {
 int npu_nvme_write(npu_nvme_context_t *ctx,
                    void *npu_buffer,
                    uint64_t nvme_offset,
-                   size_t size) {
+                   size_t size, 
+                   size_t chunk_size_max){
     if (! ctx || !npu_buffer || size == 0) {
         fprintf(stderr, "[Error] Invalid parameters: ctx=%p, npu_buffer=%p, size=%zu\n",
                 ctx, npu_buffer, size);
@@ -252,8 +298,8 @@ int npu_nvme_write(npu_nvme_context_t *ctx,
     
     while (remaining > 0) {
         chunk_num++;
-        size_t chunk_size = (remaining > MAX_SINGLE_TRANSFER) 
-                            ? MAX_SINGLE_TRANSFER 
+        size_t chunk_size = (remaining > chunk_size_max) 
+                            ? chunk_size_max 
                             : remaining;
         
         printf("\n[Chunk %d] Processing %.2f MB\n", chunk_num, chunk_size / 1024.0 / 1024.0);
@@ -378,7 +424,8 @@ int npu_nvme_write(npu_nvme_context_t *ctx,
 int npu_nvme_read(npu_nvme_context_t *ctx,
                   void *npu_buffer,
                   uint64_t nvme_offset,
-                  size_t size) {
+                  size_t size,
+                  size_t chunk_size_max) {
     if (!ctx || !npu_buffer || size == 0) {
         fprintf(stderr, "[Error] Invalid parameters\n");
         return -1;
@@ -391,8 +438,8 @@ int npu_nvme_read(npu_nvme_context_t *ctx,
     size_t transferred = 0;
     
     while (remaining > 0) {
-        size_t chunk_size = (remaining > MAX_SINGLE_TRANSFER) 
-                            ? MAX_SINGLE_TRANSFER 
+        size_t chunk_size = (remaining > chunk_size_max) 
+                            ? chunk_size_max 
                             : remaining;
         
         size_t aligned_size = (chunk_size + ctx->block_size - 1) 
@@ -472,7 +519,8 @@ int npu_nvme_write_pipeline(npu_nvme_context_t *ctx,
                             void *npu_buffer,
                             uint64_t nvme_offset,
                             size_t size,
-                            int pipeline_depth) {
+                            int pipeline_depth,
+                            size_t chunk_size_max) {
     if (!  ctx || ! npu_buffer || size == 0) {
         return -1;
     }
@@ -485,7 +533,7 @@ int npu_nvme_write_pipeline(npu_nvme_context_t *ctx,
     printf("\n[Pipeline Write] Starting\n");
     printf("  Total size: %.2f MB\n", size / 1024.0 / 1024.0);
     printf("  Pipeline depth: %d\n", pipeline_depth);
-    printf("  Chunk size: %.2f MB\n", MAX_SINGLE_TRANSFER / 1024.0 / 1024.0);
+    printf("  Chunk size: %.2f MB\n", chunk_size_max / 1024.0 / 1024.0);
     
     // 分配pipeline slots
     struct pipeline_slot *slots = calloc(pipeline_depth, sizeof(struct pipeline_slot));
@@ -505,7 +553,7 @@ int npu_nvme_write_pipeline(npu_nvme_context_t *ctx,
     
     // Pipeline状态
     size_t total_submitted = 0;
-    int num_chunks = (size + MAX_SINGLE_TRANSFER - 1) / MAX_SINGLE_TRANSFER;
+    int num_chunks = (size + chunk_size_max - 1) / chunk_size_max;
     int next_chunk_to_prepare = 0;    // 下一个要准备的chunk编号
     int next_chunk_to_submit = 0;     // 下一个要提交的chunk编号
     int chunks_completed = 0;          // 已完成的chunk数量
@@ -525,10 +573,10 @@ int npu_nvme_write_pipeline(npu_nvme_context_t *ctx,
                 if (slots[i].  state == SLOT_FREE) {
                     
                     // 计算这个chunk的大小和偏移
-                    size_t chunk_offset = (size_t)next_chunk_to_prepare * MAX_SINGLE_TRANSFER;
+                    size_t chunk_offset = (size_t)next_chunk_to_prepare * chunk_size_max;
                     size_t remaining = size - chunk_offset;
-                    size_t chunk_size = (remaining > MAX_SINGLE_TRANSFER) 
-                                        ? MAX_SINGLE_TRANSFER 
+                    size_t chunk_size = (remaining > chunk_size_max) 
+                                        ? chunk_size_max 
                                         : remaining;
                     size_t aligned_size = (chunk_size + ctx->block_size - 1) 
                                           & ~(ctx->block_size - 1);
@@ -562,10 +610,10 @@ int npu_nvme_write_pipeline(npu_nvme_context_t *ctx,
                     }
                     
                     // 设置chunk信息
-                    slots[i]. chunk_size = chunk_size;
+                    slots[i].chunk_size = chunk_size;
                     slots[i].nvme_lba = (nvme_offset + chunk_offset) / ctx->block_size;
                     slots[i].num_blocks = aligned_size / ctx->block_size;
-                    slots[i]. state = SLOT_READY;
+                    slots[i].state = SLOT_READY;
                     slots[i].error = 0;
                     
                     next_chunk_to_prepare++;
@@ -605,7 +653,7 @@ int npu_nvme_write_pipeline(npu_nvme_context_t *ctx,
                     gettimeofday(&current_time, NULL);
                     double elapsed = (current_time.tv_sec - start_time.tv_sec) + 
                                     (current_time.tv_usec - start_time.tv_usec) / 1e6;
-                    double progress_size = (double)next_chunk_to_submit * MAX_SINGLE_TRANSFER;
+                    double progress_size = (double)next_chunk_to_submit * chunk_size_max;
                     if (progress_size > size) progress_size = size;
                     double speed = progress_size / elapsed / 1024.0 / 1024.0;
                     
@@ -727,4 +775,546 @@ void npu_nvme_cleanup(npu_nvme_context_t *ctx) {
     
     printf("Cleanup complete\n");
     printf("========================================\n\n");
+}
+
+int npu_nvme_write_batch(npu_nvme_context_t *ctx,
+                         void **npu_buffers,
+                         uint64_t *nvme_offsets,
+                         size_t *sizes,
+                         int num_items,
+                         int pipeline_depth,
+                         size_t chunk_size_max) {
+    
+    if (! ctx || !npu_buffers || !nvme_offsets || !sizes || num_items <= 0) {
+        return -1;
+    }
+    
+    if (pipeline_depth < 1 || pipeline_depth > 16) {
+        pipeline_depth = 4;
+    }
+    
+    printf("\n[Batch Pipeline Write] Starting\n");
+    printf("  Number of items: %d\n", num_items);
+    printf("  Pipeline depth: %d\n", pipeline_depth);
+    
+    // 计算总大小和总chunk数
+    size_t total_size = 0;
+    int total_chunks = 0;
+    for (int i = 0; i < num_items; i++) {
+        total_size += sizes[i];
+        total_chunks += (sizes[i] + chunk_size_max - 1) / chunk_size_max;
+    }
+    
+    printf("  Total size:  %.2f MB\n", total_size / 1024.0 / 1024.0);
+    printf("  Total chunks: %d\n", total_chunks);
+    
+    // 初始化batch context
+    batch_context_t batch_ctx = {
+        .num_items = num_items,
+        .current_item = 0,
+        .current_item_offset = 0,
+        . total_chunks = total_chunks,
+        .chunks_prepared = 0,
+        .chunks_submitted = 0,
+        .chunks_completed = 0
+    };
+    
+    // 分配pipeline slots
+    struct pipeline_slot *slots = calloc(pipeline_depth, sizeof(struct pipeline_slot));
+    if (!slots) {
+        fprintf(stderr, "[Batch] Failed to allocate slots\n");
+        return -1;
+    }
+    
+    for (int i = 0; i < pipeline_depth; i++) {
+        slots[i].slot_id = i;
+        slots[i].state = SLOT_FREE;
+        slots[i].error = 0;
+        slots[i].buffer_size = 0;
+        slots[i]. host_buffer = NULL;
+    }
+    
+    struct timeval start_time, current_time;
+    gettimeofday(&start_time, NULL);
+    
+    int last_progress = 0;
+    
+    // ========================================
+    // Pipeline主循环（跨参数）
+    // ========================================
+    while (batch_ctx.chunks_completed < total_chunks) {
+        
+        // === Stage 1: 准备新chunk（可能来自不同参数）===
+        if (batch_ctx.chunks_prepared < total_chunks) {
+            for (int slot_idx = 0; slot_idx < pipeline_depth; slot_idx++) {
+                if (slots[slot_idx].state == SLOT_FREE) {
+                    
+                    // 跳过已经处理完的item
+                    while (batch_ctx.current_item < num_items && 
+                           batch_ctx.current_item_offset >= sizes[batch_ctx.current_item]) {
+                        batch_ctx.current_item++;
+                        batch_ctx.current_item_offset = 0;
+                    }
+                    
+                    if (batch_ctx.current_item >= num_items) {
+                        break;  // 所有item都已准备
+                    }
+                    
+                    // 计算当前chunk
+                    int item_idx = batch_ctx.current_item;
+                    size_t item_offset = batch_ctx.current_item_offset;
+                    size_t remaining = sizes[item_idx] - item_offset;
+                    
+                    size_t chunk_size = (remaining > chunk_size_max) 
+                                        ? chunk_size_max 
+                                        : remaining;
+                    size_t aligned_size = (chunk_size + ctx->block_size - 1) 
+                                          & ~(ctx->block_size - 1);
+                    
+                    // 分配buffer
+                    if (slots[slot_idx].buffer_size < aligned_size) {
+                        if (slots[slot_idx].host_buffer) {
+                            spdk_dma_free(slots[slot_idx].host_buffer);
+                        }
+                        slots[slot_idx]. host_buffer = spdk_dma_zmalloc(aligned_size, 4096, NULL);
+                        if (!slots[slot_idx].host_buffer) {
+                            fprintf(stderr, "[Batch] Failed to allocate buffer\n");
+                            goto cleanup_error;
+                        }
+                        slots[slot_idx]. buffer_size = aligned_size;
+                    }
+                    
+                    // NPU -> Host拷贝
+                    aclError ret = aclrtMemcpy(
+                        slots[slot_idx].host_buffer,
+                        aligned_size,
+                        (char *)npu_buffers[item_idx] + item_offset,
+                        chunk_size,
+                        ACL_MEMCPY_DEVICE_TO_HOST
+                    );
+                    
+                    if (ret != ACL_SUCCESS) {
+                        fprintf(stderr, "[Batch] NPU copy failed (item %d, offset %zu)\n", 
+                                item_idx, item_offset);
+                        goto cleanup_error;
+                    }
+                    
+                    // 设置chunk信息
+                    uint64_t nvme_lba = (nvme_offsets[item_idx] + item_offset) / ctx->block_size;
+                    uint32_t num_blocks = aligned_size / ctx->block_size;
+                    
+                    slots[slot_idx]. chunk_size = chunk_size;
+                    slots[slot_idx]. nvme_lba = nvme_lba;
+                    slots[slot_idx].num_blocks = num_blocks;
+                    slots[slot_idx].state = SLOT_READY;
+                    slots[slot_idx].error = 0;
+                    
+                    batch_ctx.current_item_offset += chunk_size;
+                    batch_ctx.chunks_prepared++;
+                    
+                    break;  // 每次准备一个
+                }
+            }
+        }
+        
+        // === Stage 2: 提交准备好的chunk ===
+        for (int i = 0; i < pipeline_depth; i++) {
+            if (slots[i].state == SLOT_READY) {
+                int rc = spdk_nvme_ns_cmd_write(
+                    ctx->ns,
+                    ctx->qpair,
+                    slots[i].host_buffer,
+                    slots[i].nvme_lba,
+                    slots[i].num_blocks,
+                    pipeline_write_complete,
+                    &slots[i],
+                    0
+                );
+                
+                if (rc != 0) {
+                    fprintf(stderr, "[Batch] Failed to submit slot %d (rc=%d)\n", i, rc);
+                    goto cleanup_error;
+                }
+                
+                slots[i].state = SLOT_SUBMITTED;
+                batch_ctx.chunks_submitted++;
+            }
+        }
+        
+        // === Stage 3: Poll完成事件 ===
+        spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+        
+        for (int i = 0; i < pipeline_depth; i++) {
+            if (slots[i]. state == SLOT_COMPLETED) {
+                if (slots[i].error) {
+                    fprintf(stderr, "[Batch] Slot %d completed with error\n", i);
+                    goto cleanup_error;
+                }
+                slots[i].state = SLOT_FREE;
+                batch_ctx.chunks_completed++;
+            }
+        }
+        
+        // 显示进度（每10%）
+        int progress_pct = (batch_ctx.chunks_completed * 100) / total_chunks;
+        if (progress_pct >= last_progress + 10) {
+            gettimeofday(&current_time, NULL);
+            double elapsed = (current_time.tv_sec - start_time.tv_sec) + 
+                           (current_time.tv_usec - start_time.tv_usec) / 1e6;
+            double completed_size = 0;
+            for (int i = 0; i <= batch_ctx.current_item && i < num_items; i++) {
+                if (i < batch_ctx.current_item) {
+                    completed_size += sizes[i];
+                } else {
+                    completed_size += batch_ctx.current_item_offset;
+                }
+            }
+            double speed = completed_size / elapsed / 1024.0 / 1024.0;
+            
+            printf("[Batch] Progress:  %d%% (%d/%d chunks), %.1f MB/s\n",
+                   progress_pct, batch_ctx.chunks_completed, total_chunks, speed);
+            last_progress = progress_pct;
+        }
+        
+        // 超时检测
+        gettimeofday(&current_time, NULL);
+        double elapsed = (current_time.tv_sec - start_time.tv_sec) + 
+                        (current_time.tv_usec - start_time.tv_usec) / 1e6;
+        if (elapsed > 120.0) {
+            fprintf(stderr, "[Batch] Timeout after %.1fs\n", elapsed);
+            goto cleanup_error;
+        }
+    }
+    
+    // 计算统计
+    gettimeofday(&current_time, NULL);
+    double total_time = (current_time.tv_sec - start_time.tv_sec) + 
+                       (current_time.tv_usec - start_time.tv_usec) / 1e6;
+    double avg_speed = total_size / total_time / 1024.0 / 1024.0;
+    
+    printf("\n[Batch Pipeline Write] Completed!\n");
+    printf("  Total:  %.2f MB in %.3f seconds\n", 
+           total_size / 1024.0 / 1024.0, total_time);
+    printf("  Average speed: %.2f MB/s\n", avg_speed);
+    printf("  Items:  %d, Chunks: prepared=%d, submitted=%d, completed=%d\n",
+           num_items, batch_ctx.chunks_prepared, batch_ctx.chunks_submitted, 
+           batch_ctx.chunks_completed);
+    
+    // 清理
+    for (int i = 0; i < pipeline_depth; i++) {
+        if (slots[i]. host_buffer) {
+            spdk_dma_free(slots[i].host_buffer);
+        }
+    }
+    free(slots);
+    
+    return 0;
+
+cleanup_error:
+    for (int i = 0; i < pipeline_depth; i++) {
+        if (slots[i].host_buffer) {
+            spdk_dma_free(slots[i].host_buffer);
+        }
+    }
+    free(slots);
+    return -1;
+}
+
+int npu_nvme_write_batch_async(npu_nvme_context_t *ctx,
+                                void **npu_buffers,
+                                uint64_t *nvme_offsets,
+                                size_t *sizes,
+                                int num_items,
+                                int pipeline_depth,
+                                size_t chunk_size_max) {
+    
+    printf("\n[Async Batch Pipeline] Starting\n");
+    printf("  Items: %d, Pipeline depth: %d\n", num_items, pipeline_depth);
+    
+    // 计算总信息
+    size_t total_size = 0;
+    int total_chunks = 0;
+    for (int i = 0; i < num_items; i++) {
+        total_size += sizes[i];
+        total_chunks += (sizes[i] + chunk_size_max - 1) / chunk_size_max;
+    }
+    printf("  Total:  %.2f MB, %d chunks\n", total_size/1024.0/1024.0, total_chunks);
+    
+    // 分配slots
+    pipeline_slot_t *slots = calloc(pipeline_depth, sizeof(pipeline_slot_t));
+    if (!slots) {
+        fprintf(stderr, "[Pipeline] Failed to allocate slots\n");
+        return -1;
+    }
+    
+    // 初始化slots
+    for (int i = 0; i < pipeline_depth; i++) {
+        slots[i].slot_id = i;
+        slots[i].state = SLOT_STATE_FREE;
+        slots[i]. error = 0;
+        slots[i].buffer_size = 0;
+        slots[i]. host_buffer = NULL;
+        slots[i].acl_stream = NULL;
+        slots[i].acl_event = NULL;
+        
+        // 创建stream
+        aclError ret = aclrtCreateStream(&slots[i].acl_stream);
+        if (ret != ACL_SUCCESS) {
+            fprintf(stderr, "[Pipeline] Failed to create stream %d: %d\n", i, ret);
+            goto init_cleanup;
+        }
+        
+        // 创建event
+        ret = aclrtCreateEvent(&slots[i].acl_event);
+        if (ret != ACL_SUCCESS) {
+            fprintf(stderr, "[Pipeline] Failed to create event %d: %d\n", i, ret);
+            goto init_cleanup;
+        }
+        
+        printf("[Pipeline] Slot %d initialized\n", i);
+    }
+    
+    // Pipeline状态
+    int current_item = 0;
+    size_t current_item_offset = 0;
+    int chunks_prepared = 0;
+    int chunks_submitted = 0;
+    int chunks_completed = 0;
+    
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
+    
+    printf("[Pipeline] Starting main loop.. .\n");
+    
+    int loop_count = 0;
+    
+    // 主循环
+    while (chunks_completed < total_chunks) {
+        loop_count++;
+        
+        // 每1000次循环输出一次心跳
+        if (loop_count % 10000 == 0) {
+            printf("[Pipeline] Loop %d:  prep=%d, sub=%d, comp=%d\n",
+                   loop_count, chunks_prepared, chunks_submitted, chunks_completed);
+        }
+        
+        // ========================================
+        // Stage 1: 发起NPU拷贝
+        // ========================================
+        if (chunks_prepared < total_chunks) {
+            for (int i = 0; i < pipeline_depth; i++) {
+                if (slots[i].state == SLOT_STATE_FREE) {
+                    
+                    // 跳过已完成的item
+                    while (current_item < num_items && 
+                           current_item_offset >= sizes[current_item]) {
+                        current_item++;
+                        current_item_offset = 0;
+                    }
+                    
+                    if (current_item >= num_items) break;
+                    
+                    // 计算chunk
+                    size_t remaining = sizes[current_item] - current_item_offset;
+                    size_t chunk_size = (remaining > chunk_size_max) 
+                                        ? chunk_size_max : remaining;
+                    size_t aligned_size = (chunk_size + ctx->block_size - 1) 
+                                          & ~(ctx->block_size - 1);
+                    
+                    // 分配buffer
+                    if (slots[i].buffer_size < aligned_size) {
+                        if (slots[i].host_buffer) {
+                            spdk_dma_free(slots[i].host_buffer);
+                        }
+                        slots[i]. host_buffer = spdk_dma_zmalloc(aligned_size, 4096, NULL);
+                        if (!slots[i].host_buffer) {
+                            fprintf(stderr, "[Pipeline] Failed to allocate buffer\n");
+                            goto cleanup;
+                        }
+                        slots[i].buffer_size = aligned_size;
+                    }
+                    
+                    // 异步拷贝
+                    void *npu_src = (char *)npu_buffers[current_item] + current_item_offset;
+                    
+                    aclError acl_ret = aclrtMemcpyAsync(
+                        slots[i].host_buffer,
+                        aligned_size,
+                        npu_src,
+                        chunk_size,
+                        ACL_MEMCPY_DEVICE_TO_HOST,
+                        slots[i]. acl_stream
+                    );
+                    
+                    if (acl_ret != ACL_SUCCESS) {
+                        fprintf(stderr, "[Pipeline] aclrtMemcpyAsync failed: %d\n", acl_ret);
+                        goto cleanup;
+                    }
+                    
+                    // 记录event
+                    acl_ret = aclrtRecordEvent(slots[i].acl_event, slots[i].acl_stream);
+                    if (acl_ret != ACL_SUCCESS) {
+                        fprintf(stderr, "[Pipeline] aclrtRecordEvent failed: %d\n", acl_ret);
+                        goto cleanup;
+                    }
+                    
+                    // 设置chunk信息
+                    slots[i].chunk_size = chunk_size;
+                    slots[i]. nvme_lba = (nvme_offsets[current_item] + current_item_offset) 
+                                        / ctx->block_size;
+                    slots[i].num_blocks = aligned_size / ctx->block_size;
+                    slots[i].state = SLOT_STATE_COPYING_NPU;
+                    
+                    current_item_offset += chunk_size;
+                    chunks_prepared++;
+                    
+                    printf("[Pipeline] Slot %d:  started NPU copy (chunk %d/%d)\n",
+                           i, chunks_prepared, total_chunks);
+                    
+                    break;
+                }
+            }
+        }
+        
+        // ========================================
+        // Stage 2: 检查NPU拷贝完成
+        // ========================================
+        for (int i = 0; i < pipeline_depth; i++) {
+            if (slots[i]. state == SLOT_STATE_COPYING_NPU) {
+                aclrtEventStatus event_status;
+                aclError ret = aclrtQueryEvent(slots[i].acl_event, &event_status);
+                
+                if (ret != ACL_SUCCESS) {
+                    fprintf(stderr, "[Pipeline] aclrtQueryEvent failed: %d\n", ret);
+                    slots[i].error = 1;
+                    goto cleanup;
+                }
+                
+                if (event_status == ACL_EVENT_STATUS_COMPLETE) {
+                    slots[i].state = SLOT_STATE_COPY_DONE;
+                    printf("[Pipeline] Slot %d: NPU copy completed\n", i);
+                }
+            }
+        }
+        
+        // ========================================
+        // Stage 3: 提交NVMe写
+        // ========================================
+        for (int i = 0; i < pipeline_depth; i++) {
+            if (slots[i]. state == SLOT_STATE_COPY_DONE) {
+                
+                printf("[Pipeline] Slot %d:  submitting NVMe write (LBA=%lu, blocks=%u)\n",
+                       i, slots[i].nvme_lba, slots[i].num_blocks);
+                
+                int rc = spdk_nvme_ns_cmd_write(
+                    ctx->ns,
+                    ctx->qpair,
+                    slots[i].host_buffer,
+                    slots[i].nvme_lba,
+                    slots[i].num_blocks,
+                    async_pipeline_write_complete,  // 使用明确命名的回调
+                    &slots[i],
+                    0
+                );
+                
+                if (rc != 0) {
+                    fprintf(stderr, "[Pipeline] Failed to submit NVMe write (rc=%d)\n", rc);
+                    goto cleanup;
+                }
+                
+                slots[i].state = SLOT_STATE_NVME_SUBMITTED;
+                chunks_submitted++;
+                
+                printf("[Pipeline] Slot %d:  NVMe write submitted (total %d/%d)\n",
+                       i, chunks_submitted, total_chunks);
+            }
+        }
+        
+        // ========================================
+        // Stage 4: Poll NVMe完成
+        // ========================================
+        int completions = spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+        if (completions > 0) {
+            printf("[Pipeline] Polled %d completions\n", completions);
+        }
+        
+        for (int i = 0; i < pipeline_depth; i++) {
+            if (slots[i]. state == SLOT_STATE_NVME_COMPLETED) {
+                if (slots[i].error) {
+                    fprintf(stderr, "[Pipeline] Slot %d completed with error\n", i);
+                    goto cleanup;
+                }
+                
+                printf("[Pipeline] Slot %d:  fully completed, marking FREE\n", i);
+                slots[i].state = SLOT_STATE_FREE;
+                chunks_completed++;
+            }
+        }
+        
+        // 超时检测
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        double elapsed = (now.tv_sec - start_time.tv_sec) + 
+                        (now.tv_usec - start_time.tv_usec) / 1e6;
+        if (elapsed > 30.0) {  // 降低到30秒，更容易调试
+            fprintf(stderr, "[Pipeline] Timeout after %.1f seconds\n", elapsed);
+            fprintf(stderr, "[Pipeline] Status: prep=%d, sub=%d, comp=%d/%d\n",
+                    chunks_prepared, chunks_submitted, chunks_completed, total_chunks);
+            
+            for (int i = 0; i < pipeline_depth; i++) {
+                const char *state_str = "UNKNOWN";
+                switch (slots[i].state) {
+                    case SLOT_STATE_FREE:  state_str = "FREE"; break;
+                    case SLOT_STATE_COPYING_NPU:  state_str = "COPYING_NPU"; break;
+                    case SLOT_STATE_COPY_DONE: state_str = "COPY_DONE"; break;
+                    case SLOT_STATE_NVME_SUBMITTED: state_str = "NVME_SUBMITTED"; break;
+                    case SLOT_STATE_NVME_COMPLETED: state_str = "NVME_COMPLETED"; break;
+                    default: state_str = "INVALID"; break;
+                }
+                fprintf(stderr, "  Slot %d: state=%d (%s), error=%d\n", 
+                        i, slots[i]. state, state_str, slots[i].error);
+            }
+            
+            goto cleanup;
+        }
+    }
+    
+    // 成功完成
+    struct timeval end_time;
+    gettimeofday(&end_time, NULL);
+    double total_time = (end_time. tv_sec - start_time. tv_sec) + 
+                       (end_time.tv_usec - start_time.tv_usec) / 1e6;
+    double speed = total_size / total_time / 1024.0 / 1024.0;
+    
+    printf("\n[Async Batch Pipeline] Completed!\n");
+    printf("  Total:  %.2f MB in %.3f seconds\n", 
+           total_size/1024.0/1024.0, total_time);
+    printf("  Average speed: %.2f MB/s\n", speed);
+    
+    // 清理
+    for (int i = 0; i < pipeline_depth; i++) {
+        if (slots[i]. acl_event) aclrtDestroyEvent(slots[i].acl_event);
+        if (slots[i]. acl_stream) aclrtDestroyStream(slots[i].acl_stream);
+        if (slots[i].host_buffer) spdk_dma_free(slots[i].host_buffer);
+    }
+    free(slots);
+    return 0;
+
+init_cleanup:
+    for (int i = 0; i < pipeline_depth; i++) {
+        if (slots[i].acl_event) aclrtDestroyEvent(slots[i]. acl_event);
+        if (slots[i].acl_stream) aclrtDestroyStream(slots[i].acl_stream);
+    }
+    free(slots);
+    return -1;
+
+cleanup:
+    for (int i = 0; i < pipeline_depth; i++) {
+        if (slots[i].acl_stream) aclrtSynchronizeStream(slots[i]. acl_stream);
+        if (slots[i].acl_event) aclrtDestroyEvent(slots[i].acl_event);
+        if (slots[i].acl_stream) aclrtDestroyStream(slots[i]. acl_stream);
+        if (slots[i].host_buffer) spdk_dma_free(slots[i].host_buffer);
+    }
+    free(slots);
+    return -1;
 }

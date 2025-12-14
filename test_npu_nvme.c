@@ -11,6 +11,7 @@
 #include <sys/time.h>
 
 #define TEST_SIZE (4 * 1024 * 1024)  // 4MB
+#define CHUNK_SIZE (4 * 1024 * 1024) // 4MB
 #define NVME_OFFSET 0
 
 static double get_time_ms() {
@@ -69,7 +70,7 @@ int main(int argc, char **argv) {
     // Test Write
     printf("\n[Test] Writing %d MB from NPU to NVMe...\n", TEST_SIZE / 1024 / 1024);
     double start = get_time_ms();
-    rc = npu_nvme_write(ctx, npu_buffer, NVME_OFFSET, TEST_SIZE);
+    rc = npu_nvme_write(ctx, npu_buffer, NVME_OFFSET, TEST_SIZE, CHUNK_SIZE);
     double write_time = get_time_ms() - start;
     
     if (rc != 0) {
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
     // Test Read
     printf("\n[Test] Reading %d MB from NVMe to NPU...\n", TEST_SIZE / 1024 / 1024);
     start = get_time_ms();
-    rc = npu_nvme_read(ctx, npu_buffer, NVME_OFFSET, TEST_SIZE);
+    rc = npu_nvme_read(ctx, npu_buffer, NVME_OFFSET, TEST_SIZE, CHUNK_SIZE);
     double read_time = get_time_ms() - start;
     
     if (rc != 0) {
