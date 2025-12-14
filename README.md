@@ -1,5 +1,5 @@
-#环境设置和运行指南#
-##准备步骤##
+# 环境设置和运行指南
+## 准备步骤
 切换到root环境：
 ```bash
 sudo su -
@@ -26,7 +26,7 @@ export TOOLCHAIN_HOME=${ASCEND_TOOLKIT_HOME}/toolkit
 export ASCEND_HOME_PATH=${ASCEND_TOOLKIT_HOME}
 ```
 
-##运行测试脚本##
+## 运行测试脚本
 项目文件夹为/home/user3/npu-nvme，测试脚本为test.py。
 ```bash
 python test.py
