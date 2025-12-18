@@ -1,219 +1,247 @@
-import torch
 import ctypes
+import math
 import time
-import os
-from typing import Dict, List
+from typing import List, Dict
 
-libnpu_nvme = ctypes. CDLL('./out/lib/libnpu_nvme.so')
+import torch
+
+
+# ============================================================
+# 绑定 C 接口
+# ============================================================
+lib = ctypes.CDLL("./out/lib/libnpu_nvme.so")
 
 class NPUNVMEContext(ctypes.Structure):
     pass
 
-# 接口定义保持不变
-libnpu_nvme.npu_nvme_init.argtypes = [ctypes. POINTER(ctypes. POINTER(NPUNVMEContext)), ctypes.c_char_p]
-libnpu_nvme.npu_nvme_init.restype = ctypes.c_int
+# init(ctx**, addr, pipeline_depth, requested_chunk_size)
+lib.npu_nvme_init.argtypes = [
+    ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)),
+    ctypes.c_char_p,
+    ctypes.c_int,
+    ctypes.c_size_t,
+]
+lib.npu_nvme_init.restype = ctypes.c_int
 
-libnpu_nvme.npu_nvme_write_pipeline.argtypes = [
-    ctypes.POINTER(NPUNVMEContext), 
-    ctypes.c_void_p, 
-    ctypes.c_uint64, 
-    ctypes. c_size_t,
+# cleanup
+lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+lib.npu_nvme_cleanup.restype = None
+
+# get_max_transfer
+lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+lib.npu_nvme_get_max_transfer.restype = ctypes.c_size_t
+
+# write_batch / read_batch
+lib.npu_nvme_write_batch.argtypes = [
+    ctypes.POINTER(NPUNVMEContext),
+    ctypes.POINTER(ctypes.c_void_p),   # void** npu_ptrs
+    ctypes.POINTER(ctypes.c_uint64),   # uint64_t* offsets
+    ctypes.POINTER(ctypes.c_size_t),   # size_t* sizes
+    ctypes.c_int                       # num_items
+]
+lib.npu_nvme_write_batch.restype = ctypes.c_int
+
+lib.npu_nvme_read_batch.argtypes = [
+    ctypes.POINTER(NPUNVMEContext),
+    ctypes.POINTER(ctypes.c_void_p),
+    ctypes.POINTER(ctypes.c_uint64),
+    ctypes.POINTER(ctypes.c_size_t),
     ctypes.c_int
 ]
-libnpu_nvme.npu_nvme_write_pipeline.restype = ctypes.c_int
-
-libnpu_nvme.npu_nvme_write. argtypes = [
-    ctypes.POINTER(NPUNVMEContext), 
-    ctypes.c_void_p, 
-    ctypes.c_uint64, 
-    ctypes.c_size_t
-]
-libnpu_nvme.npu_nvme_write.restype = ctypes.c_int
-
-libnpu_nvme.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-libnpu_nvme.npu_nvme_cleanup.restype = None
-
-libnpu_nvme.npu_nvme_write_batch.argtypes = [
-    ctypes.POINTER(NPUNVMEContext),
-    ctypes.POINTER(ctypes.c_void_p),    # void **npu_buffers
-    ctypes.POINTER(ctypes.c_uint64),    # uint64_t *nvme_offsets
-    ctypes.POINTER(ctypes.c_size_t),    # size_t *sizes
-    ctypes.c_int,                        # int num_items
-    ctypes.c_int                         # int pipeline_depth
-]
-libnpu_nvme.npu_nvme_write_batch.restype = ctypes.c_int
+lib.npu_nvme_read_batch.restype = ctypes.c_int
 
 
-libnpu_nvme. npu_nvme_write_batch_async.argtypes = [
-    ctypes.POINTER(NPUNVMEContext),
-    ctypes.POINTER(ctypes.c_void_p),    # void **npu_buffers
-    ctypes.POINTER(ctypes.c_uint64),    # uint64_t *nvme_offsets
-    ctypes.POINTER(ctypes.c_size_t),    # size_t *sizes
-    ctypes.c_int,                        # int num_items
-    ctypes.c_int                         # int pipeline_depth
-]
-libnpu_nvme.npu_nvme_write_batch_async.restype = ctypes.c_int
+# ============================================================
+# 工具：分块与合包
+# ============================================================
+def build_chunks(params: List[Dict], chunk_size: int):
+    """
+    将一组参数（含 ptr/size/offset_on_nvme）切成 <= chunk_size 的块。
+    返回 (chunks, total_size)
+    chunks: List[ (ptr, nvme_offset, size) ]
+    """
+    chunks = []
+    nvme_offset = 0
+    for p in params:
+        ptr = p["ptr"]
+        remaining = p["size"]
+        inner_off = 0
+        while remaining > 0:
+            take = min(remaining, chunk_size)
+            chunks.append((
+                ctypes.c_void_p(ptr + inner_off),   # NPU 地址 + 偏移
+                ctypes.c_uint64(nvme_offset),       # NVMe 偏移（无空洞）
+                ctypes.c_size_t(take)                # 本块大小
+            ))
+            remaining -= take
+            inner_off += take
+            nvme_offset += take
+    return chunks, nvme_offset
 
 
+def rebuild_chunks_from_meta(model: torch.nn.Module, meta: Dict, chunk_size: int):
+    """
+    根据元数据和 chunk_size，按与写入时一致的规则重建块列表。
+    """
+    params = []
+    for name, param in model.named_parameters():
+        if name not in meta:
+            continue
+        info = meta[name]
+        params.append({
+            "ptr": param.data_ptr(),
+            "size": info["size"],
+            "offset": info["offset"]
+        })
+    # 按 offset 排序，确保顺序一致
+    params.sort(key=lambda x: x["offset"])
+    # 重建块：沿用当初的连续布局
+    chunks = []
+    for p in params:
+        ptr = p["ptr"]
+        remaining = p["size"]
+        nvme_off = p["offset"]
+        inner_off = 0
+        while remaining > 0:
+            take = min(remaining, chunk_size)
+            chunks.append((
+                ctypes.c_void_p(ptr + inner_off),
+                ctypes.c_uint64(nvme_off),
+                ctypes.c_size_t(take)
+            ))
+            remaining -= take
+            inner_off += take
+            nvme_off += take
+    return chunks
 
+
+# ============================================================
+# DirectCheckpoint
+# ============================================================
 class DirectCheckpoint:
-    def __init__(self, nvme_device:  str = "0000:83:00.0", use_pipeline: bool = True):
-        self.ctx = ctypes. POINTER(NPUNVMEContext)()
-        ret = libnpu_nvme. npu_nvme_init(ctypes.byref(self. ctx), nvme_device.encode())
-        if ret != 0:
-            raise RuntimeError("Failed to initialize NPU-NVMe interface")
-        
-        self.nvme_offset = 0
-        self.metadata = {}
-        self.use_pipeline = use_pipeline
-        
-        print(f"[Checkpoint] Mode: {'Pipeline' if use_pipeline else 'Sequential'}")
-
-    def save(self, model:  torch.nn.Module, pipeline_depth: int = 4, chunk_size: int = 4 * 1024 * 1024) -> int:
-        """保存模型到NVMe - 使用真正的Pipeline"""
-        print("\n=== Starting checkpoint save ===")
-        
-        # 收集所有参数信息
-        params_info = []
-        total_size = 0
-        
-        for idx, (name, param) in enumerate(model.named_parameters()):
-            if not param.is_npu:
-                print(f"[{idx}] Skip {name}: not on NPU")
-                continue
-            
-            npu_address = param.data_ptr()
-            size = param.numel() * param.element_size()
-            
-            if npu_address == 0 or size == 0:
-                print(f"[{idx}] Skip {name}: invalid")
-                continue
-            
-            params_info.append({
-                'name': name,
-                'address': npu_address,
-                'size': size,
-                'offset': self.nvme_offset,
-                'shape': list(param.shape),
-                'dtype': str(param.dtype)
-            })
-            
-            self.nvme_offset += size
-            total_size += size
-        
-        print(f"[Checkpoint] Total parameters: {len(params_info)}")
-        print(f"[Checkpoint] Total size: {total_size / 1024 / 1024:.2f} MB")
-        
-        # 开始传输（整体计时）
-        start_time = time.time()
-        
-        if self.use_pipeline:
-            # Pipeline模式：一次性传输所有数据
-            self._save_all_pipeline(params_info, pipeline_depth, chunk_size)
-        else:
-            # Sequential模式
-            self._save_all_sequential(params_info, chunk_size)
-        
-        elapsed = time.time() - start_time
-        speed = total_size / elapsed / 1024 / 1024
-        
-        print(f"\n[Checkpoint] Transfer completed!")
-        print(f"  Time: {elapsed:.3f}s")
-        print(f"  Speed: {speed:.2f} MB/s")
-        
-        # 保存元数据
-        for info in params_info:
-            self.metadata[info['name']] = {
-                'offset': info['offset'],
-                'size': info['size'],
-                'shape': info['shape'],
-                'dtype': info['dtype']
-            }
-
-        # 将元数据保存到本地csv文件
-        with open("checkpoint_metadata.csv", "w") as f:
-            f.write("name,offset,size,shape,dtype\n")
-            for name, meta in self.metadata.items():
-                shape_str = "x".join(map(str, meta['shape']))
-                f.write(f"{name},{meta['offset']},{meta['size']},{shape_str},{meta['dtype']}\n")
-
-        
-        torch.save(self.metadata, "checkpoint_metadata.pth")
-        print(f"[Checkpoint] Metadata saved")
-        
-        return total_size
-
-    def _save_all_pipeline(self, params_info:  List[dict], pipeline_depth: int, chunk_size: int):
-        """Pipeline模式：使用Batch API一次性传输所有参数"""
-        
-        print(f"[Checkpoint] Using Batch Pipeline API")
-        
-        num_params = len(params_info)
-        
-        # 准备C数组
-        npu_buffers = (ctypes.c_void_p * num_params)()
-        nvme_offsets = (ctypes.c_uint64 * num_params)()
-        sizes = (ctypes.c_size_t * num_params)()
-        
-        for i, info in enumerate(params_info):
-            npu_buffers[i] = info['address']
-            nvme_offsets[i] = info['offset']
-            sizes[i] = info['size']
-        
-        # 调用batch API
-        ret = libnpu_nvme.npu_nvme_write_batch(
-            self.ctx,
-            npu_buffers,
-            nvme_offsets,
-            sizes,
-            num_params,
+    def __init__(
+        self,
+        nvme_addr: str = "0000:83:00.0",
+        npu_device_id: int = 0,
+        pipeline_depth: int = 4,
+        requested_chunk_size: int = 4 * 1024 * 1024,
+    ):
+        self.ctx = ctypes.POINTER(NPUNVMEContext)()
+        rc = lib.npu_nvme_init(
+            ctypes.byref(self.ctx),
+            nvme_addr.encode(),
+            npu_device_id,
             pipeline_depth,
-            chunk_size
+            requested_chunk_size,
         )
-        
-        if ret != 0:
-            raise RuntimeError("Batch write failed")
+        if rc != 0:
+            raise RuntimeError("npu_nvme_init failed")
 
-    def _save_all_sequential(self, params_info: List[dict], chunk_size: int):
-        """Sequential模式：普通传输"""
-        for idx, info in enumerate(params_info):
-            print(f"\n[{idx+1}/{len(params_info)}] {info['name']}: {info['size']/1024/1024:.2f} MB")
-            
-            ret = libnpu_nvme.npu_nvme_write(
-                self.ctx,
-                info['address'],
-                info['offset'],
-                info['size'],
-                chunk_size
-            )
-            
-            if ret != 0:
-                raise RuntimeError(f"Failed to save {info['name']}")
-
-    def load(self, model: torch.nn.Module, metadata_path: str = "checkpoint_metadata.pth", chunk_size: int = 4 * 1024 * 1024):
-        """从NVMe加载模型"""
-        self.metadata = torch.load(metadata_path)
-
-        for name, param in model.named_parameters():
-            if name not in self.metadata:
-                continue
-                
-            meta = self.metadata[name]
-            npu_address = param.data_ptr()
-            size = meta['size']
-
-            ret = libnpu_nvme. npu_nvme_read(
-                self.ctx,
-                npu_address,
-                meta['offset'],
-                size,
-                chunk_size
-            )
-            if ret != 0:
-                raise RuntimeError(f"Failed to load parameter:  {name}")
-        
-        print("Checkpoint loaded successfully!")
+        # 生效的 chunk_size（已被设备上限裁剪）
+        self.chunk_size = lib.npu_nvme_get_max_transfer(self.ctx)
+        print(f"[DirectCheckpoint] init ok. "
+              f"pipeline_depth={pipeline_depth}, "
+              f"requested_chunk={requested_chunk_size/1024/1024:.2f}MB, "
+              f"effective_chunk={self.chunk_size/1024/1024:.2f}MB")
+        self.chunk_size = requested_chunk_size
+        self.meta = {}
+        self.total_size = 0
 
     def cleanup(self):
-        """清理资源"""
-        libnpu_nvme. npu_nvme_cleanup(self.ctx)
+        if self.ctx:
+            lib.npu_nvme_cleanup(self.ctx)
+            self.ctx = None
+
+    def _prepare_params(self, model: torch.nn.Module):
+        params = []
+        for name, p in model.named_parameters():
+            ######
+            #这里需要添加判断tensor是否在NPU上
+            ######
+            ptr = p.data_ptr()
+            size = p.numel() * p.element_size()
+            params.append({
+                "name": name,
+                "ptr": ptr,
+                "size": size,
+                "shape": list(p.shape),
+                "dtype": str(p.dtype),
+            })
+        return params
+
+    def save(self, model: torch.nn.Module, meta_path: str = "checkpoint_meta.pt"):
+        params = self._prepare_params(model)
+        # 构建连续布局（NVMe 上无空洞）
+        nvme_offset = 0
+        layout = []
+        for p in params:
+            layout.append({
+                **p,
+                "offset": nvme_offset
+            })
+            nvme_offset += p["size"]
+
+        # 生成 chunk 列表
+        chunks, total = build_chunks(layout, self.chunk_size)
+        self.total_size = total
+        print(f"[Save] params={len(params)}, chunks={len(chunks)}, "
+              f"total={total/1024/1024:.2f}MB, chunk_size={self.chunk_size/1024/1024:.2f}MB")
+
+        # 准备 ctypes 数组
+        num = len(chunks)
+        c_ptrs = (ctypes.c_void_p * num)()
+        c_offs = (ctypes.c_uint64 * num)()
+        c_sizes = (ctypes.c_size_t * num)()
+        for i, (p, o, s) in enumerate(chunks):
+            c_ptrs[i] = p
+            c_offs[i] = o
+            c_sizes[i] = s
+
+        t0 = time.time()
+        rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
+        if rc != 0:
+            raise RuntimeError("write_batch failed")
+        t1 = time.time()
+        bw = total / 1024 / 1024 / (t1 - t0)
+        print(f"[Save] done in {t1-t0:.3f}s, BW={bw:.1f} MB/s")
+
+        # 保存元数据
+        meta = {
+            "chunk_size": self.chunk_size,
+            "total_size": total,
+            "params": {p["name"]: {
+                "offset": p["offset"],
+                "size": p["size"],
+                "shape": p["shape"],
+                "dtype": p["dtype"],
+            } for p in layout}
+        }
+        torch.save(meta, meta_path)
+        self.meta = meta
+        print(f"[Save] meta saved to {meta_path}")
+        return total, t1 - t0, bw
+
+    def load(self, model: torch.nn.Module, meta_path: str = "checkpoint_meta.pt"):
+        meta = torch.load(meta_path)
+        chunk_size = min(meta.get("chunk_size", self.chunk_size), self.chunk_size)
+        self.meta = meta
+
+        chunks = rebuild_chunks_from_meta(model, meta["params"], chunk_size)
+        num = len(chunks)
+        c_ptrs = (ctypes.c_void_p * num)()
+        c_offs = (ctypes.c_uint64 * num)()
+        c_sizes = (ctypes.c_size_t * num)()
+        for i, (p, o, s) in enumerate(chunks):
+            c_ptrs[i] = p
+            c_offs[i] = o
+            c_sizes[i] = s
+
+        t0 = time.time()
+        rc = lib.npu_nvme_read_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
+        if rc != 0:
+            raise RuntimeError("read_batch failed")
+        t1 = time.time()
+        total = meta["total_size"]
+        bw = total / 1024 / 1024 / (t1 - t0)
+        print(f"[Load] done in {t1-t0:.3f}s, BW={bw:.1f} MB/s")
+        return total

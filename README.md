@@ -34,3 +34,14 @@ python test.py
 测试模型、流水线深度、NVMe一次写入的Chunk size等参数均可在test.py文件中直接修改。
 保存检查点时，会输出checkpoint_metadata.csv文件。
 该文件记录模型中各个变量的名称、写入偏移、大小（单位为Byte）。
+
+由于目前ACL的调用有些bug没修好，运行后最后输出这些内容是正常的，不用在意：
+```bash
+[W compiler_depend.ts:316] Warning: NPU warning, error code is 100037[Error]: 
+[Error]: Repeated deinitialization.
+        Check whether the acl.finalize interface is repeatedly invoked for deinitialization.
+EH9999: Inner Error!
+EH9999: [PID: 476369] 2025-12-14-19:00:28.262.491 [Finalize][Acl]repeatedly finalized[FUNC:ReportInnerError][FILE:log_inner.cpp][LINE:145]
+        TraceBack (most recent call last):
+ (function operator())
+ ```
