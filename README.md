@@ -26,6 +26,11 @@ export TOOLCHAIN_HOME=${ASCEND_TOOLKIT_HOME}/toolkit
 export ASCEND_HOME_PATH=${ASCEND_TOOLKIT_HOME}
 ```
 
+初始化submodule
+```bash
+git submodule update --init --recursive
+```
+
 ## 运行测试脚本
 项目文件夹为/home/user3/npu-nvme，测试脚本为test.py。
 ```bash
