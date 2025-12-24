@@ -125,14 +125,18 @@ class DirectCheckpoint:
         npu_device_id: int = 0,
         pipeline_depth: int = 4,
         requested_chunk_size: int = 4 * 1024 * 1024,
+        enable_profiling: bool = False,
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
+        self.enable_profiling = enable_profiling
+
         rc = lib.npu_nvme_init(
             ctypes.byref(self.ctx),
             nvme_addr.encode(),
             npu_device_id,
             pipeline_depth,
             requested_chunk_size,
+            enable_profiling
         )
         if rc != 0:
             raise RuntimeError("npu_nvme_init failed")
@@ -171,6 +175,12 @@ class DirectCheckpoint:
 
     def save(self, model: torch.nn.Module, meta_path: str = "checkpoint_meta.pt"):
         params = self._prepare_params(model)
+        # 输出参数信息到params.csv，便于调试
+        if self.enable_profiling:
+            with open("params.csv", "w") as f:
+                f.write("name,ptr,size,shape,dtype\n")
+                for p in params:
+                    f.write(f"{p['name']},{p['ptr']},{p['size']},\"{p['shape']}\",{p['dtype']}\n")
         # 构建连续布局（NVMe 上无空洞）
         nvme_offset = 0
         layout = []
@@ -219,7 +229,7 @@ class DirectCheckpoint:
         torch.save(meta, meta_path)
         self.meta = meta
         print(f"[Save] meta saved to {meta_path}")
-        return total, t1 - t0, bw
+        return total, len(chunks), t1 - t0, bw
 
     def load(self, model: torch.nn.Module, meta_path: str = "checkpoint_meta.pt"):
         meta = torch.load(meta_path)

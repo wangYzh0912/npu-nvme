@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
 #define MIN_PIPE_DEPTH   1
 #define MAX_PIPE_DEPTH   16
@@ -58,8 +59,35 @@ typedef struct dma_buf {
     size_t size;     /* 已分配大小 */
 } dma_buf_t;
 
+typedef struct {
+    int      buf_idx;
+    int      state;      /* 0 pending, 1 submitted, 2 completed */
+    uint64_t copy_us;    /* NPU->Host 拷贝耗时 */
+    uint64_t submit_ts;  /* 提交时刻 */
+    uint64_t done_ts;    /* 完成时刻（回调里写） */
+} item_stat_t;
+
+typedef struct {
+    int           item;
+    int          *flag_ptr;
+    item_stat_t  *stat_ptr;
+} cb_ctx_t;
+
+static item_stat_t *g_stats = NULL;
+
+static inline uint64_t tv_us(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000000ULL + tv.tv_usec;
+}
+
 static void io_complete(void *arg, const struct spdk_nvme_cpl *cpl) {
     int *flag = (int *)arg;
+    cb_ctx_t *c = (cb_ctx_t *)arg;
+    int err = spdk_nvme_cpl_is_error(cpl) ? -1 : 1;
+    *(c->flag_ptr) = err;
+    c->stat_ptr[c->item].state   = 2;
+    c->stat_ptr[c->item].done_ts = tv_us();
     if (spdk_nvme_cpl_is_error(cpl)) {
         *flag = -1;
     } else {
@@ -89,6 +117,7 @@ struct npu_nvme_context {
 
     /* 管理参数 */
     int pipeline_depth;
+    bool enable_profiling;
 };
 
 /* 计算 MDTS 得到 max_transfer */
@@ -137,7 +166,8 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
                   const char *nvme_pci_addr,
                   int npu_device_id,
                   int pipeline_depth,
-                  size_t chunk_size) {
+                  size_t chunk_size,
+                  bool enable_profiling) {
     if (!pctx || !nvme_pci_addr) return -1;
 
     if (pipeline_depth < MIN_PIPE_DEPTH) pipeline_depth = MIN_PIPE_DEPTH;
@@ -234,6 +264,7 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
 
     *pctx = ctx;
     ctx->max_transfer = chunk_size;
+    ctx->enable_profiling = enable_profiling;
     return 0;
 
 fail:
@@ -270,6 +301,7 @@ void npu_nvme_cleanup(npu_nvme_context_t *ctx) {
 size_t npu_nvme_get_max_transfer(npu_nvme_context_t *ctx) {
     return ctx ? ctx->max_transfer : 0;
 }
+
 int npu_nvme_write_batch(npu_nvme_context_t *ctx,
                          void **npu_ptrs,
                          uint64_t *nvme_offsets,
@@ -281,41 +313,40 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
     int idx;
     int ret = 0;
 
-    int *flags = calloc(num_items, sizeof(int));          // -1 error, 1 ok, 0 pending
-    int *buf_idx = calloc(num_items, sizeof(int));        // 记录每个提交用的buffer
-    bool *reclaimed = calloc(num_items, sizeof(bool));    // 是否已回收
-    if (!flags || !buf_idx || !reclaimed) { ret = -1; goto cleanup; }
+    int *flags = calloc(num_items, sizeof(int));
+    int *buf_idx = calloc(num_items, sizeof(int));
+    bool *reclaimed = calloc(num_items, sizeof(bool));
+    item_stat_t *stat = calloc(num_items, sizeof(item_stat_t));
+    cb_ctx_t *cb_ctx = calloc(num_items, sizeof(cb_ctx_t));
+    if (!stat || !cb_ctx || !flags || !buf_idx || !reclaimed) { ret = -1; goto cleanup; }
 
     while (completed < num_items) {
-        /* Stage1: 尽量提交新的 I/O */
         while (submitted < num_items) {
-            if (!ring_pop(&ctx->free_ring, &idx)) break; /* 无空闲 buffer，去 poll */
-
+            if (!ring_pop(&ctx->free_ring, &idx)) break;
             size_t sz = sizes[submitted];
             if (sz == 0 || sz > ctx->max_transfer) {
-                fprintf(stderr, "size invalid: %zu, max_transfer: %zu\n", sz, ctx->max_transfer);
                 flags[submitted] = -1;
-                reclaimed[submitted] = true; // 不占用 buffer
-                submitted++;
+                reclaimed[submitted] = true;
+                submitted++; completed++;    // 避免卡住
                 continue;
             }
             size_t aligned = ALIGN_4K(sz);
             if (aligned > ctx->pool[idx].size) {
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
-                submitted++;
+                submitted++; completed++;
                 continue;
             }
 
-            /* NPU -> host */
+            uint64_t t1 = tv_us();
             aclError acret = aclrtMemcpy(ctx->pool[idx].buf, aligned,
                                          npu_ptrs[submitted], sz,
                                          ACL_MEMCPY_DEVICE_TO_HOST);
+            uint64_t t2 = tv_us();
             if (acret != ACL_SUCCESS) {
-                fprintf(stderr, "aclrtMemcpy failed item %d\n", submitted);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
-                submitted++;
+                submitted++; completed++;
                 ring_push(&ctx->free_ring, idx);
                 continue;
             }
@@ -323,48 +354,71 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
             uint64_t lba = nvme_offsets[submitted] / ctx->block_size;
             uint32_t nblk = (uint32_t)(aligned / ctx->block_size);
 
+            stat[submitted].copy_us   = t2 - t1;
+            stat[submitted].buf_idx   = idx;
+            stat[submitted].state     = 1;
+            stat[submitted].submit_ts = tv_us();
+
+            cb_ctx[submitted].item     = submitted;
+            cb_ctx[submitted].flag_ptr = &flags[submitted];
+            cb_ctx[submitted].stat_ptr = stat;
+
             flags[submitted] = 0;
             buf_idx[submitted] = idx;
             int rc = spdk_nvme_ns_cmd_write(ctx->ns, ctx->qpair,
                                             ctx->pool[idx].buf,
                                             lba, nblk,
-                                            io_complete, &flags[submitted], 0);
+                                            io_complete, &cb_ctx[submitted], 0);
             if (rc != 0) {
-                fprintf(stderr, "spdk_nvme_ns_cmd_write failed %d\n", rc);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
+                submitted++; completed++;
                 ring_push(&ctx->free_ring, idx);
+                continue;
             }
             submitted++;
         }
 
-        /* Stage2: poll completions */
         spdk_nvme_qpair_process_completions(ctx->qpair, 0);
 
-        /* Stage3: 回收已完成的 buffer */
         for (int i = 0; i < num_items; ++i) {
-            if (!reclaimed[i] && flags[i] != 0) { // 已完成或出错且未回收
-                if (flags[i] != 1) ret = -1; // 记录错误
-
-                ring_push(&ctx->free_ring, buf_idx[i]);
+            if (!reclaimed[i] && stat[i].state == 2) { // 已完成
+                ring_push(&ctx->free_ring, stat[i].buf_idx);
                 reclaimed[i] = true;
+                if (flags[i] != 1) ret = -1;
                 completed++;
             }
         }
 
-        /* 避免忙等 */
-        if (submitted >= num_items && completed < num_items) {
+        if (submitted >= num_items && completed < num_items)
             usleep(50);
+    }
+
+    if (ctx->enable_profiling) {
+        FILE *f = fopen("time.csv", "w");
+        if (f) {
+            fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
+            for (int i = 0; i < num_items; ++i) {
+                if (stat[i].state == 2) {
+                    uint64_t nvme_us = (stat[i].done_ts >= stat[i].submit_ts)
+                                    ? (stat[i].done_ts - stat[i].submit_ts)
+                                    : 0;
+                    fprintf(f, "%d,%d,%lu,%lu\n",
+                            i, stat[i].buf_idx, stat[i].copy_us, nvme_us);
+                }
+            }
+            fclose(f);
         }
     }
 
 cleanup:
+    free(stat);
+    free(cb_ctx);
     free(flags);
     free(buf_idx);
     free(reclaimed);
     return ret;
 }
-
 
 int npu_nvme_read_batch(npu_nvme_context_t *ctx,
                         void **npu_ptrs,
@@ -379,7 +433,8 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
     int *flags = calloc(num_items, sizeof(int));
     int *buf_idx = calloc(num_items, sizeof(int));
     bool *reclaimed = calloc(num_items, sizeof(bool));
-    if (!flags || !buf_idx || !reclaimed) { ret = -1; goto out; }
+    cb_ctx_t *cb_ctx = calloc(num_items, sizeof(cb_ctx_t));
+    if (!flags || !buf_idx || !reclaimed || !cb_ctx) { ret = -1; goto out; }
 
     while (completed < num_items) {
         while (submitted < num_items) {
@@ -405,10 +460,14 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
 
             flags[submitted] = 0;
             buf_idx[submitted] = idx;
+            cb_ctx[submitted].item = submitted;
+            cb_ctx[submitted].flag_ptr = &flags[submitted];
+            cb_ctx[submitted].stat_ptr = NULL; // 读取不做统计
+
             int rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair,
                                            ctx->pool[idx].buf,
                                            lba, nblk,
-                                           io_complete, &flags[submitted], 0);
+                                           io_complete, &cb_ctx[submitted], 0);
             if (rc != 0) {
                 fprintf(stderr, "spdk_nvme_ns_cmd_read failed %d\n", rc);
                 flags[submitted] = -1;
@@ -451,5 +510,6 @@ out:
     free(flags);
     free(buf_idx);
     free(reclaimed);
+    free(cb_ctx);
     return ret;
 }

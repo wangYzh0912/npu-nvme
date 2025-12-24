@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,7 +16,8 @@ int npu_nvme_init(npu_nvme_context_t **ctx,
                   const char *nvme_pci_addr,
                   int npu_device_id,
                   int pipeline_depth,
-                  size_t chunk_size);
+                  size_t chunk_size,
+                  bool enable_profiling);
 
 void npu_nvme_cleanup(npu_nvme_context_t *ctx);
 
