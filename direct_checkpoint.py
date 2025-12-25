@@ -75,7 +75,7 @@ def build_chunks(params: List[Dict], chunk_size: int):
             ))
             remaining -= take
             inner_off += take
-            nvme_offset += take
+            nvme_offset += int(math.ceil(take / 4096.0) * 4096)  # NVMe 按 4K 对齐推进偏移
     return chunks, nvme_offset
 
 
@@ -111,7 +111,7 @@ def rebuild_chunks_from_meta(model: torch.nn.Module, meta: Dict, chunk_size: int
             ))
             remaining -= take
             inner_off += take
-            nvme_off += take
+            nvme_off += int(math.ceil(take / 4096.0) * 4096)
     return chunks
 
 
@@ -180,8 +180,7 @@ class DirectCheckpoint:
             with open("params.csv", "w") as f:
                 f.write("name,ptr,size,shape,dtype\n")
                 for p in params:
-                    f.write(f"{p['name']},{p['ptr']},{p['size']},\"{p['shape']}\",{p['dtype']}\n")
-        # 构建连续布局（NVMe 上无空洞）
+                    f.write(f"{p['name']},{p['ptr']},{p['size']},\"{p['shape']}\",{p['dtype']}\n")  
         nvme_offset = 0
         layout = []
         for p in params:
@@ -189,7 +188,7 @@ class DirectCheckpoint:
                 **p,
                 "offset": nvme_offset
             })
-            nvme_offset += p["size"]
+            nvme_offset += int(math.ceil(p["size"] / 4096.0) * 4096)
 
         # 生成 chunk 列表
         chunks, total = build_chunks(layout, self.chunk_size)
@@ -254,4 +253,4 @@ class DirectCheckpoint:
         total = meta["total_size"]
         bw = total / 1024 / 1024 / (t1 - t0)
         print(f"[Load] done in {t1-t0:.3f}s, BW={bw:.1f} MB/s")
-        return total
+        return total, len(chunks), t1 - t0, bw

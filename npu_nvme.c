@@ -395,7 +395,7 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
     }
 
     if (ctx->enable_profiling) {
-        FILE *f = fopen("time.csv", "w");
+        FILE *f = fopen("time_write.csv", "w");
         if (f) {
             fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
             for (int i = 0; i < num_items; ++i) {
@@ -434,7 +434,8 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
     int *buf_idx = calloc(num_items, sizeof(int));
     bool *reclaimed = calloc(num_items, sizeof(bool));
     cb_ctx_t *cb_ctx = calloc(num_items, sizeof(cb_ctx_t));
-    if (!flags || !buf_idx || !reclaimed || !cb_ctx) { ret = -1; goto out; }
+    item_stat_t *stat = calloc(num_items, sizeof(item_stat_t)); // read 也需非空 stat_ptr 供回调使用
+    if (!flags || !buf_idx || !reclaimed || !cb_ctx || !stat) { ret = -1; goto cleanup; }
 
     while (completed < num_items) {
         while (submitted < num_items) {
@@ -460,9 +461,14 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
 
             flags[submitted] = 0;
             buf_idx[submitted] = idx;
+
+            stat[submitted].buf_idx   = idx;
+            stat[submitted].state     = 1;
+            stat[submitted].submit_ts = tv_us();
+
             cb_ctx[submitted].item = submitted;
             cb_ctx[submitted].flag_ptr = &flags[submitted];
-            cb_ctx[submitted].stat_ptr = NULL; // 读取不做统计
+            cb_ctx[submitted].stat_ptr = stat; // 传递非空指针，避免回调解引用空指针
 
             int rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair,
                                            ctx->pool[idx].buf,
@@ -484,14 +490,16 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
                 /* host -> NPU */
                 if (flags[i] == 1) {
                     size_t sz = sizes[i];
-                    size_t aligned = ALIGN_4K(sz);
+                    uint64_t t1 = tv_us();
                     aclError acret = aclrtMemcpy(npu_ptrs[i], sz,
                                                  ctx->pool[buf_idx[i]].buf, sz,
                                                  ACL_MEMCPY_HOST_TO_DEVICE);
+                    uint64_t t2 = tv_us();
                     if (acret != ACL_SUCCESS) {
                         fprintf(stderr, "aclrtMemcpy H2D failed item %d\n", i);
                         ret = -1;
                     }
+                    stat[i].copy_us = t2 - t1;
                 } else {
                     ret = -1;
                 }
@@ -506,10 +514,30 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
         }
     }
 
-out:
+
+    if (ctx->enable_profiling) {
+        FILE *f = fopen("time_read.csv", "w");
+        if (f) {
+            fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
+            for (int i = 0; i < num_items; ++i) {
+                if (stat[i].state == 2) {
+                    uint64_t nvme_us = (stat[i].done_ts >= stat[i].submit_ts)
+                                    ? (stat[i].done_ts - stat[i].submit_ts)
+                                    : 0;
+                    fprintf(f, "%d,%d,%lu,%lu\n",
+                            i, stat[i].buf_idx, stat[i].copy_us, nvme_us);
+                }
+            }
+            fclose(f);
+        }
+    }
+
+cleanup:
+
     free(flags);
     free(buf_idx);
     free(reclaimed);
     free(cb_ctx);
+    free(stat);
     return ret;
 }
