@@ -1,15 +1,19 @@
 import ctypes
 import math
+import os
+import pickle
 import time
 from typing import List, Dict
 
-import torch
+import mindspore as ms
+import numpy as np
 
 
 # ============================================================
 # 绑定 C 接口
 # ============================================================
-lib = ctypes.CDLL("./out/lib/libnpu_nvme.so")
+_LIB_PATH = os.path.join(os.path.dirname(__file__), "out", "lib", "libnpu_nvme.so")
+lib = ctypes.CDLL(_LIB_PATH)
 
 class NPUNVMEContext(ctypes.Structure):
     pass
@@ -19,7 +23,9 @@ lib.npu_nvme_init.argtypes = [
     ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)),
     ctypes.c_char_p,
     ctypes.c_int,
-    ctypes.c_size_t,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.c_bool,
 ]
 lib.npu_nvme_init.restype = ctypes.c_int
 
@@ -29,7 +35,7 @@ lib.npu_nvme_cleanup.restype = None
 
 # get_max_transfer
 lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-lib.npu_nvme_get_max_transfer.restype = ctypes.c_size_t
+lib.npu_nvme_get_max_transfer.restype = ctypes.c_int
 
 # write_batch / read_batch
 lib.npu_nvme_write_batch.argtypes = [
@@ -79,25 +85,30 @@ def build_chunks(params: List[Dict], chunk_size: int):
     return chunks, nvme_offset
 
 
-def rebuild_chunks_from_meta(model: torch.nn.Module, meta: Dict, chunk_size: int):
+def rebuild_chunks_from_meta(model: ms.nn.Cell, meta: Dict, chunk_size: int):
     """
-    根据元数据和 chunk_size，按与写入时一致的规则重建块列表。
+    根据元数据和 chunk_size，重建读取所需的块列表，并为每个参数分配 CPU 缓冲区。
+    返回 (chunks, buffers)。
     """
-    params = []
-    for name, param in model.named_parameters():
+    buffers = []
+    for name, param in model.parameters_and_names():
         if name not in meta:
             continue
         info = meta[name]
-        params.append({
-            "ptr": param.data_ptr(),
+        np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
+        buffers.append({
+            "name": name,
+            "ptr": np_arr.ctypes.data,
             "size": info["size"],
-            "offset": info["offset"]
+            "offset": info["offset"],
+            "np_arr": np_arr,
+            "param_ref": param,
         })
-    # 按 offset 排序，确保顺序一致
-    params.sort(key=lambda x: x["offset"])
-    # 重建块：沿用当初的连续布局
+
+    buffers.sort(key=lambda x: x["offset"])
+
     chunks = []
-    for p in params:
+    for p in buffers:
         ptr = p["ptr"]
         remaining = p["size"]
         nvme_off = p["offset"]
@@ -112,7 +123,7 @@ def rebuild_chunks_from_meta(model: torch.nn.Module, meta: Dict, chunk_size: int
             remaining -= take
             inner_off += take
             nvme_off += int(math.ceil(take / 4096.0) * 4096)
-    return chunks
+    return chunks, buffers
 
 
 # ============================================================
@@ -130,6 +141,8 @@ class DirectCheckpoint:
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
         self.enable_profiling = enable_profiling
 
+        print(f"[DirectCheckpoint] loading so from {_LIB_PATH}")
+
         rc = lib.npu_nvme_init(
             ctypes.byref(self.ctx),
             nvme_addr.encode(),
@@ -141,13 +154,15 @@ class DirectCheckpoint:
         if rc != 0:
             raise RuntimeError("npu_nvme_init failed")
 
-        # 生效的 chunk_size（已被设备上限裁剪）
-        self.chunk_size = lib.npu_nvme_get_max_transfer(self.ctx)
-        print(f"[DirectCheckpoint] init ok. "
-              f"pipeline_depth={pipeline_depth}, "
-              f"requested_chunk={requested_chunk_size/1024/1024:.2f}MB, "
-              f"effective_chunk={self.chunk_size/1024/1024:.2f}MB")
+        # 生效的 chunk_size：完全采用用户请求值，设备返回值仅作参考打印
+        eff = lib.npu_nvme_get_max_transfer(self.ctx)
         self.chunk_size = requested_chunk_size
+        print(
+            f"[DirectCheckpoint] init ok. "
+            f"pipeline_depth={pipeline_depth}, "
+            f"requested_chunk={requested_chunk_size/1024/1024:.2f}MB, "
+            f"effective_chunk={self.chunk_size/1024/1024:.2f}MB (raw_device={eff/1024/1024:.2f}MB)"
+        )
         self.meta = {}
         self.total_size = 0
 
@@ -156,25 +171,60 @@ class DirectCheckpoint:
             lib.npu_nvme_cleanup(self.ctx)
             self.ctx = None
 
-    def _prepare_params(self, model: torch.nn.Module):
+    def _prepare_params(self, model: ms.nn.Cell):
         params = []
-        for name, p in model.named_parameters():
-            ######
-            #这里需要添加判断tensor是否在NPU上
-            ######
-            ptr = p.data_ptr()
-            size = p.numel() * p.element_size()
-            params.append({
-                "name": name,
-                "ptr": ptr,
-                "size": size,
-                "shape": list(p.shape),
-                "dtype": str(p.dtype),
-            })
+        for name, p in model.parameters_and_names():
+            # 优先使用实验性设备指针实现零拷贝；若获取失败则回退到 CPU 拷贝
+            ptr = int(p.data._data_ptr()) if hasattr(p, "data") else 0
+            dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
+            size = int(np.prod(p.shape)) * dtype_np.itemsize
+            shape = list(p.shape)
+            dtype = dtype_np.name
+
+            if ptr == 0:
+                np_arr = p.asnumpy()
+                ptr = np_arr.ctypes.data
+                params.append({
+                    "name": name,
+                    "ptr": ptr,
+                    "size": size,
+                    "shape": shape,
+                    "dtype": dtype,
+                    "np_arr": np_arr,
+                    "param_ref": p
+                })
+            else:
+                params.append({
+                    "name": name,
+                    "ptr": ptr,
+                    "size": size,
+                    "shape": shape,
+                    "dtype": dtype,
+                    "np_arr": None,
+                    "param_ref": p
+                })
         return params
 
-    def save(self, model: torch.nn.Module, meta_path: str = "checkpoint_meta.pt"):
+    def save(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl"):
+        t_start = time.time()
+        if self.chunk_size <= 0:
+            raise RuntimeError(f"invalid chunk_size={self.chunk_size}, please check npu_nvme_get_max_transfer or requested_chunk_size")
         params = self._prepare_params(model)
+        t_prep = time.time()
+        zero_copy = sum(1 for p in params if p["np_arr"] is None)
+        cpu_copy = len(params) - zero_copy
+        raw_total = sum(p["size"] for p in params)
+        max_item = max(params, key=lambda x: x["size"])
+        print(
+            f"[Save] params={len(params)} zero_copy={zero_copy} cpu_copy={cpu_copy} "
+            f"chunk_size_bytes={self.chunk_size} ({self.chunk_size/1024/1024:.2f}MB) "
+            f"raw_total={raw_total/1024/1024:.2f}MB max_param={max_item['name']} {max_item['size']/1024/1024:.2f}MB",
+            flush=True,
+        )
+        if raw_total > 32 * 1024 * 1024 * 1024:  # >32GB suspicious for gpt2-xl
+            print(f"[Save][WARN] raw_total seems too large: {raw_total/1024/1024/1024:.2f}GB", flush=True)
+        if self.chunk_size < 1024 * 1024:
+            print(f"[Save][WARN] chunk_size <1MB ({self.chunk_size} bytes), expect ~4MB; check C library rebuild", flush=True)
         # 输出参数信息到params.csv，便于调试
         if self.enable_profiling:
             with open("params.csv", "w") as f:
@@ -193,8 +243,11 @@ class DirectCheckpoint:
         # 生成 chunk 列表
         chunks, total = build_chunks(layout, self.chunk_size)
         self.total_size = total
-        print(f"[Save] params={len(params)}, chunks={len(chunks)}, "
-              f"total={total/1024/1024:.2f}MB, chunk_size={self.chunk_size/1024/1024:.2f}MB")
+        print(
+            f"[Save] chunks={len(chunks)} total={total/1024/1024:.2f}MB "
+            f"prep_time={t_prep - t_start:.3f}s",
+            flush=True,
+        )
 
         # 准备 ctypes 数组
         num = len(chunks)
@@ -212,7 +265,11 @@ class DirectCheckpoint:
             raise RuntimeError("write_batch failed")
         t1 = time.time()
         bw = total / 1024 / 1024 / (t1 - t0)
-        print(f"[Save] done in {t1-t0:.3f}s, BW={bw:.1f} MB/s")
+        print(
+            f"[Save] memcpy+write {t1-t0:.3f}s, BW={bw:.1f} MB/s "
+            f"total_elapsed={t1 - t_start:.3f}s",
+            flush=True,
+        )
 
         # 保存元数据
         meta = {
@@ -225,17 +282,19 @@ class DirectCheckpoint:
                 "dtype": p["dtype"],
             } for p in layout}
         }
-        torch.save(meta, meta_path)
+        with open(meta_path, "wb") as f:
+            pickle.dump(meta, f)
         self.meta = meta
         print(f"[Save] meta saved to {meta_path}")
         return total, len(chunks), t1 - t0, bw
 
-    def load(self, model: torch.nn.Module, meta_path: str = "checkpoint_meta.pt"):
-        meta = torch.load(meta_path)
+    def load(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl"):
+        with open(meta_path, "rb") as f:
+            meta = pickle.load(f)
         chunk_size = min(meta.get("chunk_size", self.chunk_size), self.chunk_size)
         self.meta = meta
 
-        chunks = rebuild_chunks_from_meta(model, meta["params"], chunk_size)
+        chunks, buffers = rebuild_chunks_from_meta(model, meta["params"], chunk_size)
         num = len(chunks)
         c_ptrs = (ctypes.c_void_p * num)()
         c_offs = (ctypes.c_uint64 * num)()
@@ -252,5 +311,10 @@ class DirectCheckpoint:
         t1 = time.time()
         total = meta["total_size"]
         bw = total / 1024 / 1024 / (t1 - t0)
+        # 将读回的 CPU 缓冲区写回 MindSpore 参数
+        for buf in buffers:
+            tensor = ms.Tensor(buf["np_arr"])
+            buf["param_ref"].set_data(tensor, slice_shape=True)
+
         print(f"[Load] done in {t1-t0:.3f}s, BW={bw:.1f} MB/s")
         return total, len(chunks), t1 - t0, bw

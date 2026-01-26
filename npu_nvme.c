@@ -112,23 +112,13 @@ struct npu_nvme_context {
     ring_t free_ring;    /* 可用 buffer 索引 */
 
     /* 设备限制 */
-    size_t max_transfer; /* 由 MDTS 推导 */
-    size_t mdts_limit;
+    int max_transfer; /* 由用户 chunk_size 决定 */
+    int mdts_limit;   /* 保留字段，不使用 */
 
     /* 管理参数 */
     int pipeline_depth;
     bool enable_profiling;
 };
-
-/* 计算 MDTS 得到 max_transfer */
-static size_t get_mdts_bytes(const struct spdk_nvme_ctrlr_data *cdata) {
-    /* 2^(12 + mdts) 字节；mdts=0 表示无限制，取 4MB 保险值 */
-    if (cdata->mdts == 0) return 4 * 1024 * 1024ULL;
-    uint64_t sz = 1ULL << (12 + cdata->mdts);
-    /* 根据你的设备测试，4MB 安全，若需要可改大/小 */
-    if (sz > 4 * 1024 * 1024ULL) sz = 4 * 1024 * 1024ULL;
-    return (size_t)sz;
-}
 
 /* attach 回调 */
 static void attach_cb(void *cb_ctx,
@@ -136,8 +126,6 @@ static void attach_cb(void *cb_ctx,
                       struct spdk_nvme_ctrlr *ctrlr,
                       const struct spdk_nvme_ctrlr_opts *opts) {
     npu_nvme_context_t *ctx = cb_ctx;
-    const struct spdk_nvme_ctrlr_data *cdata = spdk_nvme_ctrlr_get_data(ctrlr);
-    size_t mdts_limit = get_mdts_bytes(cdata);
 
     int nsid;
     for (nsid = spdk_nvme_ctrlr_get_first_active_ns(ctrlr);
@@ -149,9 +137,8 @@ static void attach_cb(void *cb_ctx,
         ctx->ns = ns;
         ctx->block_size = spdk_nvme_ns_get_sector_size(ns);
         ctx->total_blocks = spdk_nvme_ns_get_num_sectors(ns);
-        ctx->mdts_limit = mdts_limit;
-        printf("[NVMe] block=%u, total_blocks=%lu, max_xfer=%.2f MB\n",
-               ctx->block_size, ctx->total_blocks, ctx->max_transfer/1024.0/1024.0);
+        ctx->mdts_limit = 0; /* 不使用 MDTS 限制 */
+        /* 打印延后到 max_transfer 确定后 */
         break;
     }
 }
@@ -166,9 +153,12 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
                   const char *nvme_pci_addr,
                   int npu_device_id,
                   int pipeline_depth,
-                  size_t chunk_size,
+                  int chunk_size,
                   bool enable_profiling) {
     if (!pctx || !nvme_pci_addr) return -1;
+    fprintf(stderr, "[Init] enter npu_nvme_init nvme=%s device=%d pipeline=%d chunk=%d\n",
+            nvme_pci_addr, npu_device_id, pipeline_depth, chunk_size);
+    fflush(stderr);
 
     if (pipeline_depth < MIN_PIPE_DEPTH) pipeline_depth = MIN_PIPE_DEPTH;
     if (pipeline_depth > MAX_PIPE_DEPTH) pipeline_depth = MAX_PIPE_DEPTH;
@@ -219,14 +209,14 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
         return -1;
     }
 
-    if (chunk_size == 0) {
-        ctx->max_transfer = ctx->mdts_limit;
-    } else {
-        ctx->max_transfer = chunk_size;
-        if (ctx->max_transfer > ctx->mdts_limit) {
-            ctx->max_transfer = ctx->mdts_limit;
-        }
-    }
+    /* max_transfer 完全由用户 chunk_size 决定，chunk_size=0 时退回 4MB 默认 */
+    ctx->max_transfer = (chunk_size == 0) ? (4 * 1024 * 1024ULL) : chunk_size;
+
+        fprintf(stderr, "[NVMe] block=%u, total_blocks=%lu, max_xfer=%d MB\n",
+            ctx->block_size,
+            ctx->total_blocks,
+            ctx->max_transfer/1024/1024);
+        fflush(stderr);
 
     /* qpair */
     ctx->qpair = spdk_nvme_ctrlr_alloc_io_qpair(ctx->ctrlr, NULL, 0);
@@ -250,10 +240,10 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
         goto fail;
     }
     for (int i = 0; i < ctx->pool_size; ++i) {
-        //size_t sz = ALIGN_4K(ctx->max_transfer);
-        size_t sz = ALIGN_4K(chunk_size);
+        size_t sz = ALIGN_4K(ctx->max_transfer);
         ctx->pool[i].buf = spdk_dma_zmalloc(sz, 4096, NULL);
-        printf("[Init] Allocated DMA buf %d at %p, size=%zu\n", i, ctx->pool[i].buf, sz);
+        fprintf(stderr, "[Init] Allocated DMA buf %d at %p, size=%zu\n", i, ctx->pool[i].buf, sz);
+        fflush(stderr);
         ctx->pool[i].size = sz;
         if (!ctx->pool[i].buf) {
             fprintf(stderr, "dma buf alloc failed at %d\n", i);
@@ -263,7 +253,6 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
     }
 
     *pctx = ctx;
-    ctx->max_transfer = chunk_size;
     ctx->enable_profiling = enable_profiling;
     return 0;
 
@@ -309,6 +298,20 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
                          int num_items) {
     if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) return -1;
 
+    static int log_once = 0;
+    if (!log_once) {
+        size_t max_sz = 0, min_sz = (size_t)-1;
+        int sample = num_items < 8 ? num_items : 8;
+        fprintf(stderr, "[npu_nvme_write_batch] num=%d max_transfer=%zu\n", num_items, ctx->max_transfer);
+        for (int i = 0; i < sample; ++i) {
+            if (sizes[i] > max_sz) max_sz = sizes[i];
+            if (sizes[i] < min_sz) min_sz = sizes[i];
+            fprintf(stderr, "  item%d sz=%zu off=%lu\n", i, sizes[i], nvme_offsets[i]);
+        }
+        fprintf(stderr, "  min_sz=%zu max_sz=%zu\n", min_sz, max_sz);
+        log_once = 1;
+    }
+
     int submitted = 0, completed = 0;
     int idx;
     int ret = 0;
@@ -325,6 +328,7 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
             if (!ring_pop(&ctx->free_ring, &idx)) break;
             size_t sz = sizes[submitted];
             if (sz == 0 || sz > ctx->max_transfer) {
+                fprintf(stderr, "[write_batch] skip item %d sz=%zu max_transfer=%zu\n", submitted, sz, ctx->max_transfer);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
                 submitted++; completed++;    // 避免卡住
@@ -344,6 +348,7 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
                                          ACL_MEMCPY_DEVICE_TO_HOST);
             uint64_t t2 = tv_us();
             if (acret != ACL_SUCCESS) {
+                fprintf(stderr, "[write_batch] aclrtMemcpy D2H failed item %d sz=%zu err=%d\n", submitted, sz, acret);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
                 submitted++; completed++;
@@ -370,6 +375,8 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
                                             lba, nblk,
                                             io_complete, &cb_ctx[submitted], 0);
             if (rc != 0) {
+                fprintf(stderr, "[write_batch] spdk_nvme_ns_cmd_write failed item %d rc=%d lba=%lu nblk=%u\n",
+                        submitted, rc, lba, nblk);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
                 submitted++; completed++;
