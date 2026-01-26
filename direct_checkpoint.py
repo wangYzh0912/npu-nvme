@@ -137,9 +137,20 @@ class DirectCheckpoint:
         pipeline_depth: int = 4,
         requested_chunk_size: int = 4 * 1024 * 1024,
         enable_profiling: bool = False,
+        rank_id: int = 0,
+        world_size: int = 1,
+        base_offset_bytes: int = 0,
+        shard_span_bytes: int = None,
+        spdk_shm_id: int = 1,                # shared mem id for SPDK multiprocess
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
         self.enable_profiling = enable_profiling
+        self.rank_id = rank_id
+        self.world_size = world_size
+        self.base_offset_bytes = base_offset_bytes
+        self.shard_span_bytes = shard_span_bytes
+        # set env for SPDK multiprocess (primary/secondary auto-decided by SPDK via shm_id)
+        os.environ.setdefault("SPDK_SHM_ID", str(spdk_shm_id))
 
         print(f"[DirectCheckpoint] loading so from {_LIB_PATH}")
 
@@ -161,7 +172,8 @@ class DirectCheckpoint:
             f"[DirectCheckpoint] init ok. "
             f"pipeline_depth={pipeline_depth}, "
             f"requested_chunk={requested_chunk_size/1024/1024:.2f}MB, "
-            f"effective_chunk={self.chunk_size/1024/1024:.2f}MB (raw_device={eff/1024/1024:.2f}MB)"
+            f"effective_chunk={self.chunk_size/1024/1024:.2f}MB (raw_device={eff/1024/1024:.2f}MB) "
+            f"rank={self.rank_id}/{self.world_size}, base_offset={self.base_offset_bytes}, shm_id={os.environ.get('SPDK_SHM_ID')}"
         )
         self.meta = {}
         self.total_size = 0
@@ -175,7 +187,12 @@ class DirectCheckpoint:
         params = []
         for name, p in model.parameters_and_names():
             # 优先使用实验性设备指针实现零拷贝；若获取失败则回退到 CPU 拷贝
-            ptr = int(p.data._data_ptr()) if hasattr(p, "data") else 0
+            ptr = 0
+            try:
+                if hasattr(p, "data") and p.data is not None and getattr(p.data, "device_address", None):
+                    ptr = int(p.data._data_ptr())
+            except Exception:
+                ptr = 0  # 某些张量尚未物化到 device，回退到 CPU 拷贝
             dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
             size = int(np.prod(p.shape)) * dtype_np.itemsize
             shape = list(p.shape)
@@ -225,6 +242,10 @@ class DirectCheckpoint:
             print(f"[Save][WARN] raw_total seems too large: {raw_total/1024/1024/1024:.2f}GB", flush=True)
         if self.chunk_size < 1024 * 1024:
             print(f"[Save][WARN] chunk_size <1MB ({self.chunk_size} bytes), expect ~4MB; check C library rebuild", flush=True)
+        if self.shard_span_bytes is not None and (self.base_offset_bytes + raw_total) > (self.base_offset_bytes + self.shard_span_bytes):
+            raise RuntimeError(
+                f"shard_span_bytes too small: need {raw_total}, span {self.shard_span_bytes}, base_offset {self.base_offset_bytes}"
+            )
         # 输出参数信息到params.csv，便于调试
         if self.enable_profiling:
             with open("params.csv", "w") as f:
@@ -256,7 +277,7 @@ class DirectCheckpoint:
         c_sizes = (ctypes.c_size_t * num)()
         for i, (p, o, s) in enumerate(chunks):
             c_ptrs[i] = p
-            c_offs[i] = o
+            c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
             c_sizes[i] = s
 
         t0 = time.time()
@@ -275,6 +296,10 @@ class DirectCheckpoint:
         meta = {
             "chunk_size": self.chunk_size,
             "total_size": total,
+            "rank_id": self.rank_id,
+            "world_size": self.world_size,
+            "base_offset_bytes": self.base_offset_bytes,
+            "shard_span_bytes": self.shard_span_bytes,
             "params": {p["name"]: {
                 "offset": p["offset"],
                 "size": p["size"],
@@ -293,6 +318,10 @@ class DirectCheckpoint:
             meta = pickle.load(f)
         chunk_size = min(meta.get("chunk_size", self.chunk_size), self.chunk_size)
         self.meta = meta
+        base_off = meta.get("base_offset_bytes", self.base_offset_bytes)
+        if self.base_offset_bytes != base_off:
+            print(f"[Load][WARN] base_offset mismatch: meta {base_off}, current {self.base_offset_bytes}; use meta", flush=True)
+            self.base_offset_bytes = base_off
 
         chunks, buffers = rebuild_chunks_from_meta(model, meta["params"], chunk_size)
         num = len(chunks)
@@ -301,7 +330,7 @@ class DirectCheckpoint:
         c_sizes = (ctypes.c_size_t * num)()
         for i, (p, o, s) in enumerate(chunks):
             c_ptrs[i] = p
-            c_offs[i] = o
+            c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
             c_sizes[i] = s
 
         t0 = time.time()

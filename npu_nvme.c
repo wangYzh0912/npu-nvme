@@ -168,12 +168,16 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
     ctx->pipeline_depth = pipeline_depth;
     ctx->mdts_limit = 0; 
 
-    /* SPDK env init (once) */
+    /* SPDK env init (once). Note: current SPDK headers do not expose proc_type; only shm_id honored. */
     static int spdk_inited = 0;
     if (!spdk_inited) {
         struct spdk_env_opts opts;
         spdk_env_opts_init(&opts);
         opts.name = "npu_nvme";
+        const char *shm = getenv("SPDK_SHM_ID");
+        if (shm) {
+            opts.shm_id = atoi(shm);
+        }
         if (spdk_env_init(&opts) < 0) {
             fprintf(stderr, "spdk_env_init failed\n");
             free(ctx);
