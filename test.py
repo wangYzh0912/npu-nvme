@@ -11,6 +11,7 @@ import acl
 os.environ['HF_ENDPOINT'] = 'https://alpha.hf-mirror.com'
 
 
+
 # ============================
 # 配置
 # ============================
