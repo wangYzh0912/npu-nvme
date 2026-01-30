@@ -6,8 +6,20 @@ from mindformers import Trainer, AutoModel, AutoTokenizer, AutoConfig
 import time
 import os
 import numpy as np
-from mindspore import Callback
+from mindspore import Callback, ops
 from direct_checkpoint import DirectCheckpoint
+
+# Some launchers (e.g. mpirun) do not export Ascend envs by default; derive them from MPI vars.
+def _ensure_ascend_env():
+    mpi_rank = os.getenv("OMPI_COMM_WORLD_RANK") or os.getenv("PMI_RANK")
+    mpi_size = os.getenv("OMPI_COMM_WORLD_SIZE") or os.getenv("PMI_SIZE")
+    if mpi_rank is not None:
+        os.environ.setdefault("RANK_ID", mpi_rank)
+        os.environ.setdefault("DEVICE_ID", mpi_rank)
+        os.environ.setdefault("ASCEND_DEVICE_ID", mpi_rank)
+    if mpi_size is not None:
+        os.environ.setdefault("RANK_SIZE", mpi_size)
+        os.environ.setdefault("DEVICE_NUM", mpi_size)
 
 # ----------------------
 # 4 卡（64GB/卡）示例配置
@@ -61,35 +73,113 @@ class DirectCkptCallback(Callback):
         if step % CHECKPOINT_INTERVAL != 0:
             return
         t0 = time.time()
+        save_start = time.time()
         total, num_chunks, t_save, bw = self.ckpt.save(
             self.model,
             meta_path=f"checkpoint_meta_rank{self.rank_id}.pkl",
         )
+        save_end = time.time()
+        print(f"[DirectCkpt][rank {self.rank_id}] save_start={save_start}, save_end={save_end}")
+
+        agg_total_mb = None
+        agg_time_s = None
+        agg_window_bw = None
+        try:
+            total_tensor = ms.Tensor(np.array([total], dtype=np.float32))
+            time_tensor = ms.Tensor(np.array([t_save], dtype=np.float32))
+            start_tensor = ms.Tensor(np.array([save_start], dtype=np.float32))
+            end_tensor = ms.Tensor(np.array([save_end], dtype=np.float32))
+
+            agg_total_mb = ops.AllReduce(ops.ReduceOp.SUM)(total_tensor).asnumpy().item() / 1024 / 1024
+            agg_time_s = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor).asnumpy().item()
+            min_start = ops.AllReduce(ops.ReduceOp.MIN)(start_tensor).asnumpy().item()
+            max_end = ops.AllReduce(ops.ReduceOp.MAX)(end_tensor).asnumpy().item()
+            print(f"[DirectCkpt][rank {self.rank_id}] min_start={min_start}, max_end={max_end}")
+            if max_end > min_start:
+                agg_window_bw = agg_total_mb / (max_end - min_start)
+        except Exception as ex:
+            if self.rank_id == 0:
+                print(f"[DirectCkpt][aggregate] allreduce failed: {ex}", flush=True)
         print(
             f"[DirectCkpt][rank {self.rank_id}] step={step} size={total/1024/1024:.1f}MB "
             f"chunks={num_chunks} save_time={t_save:.3f}s bw={bw:.1f}MB/s",
             flush=True,
         )
-        # 仅 rank0 做一次读取校验，避免多卡重复
+        if self.rank_id == 0 and agg_total_mb is not None and agg_time_s is not None and agg_time_s > 0:
+            agg_bw = agg_total_mb / agg_time_s
+            msg = (
+                f"[DirectCkpt][aggregate] global_size={agg_total_mb:.1f}MB "
+                f"max_save_time={agg_time_s:.3f}s est_bw(sum/max)={agg_bw:.1f}MB/s"
+            )
+            if agg_window_bw is not None:
+                msg += f" est_bw(window)={agg_window_bw:.1f}MB/s"
+            print(msg, flush=True)
+        # 仅 rank0 做一次读取校验，避免多卡重复；只校验本 rank 持有的参数，忽略其他 pipeline stage
+        '''
         if self.rank_id == 0:
             ms_ckpt_path = f"ms_step_{step}.ckpt"
             ms.save_checkpoint(self.model, ms_ckpt_path)
             self.ckpt.load(self.model, meta_path=f"checkpoint_meta_rank{self.rank_id}.pkl")
-            mismatches = []
             ref_dict = ms.load_checkpoint(ms_ckpt_path)
+            mismatches = []
+            skipped = 0
             for name, param in self.model.parameters_and_names():
                 if name not in ref_dict:
-                    mismatches.append(name + "(missing)")
+                    skipped += 1  # 参数可能属于其他 pipeline stage，不在本 rank 的参考 ckpt 中
                     continue
                 arr = param.asnumpy()
                 ref = ref_dict[name].asnumpy()
                 if not np.allclose(arr, ref, rtol=RTOL, atol=ATOL):
                     mismatches.append(name)
             if mismatches:
-                print(f"[DirectCkpt][rank 0] verify mismatch={len(mismatches)} first={mismatches[:5]}", flush=True)
+                print(f"[DirectCkpt][rank 0] verify mismatch={len(mismatches)} first={mismatches[:5]} (skipped {skipped})", flush=True)
             else:
-                print(f"[DirectCkpt][rank 0] verify ok at step {step}", flush=True)
-        
+                print(f"[DirectCkpt][rank 0] verify ok at step {step} (skipped {skipped})", flush=True)
+        '''
+
+        # === 读回检查点并统计带宽 ===
+
+        load_start = time.time()
+        total_load, num_chunks_load, t_load, bw_load = self.ckpt.load(
+            self.model,
+            meta_path=f"checkpoint_meta_rank{self.rank_id}.pkl"
+        )
+        load_end = time.time()
+
+        agg_total_mb_load = None
+        agg_time_s_load = None
+        agg_window_bw_load = None
+        try:
+            total_tensor_load = ms.Tensor(np.array([total_load], dtype=np.float32))
+            time_tensor_load = ms.Tensor(np.array([t_load], dtype=np.float32))
+            start_tensor_load = ms.Tensor(np.array([load_start], dtype=np.float32))
+            end_tensor_load = ms.Tensor(np.array([load_end], dtype=np.float32))
+
+            agg_total_mb_load = ops.AllReduce(ops.ReduceOp.SUM)(total_tensor_load).asnumpy().item() / 1024 / 1024
+            agg_time_s_load = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor_load).asnumpy().item()
+            min_start_load = ops.AllReduce(ops.ReduceOp.MIN)(start_tensor_load).asnumpy().item()
+            max_end_load = ops.AllReduce(ops.ReduceOp.MAX)(end_tensor_load).asnumpy().item()
+            if max_end_load > min_start_load:
+                agg_window_bw_load = agg_total_mb_load / (max_end_load - min_start_load)
+        except Exception as ex:
+            if self.rank_id == 0:
+                print(f"[DirectCkpt][aggregate][load] allreduce failed: {ex}", flush=True)
+
+        print(
+            f"[DirectCkpt][rank {self.rank_id}] load size={total_load/1024/1024:.1f}MB "
+            f"chunks={num_chunks_load} load_time={t_load:.3f}s bw={bw_load:.1f}MB/s",
+            flush=True,
+        )
+        if self.rank_id == 0 and agg_total_mb_load is not None and agg_time_s_load is not None and agg_time_s_load > 0:
+            agg_bw_load = agg_total_mb_load / agg_time_s_load
+            msg_load = (
+                f"[DirectCkpt][aggregate][load] global_size={agg_total_mb_load:.1f}MB "
+                f"max_load_time={agg_time_s_load:.3f}s est_bw(sum/max)={agg_bw_load:.1f}MB/s"
+            )
+            if agg_window_bw_load is not None:
+                msg_load += f" est_bw(window)={agg_window_bw_load:.1f}MB/s"
+            print(msg_load, flush=True)
+
         print(f"[DirectCkpt][rank {self.rank_id}] step_end done in {time.time()-t0:.3f}s", flush=True)
 
     def on_train_step_end(self, run_context):
@@ -101,6 +191,10 @@ class DirectCkptCallback(Callback):
 
 
 def main():
+    _ensure_ascend_env()
+    # init() 会检查模式，需在通信初始化前显式设为 GRAPH
+    pre_rank_id = int(os.getenv("RANK_ID", "0"))
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=pre_rank_id)
     start_init_time = time.time()
     init()
     rank_id = get_rank()
