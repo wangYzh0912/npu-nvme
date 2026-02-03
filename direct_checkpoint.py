@@ -10,51 +10,55 @@ import numpy as np
 
 
 # ============================================================
-# 绑定 C 接口
+# 绑定 C 接口（若缺失则在 DRAM 模式下跳过）
 # ============================================================
 _LIB_PATH = os.path.join(os.path.dirname(__file__), "out", "lib", "libnpu_nvme.so")
-lib = ctypes.CDLL(_LIB_PATH)
+try:
+    lib = ctypes.CDLL(_LIB_PATH)
+except OSError:
+    lib = None
 
 class NPUNVMEContext(ctypes.Structure):
     pass
 
 # init(ctx**, addr, pipeline_depth, requested_chunk_size)
-lib.npu_nvme_init.argtypes = [
-    ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)),
-    ctypes.c_char_p,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_bool,
-]
-lib.npu_nvme_init.restype = ctypes.c_int
+if lib is not None:
+    lib.npu_nvme_init.argtypes = [
+        ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)),
+        ctypes.c_char_p,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_bool,
+    ]
+    lib.npu_nvme_init.restype = ctypes.c_int
 
-# cleanup
-lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-lib.npu_nvme_cleanup.restype = None
+    # cleanup
+    lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_cleanup.restype = None
 
-# get_max_transfer
-lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-lib.npu_nvme_get_max_transfer.restype = ctypes.c_int
+    # get_max_transfer
+    lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_get_max_transfer.restype = ctypes.c_int
 
-# write_batch / read_batch
-lib.npu_nvme_write_batch.argtypes = [
-    ctypes.POINTER(NPUNVMEContext),
-    ctypes.POINTER(ctypes.c_void_p),   # void** npu_ptrs
-    ctypes.POINTER(ctypes.c_uint64),   # uint64_t* offsets
-    ctypes.POINTER(ctypes.c_size_t),   # size_t* sizes
-    ctypes.c_int                       # num_items
-]
-lib.npu_nvme_write_batch.restype = ctypes.c_int
+    # write_batch / read_batch
+    lib.npu_nvme_write_batch.argtypes = [
+        ctypes.POINTER(NPUNVMEContext),
+        ctypes.POINTER(ctypes.c_void_p),   # void** npu_ptrs
+        ctypes.POINTER(ctypes.c_uint64),   # uint64_t* offsets
+        ctypes.POINTER(ctypes.c_size_t),   # size_t* sizes
+        ctypes.c_int                       # num_items
+    ]
+    lib.npu_nvme_write_batch.restype = ctypes.c_int
 
-lib.npu_nvme_read_batch.argtypes = [
-    ctypes.POINTER(NPUNVMEContext),
-    ctypes.POINTER(ctypes.c_void_p),
-    ctypes.POINTER(ctypes.c_uint64),
-    ctypes.POINTER(ctypes.c_size_t),
-    ctypes.c_int
-]
-lib.npu_nvme_read_batch.restype = ctypes.c_int
+    lib.npu_nvme_read_batch.argtypes = [
+        ctypes.POINTER(NPUNVMEContext),
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_uint64),
+        ctypes.POINTER(ctypes.c_size_t),
+        ctypes.c_int
+    ]
+    lib.npu_nvme_read_batch.restype = ctypes.c_int
 
 
 # ============================================================
@@ -142,6 +146,7 @@ class DirectCheckpoint:
         base_offset_bytes: int = 0,
         shard_span_bytes: int = None,
         spdk_shm_id: int = 1,                # shared mem id for SPDK multiprocess
+        use_dram: bool = False,              # 新增：在无 SSD 环境用 DRAM 模拟
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
         self.enable_profiling = enable_profiling
@@ -149,37 +154,48 @@ class DirectCheckpoint:
         self.world_size = world_size
         self.base_offset_bytes = base_offset_bytes
         self.shard_span_bytes = shard_span_bytes
+        self.use_dram = use_dram or (lib is None)
+        self._dram_store = {}  # offset -> bytes
         # set env for SPDK multiprocess (primary/secondary auto-decided by SPDK via shm_id)
         os.environ.setdefault("SPDK_SHM_ID", str(spdk_shm_id))
 
-        print(f"[DirectCheckpoint] loading so from {_LIB_PATH}")
+        if not self.use_dram:
+            print(f"[DirectCheckpoint] loading so from {_LIB_PATH}")
 
-        rc = lib.npu_nvme_init(
-            ctypes.byref(self.ctx),
-            nvme_addr.encode(),
-            npu_device_id,
-            pipeline_depth,
-            requested_chunk_size,
-            enable_profiling
-        )
-        if rc != 0:
-            raise RuntimeError("npu_nvme_init failed")
+            rc = lib.npu_nvme_init(
+                ctypes.byref(self.ctx),
+                nvme_addr.encode(),
+                npu_device_id,
+                pipeline_depth,
+                requested_chunk_size,
+                enable_profiling
+            )
+            if rc != 0:
+                raise RuntimeError("npu_nvme_init failed")
 
-        # 生效的 chunk_size：完全采用用户请求值，设备返回值仅作参考打印
-        eff = lib.npu_nvme_get_max_transfer(self.ctx)
-        self.chunk_size = requested_chunk_size
-        print(
-            f"[DirectCheckpoint] init ok. "
-            f"pipeline_depth={pipeline_depth}, "
-            f"requested_chunk={requested_chunk_size/1024/1024:.2f}MB, "
-            f"effective_chunk={self.chunk_size/1024/1024:.2f}MB (raw_device={eff/1024/1024:.2f}MB) "
-            f"rank={self.rank_id}/{self.world_size}, base_offset={self.base_offset_bytes}, shm_id={os.environ.get('SPDK_SHM_ID')}"
-        )
+            # 生效的 chunk_size：完全采用用户请求值，设备返回值仅作参考打印
+            eff = lib.npu_nvme_get_max_transfer(self.ctx)
+            self.chunk_size = requested_chunk_size
+            print(
+                f"[DirectCheckpoint] init ok. "
+                f"pipeline_depth={pipeline_depth}, "
+                f"requested_chunk={requested_chunk_size/1024/1024:.2f}MB, "
+                f"effective_chunk={self.chunk_size/1024/1024:.2f}MB (raw_device={eff/1024/1024:.2f}MB) "
+                f"rank={self.rank_id}/{self.world_size}, base_offset={self.base_offset_bytes}, shm_id={os.environ.get('SPDK_SHM_ID')}"
+            )
+        else:
+            # DRAM fallback: 仍然保留 build_chunks 等流程，只是把写入落到内存
+            self.chunk_size = requested_chunk_size
+            print(
+                f"[DirectCheckpoint][DRAM mode] simulate NVMe in DRAM. "
+                f"pipeline_depth={pipeline_depth}, requested_chunk={requested_chunk_size/1024/1024:.2f}MB "
+                f"rank={self.rank_id}/{self.world_size}, base_offset={self.base_offset_bytes}"
+            )
         self.meta = {}
         self.total_size = 0
 
     def cleanup(self):
-        if self.ctx:
+        if not self.use_dram and self.ctx:
             lib.npu_nvme_cleanup(self.ctx)
             self.ctx = None
 
@@ -270,25 +286,31 @@ class DirectCheckpoint:
             flush=True,
         )
 
-        # 准备 ctypes 数组
+        # 准备写入
         num = len(chunks)
-        c_ptrs = (ctypes.c_void_p * num)()
-        c_offs = (ctypes.c_uint64 * num)()
-        c_sizes = (ctypes.c_size_t * num)()
-        for i, (p, o, s) in enumerate(chunks):
-            c_ptrs[i] = p
-            c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
-            c_sizes[i] = s
-
         t0 = time.time()
-        rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
-        if rc != 0:
-            raise RuntimeError("write_batch failed")
+        if self.use_dram:
+            for p, o, s in chunks:
+                buf = (ctypes.c_char * s.value).from_address(p.value)
+                self._dram_store[int(o.value + self.base_offset_bytes)] = bytes(buf)
+        else:
+            c_ptrs = (ctypes.c_void_p * num)()
+            c_offs = (ctypes.c_uint64 * num)()
+            c_sizes = (ctypes.c_size_t * num)()
+            for i, (p, o, s) in enumerate(chunks):
+                c_ptrs[i] = p
+                c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
+                c_sizes[i] = s
+
+            rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
+            if rc != 0:
+                raise RuntimeError("write_batch failed")
         t1 = time.time()
         bw = total / 1024 / 1024 / (t1 - t0)
         print(
             f"[Save] memcpy+write {t1-t0:.3f}s, BW={bw:.1f} MB/s "
-            f"total_elapsed={t1 - t_start:.3f}s",
+            f"total_elapsed={t1 - t_start:.3f}s "
+            f"{'(DRAM simulated)' if self.use_dram else ''}",
             flush=True,
         )
 
@@ -325,18 +347,25 @@ class DirectCheckpoint:
 
         chunks, buffers = rebuild_chunks_from_meta(model, meta["params"], chunk_size)
         num = len(chunks)
-        c_ptrs = (ctypes.c_void_p * num)()
-        c_offs = (ctypes.c_uint64 * num)()
-        c_sizes = (ctypes.c_size_t * num)()
-        for i, (p, o, s) in enumerate(chunks):
-            c_ptrs[i] = p
-            c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
-            c_sizes[i] = s
-
         t0 = time.time()
-        rc = lib.npu_nvme_read_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
-        if rc != 0:
-            raise RuntimeError("read_batch failed")
+        if self.use_dram:
+            for p, o, s in chunks:
+                data = self._dram_store.get(int(o.value + self.base_offset_bytes))
+                if data is None or len(data) < s.value:
+                    raise RuntimeError(f"DRAM data missing at offset {o.value}")
+                ctypes.memmove(p, data, s.value)
+        else:
+            c_ptrs = (ctypes.c_void_p * num)()
+            c_offs = (ctypes.c_uint64 * num)()
+            c_sizes = (ctypes.c_size_t * num)()
+            for i, (p, o, s) in enumerate(chunks):
+                c_ptrs[i] = p
+                c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
+                c_sizes[i] = s
+
+            rc = lib.npu_nvme_read_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
+            if rc != 0:
+                raise RuntimeError("read_batch failed")
         t1 = time.time()
         total = meta["total_size"]
         bw = total / 1024 / 1024 / (t1 - t0)
