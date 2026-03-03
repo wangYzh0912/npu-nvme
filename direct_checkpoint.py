@@ -189,12 +189,24 @@ class DirectCheckpoint:
             # 优先使用实验性设备指针实现零拷贝；若获取失败则回退到 CPU 拷贝
             ptr = 0
             try:
-                if hasattr(p, "data") and p.data is not None and getattr(p.data, "device_address", None):
-                    ptr = int(p.data._data_ptr())
+                # 尝试获取 Tensor 的 device address
+                # 在 Graph Mode 下，Parameter 可能主要存在于 host 侧，但在训练 step 后通常由于 offload 或图执行驻留在 device
+                # 这里尝试多种获取方式
+                if hasattr(p, "data") and p.data is not None:
+                    # 方式 1: 直接访问 .device_address (MindSpore 2.x+)
+                    dev_addr = getattr(p.data, "device_address", None)
+                    if dev_addr and hasattr(dev_addr, "ptr"):
+                        ptr = int(dev_addr.ptr)
+                    
+                    # 方式 2: 使用实验性 _data_ptr()
+                    if ptr == 0 and hasattr(p.data, "_data_ptr"):
+                        ptr = int(p.data._data_ptr())
             except Exception:
                 ptr = 0  # 某些张量尚未物化到 device，回退到 CPU 拷贝
+            
             dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
             size = int(np.prod(p.shape)) * dtype_np.itemsize
+
             shape = list(p.shape)
             dtype = dtype_np.name
 
@@ -285,10 +297,16 @@ class DirectCheckpoint:
         if rc != 0:
             raise RuntimeError("write_batch failed")
         t1 = time.time()
-        bw = total / 1024 / 1024 / (t1 - t0)
+        
+        # [Corrected] BW should be based on total_elapsed (including D2H copy in _prepare_params)
+        # to reflect the real impact on training throughput.
+        # Original: bw = total / 1024 / 1024 / (t1 - t0)
+        real_time = t1 - t_start
+        bw = total / 1024 / 1024 / real_time
+        
         print(
-            f"[Save] memcpy+write {t1-t0:.3f}s, BW={bw:.1f} MB/s "
-            f"total_elapsed={t1 - t_start:.3f}s",
+            f"[Save] memcpy+write {t1-t0:.3f}s, BW(pure_write)={total/1024/1024/(t1-t0):.1f} MB/s, "
+            f"BW(e2e)={bw:.1f} MB/s, total_elapsed={real_time:.3f}s",
             flush=True,
         )
 
@@ -311,9 +329,10 @@ class DirectCheckpoint:
             pickle.dump(meta, f)
         self.meta = meta
         print(f"[Save] meta saved to {meta_path}")
-        return total, len(chunks), t1 - t0, bw
+        return total, len(chunks), real_time, bw
 
     def load(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl"):
+        t_start = time.time()
         with open(meta_path, "rb") as f:
             meta = pickle.load(f)
         chunk_size = min(meta.get("chunk_size", self.chunk_size), self.chunk_size)
@@ -323,7 +342,11 @@ class DirectCheckpoint:
             print(f"[Load][WARN] base_offset mismatch: meta {base_off}, current {self.base_offset_bytes}; use meta", flush=True)
             self.base_offset_bytes = base_off
 
+        # create empty buffers
+        t_rebuild = time.time()
         chunks, buffers = rebuild_chunks_from_meta(model, meta["params"], chunk_size)
+        t_rebuild_end = time.time()
+        
         num = len(chunks)
         c_ptrs = (ctypes.c_void_p * num)()
         c_offs = (ctypes.c_uint64 * num)()
@@ -333,17 +356,30 @@ class DirectCheckpoint:
             c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
             c_sizes[i] = s
 
+        # read from NVMe to buffers
         t0 = time.time()
         rc = lib.npu_nvme_read_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
         if rc != 0:
             raise RuntimeError("read_batch failed")
         t1 = time.time()
+        
         total = meta["total_size"]
-        bw = total / 1024 / 1024 / (t1 - t0)
-        # 将读回的 CPU 缓冲区写回 MindSpore 参数
+        
+        # update model weights
+        t_update = time.time()
         for buf in buffers:
             tensor = ms.Tensor(buf["np_arr"])
             buf["param_ref"].set_data(tensor, slice_shape=True)
+        t_end = time.time()
 
-        print(f"[Load] done in {t1-t0:.3f}s, BW={bw:.1f} MB/s")
-        return total, len(chunks), t1 - t0, bw
+        pure_read_time = t1 - t0
+        total_time = t_end - t_start
+        bw_read = total / 1024 / 1024 / pure_read_time if pure_read_time > 0 else 0
+        bw_e2e = total / 1024 / 1024 / total_time if total_time > 0 else 0
+
+        print(
+            f"[Load] prepare={t_rebuild_end - t_rebuild:.3f}s read={pure_read_time:.3f}s set_data={t_end - t_update:.3f}s "
+            f"BW(pure)={bw_read:.1f} MB/s BW(e2e)={bw_e2e:.1f} MB/s total={total_time:.3f}s",
+            flush=True
+        )
+        return total, len(chunks), total_time, bw_e2e

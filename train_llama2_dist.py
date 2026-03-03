@@ -79,7 +79,6 @@ class DirectCkptCallback(Callback):
             meta_path=f"checkpoint_meta_rank{self.rank_id}.pkl",
         )
         save_end = time.time()
-        print(f"[DirectCkpt][rank {self.rank_id}] save_start={save_start}, save_end={save_end}")
 
         agg_total_mb = None
         agg_time_s = None
@@ -94,7 +93,6 @@ class DirectCkptCallback(Callback):
             agg_time_s = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor).asnumpy().item()
             min_start = ops.AllReduce(ops.ReduceOp.MIN)(start_tensor).asnumpy().item()
             max_end = ops.AllReduce(ops.ReduceOp.MAX)(end_tensor).asnumpy().item()
-            print(f"[DirectCkpt][rank {self.rank_id}] min_start={min_start}, max_end={max_end}")
             if max_end > min_start:
                 agg_window_bw = agg_total_mb / (max_end - min_start)
         except Exception as ex:
@@ -138,7 +136,6 @@ class DirectCkptCallback(Callback):
         '''
 
         # === 读回检查点并统计带宽 ===
-
         load_start = time.time()
         total_load, num_chunks_load, t_load, bw_load = self.ckpt.load(
             self.model,
