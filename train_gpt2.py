@@ -49,6 +49,18 @@ class DirectCkptCallback(Callback):
         print(f"[DirectCkpt] step={step} size={total/1024/1024:.2f}MB chunks={num_chunks} "
               f"save_time={t_save:.3f}s bw={bw_save:.1f}MB/s")
 
+        # ---------------------------
+        # Load Test
+        # ---------------------------
+        print(f"[DirectCkpt] Testing Load for step={step}...", flush=True)
+        t_load_start = time.time()
+        
+        # 验证读取性能
+        self.ckpt.load(self.model, meta_path="checkpoint_meta.pkl")
+        
+        t_load_end = time.time()
+        print(f"[DirectCkpt] Load step={step} done. Total elapsed: {t_load_end - t_load_start:.3f}s", flush=True)
+        
         '''
         # ms 官方快照用于对比
         ms_ckpt_path = f"ms_step_{step}.ckpt"
@@ -125,3 +137,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
