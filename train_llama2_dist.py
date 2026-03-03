@@ -9,6 +9,36 @@ import numpy as np
 from mindspore import Callback, ops
 from direct_checkpoint import DirectCheckpoint
 
+class LossLogger(Callback):
+    def __init__(self, rank_id):
+        self.rank_id = rank_id
+        if self.rank_id == 0:
+            with open("loss_curve.csv", "w") as f:
+                f.write("step,loss\n")
+    
+    def step_end(self, run_context):
+        cb_params = run_context.original_args()
+        step = cb_params.cur_step_num
+        loss = cb_params.net_outputs
+        
+        # Handle loss which might be a tuple or Tensor
+        actual_loss = loss
+        if isinstance(loss, (tuple, list)):
+            actual_loss = loss[0]
+        if hasattr(actual_loss, "asnumpy"):
+            actual_loss = actual_loss.asnumpy()
+        
+        # Extract scalar
+        if hasattr(actual_loss, "item"):
+            actual_loss = actual_loss.item()
+            
+        if self.rank_id == 0:
+            # Print periodically or every step
+            if step % 1 == 0:
+                print(f"[LossLogger] step={step} loss={actual_loss}", flush=True)
+                with open("loss_curve.csv", "a") as f:
+                    f.write(f"{step},{actual_loss}\n")
+
 # Some launchers (e.g. mpirun) do not export Ascend envs by default; derive them from MPI vars.
 def _ensure_ascend_env():
     mpi_rank = os.getenv("OMPI_COMM_WORLD_RANK") or os.getenv("PMI_RANK")
@@ -32,7 +62,7 @@ BATCH_SIZE = 2                  # per-device batch；需能整除 micro_batch_nu
 GRAD_ACCUM_STEPS = 2            # micro batch 个数需 >= pipeline_stages（这里 pp=2）
 TRAIN_MR = "./prepare/llama2/wikitext2_data/wiki_train_4096.mindrecord"
 EVAL_MR  = "./prepare/llama2/wikitext2_data/wiki_valid_4096.mindrecord"
-CHECKPOINT_INTERVAL = 1
+CHECKPOINT_INTERVAL = 5
 NVME_ADDR = "0000:83:00.0"
 PIPELINE_DEPTH = 8
 CHUNK_SIZE = 4 * 1024 * 1024
@@ -240,6 +270,9 @@ def main():
 
     # 4) DirectCheckpoint 回调：每 rank 独立写入自己的 NVMe 区间
     dc_cb = DirectCkptCallback(model, rank_id=rank_id, world_size=rank_size)
+    
+    # Loss Logger
+    loss_cb = LossLogger(rank_id)
 
     # Trainer
     trainer = Trainer(
@@ -249,7 +282,7 @@ def main():
         model_name=MODEL_NAME,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
-        callbacks=[dc_cb],  # 直接传入 Callback 实例，避免插入 config.callbacks(dict)
+        callbacks=[dc_cb, loss_cb],  # 直接传入 Callback 实例，避免插入 config.callbacks(dict)
     )
 
     # 强制覆盖并行配置，避免默认 dp=8 触发检查不通过

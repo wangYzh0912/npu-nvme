@@ -6,6 +6,7 @@ import time
 from typing import List, Dict
 
 import mindspore as ms
+from mindspore import ops
 import numpy as np
 
 
@@ -27,6 +28,8 @@ lib.npu_nvme_init.argtypes = [
     ctypes.c_int,
     ctypes.c_bool,
 ]
+
+# (Removed unused helper bindings)
 lib.npu_nvme_init.restype = ctypes.c_int
 
 # cleanup
@@ -87,22 +90,61 @@ def build_chunks(params: List[Dict], chunk_size: int):
 
 def rebuild_chunks_from_meta(model: ms.nn.Cell, meta: Dict, chunk_size: int):
     """
-    根据元数据和 chunk_size，重建读取所需的块列表，并为每个参数分配 CPU 缓冲区。
+    根据元数据和 chunk_size，重建读取所需的块列表，并为每个参数分配缓冲区（优先 NPU，失败则 CPU）。
     返回 (chunks, buffers)。
     """
     buffers = []
+    
+    # 辅助：获取设备指针
+    def get_dev_ptr(p):
+        ptr = 0
+        try:
+            data_obj = p.data if hasattr(p, "data") else p
+            
+            # [CRITICAL UPDATE]
+            # Based on user's environment:
+            # 1. 'device_address' attribute DOES NOT EXIST on the Tensor object directly.
+            # 2. '_data_ptr()' works and returns a valid integer address.
+            
+            # Therefore, relying on 'device_address' as a gatekeeper causes 100% false negatives (zero_copy=0).
+            # We must try calling '_data_ptr()' directly.
+            
+            if hasattr(data_obj, "_data_ptr"):
+                 # To be safe for uninitialized params (though load usually implies existing structure)
+                 if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
+                     ptr = 0
+                 else:
+                     ptr = int(data_obj._data_ptr())
+        except Exception:
+            # If _data_ptr() fails (e.g. Tensor not on device), we catch it here and fall back to 0
+            ptr = 0
+        return ptr
+
     for name, param in model.parameters_and_names():
         if name not in meta:
             continue
         info = meta[name]
-        np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
+        
+        # 尝试获取设备指针
+        dev_ptr = get_dev_ptr(param)
+        use_dev = (dev_ptr != 0)
+        
+        np_arr = None
+        ptr_val = dev_ptr
+        
+        # 若无法获取设备指针，则回退 CPU
+        if not use_dev:
+            np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
+            ptr_val = np_arr.ctypes.data
+            
         buffers.append({
             "name": name,
-            "ptr": np_arr.ctypes.data,
+            "ptr": ptr_val,
             "size": info["size"],
             "offset": info["offset"],
-            "np_arr": np_arr,
+            "np_arr": np_arr,      # None if zero-copy
             "param_ref": param,
+            "use_dev": use_dev
         })
 
     buffers.sort(key=lambda x: x["offset"])
@@ -189,18 +231,26 @@ class DirectCheckpoint:
             # 优先使用实验性设备指针实现零拷贝；若获取失败则回退到 CPU 拷贝
             ptr = 0
             try:
-                # 尝试获取 Tensor 的 device address
-                # 在 Graph Mode 下，Parameter 可能主要存在于 host 侧，但在训练 step 后通常由于 offload 或图执行驻留在 device
-                # 这里尝试多种获取方式
-                if hasattr(p, "data") and p.data is not None:
-                    # 方式 1: 直接访问 .device_address (MindSpore 2.x+)
-                    dev_addr = getattr(p.data, "device_address", None)
-                    if dev_addr and hasattr(dev_addr, "ptr"):
+                data_obj = p.data if hasattr(p, "data") else p
+                
+                # [CRITICAL UPDATE]
+                # Based on user's test: 'device_address' attribute is MISSING on Tensors.
+                # However, '_data_ptr()' returns a valid address.
+                # So we must call '_data_ptr()' directly.
+                
+                # 1. 尝试 _data_ptr (唯一有效的途径)
+                if hasattr(data_obj, "_data_ptr"):
+                    if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
+                        ptr = 0
+                    else:
+                        ptr = int(data_obj._data_ptr())
+
+                # 2. 备选：如果未来版本有了 device_address
+                if ptr == 0 and hasattr(data_obj, "device_address"):
+                    dev_addr = getattr(data_obj, "device_address", None)
+                    if dev_addr is not None and hasattr(dev_addr, "ptr"):
                         ptr = int(dev_addr.ptr)
-                    
-                    # 方式 2: 使用实验性 _data_ptr()
-                    if ptr == 0 and hasattr(p.data, "_data_ptr"):
-                        ptr = int(p.data._data_ptr())
+
             except Exception:
                 ptr = 0  # 某些张量尚未物化到 device，回退到 CPU 拷贝
             
@@ -367,10 +417,23 @@ class DirectCheckpoint:
         
         # update model weights
         t_update = time.time()
+        
         for buf in buffers:
-            tensor = ms.Tensor(buf["np_arr"])
-            buf["param_ref"].set_data(tensor, slice_shape=True)
+            # If zero-copy load (use_dev=True), data already in place via read_batch -> aclrtMemcpy(H2D)
+            if buf.get("use_dev", False):
+                continue
+
+            param = buf["param_ref"]
+            if buf["np_arr"] is not None:
+                # Fallback: copy from numpy buffer to parameter
+                # Note: read_batch likely copied to the numpy buffer using H2D (check implicit behavior)
+                tensor = ms.Tensor(buf["np_arr"], dtype=param.dtype)
+                ops.assign(param, tensor)
         t_end = time.time()
+        
+        # Determine actual zero-copy ratio
+        zc_count = sum(1 for b in buffers if b.get("use_dev", False))
+        print(f"[Load] Zero-copy applied to {zc_count}/{len(buffers)} params", flush=True)
 
         pure_read_time = t1 - t0
         total_time = t_end - t_start
