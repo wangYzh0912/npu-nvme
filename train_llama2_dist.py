@@ -8,15 +8,23 @@ import os
 import numpy as np
 from mindspore import Callback, ops
 from direct_checkpoint import DirectCheckpoint
+from fast_init import replace_with_noop_initializer
+
 
 class LossLogger(Callback):
-    def __init__(self, rank_id):
+    def __init__(self, rank_id, world_size):
         self.rank_id = rank_id
-        if self.rank_id == 0:
-            with open("loss_curve.csv", "w") as f:
+        self.world_size = world_size
+        self.is_last_stage = (rank_id >= (world_size - world_size // PIPELINE_PARALLEL))
+        if self.is_last_stage:
+            log_file = f"loss_curve_rank{rank_id}.csv"
+            with open(log_file, "w") as f:
                 f.write("step,loss\n")
     
     def step_end(self, run_context):
+        if not self.is_last_stage:
+            return
+
         cb_params = run_context.original_args()
         step = cb_params.cur_step_num
         loss = cb_params.net_outputs
@@ -32,12 +40,11 @@ class LossLogger(Callback):
         if hasattr(actual_loss, "item"):
             actual_loss = actual_loss.item()
             
-        if self.rank_id == 0:
-            # Print periodically or every step
-            if step % 1 == 0:
-                print(f"[LossLogger] step={step} loss={actual_loss}", flush=True)
-                with open("loss_curve.csv", "a") as f:
-                    f.write(f"{step},{actual_loss}\n")
+        # Print periodically or every step
+        if step % 1 == 0:
+            print(f"[LossLogger][rank {self.rank_id}] step={step} loss={actual_loss:.6f}", flush=True)
+            with open(f"loss_curve_rank{self.rank_id}.csv", "a") as f:
+                f.write(f"{step},{actual_loss}\n")
 
 # Some launchers (e.g. mpirun) do not export Ascend envs by default; derive them from MPI vars.
 def _ensure_ascend_env():
@@ -78,23 +85,31 @@ PIPELINE_PARALLEL = 2
 
 
 class DirectCkptCallback(Callback):
-    def __init__(self, model: ms.nn.Cell, rank_id: int, world_size: int):
+    def __init__(self, model: ms.nn.Cell, rank_id: int, world_size: int, ckpt_manager=None):
         super().__init__()
         base_offset = rank_id * BASE_SPAN_BYTES
         self.rank_id = rank_id
         self.world_size = world_size
-        self.ckpt = DirectCheckpoint(
-            nvme_addr=NVME_ADDR,
-            npu_device_id=rank_id,
-            pipeline_depth=PIPELINE_DEPTH,
-            requested_chunk_size=CHUNK_SIZE,
-            enable_profiling=False,
-            rank_id=rank_id,
-            world_size=world_size,
-            base_offset_bytes=base_offset,
-            shard_span_bytes=BASE_SPAN_BYTES,
-            spdk_shm_id=SPDK_SHM_ID,
-        )
+        
+        # Determine local device ID (assuming 8 cards per node standard)
+        # For multi-node, rank_id grows globally, but device_id is local.
+        local_device_id = rank_id % 8
+        
+        if ckpt_manager is None:
+            self.ckpt = DirectCheckpoint(
+                nvme_addr=NVME_ADDR,
+                npu_device_id=local_device_id,
+                pipeline_depth=PIPELINE_DEPTH,
+                requested_chunk_size=CHUNK_SIZE,
+                enable_profiling=False,
+                rank_id=rank_id,
+                world_size=world_size,
+                base_offset_bytes=base_offset,
+                shard_span_bytes=BASE_SPAN_BYTES,
+                spdk_shm_id=SPDK_SHM_ID,
+            )
+        else:
+            self.ckpt = ckpt_manager
         self.model = model
 
     def step_end(self, run_context):
@@ -118,16 +133,22 @@ class DirectCkptCallback(Callback):
             time_tensor = ms.Tensor(np.array([t_save], dtype=np.float32))
             start_tensor = ms.Tensor(np.array([save_start], dtype=np.float32))
             end_tensor = ms.Tensor(np.array([save_end], dtype=np.float32))
+            bw_tensor = ms.Tensor(np.array([bw], dtype=np.float32))
 
             agg_total_mb = ops.AllReduce(ops.ReduceOp.SUM)(total_tensor).asnumpy().item() / 1024 / 1024
             agg_time_s = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor).asnumpy().item()
             min_start = ops.AllReduce(ops.ReduceOp.MIN)(start_tensor).asnumpy().item()
             max_end = ops.AllReduce(ops.ReduceOp.MAX)(end_tensor).asnumpy().item()
+            
+            # Collect individual BWs
+            all_bw = ops.AllGather()(bw_tensor).asnumpy()
+
             if max_end > min_start:
                 agg_window_bw = agg_total_mb / (max_end - min_start)
         except Exception as ex:
             if self.rank_id == 0:
-                print(f"[DirectCkpt][aggregate] allreduce failed: {ex}", flush=True)
+                print(f"[DirectCkpt][aggregate] allreduce/gather failed: {ex}", flush=True)
+            all_bw = None
         print(
             f"[DirectCkpt][rank {self.rank_id}] step={step} size={total/1024/1024:.1f}MB "
             f"chunks={num_chunks} save_time={t_save:.3f}s bw={bw:.1f}MB/s",
@@ -136,11 +157,16 @@ class DirectCkptCallback(Callback):
         if self.rank_id == 0 and agg_total_mb is not None and agg_time_s is not None and agg_time_s > 0:
             agg_bw = agg_total_mb / agg_time_s
             msg = (
-                f"[DirectCkpt][aggregate] global_size={agg_total_mb:.1f}MB "
+                f"[DirectCkpt][aggregate] save global_size={agg_total_mb:.1f}MB "
                 f"max_save_time={agg_time_s:.3f}s est_bw(sum/max)={agg_bw:.1f}MB/s"
             )
             if agg_window_bw is not None:
                 msg += f" est_bw(window)={agg_window_bw:.1f}MB/s"
+            
+            if all_bw is not None:
+                 msg += f"\n[DirectCkpt][aggregate] save Per-Rank BW: {all_bw} MB/s"
+                 msg += f" Avg: {np.mean(all_bw):.1f} MB/s"
+            
             print(msg, flush=True)
         # 仅 rank0 做一次读取校验，避免多卡重复；只校验本 rank 持有的参数，忽略其他 pipeline stage
         '''
@@ -176,21 +202,26 @@ class DirectCkptCallback(Callback):
         agg_total_mb_load = None
         agg_time_s_load = None
         agg_window_bw_load = None
+        all_bw_load = None
         try:
             total_tensor_load = ms.Tensor(np.array([total_load], dtype=np.float32))
             time_tensor_load = ms.Tensor(np.array([t_load], dtype=np.float32))
             start_tensor_load = ms.Tensor(np.array([load_start], dtype=np.float32))
             end_tensor_load = ms.Tensor(np.array([load_end], dtype=np.float32))
+            bw_tensor_load = ms.Tensor(np.array([bw_load], dtype=np.float32))
 
             agg_total_mb_load = ops.AllReduce(ops.ReduceOp.SUM)(total_tensor_load).asnumpy().item() / 1024 / 1024
             agg_time_s_load = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor_load).asnumpy().item()
             min_start_load = ops.AllReduce(ops.ReduceOp.MIN)(start_tensor_load).asnumpy().item()
             max_end_load = ops.AllReduce(ops.ReduceOp.MAX)(end_tensor_load).asnumpy().item()
+            all_bw_load = ops.AllGather()(bw_tensor_load).asnumpy()
+            
             if max_end_load > min_start_load:
                 agg_window_bw_load = agg_total_mb_load / (max_end_load - min_start_load)
         except Exception as ex:
             if self.rank_id == 0:
-                print(f"[DirectCkpt][aggregate][load] allreduce failed: {ex}", flush=True)
+                print(f"[DirectCkpt][aggregate][load] allreduce/gather failed: {ex}", flush=True)
+            all_bw_load = None
 
         print(
             f"[DirectCkpt][rank {self.rank_id}] load size={total_load/1024/1024:.1f}MB "
@@ -205,6 +236,11 @@ class DirectCkptCallback(Callback):
             )
             if agg_window_bw_load is not None:
                 msg_load += f" est_bw(window)={agg_window_bw_load:.1f}MB/s"
+            
+            if all_bw_load is not None:
+                 msg_load += f"\n[DirectCkpt][aggregate][load] Per-Rank BW: {all_bw_load} MB/s"
+                 msg_load += f" Avg: {np.mean(all_bw_load):.1f} MB/s"
+                 
             print(msg_load, flush=True)
 
         print(f"[DirectCkpt][rank {self.rank_id}] step_end done in {time.time()-t0:.3f}s", flush=True)
@@ -245,6 +281,11 @@ def main():
     cfg.seq_length = SEQ_LEN
     cfg.max_position_embeddings = SEQ_LEN
     cfg.checkpoint_name_or_path = MODEL_NAME
+
+    # [Type Match] Force FP16 to match the NVMe checkpoint data and avoid implicit cast OOM
+    cfg.compute_dtype = ms.float16
+    cfg.param_init_type = ms.float16
+
     # 并行相关字段（MindFormers LLaMA 配置通常支持以下字段）
     cfg.parallel_config = cfg.parallel_config if hasattr(cfg, "parallel_config") else None
     if cfg.parallel_config:
@@ -256,6 +297,44 @@ def main():
         cfg.parallel_config.use_seq_parallel = True
 
     model = AutoModel.from_config(cfg)
+    
+    # -------------------------------------------------------------
+    # [StartUp Logic] Check if checkpoint exists, if so, enable FastInit & Load
+    # -------------------------------------------------------------
+    ckpt_meta_path = f"checkpoint_meta_rank{rank_id}.pkl"
+    has_ckpt = os.path.exists(ckpt_meta_path)
+    
+    ckpt_manager = DirectCheckpoint(
+        nvme_addr=NVME_ADDR,
+        npu_device_id=rank_id % 8, 
+        pipeline_depth=PIPELINE_DEPTH,
+        requested_chunk_size=CHUNK_SIZE,
+        rank_id=rank_id,
+        world_size=rank_size,
+        base_offset_bytes=rank_id * BASE_SPAN_BYTES,
+        shard_span_bytes=BASE_SPAN_BYTES,
+        spdk_shm_id=SPDK_SHM_ID 
+    )
+
+    if has_ckpt:
+        print(f"[Main][Rank {rank_id}] Found existing checkpoint metadata {ckpt_meta_path}. "
+              "Enabling No-Op Initialization and loading from NVMe...", flush=True)
+        # 1. Replace init with No-Op (Save time)
+        replace_with_noop_initializer(model)
+        # 2. Allocate memory (but do not fill)
+        model.init_parameters_data()
+        # 3. Load actual weights from NVMe
+        try:
+             # Just load, no bandwidth stats needed for startup
+            ckpt_manager.load(model, meta_path=ckpt_meta_path)
+            print(f"[Main][Rank {rank_id}] Successfully loaded model from NVMe.", flush=True)
+        except Exception as e:
+            print(f"[Main][Rank {rank_id}] Failed to load from NVMe: {e}. Model may be garbage.", flush=True)
+    else:
+        print(f"[Main][Rank {rank_id}] No checkpoint found at {ckpt_meta_path}. "
+              "Using standard random initialization (Slow).", flush=True)
+        # Let standard initialization proceed (do not call replace_with_noop_initializer)
+
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     tokenizer.model_max_length = SEQ_LEN
 
@@ -269,10 +348,11 @@ def main():
     eval_ds = eval_ds.batch(BATCH_SIZE, drop_remainder=True)
 
     # 4) DirectCheckpoint 回调：每 rank 独立写入自己的 NVMe 区间
-    dc_cb = DirectCkptCallback(model, rank_id=rank_id, world_size=rank_size)
+    # Pass the already instantiated ckpt_manager to avoid SPDK re-init
+    dc_cb = DirectCkptCallback(model, rank_id=rank_id, world_size=rank_size, ckpt_manager=ckpt_manager)
     
     # Loss Logger
-    loss_cb = LossLogger(rank_id)
+    loss_cb = LossLogger(rank_id, world_size=rank_size)
 
     # Trainer
     trainer = Trainer(
