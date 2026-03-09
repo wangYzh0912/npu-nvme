@@ -17,7 +17,8 @@ int npu_nvme_init(npu_nvme_context_t **ctx,
                   int npu_device_id,
                   int pipeline_depth,
                   int chunk_size,
-                  bool enable_profiling);
+                  bool enable_profiling,
+                  const char *profiling_dir);
 
 void npu_nvme_cleanup(npu_nvme_context_t *ctx);
 

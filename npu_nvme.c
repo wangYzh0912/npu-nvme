@@ -118,6 +118,7 @@ struct npu_nvme_context {
     /* 管理参数 */
     int pipeline_depth;
     bool enable_profiling;
+    char profiling_dir[256];
 };
 
 /* attach 回调 */
@@ -154,10 +155,11 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
                   int npu_device_id,
                   int pipeline_depth,
                   int chunk_size,
-                  bool enable_profiling) {
+                  bool enable_profiling,
+                  const char *profiling_dir) {
     if (!pctx || !nvme_pci_addr) return -1;
-    fprintf(stderr, "[Init] enter npu_nvme_init nvme=%s device=%d pipeline=%d chunk=%d\n",
-            nvme_pci_addr, npu_device_id, pipeline_depth, chunk_size);
+    fprintf(stderr, "[Init] enter npu_nvme_init nvme=%s device=%d pipeline=%d chunk=%d profiling_dir=%s\n",
+            nvme_pci_addr, npu_device_id, pipeline_depth, chunk_size, profiling_dir ? profiling_dir : "null");
     fflush(stderr);
 
     if (pipeline_depth < MIN_PIPE_DEPTH) pipeline_depth = MIN_PIPE_DEPTH;
@@ -166,6 +168,12 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
     npu_nvme_context_t *ctx = calloc(1, sizeof(*ctx));
     if (!ctx) return -1;
     ctx->pipeline_depth = pipeline_depth;
+    ctx->enable_profiling = enable_profiling;
+    if (profiling_dir) {
+        strncpy(ctx->profiling_dir, profiling_dir, sizeof(ctx->profiling_dir) - 1);
+    } else {
+        strcpy(ctx->profiling_dir, ".");
+    }
     ctx->mdts_limit = 0; 
 
     /* SPDK env init (once). Note: current SPDK headers do not expose proc_type; only shm_id honored. */
@@ -406,7 +414,9 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
     }
 
     if (ctx->enable_profiling) {
-        FILE *f = fopen("time_write.csv", "w");
+        char path[512];
+        snprintf(path, sizeof(path), "%s/time_write.csv", ctx->profiling_dir);
+        FILE *f = fopen(path, "w");
         if (f) {
             fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
             for (int i = 0; i < num_items; ++i) {
@@ -527,7 +537,9 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
 
 
     if (ctx->enable_profiling) {
-        FILE *f = fopen("time_read.csv", "w");
+        char path[512];
+        snprintf(path, sizeof(path), "%s/time_read.csv", ctx->profiling_dir);
+        FILE *f = fopen(path, "w");
         if (f) {
             fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
             for (int i = 0; i < num_items; ++i) {

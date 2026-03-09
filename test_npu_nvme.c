@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
 
     /* Init */
     npu_nvme_context_t *ctx = NULL;
-    if (npu_nvme_init(&ctx, nvme_addr, npu_device_id, pipeline_depth, req_chunk_size, false)) {
+    if (npu_nvme_init(&ctx, nvme_addr, npu_device_id, pipeline_depth, req_chunk_size, false, NULL)) {
         fprintf(stderr, "Initialization failed\n");
         return 1;
     }

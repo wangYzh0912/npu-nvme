@@ -16,13 +16,22 @@ class LossLogger(Callback):
         self.rank_id = rank_id
         self.world_size = world_size
         self.is_last_stage = (rank_id >= (world_size - world_size // PIPELINE_PARALLEL))
-        if self.is_last_stage:
-            log_file = f"loss_curve_rank{rank_id}.csv"
-            with open(log_file, "w") as f:
+        self.log_file = None
+        
+        # Log if last stage or profiling is enabled
+        if self.is_last_stage or ENABLE_PROFILING:
+            if ENABLE_PROFILING:
+                os.makedirs(PROFILING_OUTPUT_DIR, exist_ok=True)
+                self.log_file = os.path.join(PROFILING_OUTPUT_DIR, f"loss_curve_rank{rank_id}.csv")
+            else:
+                self.log_file = f"loss_curve_rank{rank_id}.csv"
+            
+            with open(self.log_file, "w") as f:
                 f.write("step,loss\n")
     
     def step_end(self, run_context):
-        if not self.is_last_stage:
+        # Allow logging if profiling is enabled or it's the last stage
+        if not (self.is_last_stage or ENABLE_PROFILING):
             return
 
         cb_params = run_context.original_args()
@@ -43,7 +52,7 @@ class LossLogger(Callback):
         # Print periodically or every step
         if step % 1 == 0:
             print(f"[LossLogger][rank {self.rank_id}] step={step} loss={actual_loss:.6f}", flush=True)
-            with open(f"loss_curve_rank{self.rank_id}.csv", "a") as f:
+            with open(self.log_file, "a") as f:
                 f.write(f"{step},{actual_loss}\n")
 
 # Some launchers (e.g. mpirun) do not export Ascend envs by default; derive them from MPI vars.
@@ -64,12 +73,22 @@ def _ensure_ascend_env():
 # micro_batch=1（可根据显存再调小或用梯度累积）
 # ----------------------
 MODEL_NAME = "llama2_7b"       # 实际权重名/本地路径
+# ----------------------
+# Configuration
+# ----------------------
+USE_FAST_INIT = False              # Enable Fast/No-Op Initialization
+FAST_INIT_CKPT_DIR = "./checkpoint_meta"          # Directory containing checkpoint_meta_rank*.pkl
+ENABLE_PROFILING = True            # Enable detailed profiling output
+PROFILING_OUTPUT_DIR = "./output/profiling"  # Output directory for profiling logs
+META_OUTPUT_DIR = "./checkpoint_meta"             # Directory to save checkpoint_meta_rank*.pkl (default current dir)
+SAVE_OPTIMIZER = True              # Whether to save optimizer state
+
 SEQ_LEN = 4096
 BATCH_SIZE = 2                  # per-device batch；需能整除 micro_batch_num
 GRAD_ACCUM_STEPS = 2            # micro batch 个数需 >= pipeline_stages（这里 pp=2）
 TRAIN_MR = "./prepare/llama2/wikitext2_data/wiki_train_4096.mindrecord"
 EVAL_MR  = "./prepare/llama2/wikitext2_data/wiki_valid_4096.mindrecord"
-CHECKPOINT_INTERVAL = 5
+CHECKPOINT_INTERVAL = 10
 NVME_ADDR = "0000:83:00.0"
 PIPELINE_DEPTH = 8
 CHUNK_SIZE = 4 * 1024 * 1024
@@ -82,14 +101,23 @@ ATOL = 1e-6
 DATA_PARALLEL = 1
 MODEL_PARALLEL = 2
 PIPELINE_PARALLEL = 2
+TRAIN_STEPS = 100  # Total training steps to run. Set to -1 for full epoch.
+
+# Guarantee reproducibility
+ms.set_seed(1024)
+# Enable deterministic mode for reproducibility
+context.set_context(deterministic='ON')
 
 
 class DirectCkptCallback(Callback):
-    def __init__(self, model: ms.nn.Cell, rank_id: int, world_size: int, ckpt_manager=None):
+    def __init__(self, model: ms.nn.Cell, rank_id: int, world_size: int, ckpt_manager=None, resume_meta_path=None, ckpt_meta_path=None):
         super().__init__()
         base_offset = rank_id * BASE_SPAN_BYTES
         self.rank_id = rank_id
         self.world_size = world_size
+        self.resume_meta_path = resume_meta_path
+        self.ckpt_meta_path = ckpt_meta_path or f"checkpoint_meta_rank{rank_id}.pkl"
+        self.optimizer = None
         
         # Determine local device ID (assuming 8 cards per node standard)
         # For multi-node, rank_id grows globally, but device_id is local.
@@ -101,7 +129,8 @@ class DirectCkptCallback(Callback):
                 npu_device_id=local_device_id,
                 pipeline_depth=PIPELINE_DEPTH,
                 requested_chunk_size=CHUNK_SIZE,
-                enable_profiling=False,
+                enable_profiling=ENABLE_PROFILING,
+                profiling_dir=PROFILING_OUTPUT_DIR,
                 rank_id=rank_id,
                 world_size=world_size,
                 base_offset_bytes=base_offset,
@@ -112,6 +141,40 @@ class DirectCkptCallback(Callback):
             self.ckpt = ckpt_manager
         self.model = model
 
+    def _get_optimizer(self, run_context):
+        cb_params = run_context.original_args()
+        # 1. Try cb_params.optimizer
+        if hasattr(cb_params, 'optimizer') and cb_params.optimizer:
+            return cb_params.optimizer
+        # 2. Try cb_params.train_network.optimizer (e.g. TrainOneStepCell)
+        if hasattr(cb_params, 'train_network'):
+            net = cb_params.train_network
+            if hasattr(net, 'optimizer') and net.optimizer:
+                return net.optimizer
+        return None
+
+    def on_train_begin(self, run_context):
+        # Locate optimizer
+        self.optimizer = self._get_optimizer(run_context)
+        if self.optimizer:
+            print(f"[DirectCkpt][Rank {self.rank_id}] Found optimizer: {type(self.optimizer).__name__}", flush=True)
+        else:
+            print(f"[DirectCkpt][Rank {self.rank_id}] WARNING: Optimizer not found in run_context!", flush=True)
+
+        # Resume loading if needed
+        if self.resume_meta_path and os.path.exists(self.resume_meta_path):
+            print(f"[DirectCkpt][Rank {self.rank_id}] Resuming from {self.resume_meta_path}...", flush=True)
+            try:
+                # Load both model weights and optimizer states
+                targets = [self.model]
+                if self.optimizer and SAVE_OPTIMIZER:
+                    targets.append(self.optimizer)
+                
+                self.ckpt.load(targets, meta_path=self.resume_meta_path)
+                print(f"[DirectCkpt][Rank {self.rank_id}] Resume load success.", flush=True)
+            except Exception as e:
+                print(f"[DirectCkpt][Rank {self.rank_id}] Resume load failed: {e}", flush=True)
+
     def step_end(self, run_context):
         cbp = run_context.original_args()
         step = cbp.cur_step_num
@@ -119,13 +182,39 @@ class DirectCkptCallback(Callback):
             return
         t0 = time.time()
         save_start = time.time()
-        total, num_chunks, t_save, bw = self.ckpt.save(
-            self.model,
-            meta_path=f"checkpoint_meta_rank{self.rank_id}.pkl",
+        
+        # Save both model and optimizer?
+        targets = [self.model]
+        if self.optimizer and SAVE_OPTIMIZER:
+            targets.append(self.optimizer)
+            
+        total, num_chunks, t_save, bw, stats = self.ckpt.save(
+            targets,
+            meta_path=self.ckpt_meta_path,
         )
         save_end = time.time()
+        
+        # Write profiling stats locally
+        if ENABLE_PROFILING:
+             os.makedirs(PROFILING_OUTPUT_DIR, exist_ok=True)
+             prof_file = os.path.join(PROFILING_OUTPUT_DIR, f"save_stats_rank{self.rank_id}.csv")
+             file_exists = os.path.exists(prof_file)
+             with open(prof_file, "a") as f:
+                 if not file_exists:
+                     f.write("step,total_mb,chunks,save_seq_time,bw_e2e_mb_s,prep_time,write_time,total_time_ckpt\n")
+                 f.write(f"{step},{total/1024/1024:.2f},{num_chunks},{t_save:.4f},{bw:.2f},{stats['prep_time']:.4f},{stats['write_time']:.4f},{stats['total_time']:.4f}\n")
+
+        # Skip AllReduce stats if profiling disabled
+        if not ENABLE_PROFILING:
+            print(
+                f"[DirectCkpt][rank {self.rank_id}] step={step} size={total/1024/1024:.1f}MB "
+                f"chunks={num_chunks} save_time={t_save:.3f}s bw={bw:.1f}MB/s",
+                flush=True,
+            )
+            return
 
         agg_total_mb = None
+
         agg_time_s = None
         agg_window_bw = None
         try:
@@ -191,15 +280,35 @@ class DirectCkptCallback(Callback):
                 print(f"[DirectCkpt][rank 0] verify ok at step {step} (skipped {skipped})", flush=True)
         '''
 
-        # === 读回检查点并统计带宽 ===
-        load_start = time.time()
-        total_load, num_chunks_load, t_load, bw_load = self.ckpt.load(
-            self.model,
-            meta_path=f"checkpoint_meta_rank{self.rank_id}.pkl"
-        )
-        load_end = time.time()
+        # === 讀回检查点并统计带宽 ===
+        if ENABLE_PROFILING:
+            load_start = time.time()
+            total_load, num_chunks_load, t_load, bw_load, stats_load = self.ckpt.load(
+                self.model,
+                meta_path=self.ckpt_meta_path
+            )
+            load_end = time.time()
+            
+            # Log detailed load stats
+            os.makedirs(PROFILING_OUTPUT_DIR, exist_ok=True)
+            load_prof = os.path.join(PROFILING_OUTPUT_DIR, f"load_stats_verify_rank{self.rank_id}.csv")
+            header = "step,total_mb,chunks,load_seq_time,bw_e2e_mb_s,prep_time,read_time,set_time,total_time_ckpt\n"
+            data_row = f"{step},{total_load/1024/1024:.2f},{num_chunks_load},{t_load:.4f},{bw_load:.2f},{stats_load['prepare_time']:.4f},{stats_load['read_time']:.4f},{stats_load['set_data_time']:.4f},{stats_load['total_time']:.4f}\n"
+            
+            with open(load_prof, "a") as f:
+                if not os.path.exists(load_prof) or os.stat(load_prof).st_size == 0:
+                    f.write(header)
+                f.write(data_row)
 
-        agg_total_mb_load = None
+            agg_total_mb_load = None
+            agg_time_s_load = None
+            agg_window_bw_load = None
+            all_bw_load = None
+        else:
+             # Basic load for verify logic disabled by user preference implicitly if they don't want overhead
+             # But let's keep the load for check if user wants it (the original code did it unconditionally)
+             # To reduce overhead when profiling is disabled, let's SKIP the reload/verify entirely
+             return
         agg_time_s_load = None
         agg_window_bw_load = None
         all_bw_load = None
@@ -210,38 +319,40 @@ class DirectCkptCallback(Callback):
             end_tensor_load = ms.Tensor(np.array([load_end], dtype=np.float32))
             bw_tensor_load = ms.Tensor(np.array([bw_load], dtype=np.float32))
 
-            agg_total_mb_load = ops.AllReduce(ops.ReduceOp.SUM)(total_tensor_load).asnumpy().item() / 1024 / 1024
-            agg_time_s_load = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor_load).asnumpy().item()
-            min_start_load = ops.AllReduce(ops.ReduceOp.MIN)(start_tensor_load).asnumpy().item()
-            max_end_load = ops.AllReduce(ops.ReduceOp.MAX)(end_tensor_load).asnumpy().item()
-            all_bw_load = ops.AllGather()(bw_tensor_load).asnumpy()
-            
-            if max_end_load > min_start_load:
-                agg_window_bw_load = agg_total_mb_load / (max_end_load - min_start_load)
+            if ENABLE_PROFILING:
+                agg_total_mb_load = ops.AllReduce(ops.ReduceOp.SUM)(total_tensor_load).asnumpy().item() / 1024 / 1024
+                agg_time_s_load = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor_load).asnumpy().item()
+                min_start_load = ops.AllReduce(ops.ReduceOp.MIN)(start_tensor_load).asnumpy().item()
+                max_end_load = ops.AllReduce(ops.ReduceOp.MAX)(end_tensor_load).asnumpy().item()
+                all_bw_load = ops.AllGather()(bw_tensor_load).asnumpy()
+                
+                if max_end_load > min_start_load:
+                    agg_window_bw_load = agg_total_mb_load / (max_end_load - min_start_load)
         except Exception as ex:
             if self.rank_id == 0:
                 print(f"[DirectCkpt][aggregate][load] allreduce/gather failed: {ex}", flush=True)
             all_bw_load = None
 
-        print(
-            f"[DirectCkpt][rank {self.rank_id}] load size={total_load/1024/1024:.1f}MB "
-            f"chunks={num_chunks_load} load_time={t_load:.3f}s bw={bw_load:.1f}MB/s",
-            flush=True,
-        )
-        if self.rank_id == 0 and agg_total_mb_load is not None and agg_time_s_load is not None and agg_time_s_load > 0:
-            agg_bw_load = agg_total_mb_load / agg_time_s_load
-            msg_load = (
-                f"[DirectCkpt][aggregate][load] global_size={agg_total_mb_load:.1f}MB "
-                f"max_load_time={agg_time_s_load:.3f}s est_bw(sum/max)={agg_bw_load:.1f}MB/s"
+        if ENABLE_PROFILING:
+             print(
+                f"[DirectCkpt][rank {self.rank_id}] load size={total_load/1024/1024:.1f}MB "
+                f"chunks={num_chunks_load} load_time={t_load:.3f}s bw={bw_load:.1f}MB/s",
+                flush=True,
             )
-            if agg_window_bw_load is not None:
-                msg_load += f" est_bw(window)={agg_window_bw_load:.1f}MB/s"
-            
-            if all_bw_load is not None:
-                 msg_load += f"\n[DirectCkpt][aggregate][load] Per-Rank BW: {all_bw_load} MB/s"
-                 msg_load += f" Avg: {np.mean(all_bw_load):.1f} MB/s"
-                 
-            print(msg_load, flush=True)
+             if self.rank_id == 0 and agg_total_mb_load is not None and agg_time_s_load is not None and agg_time_s_load > 0:
+                agg_bw_load = agg_total_mb_load / agg_time_s_load
+                msg_load = (
+                    f"[DirectCkpt][aggregate][load] global_size={agg_total_mb_load:.1f}MB "
+                    f"max_load_time={agg_time_s_load:.3f}s est_bw(sum/max)={agg_bw_load:.1f}MB/s"
+                )
+                if agg_window_bw_load is not None:
+                    msg_load += f" est_bw(window)={agg_window_bw_load:.1f}MB/s"
+                
+                if all_bw_load is not None:
+                     msg_load += f"\n[DirectCkpt][aggregate][load] Per-Rank BW: {all_bw_load} MB/s"
+                     msg_load += f" Avg: {np.mean(all_bw_load):.1f} MB/s"
+                     
+                print(msg_load, flush=True)
 
         print(f"[DirectCkpt][rank {self.rank_id}] step_end done in {time.time()-t0:.3f}s", flush=True)
 
@@ -252,6 +363,16 @@ class DirectCkptCallback(Callback):
         self.ckpt.cleanup()
         print(f"[DirectCkpt][rank {self.rank_id}] cleanup done", flush=True)
 
+
+class TrainStepControl(Callback):
+    def __init__(self, steps):
+        self.steps = steps
+
+    def step_end(self, run_context):
+        cb_params = run_context.original_args()
+        step = cb_params.cur_step_num
+        if self.steps > 0 and step >= self.steps:
+            run_context.request_stop()
 
 def main():
     _ensure_ascend_env()
@@ -301,14 +422,36 @@ def main():
     # -------------------------------------------------------------
     # [StartUp Logic] Check if checkpoint exists, if so, enable FastInit & Load
     # -------------------------------------------------------------
-    ckpt_meta_path = f"checkpoint_meta_rank{rank_id}.pkl"
-    has_ckpt = os.path.exists(ckpt_meta_path)
+    
+    # Logic:
+    # 1. Determine ckpt path (Local or FastInit Dir)
+    # 2. Check if we should use FastInit
+    
+    # Decide where to save/load meta
+    os.makedirs(META_OUTPUT_DIR, exist_ok=True)
+    ckpt_meta_path = os.path.join(META_OUTPUT_DIR, f"checkpoint_meta_rank{rank_id}.pkl")
+    resume_path = None
+    
+    if USE_FAST_INIT:
+         # Override path to fast init dir
+         fast_ckpt_path = os.path.join(FAST_INIT_CKPT_DIR, ckpt_meta_path)
+         if os.path.exists(fast_ckpt_path):
+             ckpt_meta_path = fast_ckpt_path
+             has_ckpt = True
+         else:
+             print(f"[Main][Rank {rank_id}] FastInit enabled but {fast_ckpt_path} not found.", flush=True)
+             has_ckpt = False
+    else:
+         # Standard resume behavior
+         has_ckpt = os.path.exists(ckpt_meta_path)
     
     ckpt_manager = DirectCheckpoint(
         nvme_addr=NVME_ADDR,
         npu_device_id=rank_id % 8, 
         pipeline_depth=PIPELINE_DEPTH,
         requested_chunk_size=CHUNK_SIZE,
+        enable_profiling=ENABLE_PROFILING,
+        profiling_dir=PROFILING_OUTPUT_DIR,
         rank_id=rank_id,
         world_size=rank_size,
         base_offset_bytes=rank_id * BASE_SPAN_BYTES,
@@ -316,24 +459,28 @@ def main():
         spdk_shm_id=SPDK_SHM_ID 
     )
 
-    if has_ckpt:
+    if has_ckpt and USE_FAST_INIT:
         print(f"[Main][Rank {rank_id}] Found existing checkpoint metadata {ckpt_meta_path}. "
-              "Enabling No-Op Initialization and loading from NVMe...", flush=True)
+              "Enabling No-Op Initialization...", flush=True)
         # 1. Replace init with No-Op (Save time)
         replace_with_noop_initializer(model)
         # 2. Allocate memory (but do not fill)
         model.init_parameters_data()
-        # 3. Load actual weights from NVMe
-        try:
-             # Just load, no bandwidth stats needed for startup
-            ckpt_manager.load(model, meta_path=ckpt_meta_path)
-            print(f"[Main][Rank {rank_id}] Successfully loaded model from NVMe.", flush=True)
-        except Exception as e:
-            print(f"[Main][Rank {rank_id}] Failed to load from NVMe: {e}. Model may be garbage.", flush=True)
+        
+        # [Optimize] Force touch to trigger physical memory allocation
+        # This prevents "Addr ERROR" during subsequent NVMe DMA writes
+        for _, p in model.parameters_and_names():
+            if p.data is not None:
+                # Access a single element to trigger page fault handling
+                 _ = p.data.view(-1)[0].asnumpy()
+        
+        # 3. Skip manual loading here. We defer loading to DirectCkptCallback.on_train_begin 
+        #    so we can load BOTH model AND optimizer together.
+        print(f"[Main][Rank {rank_id}] Deferring load to on_train_begin (to include optimizer).", flush=True)
     else:
-        print(f"[Main][Rank {rank_id}] No checkpoint found at {ckpt_meta_path}. "
-              "Using standard random initialization (Slow).", flush=True)
-        # Let standard initialization proceed (do not call replace_with_noop_initializer)
+        # If not fast init, or ckpt not found, just init normally
+        # If has_ckpt is True but USE_FAST_INIT is False, we just resume later in callback
+        print(f"[Main][Rank {rank_id}] Standard initialization (FastInit={USE_FAST_INIT}, Found={has_ckpt}).", flush=True)
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     tokenizer.model_max_length = SEQ_LEN
@@ -349,12 +496,20 @@ def main():
 
     # 4) DirectCheckpoint 回调：每 rank 独立写入自己的 NVMe 区间
     # Pass the already instantiated ckpt_manager to avoid SPDK re-init
-    dc_cb = DirectCkptCallback(model, rank_id=rank_id, world_size=rank_size, ckpt_manager=ckpt_manager)
+    if has_ckpt:
+        resume_path = ckpt_meta_path
+    
+    dc_cb = DirectCkptCallback(model, rank_id=rank_id, world_size=rank_size, ckpt_manager=ckpt_manager, resume_meta_path=resume_path, ckpt_meta_path=ckpt_meta_path)
+
     
     # Loss Logger
     loss_cb = LossLogger(rank_id, world_size=rank_size)
 
     # Trainer
+    cbs = [dc_cb, loss_cb]
+    if TRAIN_STEPS > 0:
+        cbs.append(TrainStepControl(TRAIN_STEPS))
+
     trainer = Trainer(
         task="text_generation",
         model=model,
@@ -362,7 +517,7 @@ def main():
         model_name=MODEL_NAME,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
-        callbacks=[dc_cb, loss_cb],  # 直接传入 Callback 实例，避免插入 config.callbacks(dict)
+        callbacks=cbs,  # 直接传入 Callback 实例，避免插入 config.callbacks(dict)
     )
 
     # 强制覆盖并行配置，避免默认 dp=8 触发检查不通过

@@ -27,6 +27,7 @@ lib.npu_nvme_init.argtypes = [
     ctypes.c_int,
     ctypes.c_int,
     ctypes.c_bool,
+    ctypes.c_char_p,
 ]
 
 # (Removed unused helper bindings)
@@ -88,11 +89,15 @@ def build_chunks(params: List[Dict], chunk_size: int):
     return chunks, nvme_offset
 
 
-def rebuild_chunks_from_meta(model: ms.nn.Cell, meta: Dict, chunk_size: int):
+def rebuild_chunks_from_meta(models, meta: Dict, chunk_size: int):
     """
     根据元数据和 chunk_size，重建读取所需的块列表，并为每个参数分配缓冲区（优先 NPU，失败则 CPU）。
+    支持单个 ms.nn.Cell 或 [model, optimizer] 列表。
     返回 (chunks, buffers)。
     """
+    if not isinstance(models, (list, tuple)):
+        models = [models]
+
     buffers = []
     
     # 辅助：获取设备指针
@@ -120,32 +125,37 @@ def rebuild_chunks_from_meta(model: ms.nn.Cell, meta: Dict, chunk_size: int):
             ptr = 0
         return ptr
 
-    for name, param in model.parameters_and_names():
-        if name not in meta:
+    for model in models:
+        # Skip if None or no parameters_and_names (e.g. empty list entry)
+        if model is None or not hasattr(model, "parameters_and_names"):
             continue
-        info = meta[name]
-        
-        # 尝试获取设备指针
-        dev_ptr = get_dev_ptr(param)
-        use_dev = (dev_ptr != 0)
-        
-        np_arr = None
-        ptr_val = dev_ptr
-        
-        # 若无法获取设备指针，则回退 CPU
-        if not use_dev:
-            np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
-            ptr_val = np_arr.ctypes.data
+
+        for name, param in model.parameters_and_names():
+            if name not in meta:
+                continue
+            info = meta[name]
             
-        buffers.append({
-            "name": name,
-            "ptr": ptr_val,
-            "size": info["size"],
-            "offset": info["offset"],
-            "np_arr": np_arr,      # None if zero-copy
-            "param_ref": param,
-            "use_dev": use_dev
-        })
+            # 尝试获取设备指针
+            dev_ptr = get_dev_ptr(param)
+            use_dev = (dev_ptr != 0)
+            
+            np_arr = None
+            ptr_val = dev_ptr
+            
+            # 若无法获取设备指针，则回退 CPU
+            if not use_dev:
+                np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
+                ptr_val = np_arr.ctypes.data
+                
+            buffers.append({
+                "name": name,
+                "ptr": ptr_val,
+                "size": info["size"],
+                "offset": info["offset"],
+                "np_arr": np_arr,      # None if zero-copy
+                "param_ref": param,
+                "use_dev": use_dev
+            })
 
     buffers.sort(key=lambda x: x["offset"])
 
@@ -179,6 +189,7 @@ class DirectCheckpoint:
         pipeline_depth: int = 4,
         requested_chunk_size: int = 4 * 1024 * 1024,
         enable_profiling: bool = False,
+        profiling_dir: str = "./output/profiling",
         rank_id: int = 0,
         world_size: int = 1,
         base_offset_bytes: int = 0,
@@ -187,12 +198,16 @@ class DirectCheckpoint:
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
         self.enable_profiling = enable_profiling
+        self.profiling_dir = profiling_dir
         self.rank_id = rank_id
         self.world_size = world_size
         self.base_offset_bytes = base_offset_bytes
         self.shard_span_bytes = shard_span_bytes
         # set env for SPDK multiprocess (primary/secondary auto-decided by SPDK via shm_id)
         os.environ.setdefault("SPDK_SHM_ID", str(spdk_shm_id))
+
+        if self.enable_profiling:
+            os.makedirs(self.profiling_dir, exist_ok=True)
 
         print(f"[DirectCheckpoint] loading so from {_LIB_PATH}")
 
@@ -202,7 +217,8 @@ class DirectCheckpoint:
             npu_device_id,
             pipeline_depth,
             requested_chunk_size,
-            enable_profiling
+            enable_profiling,
+            self.profiling_dir.encode("utf-8")
         )
         if rc != 0:
             raise RuntimeError("npu_nvme_init failed")
@@ -225,63 +241,79 @@ class DirectCheckpoint:
             lib.npu_nvme_cleanup(self.ctx)
             self.ctx = None
 
-    def _prepare_params(self, model: ms.nn.Cell):
-        params = []
-        for name, p in model.parameters_and_names():
-            # 优先使用实验性设备指针实现零拷贝；若获取失败则回退到 CPU 拷贝
-            ptr = 0
-            try:
-                data_obj = p.data if hasattr(p, "data") else p
-                
-                # [CRITICAL UPDATE]
-                # Based on user's test: 'device_address' attribute is MISSING on Tensors.
-                # However, '_data_ptr()' returns a valid address.
-                # So we must call '_data_ptr()' directly.
-                
-                # 1. 尝试 _data_ptr (唯一有效的途径)
-                if hasattr(data_obj, "_data_ptr"):
-                    if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
-                        ptr = 0
-                    else:
-                        ptr = int(data_obj._data_ptr())
-
-                # 2. 备选：如果未来版本有了 device_address
-                if ptr == 0 and hasattr(data_obj, "device_address"):
-                    dev_addr = getattr(data_obj, "device_address", None)
-                    if dev_addr is not None and hasattr(dev_addr, "ptr"):
-                        ptr = int(dev_addr.ptr)
-
-            except Exception:
-                ptr = 0  # 某些张量尚未物化到 device，回退到 CPU 拷贝
+    def _prepare_params(self, models):
+        # Support single model or list of models
+        if not isinstance(models, (list, tuple)):
+            models = [models]
             
-            dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
-            size = int(np.prod(p.shape)) * dtype_np.itemsize
+        params = []
+        for model in models:
+            if model is None: 
+                continue
+            # Some objects (like Optimizer) might not have parameters_and_names directly exposed the same way
+            # But MindSpore Optimizers inherit from Cell, so they usually do.
+            if not hasattr(model, "parameters_and_names"):
+                continue
 
-            shape = list(p.shape)
-            dtype = dtype_np.name
+            for name, p in model.parameters_and_names():
+                # 优先使用实验性设备指针实现零拷贝；若获取失败则回退到 CPU 拷贝
+                ptr = 0
+                try:
+                    data_obj = p.data if hasattr(p, "data") else p
+                    
+                    # [CRITICAL UPDATE]
+                    # Based on user's test: 'device_address' attribute is MISSING on Tensors.
+                    # However, '_data_ptr()' returns a valid address.
+                    # So we must call '_data_ptr()' directly.
+                    
+                    # 1. 尝试 _data_ptr (唯一有效的途径)
+                    if hasattr(data_obj, "_data_ptr"):
+                        if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
+                            ptr = 0
+                        else:
+                            ptr = int(data_obj._data_ptr())
 
-            if ptr == 0:
-                np_arr = p.asnumpy()
-                ptr = np_arr.ctypes.data
-                params.append({
-                    "name": name,
-                    "ptr": ptr,
-                    "size": size,
-                    "shape": shape,
-                    "dtype": dtype,
-                    "np_arr": np_arr,
-                    "param_ref": p
-                })
-            else:
-                params.append({
-                    "name": name,
-                    "ptr": ptr,
-                    "size": size,
-                    "shape": shape,
-                    "dtype": dtype,
-                    "np_arr": None,
-                    "param_ref": p
-                })
+                    # 2. 备选：如果未来版本有了 device_address
+                    if ptr == 0 and hasattr(data_obj, "device_address"):
+                        dev_addr = getattr(data_obj, "device_address", None)
+                        if dev_addr is not None and hasattr(dev_addr, "ptr"):
+                            ptr = int(dev_addr.ptr)
+
+                except Exception:
+                    ptr = 0  # 某些张量尚未物化到 device，回退到 CPU 拷贝
+                
+                dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
+                # Skip empty parameters
+                if np.prod(p.shape) == 0:
+                    continue
+
+                size = int(np.prod(p.shape)) * dtype_np.itemsize
+
+                shape = list(p.shape)
+                dtype = dtype_np.name
+
+                if ptr == 0:
+                    np_arr = p.asnumpy()
+                    ptr = np_arr.ctypes.data
+                    params.append({
+                        "name": name,
+                        "ptr": ptr,
+                        "size": size,
+                        "shape": shape,
+                        "dtype": dtype,
+                        "np_arr": np_arr,
+                        "param_ref": p
+                    })
+                else:
+                    params.append({
+                        "name": name,
+                        "ptr": ptr,
+                        "size": size,
+                        "shape": shape,
+                        "dtype": dtype,
+                        "np_arr": None,
+                        "param_ref": p
+                    })
         return params
 
     def save(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl"):
@@ -310,7 +342,8 @@ class DirectCheckpoint:
             )
         # 输出参数信息到params.csv，便于调试
         if self.enable_profiling:
-            with open("params.csv", "w") as f:
+            p_out = os.path.join(self.profiling_dir, "params.csv")
+            with open(p_out, "w") as f:
                 f.write("name,ptr,size,shape,dtype\n")
                 for p in params:
                     f.write(f"{p['name']},{p['ptr']},{p['size']},\"{p['shape']}\",{p['dtype']}\n")  
@@ -379,7 +412,15 @@ class DirectCheckpoint:
             pickle.dump(meta, f)
         self.meta = meta
         print(f"[Save] meta saved to {meta_path}")
-        return total, len(chunks), real_time, bw
+        
+        stats = {
+            "prep_time": t_prep - t_start,
+            "write_time": t1 - t0,
+            "total_time": real_time,
+            "bw_pure": total/1024/1024/(t1-t0) if (t1-t0) > 0 else 0,
+            "bw_e2e": bw
+        }
+        return total, len(chunks), real_time, bw, stats
 
     def load(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl"):
         t_start = time.time()
@@ -413,7 +454,9 @@ class DirectCheckpoint:
             raise RuntimeError("read_batch failed")
         t1 = time.time()
         
-        total = meta["total_size"]
+        # [Fix] Calc bandwidth using actually loaded size (support partial load)
+        # total = meta["total_size"]
+        total = sum(c[2].value for c in chunks)
         
         # update model weights
         t_update = time.time()
@@ -445,4 +488,12 @@ class DirectCheckpoint:
             f"BW(pure)={bw_read:.1f} MB/s BW(e2e)={bw_e2e:.1f} MB/s total={total_time:.3f}s",
             flush=True
         )
-        return total, len(chunks), total_time, bw_e2e
+        stats = {
+            "prepare_time": t_rebuild_end - t_rebuild,
+            "read_time": pure_read_time,
+            "set_data_time": t_end - t_update,
+            "total_time": total_time,
+            "bw_pure": bw_read,
+            "bw_e2e": bw_e2e
+        }
+        return total, len(chunks), total_time, bw_e2e, stats
