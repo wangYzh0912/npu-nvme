@@ -5,17 +5,70 @@ from mindspore.communication import init, get_rank, get_group_size
 from mindformers import Trainer, AutoModel, AutoTokenizer, AutoConfig
 import time
 import os
+import shutil
+import concurrent.futures
 import numpy as np
 from mindspore import Callback, ops
 from direct_checkpoint import DirectCheckpoint
 from fast_init import replace_with_noop_initializer
+import psutil
+import threading
+import csv
 
+class MemoryMonitor:
+    def __init__(self, output_dir, rank_id):
+        self.output_dir = output_dir
+        self.rank_id = rank_id
+        self.history = []
+        self.running = False
+        self.thread = None
+        
+    def start(self):
+        self.running = True
+        self.thread = threading.Thread(target=self._run)
+        self.thread.daemon = True
+        self.thread.start()
+        
+    def _run(self):
+        p = psutil.Process()
+        while self.running:
+            try:
+                rss = p.memory_info().rss / 1024 / 1024 # MB
+                self.history.append((time.time(), rss))
+                time.sleep(0.1) # 100ms interval
+            except:
+                break
+                
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join(timeout=5)
+        self.save()
+        
+    def save(self):
+        if not self.history: 
+            return
+        peak = max(h[1] for h in self.history)
+        print(f"[MemoryMonitor] Rank {self.rank_id} Peak RSS: {peak:.2f} MB", flush=True)
+        
+        os.makedirs(self.output_dir, exist_ok=True)
+        path = os.path.join(self.output_dir, f"memory_rank_{self.rank_id}.csv")
+        try:
+            with open(path, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['timestamp', 'rss_mb'])
+                writer.writerows(self.history)
+            print(f"[MemoryMonitor] Saved trace to {path}", flush=True)
+        except Exception as e:
+            print(f"[MemoryMonitor] Failed to save trace: {e}", flush=True)
 
 class LossLogger(Callback):
-    def __init__(self, rank_id, world_size):
+    def __init__(self, rank_id, world_size, monitor=None):
         self.rank_id = rank_id
         self.world_size = world_size
+        self.monitor = monitor
         self.is_last_stage = (rank_id >= (world_size - world_size // PIPELINE_PARALLEL))
+
         self.log_file = None
         
         # Log if last stage or profiling is enabled
@@ -55,6 +108,11 @@ class LossLogger(Callback):
             with open(self.log_file, "a") as f:
                 f.write(f"{step},{actual_loss}\n")
 
+        # Memory Monitor Stop
+        if step == 1 and self.monitor and self.monitor.running:
+            print(f"[LossLogger][rank {self.rank_id}] Step 1 finished, stopping memory monitor...", flush=True)
+            self.monitor.stop()
+
 # Some launchers (e.g. mpirun) do not export Ascend envs by default; derive them from MPI vars.
 def _ensure_ascend_env():
     mpi_rank = os.getenv("OMPI_COMM_WORLD_RANK") or os.getenv("PMI_RANK")
@@ -76,12 +134,13 @@ MODEL_NAME = "llama2_7b"       # 实际权重名/本地路径
 # ----------------------
 # Configuration
 # ----------------------
-USE_FAST_INIT = False              # Enable Fast/No-Op Initialization
+USE_FAST_INIT = True              # Enable Fast/No-Op Initialization
 FAST_INIT_CKPT_DIR = "./checkpoint_meta"          # Directory containing checkpoint_meta_rank*.pkl
 ENABLE_PROFILING = True            # Enable detailed profiling output
 PROFILING_OUTPUT_DIR = "./output/profiling"  # Output directory for profiling logs
 META_OUTPUT_DIR = "./checkpoint_meta"             # Directory to save checkpoint_meta_rank*.pkl (default current dir)
 SAVE_OPTIMIZER = True              # Whether to save optimizer state
+ASYNC_SAVE = True                  # Enable Async Host->SSD Write
 
 SEQ_LEN = 4096
 BATCH_SIZE = 2                  # per-device batch；需能整除 micro_batch_num
@@ -101,7 +160,7 @@ ATOL = 1e-6
 DATA_PARALLEL = 1
 MODEL_PARALLEL = 2
 PIPELINE_PARALLEL = 2
-TRAIN_STEPS = 100  # Total training steps to run. Set to -1 for full epoch.
+TRAIN_STEPS = 5  # Total training steps to run. Set to -1 for full epoch.
 
 # Guarantee reproducibility
 ms.set_seed(1024)
@@ -143,15 +202,21 @@ class DirectCkptCallback(Callback):
 
     def _get_optimizer(self, run_context):
         cb_params = run_context.original_args()
-        # 1. Try cb_params.optimizer
         if hasattr(cb_params, 'optimizer') and cb_params.optimizer:
             return cb_params.optimizer
-        # 2. Try cb_params.train_network.optimizer (e.g. TrainOneStepCell)
         if hasattr(cb_params, 'train_network'):
             net = cb_params.train_network
             if hasattr(net, 'optimizer') and net.optimizer:
                 return net.optimizer
         return None
+
+    def set_async_load_future(self, future):
+        """Allow an external async loading task to be waited on."""
+        self.async_load_future = future
+        
+    def set_compilation_start(self, t):
+        self.compilation_start_time = t
+        self.has_logged_timeline = False
 
     def on_train_begin(self, run_context):
         # Locate optimizer
@@ -162,8 +227,34 @@ class DirectCkptCallback(Callback):
             print(f"[DirectCkpt][Rank {self.rank_id}] WARNING: Optimizer not found in run_context!", flush=True)
 
         # Resume loading if needed
-        if self.resume_meta_path and os.path.exists(self.resume_meta_path):
-            print(f"[DirectCkpt][Rank {self.rank_id}] Resuming from {self.resume_meta_path}...", flush=True)
+        # Strategy:
+        # 1. If we have an async load future (for Model), wait for it.
+        # 2. If optimizer is found and not loaded yet, load it synchronously.
+        # 3. If no async future, load everything synchronously.
+        
+        has_async_model = hasattr(self, 'async_load_future') and self.async_load_future is not None
+        
+        if has_async_model:
+            print(f"[DirectCkpt][Rank {self.rank_id}] Waiting for async model load to complete...", flush=True)
+            try:
+                self.preload_res = self.async_load_future.result() # Wait and get result/exception
+                self.preload_done_ts = time.time()
+                print(f"[DirectCkpt][Rank {self.rank_id}] Async model load completed.", flush=True)
+            except Exception as e:
+                print(f"[DirectCkpt][Rank {self.rank_id}] Async model load failed: {e}", flush=True)
+                raise e
+            
+            # Now load optimizer if needed (since async usually only covers model)
+            if self.optimizer and SAVE_OPTIMIZER and self.resume_meta_path: 
+                 print(f"[DirectCkpt][Rank {self.rank_id}] Loading optimizer synchronously...", flush=True)
+                 try:
+                     self.ckpt.load([self.optimizer], meta_path=self.resume_meta_path)
+                     print(f"[DirectCkpt][Rank {self.rank_id}] Optimizer load success.", flush=True)
+                 except Exception as e:
+                     print(f"[DirectCkpt][Rank {self.rank_id}] Optimizer load failed: {e}", flush=True)
+
+        elif self.resume_meta_path and os.path.exists(self.resume_meta_path):
+            print(f"[DirectCkpt][Rank {self.rank_id}] Resuming from {self.resume_meta_path} (Sync)...", flush=True)
             try:
                 # Load both model weights and optimizer states
                 targets = [self.model]
@@ -174,6 +265,40 @@ class DirectCkptCallback(Callback):
                 print(f"[DirectCkpt][Rank {self.rank_id}] Resume load success.", flush=True)
             except Exception as e:
                 print(f"[DirectCkpt][Rank {self.rank_id}] Resume load failed: {e}", flush=True)
+                
+    def on_train_step_begin(self, run_context):
+        # We simulate "Compilation End" at the beginning of the very first step.
+        # This is when graph compilation (initiated by the first step execution) effectively finishes.
+        if not getattr(self, "has_logged_timeline", False):
+            self.has_logged_timeline = True
+            compilation_end_time = time.time()
+            
+            if ENABLE_PROFILING and hasattr(self, "compilation_start_time"):
+                 try:
+                     comp_dur = compilation_end_time - self.compilation_start_time
+                     log_path = os.path.join(PROFILING_OUTPUT_DIR, f"timeline_rank{self.rank_id}.csv")
+                     os.makedirs(PROFILING_OUTPUT_DIR, exist_ok=True)
+                     
+                     p_start, p_end = 0, 0
+                     # Check if we had async preload results stored
+                     if hasattr(self, "preload_res") and isinstance(self.preload_res, dict):
+                         p_start = self.preload_res.get("start", 0)
+                         p_end = self.preload_res.get("end", 0)
+                     
+                     overlap_start = max(self.compilation_start_time, p_start)
+                     overlap_end = min(compilation_end_time, p_end)
+                     overlap = max(0, overlap_end - overlap_start)
+                     
+                     with open(log_path, "w") as f:
+                         f.write("event,start_ts,end_ts,duration_s\n")
+                         f.write(f"Compilation,{self.compilation_start_time:.4f},{compilation_end_time:.4f},{comp_dur:.4f}\n")
+                         if p_start > 0:
+                             f.write(f"AsyncPreload,{p_start:.4f},{p_end:.4f},{p_end-p_start:.4f}\n")
+                             f.write(f"Overlap,{overlap_start:.4f},{overlap_end:.4f},{overlap:.4f}\n")
+                     
+                     print(f"[DirectCkpt][Timeline] Compilation={comp_dur:.2f}s Preload={p_end-p_start:.2f}s Overlap={overlap:.2f}s", flush=True)
+                 except Exception as ex:
+                     print(f"[DirectCkpt][Timeline] Failed to log: {ex}", flush=True)
 
     def step_end(self, run_context):
         cbp = run_context.original_args()
@@ -191,6 +316,7 @@ class DirectCkptCallback(Callback):
         total, num_chunks, t_save, bw, stats = self.ckpt.save(
             targets,
             meta_path=self.ckpt_meta_path,
+            async_save=ASYNC_SAVE
         )
         save_end = time.time()
         
@@ -206,14 +332,16 @@ class DirectCkptCallback(Callback):
 
         # Skip AllReduce stats if profiling disabled
         if not ENABLE_PROFILING:
+            mode_str = "ASYNC" if ASYNC_SAVE else "SYNC"
             print(
-                f"[DirectCkpt][rank {self.rank_id}] step={step} size={total/1024/1024:.1f}MB "
+                f"[DirectCkpt][rank {self.rank_id}][{mode_str}] step={step} size={total/1024/1024:.1f}MB "
                 f"chunks={num_chunks} save_time={t_save:.3f}s bw={bw:.1f}MB/s",
                 flush=True,
             )
             return
 
         agg_total_mb = None
+
 
         agg_time_s = None
         agg_window_bw = None
@@ -256,32 +384,14 @@ class DirectCkptCallback(Callback):
                  msg += f"\n[DirectCkpt][aggregate] save Per-Rank BW: {all_bw} MB/s"
                  msg += f" Avg: {np.mean(all_bw):.1f} MB/s"
             
+            if ASYNC_SAVE:
+                msg += " [ASYNC MODE: Save time is blocking only]"
+            
             print(msg, flush=True)
-        # 仅 rank0 做一次读取校验，避免多卡重复；只校验本 rank 持有的参数，忽略其他 pipeline stage
-        '''
-        if self.rank_id == 0:
-            ms_ckpt_path = f"ms_step_{step}.ckpt"
-            ms.save_checkpoint(self.model, ms_ckpt_path)
-            self.ckpt.load(self.model, meta_path=f"checkpoint_meta_rank{self.rank_id}.pkl")
-            ref_dict = ms.load_checkpoint(ms_ckpt_path)
-            mismatches = []
-            skipped = 0
-            for name, param in self.model.parameters_and_names():
-                if name not in ref_dict:
-                    skipped += 1  # 参数可能属于其他 pipeline stage，不在本 rank 的参考 ckpt 中
-                    continue
-                arr = param.asnumpy()
-                ref = ref_dict[name].asnumpy()
-                if not np.allclose(arr, ref, rtol=RTOL, atol=ATOL):
-                    mismatches.append(name)
-            if mismatches:
-                print(f"[DirectCkpt][rank 0] verify mismatch={len(mismatches)} first={mismatches[:5]} (skipped {skipped})", flush=True)
-            else:
-                print(f"[DirectCkpt][rank 0] verify ok at step {step} (skipped {skipped})", flush=True)
-        '''
+
 
         # === 讀回检查点并统计带宽 ===
-        if ENABLE_PROFILING:
+        if False: # ENABLE_PROFILING and not ASYNC_SAVE:
             load_start = time.time()
             total_load, num_chunks_load, t_load, bw_load, stats_load = self.ckpt.load(
                 self.model,
@@ -376,12 +486,20 @@ class TrainStepControl(Callback):
 
 def main():
     _ensure_ascend_env()
+    
+    # Start Memory Monitor
+    rank_env = int(os.getenv("RANK_ID", "0"))
+    monitor = MemoryMonitor(PROFILING_OUTPUT_DIR, rank_env)
+    print(f"[Main] Starting Memory Monitor (initial rank={rank_env})...", flush=True)
+    monitor.start()
+
     # init() 会检查模式，需在通信初始化前显式设为 GRAPH
     pre_rank_id = int(os.getenv("RANK_ID", "0"))
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=pre_rank_id)
     start_init_time = time.time()
     init()
     rank_id = get_rank()
+    monitor.rank_id = rank_id # Update correct rank
     rank_size = get_group_size()
 
     assert rank_size == DATA_PARALLEL * MODEL_PARALLEL * PIPELINE_PARALLEL, \
@@ -407,6 +525,10 @@ def main():
     cfg.compute_dtype = ms.float16
     cfg.param_init_type = ms.float16
 
+    # [Exp] Force reduce layers to verify Compilation Time scaling
+    # cfg.num_layers = 2 
+    # print(f"[Main] ⚠️ EXPERIMENT: Forced num_layers={cfg.num_layers} to measuer compile time!", flush=True)
+
     # 并行相关字段（MindFormers LLaMA 配置通常支持以下字段）
     cfg.parallel_config = cfg.parallel_config if hasattr(cfg, "parallel_config") else None
     if cfg.parallel_config:
@@ -429,12 +551,14 @@ def main():
     
     # Decide where to save/load meta
     os.makedirs(META_OUTPUT_DIR, exist_ok=True)
-    ckpt_meta_path = os.path.join(META_OUTPUT_DIR, f"checkpoint_meta_rank{rank_id}.pkl")
+    ckpt_filename = f"checkpoint_meta_rank{rank_id}.pkl"
+    ckpt_meta_path = os.path.join(META_OUTPUT_DIR, ckpt_filename)
     resume_path = None
     
     if USE_FAST_INIT:
          # Override path to fast init dir
-         fast_ckpt_path = os.path.join(FAST_INIT_CKPT_DIR, ckpt_meta_path)
+         # Fix: Do not join dir again if ckpt_meta_path already contains it, or construct cleanly
+         fast_ckpt_path = os.path.join(FAST_INIT_CKPT_DIR, ckpt_filename)
          if os.path.exists(fast_ckpt_path):
              ckpt_meta_path = fast_ckpt_path
              has_ckpt = True
@@ -501,9 +625,34 @@ def main():
     
     dc_cb = DirectCkptCallback(model, rank_id=rank_id, world_size=rank_size, ckpt_manager=ckpt_manager, resume_meta_path=resume_path, ckpt_meta_path=ckpt_meta_path)
 
-    
+    # [Async Preload Optimization]
+    # If using FAST_INIT and resume, we can start loading Model Weights NOW in a background thread.
+    # While Trainer compiles the graph, IO happens in parallel.
+    if has_ckpt and USE_FAST_INIT:
+         print(f"[Main][Rank {rank_id}] Starting Async Model Preload...", flush=True)
+         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+         
+         def do_preload():
+             # [Fix] Bind thread to NPU context before calling C/ACL functions
+             try:
+                 ckpt_manager.bind_thread()
+                 print(f"[Preloader][Rank {rank_id}] Thread bound to device.", flush=True)
+             except Exception as e:
+                 print(f"[Preloader][Rank {rank_id}] Warning: bind_thread failed: {e}", flush=True)
+
+             t_start = time.time()
+             # Only load model here. Optimizers are not available yet.
+             print(f"[Preloader][Rank {rank_id}] Loading model from {ckpt_meta_path}...", flush=True)
+             ckpt_manager.load([model], meta_path=ckpt_meta_path)
+             t_end = time.time()
+             return {"start": t_start, "end": t_end}
+             
+         future = executor.submit(do_preload)
+         dc_cb.set_async_load_future(future)
+         executor.shutdown(wait=False) # Don't wait here
+
     # Loss Logger
-    loss_cb = LossLogger(rank_id, world_size=rank_size)
+    loss_cb = LossLogger(rank_id, world_size=rank_size, monitor=monitor)
 
     # Trainer
     cbs = [dc_cb, loss_cb]
@@ -527,6 +676,11 @@ def main():
     pc.pipeline_stage = PIPELINE_PARALLEL
     pc.context_parallel = 1
     pc.vocab_emb_dp = False
+    
+    # Disable Default Checkpointing (We use DirectCkptCallback)
+    trainer.config.save_checkpoint = False
+    trainer.config.runner_config.save_checkpoint = False
+
     pc.use_seq_parallel = True
     pc.micro_batch_num = GRAD_ACCUM_STEPS
 
@@ -538,8 +692,18 @@ def main():
     end_init_time = time.time()
     print(f"Initialization time: {end_init_time - start_init_time:.2f} seconds, rank {rank_id}/{rank_size}")
 
+    # Set Compilation Start Time for Profiling
+    dc_cb.set_compilation_start(time.time())
+
     trainer.train(do_eval=False)
 
 
 if __name__ == "__main__":
     main()
+    
+    if os.path.exists('./output/checkpoint'):
+        shutil.rmtree('./output/checkpoint')
+    if os.path.exists('./output/checkpoint_network'):
+        shutil.rmtree('./output/checkpoint_network')
+    if os.path.exists('./output/strategy'):
+        shutil.rmtree('./output/strategy')

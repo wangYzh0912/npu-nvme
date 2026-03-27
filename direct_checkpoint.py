@@ -3,7 +3,9 @@ import math
 import os
 import pickle
 import time
+import threading
 from typing import List, Dict
+import copy
 
 import mindspore as ms
 from mindspore import ops
@@ -51,6 +53,20 @@ lib.npu_nvme_write_batch.argtypes = [
 ]
 lib.npu_nvme_write_batch.restype = ctypes.c_int
 
+# write_batch_host (New for Async)
+try:
+    lib.npu_nvme_write_batch_host.argtypes = [
+        ctypes.POINTER(NPUNVMEContext),
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_uint64),
+        ctypes.POINTER(ctypes.c_size_t),
+        ctypes.c_int
+    ]
+    lib.npu_nvme_write_batch_host.restype = ctypes.c_int
+except AttributeError:
+    # Function not found in .so (needs rebuild)
+    pass
+
 lib.npu_nvme_read_batch.argtypes = [
     ctypes.POINTER(NPUNVMEContext),
     ctypes.POINTER(ctypes.c_void_p),
@@ -59,6 +75,13 @@ lib.npu_nvme_read_batch.argtypes = [
     ctypes.c_int
 ]
 lib.npu_nvme_read_batch.restype = ctypes.c_int
+
+# bind_thread (New for Async Load)
+try:
+    lib.npu_nvme_bind_thread.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_bind_thread.restype = ctypes.c_int
+except AttributeError:
+    pass
 
 
 # ============================================================
@@ -117,9 +140,10 @@ def rebuild_chunks_from_meta(models, meta: Dict, chunk_size: int):
             if hasattr(data_obj, "_data_ptr"):
                  # To be safe for uninitialized params (though load usually implies existing structure)
                  if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
-                     ptr = 0
-                 else:
-                     ptr = int(data_obj._data_ptr())
+                     # Force init data if not present (otherwise ptr is useless)
+                     p.init_data()
+                 
+                 ptr = int(data_obj._data_ptr())
         except Exception:
             # If _data_ptr() fails (e.g. Tensor not on device), we catch it here and fall back to 0
             ptr = 0
@@ -226,20 +250,192 @@ class DirectCheckpoint:
         # 生效的 chunk_size：完全采用用户请求值，设备返回值仅作参考打印
         eff = lib.npu_nvme_get_max_transfer(self.ctx)
         self.chunk_size = requested_chunk_size
-        print(
-            f"[DirectCheckpoint] init ok. "
-            f"pipeline_depth={pipeline_depth}, "
-            f"requested_chunk={requested_chunk_size/1024/1024:.2f}MB, "
-            f"effective_chunk={self.chunk_size/1024/1024:.2f}MB (raw_device={eff/1024/1024:.2f}MB) "
-            f"rank={self.rank_id}/{self.world_size}, base_offset={self.base_offset_bytes}, shm_id={os.environ.get('SPDK_SHM_ID')}"
-        )
+        print(f"[DirectCheckpoint] init ok. pipeline_depth={pipeline_depth}, requested_chunk={requested_chunk_size/1024/1024:.2f}MB, effective_chunk={self.chunk_size/1024/1024:.2f}MB (raw_device={eff/1024/1024:.2f}MB) rank={self.rank_id}/{self.world_size}, base_offset={self.base_offset_bytes}, shm_id={os.environ.get('SPDK_SHM_ID')}")
         self.meta = {}
         self.total_size = 0
+        self.async_thread = None
+        self.async_lock = threading.Lock()
+
+    def bind_thread(self):
+        """Must call this in any thread that performs NPU operations (aclrtMemcpy)."""
+        if hasattr(lib, "npu_nvme_bind_thread"):
+            rc = lib.npu_nvme_bind_thread(self.ctx)
+            if rc != 0:
+                print(f"[DirectCheckpoint] bind_thread failed rc={rc}", flush=True)
+                return False
+            else:
+                 # print(f"[DirectCheckpoint] bind_thread success on {threading.current_thread().name}", flush=True)
+                 return True
+        else:
+             print("[DirectCheckpoint] WARN: npu_nvme_bind_thread not found in libnpu_nvme.so. Please rebuild.", flush=True)
+             return False
 
     def cleanup(self):
+        if self.async_thread and self.async_thread.is_alive():
+             self.async_thread.join()
         if self.ctx:
             lib.npu_nvme_cleanup(self.ctx)
             self.ctx = None
+
+    def save_async(self, models, meta_path: str):
+        """
+        异步保存：
+        1. 在主线程中（NPU流中）完成 D2H Copy，将所有 Tensor 拷贝到 Host 内存 (numpy)。
+        2. 启动后台线程将 numpy 数据写入 NVMe。
+        3. 主线程立即返回，只阻塞 D2H 拷贝的时间。
+        """
+        t_start = time.time()
+        
+        # 1. Wait for previous async save if overlap
+        if self.async_thread and self.async_thread.is_alive():
+            print(f"[SaveAsync] Waiting for previous save to finish...", flush=True)
+            self.async_thread.join()
+            
+        t_wait = time.time()
+        
+        # 2. Synchronous Snapshot (D2H)
+        if not isinstance(models, (list, tuple)):
+            models_list = [models]
+        else:
+            models_list = models
+            
+        host_snapshot = []
+        total_bytes_copied = 0
+        
+        try:
+            for model in models_list:
+                if model is None: continue
+                
+                # Check if it has parameters_and_names
+                iterator = model.parameters_and_names() if hasattr(model, "parameters_and_names") else []
+                
+                for name, p in iterator:
+                    # Only save Tensors/Parameters
+                    if not hasattr(p, "asnumpy"):
+                        continue
+
+                    # Force D2H Copy
+                    # .asnumpy() creates a new array in Host RAM
+                    np_arr = p.asnumpy()
+                    
+                    total_bytes_copied += np_arr.nbytes
+                    
+                    # Prepare meta info for the worker thread
+                    host_snapshot.append({
+                        "name": name,
+                        "np_arr": np_arr,
+                        "ptr": np_arr.ctypes.data, # Host RAM ptr
+                        "size": np_arr.nbytes,
+                        "shape": list(p.shape),
+                        "dtype": str(np_arr.dtype.name)
+                    })
+        except Exception as e:
+            print(f"[SaveAsync] Snapshot failed: {e}", flush=True)
+            raise e
+            
+        t_snapshot = time.time()
+        
+        # Estimate BW for snapshot phase
+        snapshot_time = t_snapshot - t_wait
+        if snapshot_time <= 0: snapshot_time = 0.0001
+        snapshot_bw = total_bytes_copied / 1024 / 1024 / snapshot_time
+        
+        print(f"[SaveAsync] Snapshot (D2H) Done. Size={total_bytes_copied/1024/1024:.2f}MB Time={snapshot_time:.4f}s BW={snapshot_bw:.2f}MB/s", flush=True)
+        
+        # 3. Launch Background Thread
+        self.async_thread = threading.Thread(
+            target=self._background_write_worker,
+            args=(host_snapshot, meta_path, total_bytes_copied)
+        )
+        self.async_thread.start()
+        
+        # Return stats immediately (reflecting blocking time only)
+        # Note: 'total' returned here is the size, but 'real_time' is just the blocking time
+        # The caller (Callback) will log this as "save time", which is what we want (perceived latency).
+        return total_bytes_copied, len(host_snapshot), snapshot_time, snapshot_bw, {
+            "prep_time": t_wait - t_start,
+            "write_time": 0.0, # Async
+            "total_time": snapshot_time, # Blocking time
+            "bw_pure": snapshot_bw,
+            "bw_e2e": snapshot_bw
+        }
+
+    def _background_write_worker(self, snapshot_params, meta_path, total_size):
+        """
+        Background worker that writes the Host snapshot to NVMe.
+        This runs in parallel with training steps.
+        """
+        print(f"[AsyncWorker] Start writing {len(snapshot_params)} params ({total_size/1024/1024:.2f}MB) to NVMe...", flush=True)
+        t0 = time.time()
+        
+        try:
+            # 1. Re-use save logic but with pre-filled CPU pointers
+            # We need to construct layout
+            nvme_offset = 0
+            layout = []
+            
+            # Recalculate layout based on snapshot
+            for p in snapshot_params:
+                # Add offset info
+                p["offset"] = nvme_offset
+                layout.append(p)
+                nvme_offset += int(math.ceil(p["size"] / 4096.0) * 4096)
+                
+            # 2. Build chunks
+            chunks, total = build_chunks(layout, self.chunk_size)
+            
+            # 3. Prepare C arrays
+            num = len(chunks)
+            c_ptrs = (ctypes.c_void_p * num)()
+            c_offs = (ctypes.c_uint64 * num)()
+            c_sizes = (ctypes.c_size_t * num)()
+            
+            for i, (p, o, s) in enumerate(chunks):
+                # p is c_void_p already from build_chunks
+                c_ptrs[i] = p
+                c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
+                c_sizes[i] = s
+                
+            # 4. Write Execution
+            t_write_start = time.time()
+            if hasattr(lib, "npu_nvme_write_batch_host"):
+                rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs, c_offs, c_sizes, num)
+            else:
+                print("[AsyncWorker] ERROR: libnpu_nvme.so outdated. Run build.sh!", flush=True)
+                rc = -1
+            
+            t_write_end = time.time()
+            
+            if rc != 0:
+                print(f"[AsyncWorker] ERROR: write_batch failed with rc={rc}", flush=True)
+                return
+
+            # 5. Save Meta
+            meta = {
+                "chunk_size": self.chunk_size,
+                "total_size": total,
+                "rank_id": self.rank_id,
+                "world_size": self.world_size,
+                "base_offset_bytes": self.base_offset_bytes,
+                "shard_span_bytes": self.shard_span_bytes,
+                "params": {p["name"]: {
+                    "offset": p["offset"],
+                    "size": p["size"],
+                    "shape": p["shape"],
+                    "dtype": p["dtype"],
+                } for p in layout}
+            }
+            with open(meta_path, "wb") as f:
+                pickle.dump(meta, f)
+            
+            worker_time = t_write_end - t0
+            io_time = t_write_end - t_write_start
+            bw = total / 1024 / 1024 / worker_time if worker_time > 0 else 0
+            
+            print(f"[AsyncWorker] Done. IO={io_time:.2f}s Total_Worker={worker_time:.2f}s BW={bw:.2f}MB/s Meta={meta_path}", flush=True)
+            
+        except Exception as e:
+            print(f"[AsyncWorker] Exception: {e}", flush=True)
 
     def _prepare_params(self, models):
         # Support single model or list of models
@@ -316,7 +512,11 @@ class DirectCheckpoint:
                     })
         return params
 
-    def save(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl"):
+    def save(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl", async_save: bool = False):
+        if async_save:
+            # Note: Returns only Snapshot latency stats
+            return self.save_async(model, meta_path)
+            
         t_start = time.time()
         if self.chunk_size <= 0:
             raise RuntimeError(f"invalid chunk_size={self.chunk_size}, please check npu_nvme_get_max_transfer or requested_chunk_size")

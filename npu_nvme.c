@@ -283,6 +283,18 @@ fail:
     free(ctx);
     return -1;
 }
+
+int npu_nvme_bind_thread(npu_nvme_context_t *ctx) {
+    if (!ctx) return -1;
+    // Bind current thread to ctx->device_id so aclrtMemcpy works
+    aclError ret = aclrtSetDevice(ctx->npu_device_id);
+    if (ret != ACL_SUCCESS) {
+        fprintf(stderr, "[npu_nvme_bind_thread] aclrtSetDevice(%d) failed: %d\n", ctx->npu_device_id, ret);
+        return -1;
+    }
+    return 0;
+}
+
 void npu_nvme_cleanup(npu_nvme_context_t *ctx) {
     if (!ctx) return;
     if (ctx->pool) {
@@ -416,6 +428,135 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
     if (ctx->enable_profiling) {
         char path[512];
         snprintf(path, sizeof(path), "%s/time_write.csv", ctx->profiling_dir);
+        FILE *f = fopen(path, "w");
+        if (f) {
+            fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
+            for (int i = 0; i < num_items; ++i) {
+                if (stat[i].state == 2) {
+                    uint64_t nvme_us = (stat[i].done_ts >= stat[i].submit_ts)
+                                    ? (stat[i].done_ts - stat[i].submit_ts)
+                                    : 0;
+                    fprintf(f, "%d,%d,%lu,%lu\n",
+                            i, stat[i].buf_idx, stat[i].copy_us, nvme_us);
+                }
+            }
+            fclose(f);
+        }
+    }
+
+cleanup:
+    free(stat);
+    free(cb_ctx);
+    free(flags);
+    free(buf_idx);
+    free(reclaimed);
+    return ret;
+}
+
+int npu_nvme_write_batch_host(npu_nvme_context_t *ctx,
+                         void **host_ptrs,
+                         uint64_t *nvme_offsets,
+                         size_t *sizes,
+                         int num_items) {
+    if (!ctx || !host_ptrs || !nvme_offsets || !sizes || num_items <= 0) return -1;
+
+    static int log_once_host = 0;
+    if (!log_once_host) {
+        size_t max_sz = 0, min_sz = (size_t)-1;
+        int sample = num_items < 8 ? num_items : 8;
+        fprintf(stderr, "[npu_nvme_write_batch_host] num=%d max_transfer=%zu\n", num_items, ctx->max_transfer);
+        for (int i = 0; i < sample; ++i) {
+            if (sizes[i] > max_sz) max_sz = sizes[i];
+            if (sizes[i] < min_sz) min_sz = sizes[i];
+            fprintf(stderr, "  item%d sz=%zu off=%lu\n", i, sizes[i], nvme_offsets[i]);
+        }
+        fprintf(stderr, "  min_sz=%zu max_sz=%zu\n", min_sz, max_sz);
+        log_once_host = 1;
+    }
+
+    int submitted = 0, completed = 0;
+    int idx;
+    int ret = 0;
+
+    int *flags = calloc(num_items, sizeof(int));
+    int *buf_idx = calloc(num_items, sizeof(int));
+    bool *reclaimed = calloc(num_items, sizeof(bool));
+    item_stat_t *stat = calloc(num_items, sizeof(item_stat_t));
+    cb_ctx_t *cb_ctx = calloc(num_items, sizeof(cb_ctx_t));
+    if (!stat || !cb_ctx || !flags || !buf_idx || !reclaimed) { ret = -1; goto cleanup; }
+
+    while (completed < num_items) {
+        while (submitted < num_items) {
+            if (!ring_pop(&ctx->free_ring, &idx)) break;
+            size_t sz = sizes[submitted];
+            if (sz == 0 || sz > ctx->max_transfer) {
+                flags[submitted] = -1;
+                reclaimed[submitted] = true;
+                submitted++; completed++;
+                continue;
+            }
+            size_t aligned = ALIGN_4K(sz);
+            if (aligned > ctx->pool[idx].size) {
+                flags[submitted] = -1;
+                reclaimed[submitted] = true;
+                submitted++; completed++;
+                continue;
+            }
+
+            // HOST Copy (memcpy) instead of D2H
+            uint64_t t1 = tv_us();
+            memcpy(ctx->pool[idx].buf, host_ptrs[submitted], sz);
+            uint64_t t2 = tv_us();
+
+            uint64_t lba = nvme_offsets[submitted] / ctx->block_size;
+            uint32_t nblk = (uint32_t)(aligned / ctx->block_size);
+
+            stat[submitted].copy_us   = t2 - t1;
+            stat[submitted].buf_idx   = idx;
+            stat[submitted].state     = 1;
+            stat[submitted].submit_ts = tv_us();
+
+            cb_ctx[submitted].item     = submitted;
+            cb_ctx[submitted].flag_ptr = &flags[submitted];
+            cb_ctx[submitted].stat_ptr = stat;
+
+            flags[submitted] = 0;
+            buf_idx[submitted] = idx;
+            int rc = spdk_nvme_ns_cmd_write(ctx->ns, ctx->qpair,
+                                            ctx->pool[idx].buf,
+                                            lba, nblk,
+                                            io_complete, &cb_ctx[submitted], 0);
+            if (rc != 0) {
+                fprintf(stderr, "[write_batch_host] write failed item %d rc=%d lba=%lu nblk=%u\n",
+                        submitted, rc, lba, nblk);
+                flags[submitted] = -1;
+                reclaimed[submitted] = true;
+                submitted++; completed++;
+                ring_push(&ctx->free_ring, idx);
+                continue;
+            }
+            submitted++;
+        }
+
+        spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+
+        for (int i = 0; i < num_items; ++i) {
+            if (!reclaimed[i] && stat[i].state == 2) { 
+                ring_push(&ctx->free_ring, stat[i].buf_idx);
+                reclaimed[i] = true;
+                if (flags[i] != 1) ret = -1;
+                completed++;
+            }
+        }
+
+        if (submitted >= num_items && completed < num_items)
+            usleep(50);
+    }
+    
+    // Optional Profiling for Host Write
+    if (ctx->enable_profiling) {
+        char path[512];
+        snprintf(path, sizeof(path), "%s/time_write_host.csv", ctx->profiling_dir);
         FILE *f = fopen(path, "w");
         if (f) {
             fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
