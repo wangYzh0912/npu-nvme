@@ -2,6 +2,8 @@ import ctypes
 import math
 import os
 import pickle
+import json
+import struct
 import time
 import threading
 from typing import List, Dict
@@ -13,160 +15,143 @@ import numpy as np
 
 
 # ============================================================
-# 绑定 C 接口
+# 裸盘物理布局常量
+# ============================================================
+BLOCK_SIZE = 4096
+SUPERBLOCK_LBA = 0
+META_SLOT_A_LBA = 1
+META_SLOT_B_LBA = 101
+META_SLOT_BLOCKS = 100       # 每个 Meta Slot 约 400KB，足够存巨型 JSON
+MAGIC_NUMBER = b"NPUNVME1"   # 防呆校验魔数
+
+# ============================================================
+# 绑定 C 接口 (统一部署于文件头部)
 # ============================================================
 _LIB_PATH = os.path.join(os.path.dirname(__file__), "out", "lib", "libnpu_nvme.so")
-lib = ctypes.CDLL(_LIB_PATH)
 
-class NPUNVMEContext(ctypes.Structure):
-    pass
-
-# init(ctx**, addr, pipeline_depth, requested_chunk_size)
-lib.npu_nvme_init.argtypes = [
-    ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)),
-    ctypes.c_char_p,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_bool,
-    ctypes.c_char_p,
-]
-
-# (Removed unused helper bindings)
-lib.npu_nvme_init.restype = ctypes.c_int
-
-# cleanup
-lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-lib.npu_nvme_cleanup.restype = None
-
-# get_max_transfer
-lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-lib.npu_nvme_get_max_transfer.restype = ctypes.c_int
-
-# write_batch / read_batch
-lib.npu_nvme_write_batch.argtypes = [
-    ctypes.POINTER(NPUNVMEContext),
-    ctypes.POINTER(ctypes.c_void_p),   # void** npu_ptrs
-    ctypes.POINTER(ctypes.c_uint64),   # uint64_t* offsets
-    ctypes.POINTER(ctypes.c_size_t),   # size_t* sizes
-    ctypes.c_int                       # num_items
-]
-lib.npu_nvme_write_batch.restype = ctypes.c_int
-
-# write_batch_host (New for Async)
 try:
-    lib.npu_nvme_write_batch_host.argtypes = [
-        ctypes.POINTER(NPUNVMEContext),
-        ctypes.POINTER(ctypes.c_void_p),
-        ctypes.POINTER(ctypes.c_uint64),
-        ctypes.POINTER(ctypes.c_size_t),
-        ctypes.c_int
+    lib = ctypes.CDLL(_LIB_PATH)
+    
+    class NPUNVMEContext(ctypes.Structure):
+        pass
+
+    # init
+    lib.npu_nvme_init.argtypes = [
+        ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)),
+        ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_char_p,
     ]
-    lib.npu_nvme_write_batch_host.restype = ctypes.c_int
-except AttributeError:
-    # Function not found in .so (needs rebuild)
-    pass
+    lib.npu_nvme_init.restype = ctypes.c_int
 
-lib.npu_nvme_read_batch.argtypes = [
-    ctypes.POINTER(NPUNVMEContext),
-    ctypes.POINTER(ctypes.c_void_p),
-    ctypes.POINTER(ctypes.c_uint64),
-    ctypes.POINTER(ctypes.c_size_t),
-    ctypes.c_int
-]
-lib.npu_nvme_read_batch.restype = ctypes.c_int
+    # cleanup
+    lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_cleanup.restype = None
 
-# bind_thread (New for Async Load)
-try:
-    lib.npu_nvme_bind_thread.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-    lib.npu_nvme_bind_thread.restype = ctypes.c_int
-except AttributeError:
-    pass
+    # get_max_transfer
+    lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_get_max_transfer.restype = ctypes.c_int
+
+    # get_total_blocks (New)
+    lib.npu_nvme_get_total_blocks.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_get_total_blocks.restype = ctypes.c_uint64
+
+    # sync_meta_io (New: Metadata Control Plane)
+    lib.npu_nvme_sync_meta_io.argtypes = [
+        ctypes.POINTER(NPUNVMEContext), ctypes.c_uint64, ctypes.c_uint32, ctypes.c_int, ctypes.c_void_p
+    ]
+    lib.npu_nvme_sync_meta_io.restype = ctypes.c_int
+
+    # write_batch / read_batch
+    lib.npu_nvme_write_batch.argtypes = [
+        ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
+    ]
+    lib.npu_nvme_write_batch.restype = ctypes.c_int
+
+    lib.npu_nvme_read_batch.argtypes = [
+        ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
+    ]
+    lib.npu_nvme_read_batch.restype = ctypes.c_int
+
+    # write_batch_host
+    if hasattr(lib, "npu_nvme_write_batch_host"):
+        lib.npu_nvme_write_batch_host.argtypes = [
+            ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
+        ]
+        lib.npu_nvme_write_batch_host.restype = ctypes.c_int
+
+    # bind_thread
+    if hasattr(lib, "npu_nvme_bind_thread"):
+        lib.npu_nvme_bind_thread.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+        lib.npu_nvme_bind_thread.restype = ctypes.c_int
+
+except OSError as e:
+    print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")
 
 
 # ============================================================
-# 工具：分块与合包
+# 工具：分块与合包 (适配新 LBA 逻辑)
 # ============================================================
 def build_chunks(params: List[Dict], chunk_size: int):
     """
-    将一组参数（含 ptr/size/offset_on_nvme）切成 <= chunk_size 的块。
-    返回 (chunks, total_size)
-    chunks: List[ (ptr, nvme_offset, size) ]
+    基于预先计算好的 param offset 进行切块。
     """
     chunks = []
-    nvme_offset = 0
+    total_size = 0
     for p in params:
         ptr = p["ptr"]
         remaining = p["size"]
         inner_off = 0
+        nvme_offset = p["offset"]  # 现在由调用方直接计算好绝对物理偏移
+        
         while remaining > 0:
             take = min(remaining, chunk_size)
             chunks.append((
-                ctypes.c_void_p(ptr + inner_off),   # NPU 地址 + 偏移
-                ctypes.c_uint64(nvme_offset),       # NVMe 偏移（无空洞）
-                ctypes.c_size_t(take)                # 本块大小
+                ctypes.c_void_p(ptr + inner_off),
+                ctypes.c_uint64(nvme_offset),
+                ctypes.c_size_t(take)
             ))
             remaining -= take
             inner_off += take
-            nvme_offset += int(math.ceil(take / 4096.0) * 4096)  # NVMe 按 4K 对齐推进偏移
-    return chunks, nvme_offset
+            nvme_offset += int(math.ceil(take / 4096.0) * 4096)
+            total_size += take
+            
+    return chunks, total_size
 
-
-def rebuild_chunks_from_meta(models, meta: Dict, chunk_size: int):
-    """
-    根据元数据和 chunk_size，重建读取所需的块列表，并为每个参数分配缓冲区（优先 NPU，失败则 CPU）。
-    支持单个 ms.nn.Cell 或 [model, optimizer] 列表。
-    返回 (chunks, buffers)。
-    """
+def rebuild_chunks_from_meta(models, params_meta: Dict, chunk_size: int):
+    """从元数据恢复读取块布局（保持原有纯粹逻辑）"""
     if not isinstance(models, (list, tuple)):
         models = [models]
 
     buffers = []
     
-    # 辅助：获取设备指针
     def get_dev_ptr(p):
         ptr = 0
         try:
             data_obj = p.data if hasattr(p, "data") else p
-            
-            # [CRITICAL UPDATE]
-            # Based on user's environment:
-            # 1. 'device_address' attribute DOES NOT EXIST on the Tensor object directly.
-            # 2. '_data_ptr()' works and returns a valid integer address.
-            
-            # Therefore, relying on 'device_address' as a gatekeeper causes 100% false negatives (zero_copy=0).
-            # We must try calling '_data_ptr()' directly.
-            
             if hasattr(data_obj, "_data_ptr"):
-                 # To be safe for uninitialized params (though load usually implies existing structure)
                  if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
-                     # Force init data if not present (otherwise ptr is useless)
                      p.init_data()
-                 
                  ptr = int(data_obj._data_ptr())
         except Exception:
-            # If _data_ptr() fails (e.g. Tensor not on device), we catch it here and fall back to 0
             ptr = 0
         return ptr
 
     for model in models:
-        # Skip if None or no parameters_and_names (e.g. empty list entry)
         if model is None or not hasattr(model, "parameters_and_names"):
             continue
 
         for name, param in model.parameters_and_names():
-            if name not in meta:
+            if name not in params_meta:
                 continue
-            info = meta[name]
+            info = params_meta[name]
             
-            # 尝试获取设备指针
             dev_ptr = get_dev_ptr(param)
             use_dev = (dev_ptr != 0)
-            
             np_arr = None
             ptr_val = dev_ptr
             
-            # 若无法获取设备指针，则回退 CPU
             if not use_dev:
                 np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
                 ptr_val = np_arr.ctypes.data
@@ -176,7 +161,7 @@ def rebuild_chunks_from_meta(models, meta: Dict, chunk_size: int):
                 "ptr": ptr_val,
                 "size": info["size"],
                 "offset": info["offset"],
-                "np_arr": np_arr,      # None if zero-copy
+                "np_arr": np_arr,
                 "param_ref": param,
                 "use_dev": use_dev
             })
@@ -218,7 +203,9 @@ class DirectCheckpoint:
         world_size: int = 1,
         base_offset_bytes: int = 0,
         shard_span_bytes: int = None,
-        spdk_shm_id: int = 1,                # shared mem id for SPDK multiprocess
+        spdk_shm_id: int = 1,
+        keep_last_n: int = 3,       # 新增：保留最新 N 份
+        slot_size_gb: int = 50      # 新增：单个槽位容量上限
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
         self.enable_profiling = enable_profiling
@@ -227,9 +214,15 @@ class DirectCheckpoint:
         self.world_size = world_size
         self.base_offset_bytes = base_offset_bytes
         self.shard_span_bytes = shard_span_bytes
-        # set env for SPDK multiprocess (primary/secondary auto-decided by SPDK via shm_id)
         os.environ.setdefault("SPDK_SHM_ID", str(spdk_shm_id))
 
+        # 堆栈与元数据参数
+        self.keep_last_n = keep_last_n
+        self.slot_blocks = (slot_size_gb * 1024**3) // BLOCK_SIZE
+        self.active_meta_slot = 0
+        self.stack_start_lba = 0
+        self.meta_dict = {"checkpoints": {}}
+        
         if self.enable_profiling:
             os.makedirs(self.profiling_dir, exist_ok=True)
 
@@ -247,28 +240,111 @@ class DirectCheckpoint:
         if rc != 0:
             raise RuntimeError("npu_nvme_init failed")
 
-        # 生效的 chunk_size：完全采用用户请求值，设备返回值仅作参考打印
+        self.total_blocks = lib.npu_nvme_get_total_blocks(self.ctx)
+        if self.total_blocks == 0:
+            raise RuntimeError("Failed to get NVMe total blocks from hardware.")
+
         eff = lib.npu_nvme_get_max_transfer(self.ctx)
         self.chunk_size = requested_chunk_size
-        print(f"[DirectCheckpoint] init ok. pipeline_depth={pipeline_depth}, requested_chunk={requested_chunk_size/1024/1024:.2f}MB, effective_chunk={self.chunk_size/1024/1024:.2f}MB (raw_device={eff/1024/1024:.2f}MB) rank={self.rank_id}/{self.world_size}, base_offset={self.base_offset_bytes}, shm_id={os.environ.get('SPDK_SHM_ID')}")
-        self.meta = {}
-        self.total_size = 0
+        print(f"[DirectCheckpoint] init ok. chunk={self.chunk_size/1024/1024:.2f}MB, rank={self.rank_id}/{self.world_size}")
+        
         self.async_thread = None
         self.async_lock = threading.Lock()
 
+        # 初始化并挂载裸盘文件系统
+        self._mount_filesystem()
+
+    def _mount_filesystem(self):
+        """挂载裸盘：读取超级块和元数据字典，防呆校验"""
+        sb_buf = ctypes.create_string_buffer(BLOCK_SIZE)
+        rc = lib.npu_nvme_sync_meta_io(self.ctx, SUPERBLOCK_LBA, 1, 1, ctypes.byref(sb_buf))
+        if rc != 0:
+            raise RuntimeError("Failed to read Superblock.")
+
+        header = struct.unpack("<8s I Q Q", sb_buf.raw[:28])
+        magic = header[0]
+        
+        if magic != MAGIC_NUMBER:
+            raise RuntimeError(f"Disk is NOT formatted! Found magic: {magic}. Please run format script.")
+            
+        self.active_meta_slot = header[1]
+        self.stack_start_lba = header[3]
+        
+        # 兜底：如果格式化时未指定栈顶，这里自动从盘尾分配
+        if self.stack_start_lba == 0:
+            total_stack_blocks = self.world_size * self.keep_last_n * self.slot_blocks
+            self.stack_start_lba = self.total_blocks - total_stack_blocks
+            print(f"[Warning] Auto-calculating stack_start_lba to {self.stack_start_lba}")
+
+        slot_lba = META_SLOT_A_LBA if self.active_meta_slot == 0 else META_SLOT_B_LBA
+        meta_buf = ctypes.create_string_buffer(META_SLOT_BLOCKS * BLOCK_SIZE)
+        lib.npu_nvme_sync_meta_io(self.ctx, slot_lba, META_SLOT_BLOCKS, 1, ctypes.byref(meta_buf))
+        
+        meta_str = meta_buf.value.decode('utf-8').rstrip('\x00')
+        if meta_str:
+            self.meta_dict = json.loads(meta_str)
+            
+        print(f"[Rank {self.rank_id}] FileSystem Mounted. Stack LBA: {self.stack_start_lba}, Active Slot: {'A' if self.active_meta_slot==0 else 'B'}")
+
+    def _get_current_slot_base_lba(self, step: int):
+        """零通信偏移量计算：本地盲算专属 LBA 槽位起始地址"""
+        slot_idx = step % self.keep_last_n
+        rank_offset = self.rank_id * self.keep_last_n * self.slot_blocks
+        slot_offset = slot_idx * self.slot_blocks
+        return self.stack_start_lba + rank_offset + slot_offset
+
+    def _commit_metadata(self, step: int, layout: List[Dict]):
+        """Rank 0 专属：同步 Ping-Pong 强一致性落盘"""
+        if self.rank_id != 0:
+            return
+
+        ckpt_key = f"step_{step}"
+        self.meta_dict["checkpoints"][ckpt_key] = {
+            "type": "SHARD",
+            "chunk_size": self.chunk_size,
+            "rank_id": self.rank_id,
+            "world_size": self.world_size,
+            "params": {p["name"]: {
+                "offset": p["offset"],
+                "size": p["size"],
+                "shape": p["shape"],
+                "dtype": p["dtype"],
+            } for p in layout}
+        }
+        
+        # 清理超出 keep_last_n 的旧版本元数据
+        old_step = step - self.keep_last_n
+        if f"step_{old_step}" in self.meta_dict["checkpoints"]:
+            del self.meta_dict["checkpoints"][f"step_{old_step}"]
+
+        # 算出下一个备用槽位
+        next_slot = 1 if self.active_meta_slot == 0 else 0
+        target_lba = META_SLOT_B_LBA if next_slot == 1 else META_SLOT_A_LBA
+        
+        meta_json = json.dumps(self.meta_dict).encode('utf-8')
+        if len(meta_json) > META_SLOT_BLOCKS * BLOCK_SIZE:
+            raise RuntimeError("Metadata JSON exceeds allocated capacity!")
+            
+        meta_buf = ctypes.create_string_buffer(meta_json, META_SLOT_BLOCKS * BLOCK_SIZE)
+        
+        # 1. 覆写备用 Meta Slot
+        lib.npu_nvme_sync_meta_io(self.ctx, target_lba, META_SLOT_BLOCKS, 0, ctypes.byref(meta_buf))
+        
+        # 2. 原子更新 Superblock
+        sb_buf = ctypes.create_string_buffer(BLOCK_SIZE)
+        struct.pack_into("<8s I Q Q", sb_buf, 0, MAGIC_NUMBER, next_slot, self.total_blocks, self.stack_start_lba)
+        lib.npu_nvme_sync_meta_io(self.ctx, SUPERBLOCK_LBA, 1, 0, ctypes.byref(sb_buf))
+        
+        self.active_meta_slot = next_slot
+
     def bind_thread(self):
-        """Must call this in any thread that performs NPU operations (aclrtMemcpy)."""
         if hasattr(lib, "npu_nvme_bind_thread"):
             rc = lib.npu_nvme_bind_thread(self.ctx)
             if rc != 0:
                 print(f"[DirectCheckpoint] bind_thread failed rc={rc}", flush=True)
                 return False
-            else:
-                 # print(f"[DirectCheckpoint] bind_thread success on {threading.current_thread().name}", flush=True)
-                 return True
-        else:
-             print("[DirectCheckpoint] WARN: npu_nvme_bind_thread not found in libnpu_nvme.so. Please rebuild.", flush=True)
-             return False
+            return True
+        return False
 
     def cleanup(self):
         if self.async_thread and self.async_thread.is_alive():
@@ -277,212 +353,34 @@ class DirectCheckpoint:
             lib.npu_nvme_cleanup(self.ctx)
             self.ctx = None
 
-    def save_async(self, models, meta_path: str):
-        """
-        异步保存：
-        1. 在主线程中（NPU流中）完成 D2H Copy，将所有 Tensor 拷贝到 Host 内存 (numpy)。
-        2. 启动后台线程将 numpy 数据写入 NVMe。
-        3. 主线程立即返回，只阻塞 D2H 拷贝的时间。
-        """
-        t_start = time.time()
-        
-        # 1. Wait for previous async save if overlap
-        if self.async_thread and self.async_thread.is_alive():
-            print(f"[SaveAsync] Waiting for previous save to finish...", flush=True)
-            self.async_thread.join()
-            
-        t_wait = time.time()
-        
-        # 2. Synchronous Snapshot (D2H)
-        if not isinstance(models, (list, tuple)):
-            models_list = [models]
-        else:
-            models_list = models
-            
-        host_snapshot = []
-        total_bytes_copied = 0
-        
-        try:
-            for model in models_list:
-                if model is None: continue
-                
-                # Check if it has parameters_and_names
-                iterator = model.parameters_and_names() if hasattr(model, "parameters_and_names") else []
-                
-                for name, p in iterator:
-                    # Only save Tensors/Parameters
-                    if not hasattr(p, "asnumpy"):
-                        continue
-
-                    # Force D2H Copy
-                    # .asnumpy() creates a new array in Host RAM
-                    np_arr = p.asnumpy()
-                    
-                    total_bytes_copied += np_arr.nbytes
-                    
-                    # Prepare meta info for the worker thread
-                    host_snapshot.append({
-                        "name": name,
-                        "np_arr": np_arr,
-                        "ptr": np_arr.ctypes.data, # Host RAM ptr
-                        "size": np_arr.nbytes,
-                        "shape": list(p.shape),
-                        "dtype": str(np_arr.dtype.name)
-                    })
-        except Exception as e:
-            print(f"[SaveAsync] Snapshot failed: {e}", flush=True)
-            raise e
-            
-        t_snapshot = time.time()
-        
-        # Estimate BW for snapshot phase
-        snapshot_time = t_snapshot - t_wait
-        if snapshot_time <= 0: snapshot_time = 0.0001
-        snapshot_bw = total_bytes_copied / 1024 / 1024 / snapshot_time
-        
-        print(f"[SaveAsync] Snapshot (D2H) Done. Size={total_bytes_copied/1024/1024:.2f}MB Time={snapshot_time:.4f}s BW={snapshot_bw:.2f}MB/s", flush=True)
-        
-        # 3. Launch Background Thread
-        self.async_thread = threading.Thread(
-            target=self._background_write_worker,
-            args=(host_snapshot, meta_path, total_bytes_copied)
-        )
-        self.async_thread.start()
-        
-        # Return stats immediately (reflecting blocking time only)
-        # Note: 'total' returned here is the size, but 'real_time' is just the blocking time
-        # The caller (Callback) will log this as "save time", which is what we want (perceived latency).
-        return total_bytes_copied, len(host_snapshot), snapshot_time, snapshot_bw, {
-            "prep_time": t_wait - t_start,
-            "write_time": 0.0, # Async
-            "total_time": snapshot_time, # Blocking time
-            "bw_pure": snapshot_bw,
-            "bw_e2e": snapshot_bw
-        }
-
-    def _background_write_worker(self, snapshot_params, meta_path, total_size):
-        """
-        Background worker that writes the Host snapshot to NVMe.
-        This runs in parallel with training steps.
-        """
-        print(f"[AsyncWorker] Start writing {len(snapshot_params)} params ({total_size/1024/1024:.2f}MB) to NVMe...", flush=True)
-        t0 = time.time()
-        
-        try:
-            # 1. Re-use save logic but with pre-filled CPU pointers
-            # We need to construct layout
-            nvme_offset = 0
-            layout = []
-            
-            # Recalculate layout based on snapshot
-            for p in snapshot_params:
-                # Add offset info
-                p["offset"] = nvme_offset
-                layout.append(p)
-                nvme_offset += int(math.ceil(p["size"] / 4096.0) * 4096)
-                
-            # 2. Build chunks
-            chunks, total = build_chunks(layout, self.chunk_size)
-            
-            # 3. Prepare C arrays
-            num = len(chunks)
-            c_ptrs = (ctypes.c_void_p * num)()
-            c_offs = (ctypes.c_uint64 * num)()
-            c_sizes = (ctypes.c_size_t * num)()
-            
-            for i, (p, o, s) in enumerate(chunks):
-                # p is c_void_p already from build_chunks
-                c_ptrs[i] = p
-                c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
-                c_sizes[i] = s
-                
-            # 4. Write Execution
-            t_write_start = time.time()
-            if hasattr(lib, "npu_nvme_write_batch_host"):
-                rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs, c_offs, c_sizes, num)
-            else:
-                print("[AsyncWorker] ERROR: libnpu_nvme.so outdated. Run build.sh!", flush=True)
-                rc = -1
-            
-            t_write_end = time.time()
-            
-            if rc != 0:
-                print(f"[AsyncWorker] ERROR: write_batch failed with rc={rc}", flush=True)
-                return
-
-            # 5. Save Meta
-            meta = {
-                "chunk_size": self.chunk_size,
-                "total_size": total,
-                "rank_id": self.rank_id,
-                "world_size": self.world_size,
-                "base_offset_bytes": self.base_offset_bytes,
-                "shard_span_bytes": self.shard_span_bytes,
-                "params": {p["name"]: {
-                    "offset": p["offset"],
-                    "size": p["size"],
-                    "shape": p["shape"],
-                    "dtype": p["dtype"],
-                } for p in layout}
-            }
-            with open(meta_path, "wb") as f:
-                pickle.dump(meta, f)
-            
-            worker_time = t_write_end - t0
-            io_time = t_write_end - t_write_start
-            bw = total / 1024 / 1024 / worker_time if worker_time > 0 else 0
-            
-            print(f"[AsyncWorker] Done. IO={io_time:.2f}s Total_Worker={worker_time:.2f}s BW={bw:.2f}MB/s Meta={meta_path}", flush=True)
-            
-        except Exception as e:
-            print(f"[AsyncWorker] Exception: {e}", flush=True)
-
     def _prepare_params(self, models):
-        # Support single model or list of models
         if not isinstance(models, (list, tuple)):
             models = [models]
-            
         params = []
         for model in models:
-            if model is None: 
-                continue
-            # Some objects (like Optimizer) might not have parameters_and_names directly exposed the same way
-            # But MindSpore Optimizers inherit from Cell, so they usually do.
-            if not hasattr(model, "parameters_and_names"):
+            if model is None or not hasattr(model, "parameters_and_names"):
                 continue
 
             for name, p in model.parameters_and_names():
-                # 优先使用实验性设备指针实现零拷贝；若获取失败则回退到 CPU 拷贝
                 ptr = 0
                 try:
                     data_obj = p.data if hasattr(p, "data") else p
-                    
-                    # [CRITICAL UPDATE]
-                    # Based on user's test: 'device_address' attribute is MISSING on Tensors.
-                    # However, '_data_ptr()' returns a valid address.
-                    # So we must call '_data_ptr()' directly.
-                    
-                    # 1. 尝试 _data_ptr (唯一有效的途径)
                     if hasattr(data_obj, "_data_ptr"):
                         if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
                             ptr = 0
                         else:
                             ptr = int(data_obj._data_ptr())
 
-                    # 2. 备选：如果未来版本有了 device_address
                     if ptr == 0 and hasattr(data_obj, "device_address"):
                         dev_addr = getattr(data_obj, "device_address", None)
                         if dev_addr is not None and hasattr(dev_addr, "ptr"):
                             ptr = int(dev_addr.ptr)
 
                 except Exception:
-                    ptr = 0  # 某些张量尚未物化到 device，回退到 CPU 拷贝
+                    ptr = 0 
                 
                 dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
-                # Skip empty parameters
-                if np.prod(p.shape) == 0:
-                    continue
-
+                if np.prod(p.shape) == 0: continue
                 size = int(np.prod(p.shape)) * dtype_np.itemsize
 
                 shape = list(p.shape)
@@ -492,87 +390,46 @@ class DirectCheckpoint:
                     np_arr = p.asnumpy()
                     ptr = np_arr.ctypes.data
                     params.append({
-                        "name": name,
-                        "ptr": ptr,
-                        "size": size,
-                        "shape": shape,
-                        "dtype": dtype,
-                        "np_arr": np_arr,
-                        "param_ref": p
+                        "name": name, "ptr": ptr, "size": size,
+                        "shape": shape, "dtype": dtype, "np_arr": np_arr, "param_ref": p
                     })
                 else:
                     params.append({
-                        "name": name,
-                        "ptr": ptr,
-                        "size": size,
-                        "shape": shape,
-                        "dtype": dtype,
-                        "np_arr": None,
-                        "param_ref": p
+                        "name": name, "ptr": ptr, "size": size,
+                        "shape": shape, "dtype": dtype, "np_arr": None, "param_ref": p
                     })
         return params
 
-    def save(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl", async_save: bool = False):
+    def save(self, model: ms.nn.Cell, step: int, meta_path: str = "checkpoint_meta.pkl", async_save: bool = False):
         if async_save:
-            # Note: Returns only Snapshot latency stats
-            return self.save_async(model, meta_path)
+            return self.save_async(model, step, meta_path)
             
         t_start = time.time()
-        if self.chunk_size <= 0:
-            raise RuntimeError(f"invalid chunk_size={self.chunk_size}, please check npu_nvme_get_max_transfer or requested_chunk_size")
         params = self._prepare_params(model)
         t_prep = time.time()
-        zero_copy = sum(1 for p in params if p["np_arr"] is None)
-        cpu_copy = len(params) - zero_copy
-        raw_total = sum(p["size"] for p in params)
-        max_item = max(params, key=lambda x: x["size"])
-        print(
-            f"[Save] params={len(params)} zero_copy={zero_copy} cpu_copy={cpu_copy} "
-            f"chunk_size_bytes={self.chunk_size} ({self.chunk_size/1024/1024:.2f}MB) "
-            f"raw_total={raw_total/1024/1024:.2f}MB max_param={max_item['name']} {max_item['size']/1024/1024:.2f}MB",
-            flush=True,
-        )
-        if raw_total > 32 * 1024 * 1024 * 1024:  # >32GB suspicious for gpt2-xl
-            print(f"[Save][WARN] raw_total seems too large: {raw_total/1024/1024/1024:.2f}GB", flush=True)
-        if self.chunk_size < 1024 * 1024:
-            print(f"[Save][WARN] chunk_size <1MB ({self.chunk_size} bytes), expect ~4MB; check C library rebuild", flush=True)
-        if self.shard_span_bytes is not None and (self.base_offset_bytes + raw_total) > (self.base_offset_bytes + self.shard_span_bytes):
-            raise RuntimeError(
-                f"shard_span_bytes too small: need {raw_total}, span {self.shard_span_bytes}, base_offset {self.base_offset_bytes}"
-            )
-        # 输出参数信息到params.csv，便于调试
-        if self.enable_profiling:
-            p_out = os.path.join(self.profiling_dir, "params.csv")
-            with open(p_out, "w") as f:
-                f.write("name,ptr,size,shape,dtype\n")
-                for p in params:
-                    f.write(f"{p['name']},{p['ptr']},{p['size']},\"{p['shape']}\",{p['dtype']}\n")  
-        nvme_offset = 0
+        
+        # 1. 本地盲算绝对起始 LBA
+        base_lba = self._get_current_slot_base_lba(step)
+        current_lba = base_lba
         layout = []
+        
         for p in params:
-            layout.append({
-                **p,
-                "offset": nvme_offset
-            })
-            nvme_offset += int(math.ceil(p["size"] / 4096.0) * 4096)
+            aligned_blocks = int(math.ceil(p["size"] / 4096.0))
+            if (current_lba - base_lba) + aligned_blocks > self.slot_blocks:
+                raise MemoryError(f"Rank {self.rank_id} OOM! Tensor {p['name']} exceeds slot size.")
+            
+            layout.append({**p, "offset": current_lba * BLOCK_SIZE})
+            current_lba += aligned_blocks
 
-        # 生成 chunk 列表
         chunks, total = build_chunks(layout, self.chunk_size)
-        self.total_size = total
-        print(
-            f"[Save] chunks={len(chunks)} total={total/1024/1024:.2f}MB "
-            f"prep_time={t_prep - t_start:.3f}s",
-            flush=True,
-        )
-
-        # 准备 ctypes 数组
+        
         num = len(chunks)
         c_ptrs = (ctypes.c_void_p * num)()
         c_offs = (ctypes.c_uint64 * num)()
         c_sizes = (ctypes.c_size_t * num)()
         for i, (p, o, s) in enumerate(chunks):
             c_ptrs[i] = p
-            c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
+            c_offs[i] = ctypes.c_uint64(o.value) # 不再加 base_offset_bytes，绝对 LBA 直写
             c_sizes[i] = s
 
         t0 = time.time()
@@ -581,38 +438,16 @@ class DirectCheckpoint:
             raise RuntimeError("write_batch failed")
         t1 = time.time()
         
-        # [Corrected] BW should be based on total_elapsed (including D2H copy in _prepare_params)
-        # to reflect the real impact on training throughput.
-        # Original: bw = total / 1024 / 1024 / (t1 - t0)
         real_time = t1 - t_start
         bw = total / 1024 / 1024 / real_time
         
-        print(
-            f"[Save] memcpy+write {t1-t0:.3f}s, BW(pure_write)={total/1024/1024/(t1-t0):.1f} MB/s, "
-            f"BW(e2e)={bw:.1f} MB/s, total_elapsed={real_time:.3f}s",
-            flush=True,
-        )
-
-        # 保存元数据
-        meta = {
-            "chunk_size": self.chunk_size,
-            "total_size": total,
-            "rank_id": self.rank_id,
-            "world_size": self.world_size,
-            "base_offset_bytes": self.base_offset_bytes,
-            "shard_span_bytes": self.shard_span_bytes,
-            "params": {p["name"]: {
-                "offset": p["offset"],
-                "size": p["size"],
-                "shape": p["shape"],
-                "dtype": p["dtype"],
-            } for p in layout}
-        }
-        with open(meta_path, "wb") as f:
-            pickle.dump(meta, f)
-        self.meta = meta
-        print(f"[Save] meta saved to {meta_path}")
+        # 2. 完全同步的元数据落盘 (替代掉以前只写本地 ext4 的逻辑)
+        self._commit_metadata(step, layout)
         
+        # 兼顾备份的本地 pkl 写入 (供你的外围调试脚本使用)
+        with open(meta_path, "wb") as f:
+            pickle.dump(self.meta_dict, f)
+            
         stats = {
             "prep_time": t_prep - t_start,
             "write_time": t1 - t0,
@@ -622,20 +457,96 @@ class DirectCheckpoint:
         }
         return total, len(chunks), real_time, bw, stats
 
-    def load(self, model: ms.nn.Cell, meta_path: str = "checkpoint_meta.pkl"):
+    def save_async(self, models, step: int, meta_path: str):
         t_start = time.time()
-        with open(meta_path, "rb") as f:
-            meta = pickle.load(f)
-        chunk_size = min(meta.get("chunk_size", self.chunk_size), self.chunk_size)
-        self.meta = meta
-        base_off = meta.get("base_offset_bytes", self.base_offset_bytes)
-        if self.base_offset_bytes != base_off:
-            print(f"[Load][WARN] base_offset mismatch: meta {base_off}, current {self.base_offset_bytes}; use meta", flush=True)
-            self.base_offset_bytes = base_off
+        if self.async_thread and self.async_thread.is_alive():
+            self.async_thread.join()
+            
+        t_wait = time.time()
+        models_list = [models] if not isinstance(models, (list, tuple)) else models
+        host_snapshot = []
+        total_bytes_copied = 0
+        
+        for model in models_list:
+            if model is None or not hasattr(model, "parameters_and_names"): continue
+            for name, p in model.parameters_and_names():
+                if not hasattr(p, "asnumpy"): continue
+                np_arr = p.asnumpy()
+                total_bytes_copied += np_arr.nbytes
+                host_snapshot.append({
+                    "name": name, "np_arr": np_arr, "ptr": np_arr.ctypes.data,
+                    "size": np_arr.nbytes, "shape": list(p.shape), "dtype": str(np_arr.dtype.name)
+                })
+        
+        t_snapshot = time.time()
+        snapshot_time = max(t_snapshot - t_wait, 0.0001)
+        snapshot_bw = total_bytes_copied / 1024 / 1024 / snapshot_time
+        
+        self.async_thread = threading.Thread(
+            target=self._background_write_worker,
+            args=(host_snapshot, meta_path, total_bytes_copied, step)
+        )
+        self.async_thread.start()
+        
+        return total_bytes_copied, len(host_snapshot), snapshot_time, snapshot_bw, {
+            "prep_time": t_wait - t_start, "write_time": 0.0,
+            "total_time": snapshot_time, "bw_pure": snapshot_bw, "bw_e2e": snapshot_bw
+        }
 
-        # create empty buffers
+    def _background_write_worker(self, snapshot_params, meta_path, total_size, step):
+        t0 = time.time()
+        try:
+            base_lba = self._get_current_slot_base_lba(step)
+            current_lba = base_lba
+            layout = []
+            
+            for p in snapshot_params:
+                aligned_blocks = int(math.ceil(p["size"] / 4096.0))
+                p["offset"] = current_lba * BLOCK_SIZE
+                layout.append(p)
+                current_lba += aligned_blocks
+                
+            chunks, total = build_chunks(layout, self.chunk_size)
+            
+            num = len(chunks)
+            c_ptrs = (ctypes.c_void_p * num)()
+            c_offs = (ctypes.c_uint64 * num)()
+            c_sizes = (ctypes.c_size_t * num)()
+            for i, (p, o, s) in enumerate(chunks):
+                c_ptrs[i] = p; c_offs[i] = ctypes.c_uint64(o.value); c_sizes[i] = s
+                
+            if hasattr(lib, "npu_nvme_write_batch_host"):
+                rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs, c_offs, c_sizes, num)
+            else:
+                rc = -1
+            if rc != 0: return
+
+            # 同步落盘元数据
+            self._commit_metadata(step, layout)
+            
+            with open(meta_path, "wb") as f:
+                pickle.dump(self.meta_dict, f)
+                
+        except Exception as e:
+            print(f"[AsyncWorker] Exception: {e}", flush=True)
+
+    def load(self, model: ms.nn.Cell, step: int, meta_path: str = "checkpoint_meta.pkl"):
+        t_start = time.time()
+        
+        ckpt_key = f"step_{step}"
+        if ckpt_key not in self.meta_dict.get("checkpoints", {}):
+            # 若内存无，尝试从 pkl 读取兜底
+            if os.path.exists(meta_path):
+                with open(meta_path, "rb") as f:
+                    self.meta_dict = pickle.load(f)
+            if ckpt_key not in self.meta_dict.get("checkpoints", {}):
+                raise FileNotFoundError(f"Checkpoint for step {step} not found in Meta Dictionary!")
+                
+        meta_info = self.meta_dict["checkpoints"][ckpt_key]
+        chunk_size = min(meta_info.get("chunk_size", self.chunk_size), self.chunk_size)
+
         t_rebuild = time.time()
-        chunks, buffers = rebuild_chunks_from_meta(model, meta["params"], chunk_size)
+        chunks, buffers = rebuild_chunks_from_meta(model, meta_info["params"], chunk_size)
         t_rebuild_end = time.time()
         
         num = len(chunks)
@@ -644,56 +555,36 @@ class DirectCheckpoint:
         c_sizes = (ctypes.c_size_t * num)()
         for i, (p, o, s) in enumerate(chunks):
             c_ptrs[i] = p
-            c_offs[i] = ctypes.c_uint64(o.value + self.base_offset_bytes)
+            c_offs[i] = ctypes.c_uint64(o.value)
             c_sizes[i] = s
 
-        # read from NVMe to buffers
         t0 = time.time()
         rc = lib.npu_nvme_read_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
         if rc != 0:
             raise RuntimeError("read_batch failed")
         t1 = time.time()
         
-        # [Fix] Calc bandwidth using actually loaded size (support partial load)
-        # total = meta["total_size"]
         total = sum(c[2].value for c in chunks)
-        
-        # update model weights
         t_update = time.time()
         
         for buf in buffers:
-            # If zero-copy load (use_dev=True), data already in place via read_batch -> aclrtMemcpy(H2D)
-            if buf.get("use_dev", False):
-                continue
-
+            if buf.get("use_dev", False): continue
             param = buf["param_ref"]
             if buf["np_arr"] is not None:
-                # Fallback: copy from numpy buffer to parameter
-                # Note: read_batch likely copied to the numpy buffer using H2D (check implicit behavior)
                 tensor = ms.Tensor(buf["np_arr"], dtype=param.dtype)
                 ops.assign(param, tensor)
         t_end = time.time()
         
-        # Determine actual zero-copy ratio
-        zc_count = sum(1 for b in buffers if b.get("use_dev", False))
-        print(f"[Load] Zero-copy applied to {zc_count}/{len(buffers)} params", flush=True)
-
         pure_read_time = t1 - t0
         total_time = t_end - t_start
-        bw_read = total / 1024 / 1024 / pure_read_time if pure_read_time > 0 else 0
         bw_e2e = total / 1024 / 1024 / total_time if total_time > 0 else 0
 
-        print(
-            f"[Load] prepare={t_rebuild_end - t_rebuild:.3f}s read={pure_read_time:.3f}s set_data={t_end - t_update:.3f}s "
-            f"BW(pure)={bw_read:.1f} MB/s BW(e2e)={bw_e2e:.1f} MB/s total={total_time:.3f}s",
-            flush=True
-        )
         stats = {
             "prepare_time": t_rebuild_end - t_rebuild,
             "read_time": pure_read_time,
             "set_data_time": t_end - t_update,
             "total_time": total_time,
-            "bw_pure": bw_read,
+            "bw_pure": total / 1024 / 1024 / pure_read_time if pure_read_time > 0 else 0,
             "bw_e2e": bw_e2e
         }
         return total, len(chunks), total_time, bw_e2e, stats

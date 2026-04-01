@@ -9,19 +9,21 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/time.h>
+#include <unistd.h> // 引入 usleep
 
 #define MIN_PIPE_DEPTH   1
 #define MAX_PIPE_DEPTH   16
 #define ALIGN_4K(x) (((x) + 4095ULL) & ~4095ULL)
+#define META_DMA_BUF_SIZE (128 * 1024) // 预留 128KB 作为元数据专属 DMA 缓冲区
 
 /* =========================
  * SPSC ring (单生产单消费)
  * ========================= */
 typedef struct {
-    int *slots;      /* 存放 buffer index */
+    int *slots;
     int capacity;
-    int head;        /* 消费者读 */
-    int tail;        /* 生产者写 */
+    int head;
+    int tail;
 } ring_t;
 
 static int ring_init(ring_t *r, int cap) {
@@ -55,16 +57,16 @@ static bool ring_pop(ring_t *r, int *out) {
 }
 
 typedef struct dma_buf {
-    void *buf;       /* host DMA buffer */
-    size_t size;     /* 已分配大小 */
+    void *buf;
+    size_t size;
 } dma_buf_t;
 
 typedef struct {
     int      buf_idx;
-    int      state;      /* 0 pending, 1 submitted, 2 completed */
-    uint64_t copy_us;    /* NPU->Host 拷贝耗时 */
-    uint64_t submit_ts;  /* 提交时刻 */
-    uint64_t done_ts;    /* 完成时刻（回调里写） */
+    int      state;
+    uint64_t copy_us;
+    uint64_t submit_ts;
+    uint64_t done_ts;
 } item_stat_t;
 
 typedef struct {
@@ -73,61 +75,57 @@ typedef struct {
     item_stat_t  *stat_ptr;
 } cb_ctx_t;
 
-static item_stat_t *g_stats = NULL;
-
 static inline uint64_t tv_us(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (uint64_t)tv.tv_sec * 1000000ULL + tv.tv_usec;
 }
 
+/* 修复了原本强转 arg 为 int* 导致的内存踩踏 Bug */
 static void io_complete(void *arg, const struct spdk_nvme_cpl *cpl) {
-    int *flag = (int *)arg;
     cb_ctx_t *c = (cb_ctx_t *)arg;
     int err = spdk_nvme_cpl_is_error(cpl) ? -1 : 1;
     *(c->flag_ptr) = err;
     c->stat_ptr[c->item].state   = 2;
     c->stat_ptr[c->item].done_ts = tv_us();
-    if (spdk_nvme_cpl_is_error(cpl)) {
-        *flag = -1;
-    } else {
-        *flag = 1;
-    }
+}
+
+/* 元数据专属的简化回调 */
+static void io_complete_meta(void *arg, const struct spdk_nvme_cpl *cpl) {
+    int *flag = (int *)arg;
+    *flag = spdk_nvme_cpl_is_error(cpl) ? -1 : 1;
 }
 
 struct npu_nvme_context {
-    /* SPDK/NVMe */
     struct spdk_nvme_ctrlr *ctrlr;
     struct spdk_nvme_ns    *ns;
     struct spdk_nvme_qpair *qpair;
     uint32_t block_size;
     uint64_t total_blocks;
 
-    /* ACL/NPU */
     int npu_device_id;
 
-    /* DMA buffer pool */
+    /* 数据面 DMA buffer pool */
     dma_buf_t *pool;
     int pool_size;       
-    ring_t free_ring;    /* 可用 buffer 索引 */
+    ring_t free_ring;
 
-    /* 设备限制 */
-    int max_transfer; /* 由用户 chunk_size 决定 */
-    int mdts_limit;   /* 保留字段，不使用 */
+    /* 控制面（元数据）专属 DMA buffer */
+    void *meta_dma_buf;
 
-    /* 管理参数 */
+    int max_transfer;
+    int mdts_limit;
+
     int pipeline_depth;
     bool enable_profiling;
     char profiling_dir[256];
 };
 
-/* attach 回调 */
 static void attach_cb(void *cb_ctx,
                       const struct spdk_nvme_transport_id *trid,
                       struct spdk_nvme_ctrlr *ctrlr,
                       const struct spdk_nvme_ctrlr_opts *opts) {
     npu_nvme_context_t *ctx = cb_ctx;
-
     int nsid;
     for (nsid = spdk_nvme_ctrlr_get_first_active_ns(ctrlr);
          nsid != 0;
@@ -138,8 +136,6 @@ static void attach_cb(void *cb_ctx,
         ctx->ns = ns;
         ctx->block_size = spdk_nvme_ns_get_sector_size(ns);
         ctx->total_blocks = spdk_nvme_ns_get_num_sectors(ns);
-        ctx->mdts_limit = 0; /* 不使用 MDTS 限制 */
-        /* 打印延后到 max_transfer 确定后 */
         break;
     }
 }
@@ -149,7 +145,6 @@ static bool probe_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
     return true;
 }
 
-
 int npu_nvme_init(npu_nvme_context_t **pctx,
                   const char *nvme_pci_addr,
                   int npu_device_id,
@@ -158,10 +153,7 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
                   bool enable_profiling,
                   const char *profiling_dir) {
     if (!pctx || !nvme_pci_addr) return -1;
-    fprintf(stderr, "[Init] enter npu_nvme_init nvme=%s device=%d pipeline=%d chunk=%d profiling_dir=%s\n",
-            nvme_pci_addr, npu_device_id, pipeline_depth, chunk_size, profiling_dir ? profiling_dir : "null");
-    fflush(stderr);
-
+    
     if (pipeline_depth < MIN_PIPE_DEPTH) pipeline_depth = MIN_PIPE_DEPTH;
     if (pipeline_depth > MAX_PIPE_DEPTH) pipeline_depth = MAX_PIPE_DEPTH;
 
@@ -176,123 +168,64 @@ int npu_nvme_init(npu_nvme_context_t **pctx,
     }
     ctx->mdts_limit = 0; 
 
-    /* SPDK env init (once). Note: current SPDK headers do not expose proc_type; only shm_id honored. */
     static int spdk_inited = 0;
     if (!spdk_inited) {
         struct spdk_env_opts opts;
         spdk_env_opts_init(&opts);
         opts.name = "npu_nvme";
         const char *shm = getenv("SPDK_SHM_ID");
-        if (shm) {
-            opts.shm_id = atoi(shm);
-        }
+        if (shm) opts.shm_id = atoi(shm);
         if (spdk_env_init(&opts) < 0) {
-            fprintf(stderr, "spdk_env_init failed\n");
             free(ctx);
             return -1;
         }
         spdk_inited = 1;
     }
 
-    /* ACL init */
-    /* 
+    aclrtSetDevice(npu_device_id);
     ctx->npu_device_id = npu_device_id;
-    if (aclInit(NULL) != ACL_SUCCESS ||
-        aclrtSetDevice(ctx->npu_device_id) != ACL_SUCCESS) {
-        fprintf(stderr, "ACL init failed\n");
-        free(ctx);
-        return -1;
-    }
-    */
-    aclrtSetDevice(ctx->npu_device_id);
 
-
-    /* NVMe probe */
     struct spdk_nvme_transport_id trid;
     memset(&trid, 0, sizeof(trid));
     spdk_nvme_trid_populate_transport(&trid, SPDK_NVME_TRANSPORT_PCIE);
     snprintf(trid.traddr, sizeof(trid.traddr), "%s", nvme_pci_addr);
 
     if (spdk_nvme_probe(&trid, ctx, probe_cb, attach_cb, NULL) != 0 || !ctx->ctrlr) {
-        fprintf(stderr, "nvme probe failed\n");
         aclrtResetDevice(ctx->npu_device_id);
         aclFinalize();
         free(ctx);
         return -1;
     }
 
-    /* max_transfer 完全由用户 chunk_size 决定，chunk_size=0 时退回 4MB 默认 */
     ctx->max_transfer = (chunk_size == 0) ? (4 * 1024 * 1024ULL) : chunk_size;
 
-        fprintf(stderr, "[NVMe] block=%u, total_blocks=%lu, max_xfer=%d MB\n",
-            ctx->block_size,
-            ctx->total_blocks,
-            ctx->max_transfer/1024/1024);
-        fflush(stderr);
-
-    /* qpair */
     ctx->qpair = spdk_nvme_ctrlr_alloc_io_qpair(ctx->ctrlr, NULL, 0);
-    if (!ctx->qpair) {
-        fprintf(stderr, "alloc io qpair failed\n");
-        aclrtResetDevice(ctx->npu_device_id);
-        aclFinalize();
-        free(ctx);
-        return -1;
-    }
+    if (!ctx->qpair) goto fail;
 
-    /* buffer pool = depth */
+    /* 初始化数据面 DMA Pool */
     ctx->pool_size = pipeline_depth; 
     ctx->pool = calloc(ctx->pool_size, sizeof(dma_buf_t));
-    if (!ctx->pool) {
-        fprintf(stderr, "buffer pool alloc failed\n");
-        goto fail;
-    }
-    if (ring_init(&ctx->free_ring, ctx->pool_size) != 0) {
-        fprintf(stderr, "ring init failed\n");
-        goto fail;
-    }
+    if (!ctx->pool) goto fail;
+    if (ring_init(&ctx->free_ring, ctx->pool_size) != 0) goto fail;
+
     for (int i = 0; i < ctx->pool_size; ++i) {
         size_t sz = ALIGN_4K(ctx->max_transfer);
         ctx->pool[i].buf = spdk_dma_zmalloc(sz, 4096, NULL);
-        fprintf(stderr, "[Init] Allocated DMA buf %d at %p, size=%zu\n", i, ctx->pool[i].buf, sz);
-        fflush(stderr);
         ctx->pool[i].size = sz;
-        if (!ctx->pool[i].buf) {
-            fprintf(stderr, "dma buf alloc failed at %d\n", i);
-            goto fail;
-        }
+        if (!ctx->pool[i].buf) goto fail;
         ring_push(&ctx->free_ring, i);
     }
 
+    /* 分配元数据专属 DMA Buffer (128KB) */
+    ctx->meta_dma_buf = spdk_dma_zmalloc(META_DMA_BUF_SIZE, 4096, NULL);
+    if (!ctx->meta_dma_buf) goto fail;
+
     *pctx = ctx;
-    ctx->enable_profiling = enable_profiling;
     return 0;
 
 fail:
-    if (ctx->pool) {
-        for (int i = 0; i < ctx->pool_size; ++i) {
-            if (ctx->pool[i].buf) spdk_dma_free(ctx->pool[i].buf);
-        }
-        free(ctx->pool);
-    }
-    ring_free(&ctx->free_ring);
-    if (ctx->qpair) spdk_nvme_ctrlr_free_io_qpair(ctx->qpair);
-    if (ctx->ctrlr) spdk_nvme_detach(ctx->ctrlr);
-    aclrtResetDevice(ctx->npu_device_id);
-    aclFinalize();
-    free(ctx);
+    npu_nvme_cleanup(ctx);
     return -1;
-}
-
-int npu_nvme_bind_thread(npu_nvme_context_t *ctx) {
-    if (!ctx) return -1;
-    // Bind current thread to ctx->device_id so aclrtMemcpy works
-    aclError ret = aclrtSetDevice(ctx->npu_device_id);
-    if (ret != ACL_SUCCESS) {
-        fprintf(stderr, "[npu_nvme_bind_thread] aclrtSetDevice(%d) failed: %d\n", ctx->npu_device_id, ret);
-        return -1;
-    }
-    return 0;
 }
 
 void npu_nvme_cleanup(npu_nvme_context_t *ctx) {
@@ -302,6 +235,9 @@ void npu_nvme_cleanup(npu_nvme_context_t *ctx) {
             if (ctx->pool[i].buf) spdk_dma_free(ctx->pool[i].buf);
         }
         free(ctx->pool);
+    }
+    if (ctx->meta_dma_buf) {
+        spdk_dma_free(ctx->meta_dma_buf);
     }
     ring_free(&ctx->free_ring);
     if (ctx->qpair) spdk_nvme_ctrlr_free_io_qpair(ctx->qpair);
@@ -315,26 +251,50 @@ size_t npu_nvme_get_max_transfer(npu_nvme_context_t *ctx) {
     return ctx ? ctx->max_transfer : 0;
 }
 
+uint64_t npu_nvme_get_total_blocks(npu_nvme_context_t *ctx) {
+    return ctx ? ctx->total_blocks : 0;
+}
+
+/* =========================================================
+ * 核心新增：同步元数据 I/O 引擎 (分离控制面)
+ * ========================================================= */
+int npu_nvme_sync_meta_io(npu_nvme_context_t *ctx, uint64_t start_lba, uint32_t num_blocks, bool is_read, void *meta_buffer) {
+    if (!ctx || !meta_buffer) return -1;
+    size_t size = num_blocks * ctx->block_size;
+    if (size > META_DMA_BUF_SIZE) return -1; // 防止越界
+
+    int flag = 0;
+    
+    if (!is_read) {
+        // 写盘前：先将 Python 的普通内存 Copy 到 DMA 锁定的内存
+        memcpy(ctx->meta_dma_buf, meta_buffer, size);
+        spdk_nvme_ns_cmd_write(ctx->ns, ctx->qpair, ctx->meta_dma_buf, start_lba, num_blocks, io_complete_meta, &flag, 0);
+    } else {
+        spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair, ctx->meta_dma_buf, start_lba, num_blocks, io_complete_meta, &flag, 0);
+    }
+
+    // 伪同步轮询：死盯元数据操作完成
+    while (flag == 0) {
+        spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+    }
+
+    if (is_read && flag == 1) {
+        // 读盘后：将 DMA 内存中的结果 Copy 回 Python 的普通内存
+        memcpy(meta_buffer, ctx->meta_dma_buf, size);
+    }
+
+    return flag == 1 ? 0 : -1;
+}
+
+/* =========================================================
+ * 数据面狂飙引擎
+ * ========================================================= */
 int npu_nvme_write_batch(npu_nvme_context_t *ctx,
                          void **npu_ptrs,
                          uint64_t *nvme_offsets,
                          size_t *sizes,
                          int num_items) {
     if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) return -1;
-
-    static int log_once = 0;
-    if (!log_once) {
-        size_t max_sz = 0, min_sz = (size_t)-1;
-        int sample = num_items < 8 ? num_items : 8;
-        fprintf(stderr, "[npu_nvme_write_batch] num=%d max_transfer=%zu\n", num_items, ctx->max_transfer);
-        for (int i = 0; i < sample; ++i) {
-            if (sizes[i] > max_sz) max_sz = sizes[i];
-            if (sizes[i] < min_sz) min_sz = sizes[i];
-            fprintf(stderr, "  item%d sz=%zu off=%lu\n", i, sizes[i], nvme_offsets[i]);
-        }
-        fprintf(stderr, "  min_sz=%zu max_sz=%zu\n", min_sz, max_sz);
-        log_once = 1;
-    }
 
     int submitted = 0, completed = 0;
     int idx;
@@ -352,10 +312,9 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
             if (!ring_pop(&ctx->free_ring, &idx)) break;
             size_t sz = sizes[submitted];
             if (sz == 0 || sz > ctx->max_transfer) {
-                fprintf(stderr, "[write_batch] skip item %d sz=%zu max_transfer=%zu\n", submitted, sz, ctx->max_transfer);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
-                submitted++; completed++;    // 避免卡住
+                submitted++; completed++; 
                 continue;
             }
             size_t aligned = ALIGN_4K(sz);
@@ -372,7 +331,6 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
                                          ACL_MEMCPY_DEVICE_TO_HOST);
             uint64_t t2 = tv_us();
             if (acret != ACL_SUCCESS) {
-                fprintf(stderr, "[write_batch] aclrtMemcpy D2H failed item %d sz=%zu err=%d\n", submitted, sz, acret);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
                 submitted++; completed++;
@@ -399,8 +357,6 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
                                             lba, nblk,
                                             io_complete, &cb_ctx[submitted], 0);
             if (rc != 0) {
-                fprintf(stderr, "[write_batch] spdk_nvme_ns_cmd_write failed item %d rc=%d lba=%lu nblk=%u\n",
-                        submitted, rc, lba, nblk);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
                 submitted++; completed++;
@@ -410,135 +366,12 @@ int npu_nvme_write_batch(npu_nvme_context_t *ctx,
             submitted++;
         }
 
-        spdk_nvme_qpair_process_completions(ctx->qpair, 0);
-
-        for (int i = 0; i < num_items; ++i) {
-            if (!reclaimed[i] && stat[i].state == 2) { // 已完成
-                ring_push(&ctx->free_ring, stat[i].buf_idx);
-                reclaimed[i] = true;
-                if (flags[i] != 1) ret = -1;
-                completed++;
-            }
-        }
-
-        if (submitted >= num_items && completed < num_items)
+        int cpl = spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+        
+        // 恢复原来的 usleep 退坡逻辑
+        if (cpl == 0 && submitted >= num_items && completed < num_items) {
             usleep(50);
-    }
-
-    if (ctx->enable_profiling) {
-        char path[512];
-        snprintf(path, sizeof(path), "%s/time_write.csv", ctx->profiling_dir);
-        FILE *f = fopen(path, "w");
-        if (f) {
-            fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
-            for (int i = 0; i < num_items; ++i) {
-                if (stat[i].state == 2) {
-                    uint64_t nvme_us = (stat[i].done_ts >= stat[i].submit_ts)
-                                    ? (stat[i].done_ts - stat[i].submit_ts)
-                                    : 0;
-                    fprintf(f, "%d,%d,%lu,%lu\n",
-                            i, stat[i].buf_idx, stat[i].copy_us, nvme_us);
-                }
-            }
-            fclose(f);
         }
-    }
-
-cleanup:
-    free(stat);
-    free(cb_ctx);
-    free(flags);
-    free(buf_idx);
-    free(reclaimed);
-    return ret;
-}
-
-int npu_nvme_write_batch_host(npu_nvme_context_t *ctx,
-                         void **host_ptrs,
-                         uint64_t *nvme_offsets,
-                         size_t *sizes,
-                         int num_items) {
-    if (!ctx || !host_ptrs || !nvme_offsets || !sizes || num_items <= 0) return -1;
-
-    static int log_once_host = 0;
-    if (!log_once_host) {
-        size_t max_sz = 0, min_sz = (size_t)-1;
-        int sample = num_items < 8 ? num_items : 8;
-        fprintf(stderr, "[npu_nvme_write_batch_host] num=%d max_transfer=%zu\n", num_items, ctx->max_transfer);
-        for (int i = 0; i < sample; ++i) {
-            if (sizes[i] > max_sz) max_sz = sizes[i];
-            if (sizes[i] < min_sz) min_sz = sizes[i];
-            fprintf(stderr, "  item%d sz=%zu off=%lu\n", i, sizes[i], nvme_offsets[i]);
-        }
-        fprintf(stderr, "  min_sz=%zu max_sz=%zu\n", min_sz, max_sz);
-        log_once_host = 1;
-    }
-
-    int submitted = 0, completed = 0;
-    int idx;
-    int ret = 0;
-
-    int *flags = calloc(num_items, sizeof(int));
-    int *buf_idx = calloc(num_items, sizeof(int));
-    bool *reclaimed = calloc(num_items, sizeof(bool));
-    item_stat_t *stat = calloc(num_items, sizeof(item_stat_t));
-    cb_ctx_t *cb_ctx = calloc(num_items, sizeof(cb_ctx_t));
-    if (!stat || !cb_ctx || !flags || !buf_idx || !reclaimed) { ret = -1; goto cleanup; }
-
-    while (completed < num_items) {
-        while (submitted < num_items) {
-            if (!ring_pop(&ctx->free_ring, &idx)) break;
-            size_t sz = sizes[submitted];
-            if (sz == 0 || sz > ctx->max_transfer) {
-                flags[submitted] = -1;
-                reclaimed[submitted] = true;
-                submitted++; completed++;
-                continue;
-            }
-            size_t aligned = ALIGN_4K(sz);
-            if (aligned > ctx->pool[idx].size) {
-                flags[submitted] = -1;
-                reclaimed[submitted] = true;
-                submitted++; completed++;
-                continue;
-            }
-
-            // HOST Copy (memcpy) instead of D2H
-            uint64_t t1 = tv_us();
-            memcpy(ctx->pool[idx].buf, host_ptrs[submitted], sz);
-            uint64_t t2 = tv_us();
-
-            uint64_t lba = nvme_offsets[submitted] / ctx->block_size;
-            uint32_t nblk = (uint32_t)(aligned / ctx->block_size);
-
-            stat[submitted].copy_us   = t2 - t1;
-            stat[submitted].buf_idx   = idx;
-            stat[submitted].state     = 1;
-            stat[submitted].submit_ts = tv_us();
-
-            cb_ctx[submitted].item     = submitted;
-            cb_ctx[submitted].flag_ptr = &flags[submitted];
-            cb_ctx[submitted].stat_ptr = stat;
-
-            flags[submitted] = 0;
-            buf_idx[submitted] = idx;
-            int rc = spdk_nvme_ns_cmd_write(ctx->ns, ctx->qpair,
-                                            ctx->pool[idx].buf,
-                                            lba, nblk,
-                                            io_complete, &cb_ctx[submitted], 0);
-            if (rc != 0) {
-                fprintf(stderr, "[write_batch_host] write failed item %d rc=%d lba=%lu nblk=%u\n",
-                        submitted, rc, lba, nblk);
-                flags[submitted] = -1;
-                reclaimed[submitted] = true;
-                submitted++; completed++;
-                ring_push(&ctx->free_ring, idx);
-                continue;
-            }
-            submitted++;
-        }
-
-        spdk_nvme_qpair_process_completions(ctx->qpair, 0);
 
         for (int i = 0; i < num_items; ++i) {
             if (!reclaimed[i] && stat[i].state == 2) { 
@@ -548,15 +381,11 @@ int npu_nvme_write_batch_host(npu_nvme_context_t *ctx,
                 completed++;
             }
         }
-
-        if (submitted >= num_items && completed < num_items)
-            usleep(50);
     }
-    
-    // Optional Profiling for Host Write
+
     if (ctx->enable_profiling) {
         char path[512];
-        snprintf(path, sizeof(path), "%s/time_write_host.csv", ctx->profiling_dir);
+        snprintf(path, sizeof(path), "%s/time_write.csv", ctx->profiling_dir);
         FILE *f = fopen(path, "w");
         if (f) {
             fprintf(f, "item,buf_idx,copy_us,nvme_us\n");
@@ -596,7 +425,7 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
     int *buf_idx = calloc(num_items, sizeof(int));
     bool *reclaimed = calloc(num_items, sizeof(bool));
     cb_ctx_t *cb_ctx = calloc(num_items, sizeof(cb_ctx_t));
-    item_stat_t *stat = calloc(num_items, sizeof(item_stat_t)); // read 也需非空 stat_ptr 供回调使用
+    item_stat_t *stat = calloc(num_items, sizeof(item_stat_t)); 
     if (!flags || !buf_idx || !reclaimed || !cb_ctx || !stat) { ret = -1; goto cleanup; }
 
     while (completed < num_items) {
@@ -630,14 +459,13 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
 
             cb_ctx[submitted].item = submitted;
             cb_ctx[submitted].flag_ptr = &flags[submitted];
-            cb_ctx[submitted].stat_ptr = stat; // 传递非空指针，避免回调解引用空指针
+            cb_ctx[submitted].stat_ptr = stat; 
 
             int rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair,
                                            ctx->pool[idx].buf,
                                            lba, nblk,
                                            io_complete, &cb_ctx[submitted], 0);
             if (rc != 0) {
-                fprintf(stderr, "spdk_nvme_ns_cmd_read failed %d\n", rc);
                 flags[submitted] = -1;
                 reclaimed[submitted] = true;
                 ring_push(&ctx->free_ring, idx);
@@ -645,11 +473,15 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
             submitted++;
         }
 
-        spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+        int cpl = spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+        
+        // 恢复原来的 usleep 退坡逻辑
+        if (cpl == 0 && submitted >= num_items && completed < num_items) {
+            usleep(50);
+        }
 
         for (int i = 0; i < num_items; ++i) {
             if (!reclaimed[i] && flags[i] != 0) {
-                /* host -> NPU */
                 if (flags[i] == 1) {
                     size_t sz = sizes[i];
                     uint64_t t1 = tv_us();
@@ -658,7 +490,6 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
                                                  ACL_MEMCPY_HOST_TO_DEVICE);
                     uint64_t t2 = tv_us();
                     if (acret != ACL_SUCCESS) {
-                        fprintf(stderr, "aclrtMemcpy H2D failed item %d\n", i);
                         ret = -1;
                     }
                     stat[i].copy_us = t2 - t1;
@@ -670,12 +501,7 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
                 completed++;
             }
         }
-
-        if (submitted >= num_items && completed < num_items) {
-            usleep(50);
-        }
     }
-
 
     if (ctx->enable_profiling) {
         char path[512];
@@ -697,7 +523,6 @@ int npu_nvme_read_batch(npu_nvme_context_t *ctx,
     }
 
 cleanup:
-
     free(flags);
     free(buf_idx);
     free(reclaimed);
@@ -705,5 +530,3 @@ cleanup:
     free(stat);
     return ret;
 }
-
-
