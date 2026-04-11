@@ -67,9 +67,10 @@ def format_disk(pci_addr, npu_id=0):
         sys.exit(1)
 
     try:
-        total_blocks = lib.npu_nvme_get_total_blocks(ctx)
-        capacity_gb = (total_blocks * BLOCK_SIZE) / (1024**3)
-        print(f"[2/4] Device connected. Total capacity: {capacity_gb:.2f} GB ({total_blocks} blocks)")
+        total_bytes = lib.npu_nvme_get_total_blocks(ctx)
+        total_4k_blocks = total_bytes // BLOCK_SIZE
+        capacity_gb = total_bytes / (1024**3)
+        print(f"[2/4] Device connected. Total capacity: {capacity_gb:.2f} GB ({total_4k_blocks} 4K-blocks)")
 
         # 准备空的元数据 JSON
         empty_meta = {"checkpoints": {}}
@@ -77,8 +78,8 @@ def format_disk(pci_addr, npu_id=0):
         meta_buf = ctypes.create_string_buffer(meta_json, META_SLOT_BLOCKS * BLOCK_SIZE)
 
         print("[3/4] Wiping Metadata Slots (A and B)...")
-        ret_a = lib.npu_nvme_sync_meta_io(ctx, META_SLOT_A_LBA, META_SLOT_BLOCKS, 0, ctypes.byref(meta_buf))
-        ret_b = lib.npu_nvme_sync_meta_io(ctx, META_SLOT_B_LBA, META_SLOT_BLOCKS, 0, ctypes.byref(meta_buf))
+        ret_a = lib.npu_nvme_sync_meta_io(ctx, META_SLOT_A_LBA, META_SLOT_BLOCKS, 0, ctypes.c_void_p(ctypes.addressof(meta_buf)))
+        ret_b = lib.npu_nvme_sync_meta_io(ctx, META_SLOT_B_LBA, META_SLOT_BLOCKS, 0, ctypes.c_void_p(ctypes.addressof(meta_buf)))
         if ret_a != 0 or ret_b != 0:
             raise RuntimeError("Failed to wipe Metadata Slots.")
 
@@ -86,15 +87,20 @@ def format_disk(pci_addr, npu_id=0):
         sb_buf = ctypes.create_string_buffer(BLOCK_SIZE)
         active_slot = 0       
         stack_start_lba = 0   
-        struct.pack_into("<8s I Q Q", sb_buf, 0, MAGIC_NUMBER, active_slot, total_blocks, stack_start_lba)
         
-        ret_sb = lib.npu_nvme_sync_meta_io(ctx, SUPERBLOCK_LBA, 1, 0, ctypes.byref(sb_buf))
+        # 写入的是 total_4k_blocks，而不是原始的硬件扇区数！
+        struct.pack_into("<8s I Q Q", sb_buf, 0, MAGIC_NUMBER, active_slot, total_4k_blocks, stack_start_lba)
+        
+        ret_sb = lib.npu_nvme_sync_meta_io(ctx, SUPERBLOCK_LBA, 1, 0, ctypes.c_void_p(ctypes.addressof(sb_buf)))
         if ret_sb != 0:
             raise RuntimeError("Failed to write Superblock.")
 
+        print("Flushing NVMe cache to NAND... Please wait...")
+        import time
+        time.sleep(2)
+        
         print(f"\n{'='*60}")
         print(f"[SUCCESS] NVMe disk {pci_addr} successfully formatted for NPUNVME!")
-        print(f"{'='*60}")
 
     except Exception as e:
         print(f"\n[Fatal Error] Format failed: {e}")

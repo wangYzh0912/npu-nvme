@@ -14,7 +14,7 @@
 #define MIN_PIPE_DEPTH   1
 #define MAX_PIPE_DEPTH   16
 #define ALIGN_4K(x) (((x) + 4095ULL) & ~4095ULL)
-#define META_DMA_BUF_SIZE (128 * 1024) // 预留 128KB 作为元数据专属 DMA 缓冲区
+#define META_DMA_BUF_SIZE (1024 * 1024)
 
 /* =========================
  * SPSC ring (单生产单消费)
@@ -252,39 +252,41 @@ size_t npu_nvme_get_max_transfer(npu_nvme_context_t *ctx) {
 }
 
 uint64_t npu_nvme_get_total_blocks(npu_nvme_context_t *ctx) {
-    return ctx ? ctx->total_blocks : 0;
+    return ctx ? (ctx->total_blocks * ctx->block_size) : 0;
 }
 
 /* =========================================================
  * 核心新增：同步元数据 I/O 引擎 (分离控制面)
  * ========================================================= */
-int npu_nvme_sync_meta_io(npu_nvme_context_t *ctx, uint64_t start_lba, uint32_t num_blocks, bool is_read, void *meta_buffer) {
+int npu_nvme_sync_meta_io(npu_nvme_context_t *ctx, uint64_t byte_offset, uint32_t total_bytes, int is_read, void *meta_buffer) {
     if (!ctx || !meta_buffer) return -1;
+    
+    // C 层自动根据底层真实的 block_size 换算 LBA 和物理块数！Python 彻底解脱！
+    uint64_t start_lba = byte_offset / ctx->block_size;
+    uint32_t num_blocks = (total_bytes + ctx->block_size - 1) / ctx->block_size;
     size_t size = num_blocks * ctx->block_size;
-    if (size > META_DMA_BUF_SIZE) return -1; // 防止越界
+    
+    if (size > META_DMA_BUF_SIZE) return -1; 
 
     int flag = 0;
-    
-    if (!is_read) {
-        // 写盘前：先将 Python 的普通内存 Copy 到 DMA 锁定的内存
+    if (is_read == 0) {
         memcpy(ctx->meta_dma_buf, meta_buffer, size);
         spdk_nvme_ns_cmd_write(ctx->ns, ctx->qpair, ctx->meta_dma_buf, start_lba, num_blocks, io_complete_meta, &flag, 0);
     } else {
         spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair, ctx->meta_dma_buf, start_lba, num_blocks, io_complete_meta, &flag, 0);
     }
 
-    // 伪同步轮询：死盯元数据操作完成
     while (flag == 0) {
         spdk_nvme_qpair_process_completions(ctx->qpair, 0);
     }
 
-    if (is_read && flag == 1) {
-        // 读盘后：将 DMA 内存中的结果 Copy 回 Python 的普通内存
+    if (is_read != 0 && flag == 1) {
         memcpy(meta_buffer, ctx->meta_dma_buf, size);
     }
 
     return flag == 1 ? 0 : -1;
 }
+
 
 /* =========================================================
  * 数据面狂飙引擎

@@ -23,17 +23,26 @@ ENABLE_PROFILING = False
 RTOL = 1e-4
 ATOL = 1e-6
 
+# 新增：堆栈文件系统配置
+KEEP_LAST_N = 3
+SLOT_SIZE_GB = 10  # GPT-2 XL(约15亿参数)，FP32大概占用6GB，单槽10GB足够安全
 
 class DirectCkptCallback(Callback):
     def __init__(self, model: ms.nn.Cell):
         super().__init__()
         self.model = model
+        
+        # 适配最新的初始化参数，挂载裸盘文件系统
         self.ckpt = DirectCheckpoint(
             nvme_addr=NVME_ADDR,
             npu_device_id=DEVICE_ID,
             pipeline_depth=PIPELINE_DEPTH,
             requested_chunk_size=CHUNK_SIZE,
             enable_profiling=ENABLE_PROFILING,
+            rank_id=0,
+            world_size=1,
+            keep_last_n=KEEP_LAST_N,
+            slot_size_gb=SLOT_SIZE_GB
         )
 
     def step_end(self, run_context):
@@ -42,10 +51,15 @@ class DirectCkptCallback(Callback):
         if step % CHECKPOINT_INTERVAL != 0:
             return
 
-        print(f"[DirectCkpt] enter step_end step={step}", flush=True)
+        print(f"\n[DirectCkpt] enter step_end step={step}", flush=True)
         t0 = time.time()
 
-        total, num_chunks, t_save, bw_save = self.ckpt.save(self.model, meta_path="checkpoint_meta.pkl")
+        # 适配最新 save 签名：必须传入 step 以盲算 LBA 槽位，并接收 5 个返回值
+        total, num_chunks, t_save, bw_save, stats = self.ckpt.save(
+            self.model, 
+            step=step, 
+            meta_path="checkpoint_meta.pkl"
+        )
         print(f"[DirectCkpt] step={step} size={total/1024/1024:.2f}MB chunks={num_chunks} "
               f"save_time={t_save:.3f}s bw={bw_save:.1f}MB/s")
 
@@ -55,19 +69,23 @@ class DirectCkptCallback(Callback):
         print(f"[DirectCkpt] Testing Load for step={step}...", flush=True)
         t_load_start = time.time()
         
-        # 验证读取性能
-        self.ckpt.load(self.model, meta_path="checkpoint_meta.pkl")
+        # 适配最新 load 签名：必须传入 step 检索元数据
+        _, _, t_load_total, bw_load, _ = self.ckpt.load(
+            self.model, 
+            step=step, 
+            meta_path="checkpoint_meta.pkl"
+        )
         
         t_load_end = time.time()
-        print(f"[DirectCkpt] Load step={step} done. Total elapsed: {t_load_end - t_load_start:.3f}s", flush=True)
+        print(f"[DirectCkpt] Load step={step} done. Total elapsed: {t_load_end - t_load_start:.3f}s BW: {bw_load:.1f}MB/s", flush=True)
         
-        '''
+        
         # ms 官方快照用于对比
         ms_ckpt_path = f"ms_step_{step}.ckpt"
         ms.save_checkpoint(self.model, ms_ckpt_path)
 
-        # 读回并验证
-        self.ckpt.load(self.model, meta_path="checkpoint_meta.pkl")
+        # 读回并验证 (已同步更新 step 传参)
+        self.ckpt.load(self.model, step=step, meta_path="checkpoint_meta.pkl")
         mismatches = []
         ref_dict = ms.load_checkpoint(ms_ckpt_path)
         for name, param in self.model.parameters_and_names():
@@ -82,7 +100,7 @@ class DirectCkptCallback(Callback):
             print(f"[DirectCkpt] verify mismatch={len(mismatches)} first={mismatches[:5]}")
         else:
             print(f"[DirectCkpt] verify ok at step {step}")
-        '''
+        
 
         print(f"[DirectCkpt] step_end done step={step} elapsed={time.time()-t0:.3f}s", flush=True)
 
@@ -137,5 +155,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

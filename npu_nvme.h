@@ -33,9 +33,9 @@ uint64_t npu_nvme_get_total_blocks(npu_nvme_context_t *ctx);
  * meta_buffer: Python 传进来的连续内存 (ctypes buffer)
  */
 int npu_nvme_sync_meta_io(npu_nvme_context_t *ctx, 
-                          uint64_t start_lba, 
-                          uint32_t num_blocks, 
-                          bool is_read, 
+                          uint64_t byte_offset, 
+                          uint32_t total_bytes, 
+                          int is_read, 
                           void *meta_buffer);
 
 int npu_nvme_write_batch(npu_nvme_context_t *ctx,
