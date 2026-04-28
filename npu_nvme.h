@@ -1,5 +1,5 @@
-#ifndef NPU_NVME_H
-#define NPU_NVME_H
+#ifndef NPU_NVME_ASYNC_H
+#define NPU_NVME_ASYNC_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -9,48 +9,77 @@
 extern "C" {
 #endif
 
-typedef struct npu_nvme_context npu_nvme_context_t;
-
-int npu_nvme_init(npu_nvme_context_t **ctx,
-                  const char *nvme_pci_addr,
-                  int npu_device_id,
-                  int pipeline_depth,
-                  int chunk_size,
-                  bool enable_profiling,
-                  const char *profiling_dir);
-
-void npu_nvme_cleanup(npu_nvme_context_t *ctx);
-
-size_t npu_nvme_get_max_transfer(npu_nvme_context_t *ctx);
-
-/* 新增：获取盘的总块数 (用于 Python 层计算盘尾的栈区) */
-uint64_t npu_nvme_get_total_blocks(npu_nvme_context_t *ctx);
-
-/* 新增：元数据专属同步 I/O 接口 
- * start_lba: 写入的物理块号
- * num_blocks: 写入的块数 (确保 num_blocks * block_size <= 128KB)
- * is_read: true 为读，false 为写
- * meta_buffer: Python 传进来的连续内存 (ctypes buffer)
+/**
+ * @brief Opaque 句柄，Python 层不需要知道其内部结构
  */
-int npu_nvme_sync_meta_io(npu_nvme_context_t *ctx, 
-                          uint64_t byte_offset, 
-                          uint32_t total_bytes, 
-                          int is_read, 
-                          void *meta_buffer);
+typedef struct NPUNVMEContext NPUNVMEContext;
 
-int npu_nvme_write_batch(npu_nvme_context_t *ctx,
-                         void **npu_ptrs,
-                         uint64_t *nvme_offsets,
-                         size_t *sizes,
-                         int num_items);
+/**
+ * @brief 初始化 NPU 和 NVMe SPDK 异步环境
+ * * @param out_ctx 输出的全局上下文指针
+ * @param pci_addr NVMe 硬盘的 PCIe 地址 (如 "0000:83:00.0")
+ * @param npu_id 绑定的 Ascend NPU 设备 ID
+ * @param pipe_depth 异步 Ring Buffer 的深度 (推荐 4-16)
+ * @param chunk_size 单个数据块切片大小 (推荐 4MB = 4194304)
+ * @param enable_profiling 是否开启纳秒级微观性能打点
+ * @param prof_dir Profiling CSV 文件的输出目录
+ * @return int 0 成功, -1 失败
+ */
+int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id, 
+                  int pipe_depth, int chunk_size, bool enable_profiling, const char *prof_dir);
 
-int npu_nvme_read_batch(npu_nvme_context_t *ctx,
-                        void **npu_ptrs,
-                        uint64_t *nvme_offsets,
-                        size_t *sizes,
-                        int num_items);
+/**
+ * @brief 释放所有软硬件资源，销毁 Stream 与 Event
+ */
+void npu_nvme_cleanup(NPUNVMEContext *ctx);
+
+/**
+ * @brief 获取 NVMe 硬盘总字节容量 (用于 Python 层容量防爆校验)
+ */
+uint64_t npu_nvme_get_total_blocks(NPUNVMEContext *ctx);
+
+/**
+ * @brief 获取配置的最大单次传输大小 (Chunk Size)
+ */
+int npu_nvme_get_max_transfer(NPUNVMEContext *ctx);
+
+/**
+ * @brief 同步读写元数据 (Superblock & JSON Ledger)
+ * * @param ctx 全局上下文
+ * @param byte_offset 物理硬盘上的绝对字节偏移量
+ * @param total_bytes 读写总字节数
+ * @param is_read 1 为读，0 为写
+ * @param meta_buffer 主机内存中的 Buffer 指针
+ * @return int 0 成功, -1 失败
+ */
+int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t total_bytes, int is_read, void *meta_buffer);
+
+/**
+ * @brief 【核心】全异步 Zero-Bubble 批量张量直写 (NPU -> NVMe)
+ * * @param ctx 全局上下文
+ * @param npu_ptrs NPU 显存源地址数组
+ * @param nvme_offsets NVMe 目标物理偏移量数组
+ * @param sizes 每个张量切片的大小数组
+ * @param num_items 任务总数
+ * @return int 0 成功, -1 失败
+ */
+int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs, 
+                         uint64_t *nvme_offsets, size_t *sizes, int num_items);
+
+/**
+ * @brief 【核心】全异步 Zero-Bubble 批量张量直读 (NVMe -> NPU)
+ * * @param ctx 全局上下文
+ * @param npu_ptrs NPU 显存目标地址数组
+ * @param nvme_offsets NVMe 源物理偏移量数组
+ * @param sizes 每个张量切片的大小数组
+ * @param num_items 任务总数
+ * @return int 0 成功, -1 失败
+ */
+int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs, 
+                        uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // NPU_NVME_ASYNC_H

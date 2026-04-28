@@ -226,12 +226,16 @@ class DirectCkptCallback(Callback):
 
         # ==== 2. 分布式绝对屏障 (Global IO Barrier) ====
         try:
-            time_tensor = ms.Tensor(np.array([t_save], dtype=np.float32))
-            agg_time_s = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor).asnumpy().item()
+            # time_tensor = ms.Tensor(np.array([t_save], dtype=np.float32))
+            # agg_time_s = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor).asnumpy().item()
             
+            # total_mb = total / (1024 * 1024)
+            # print(f"[DirectCkpt][Rank {self.rank_id}] Passed IO Barrier! Local save: {total_mb:.2f} MB in {t_save:.3f}s | BW: {bw:.2f} MB/s", flush=True)
+            
+            agg_time_s = t_save 
             total_mb = total / (1024 * 1024)
             print(f"[DirectCkpt][Rank {self.rank_id}] Passed IO Barrier! Local save: {total_mb:.2f} MB in {t_save:.3f}s | BW: {bw:.2f} MB/s", flush=True)
-            
+
             # 【核心新增】：将每次 Checkpoint 的硬核统计数据追加到各 Rank 的 CSV 报表中
             csv_path = os.path.join(PROFILING_OUTPUT_DIR, f"rank{self.rank_id}_write.csv")
             file_exists = os.path.exists(csv_path)

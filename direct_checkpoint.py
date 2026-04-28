@@ -12,6 +12,8 @@ import mindspore as ms
 from mindspore import ops
 import numpy as np
 
+import atexit
+
 # ============================================================
 # 裸盘物理布局常量 (全字节寻址 Byte Addressing)
 # ============================================================
@@ -215,6 +217,9 @@ class DirectCheckpoint:
 
         self._mount_filesystem()
 
+        atexit.register(self.close)
+        self._closed = False
+
     def _mount_filesystem(self):
         sb_buf = ctypes.create_string_buffer(4096)
         rc = lib.npu_nvme_sync_meta_io(self.ctx, SUPERBLOCK_OFFSET, 4096, 1, ctypes.c_void_p(ctypes.addressof(sb_buf)))
@@ -371,10 +376,19 @@ class DirectCheckpoint:
         if async_save:
             return self.save_async(model, step, meta_path, commit_meta)
 
-        t_start = time.time()
+        t_start = time.perf_counter()
+        
+        # ============================================================
+        # 阶段 1: T_Prep (框架遍历与内存/指针处理)
+        # ============================================================
+        t_prep_start = time.perf_counter()
         params = self._prepare_params(model)
-        t_prep = time.time()
+        t_prep_end = time.perf_counter()
+        T_Prep = t_prep_end - t_prep_start
 
+        # ============================================================
+        # 阶段 2: T_Layout (物理寻址、越界防御与 C-types 组装)
+        # ============================================================
         base_offset_bytes = self._get_current_slot_base_offset(step)
         print(f"[DirectCkpt] Rank {self.rank_id} saving step {step} to offset {base_offset_bytes / 1024**3:.2f} GB ...", flush=True)
 
@@ -402,42 +416,55 @@ class DirectCheckpoint:
 
             current_offset += aligned_bytes
 
-        t0 = time.time()
         total_written = 0
-
-        # 1. 显存直通数据 (GPUDirect)
+        
+        # 预先完成所有 Dev (显存) 的 C 数组组装，绝不占用硬件传输时间
         dev_chunks, dev_sz = build_chunks(dev_params, self.chunk_size)
         if dev_chunks:
-            num = len(dev_chunks)
-            c_ptrs = (ctypes.c_void_p * num)()
-            c_offs = (ctypes.c_uint64 * num)()
-            c_sizes = (ctypes.c_size_t * num)()
+            num_dev = len(dev_chunks)
+            c_ptrs_dev = (ctypes.c_void_p * num_dev)()
+            c_offs_dev = (ctypes.c_uint64 * num_dev)()
+            c_sizes_dev = (ctypes.c_size_t * num_dev)()
             for i, (p, o, s) in enumerate(dev_chunks):
-                c_ptrs[i], c_offs[i], c_sizes[i] = p, ctypes.c_uint64(o.value), s
-            
-            rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
+                c_ptrs_dev[i], c_offs_dev[i], c_sizes_dev[i] = p, ctypes.c_uint64(o.value), s
+
+        # 预先完成所有 Host (内存) 的 C 数组组装
+        host_chunks, host_sz = build_chunks(host_params, self.chunk_size)
+        if host_chunks:
+            num_host = len(host_chunks)
+            c_ptrs_host = (ctypes.c_void_p * num_host)()
+            c_offs_host = (ctypes.c_uint64 * num_host)()
+            c_sizes_host = (ctypes.c_size_t * num_host)()
+            for i, (p, o, s) in enumerate(host_chunks):
+                c_ptrs_host[i], c_offs_host[i], c_sizes_host[i] = p, ctypes.c_uint64(o.value), s
+
+        t_layout_end = time.perf_counter()
+        T_Layout = t_layout_end - t_prep_end
+
+        # ============================================================
+        # 阶段 3: T_SPDK (纯硬件直写 DMA 耗时，没有任何 Python 开销)
+        # ============================================================
+        t_spdk_start = time.perf_counter()
+
+        if dev_chunks:
+            rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs_dev, c_offs_dev, c_sizes_dev, num_dev)
             if rc != 0: raise RuntimeError(f"write_batch failed (rc={rc})")
             total_written += dev_sz
 
-        # 2. 主机内存数据 (CPU Memory)
-        host_chunks, host_sz = build_chunks(host_params, self.chunk_size)
         if host_chunks:
             if hasattr(lib, "npu_nvme_write_batch_host"):
-                num = len(host_chunks)
-                c_ptrs = (ctypes.c_void_p * num)()
-                c_offs = (ctypes.c_uint64 * num)()
-                c_sizes = (ctypes.c_size_t * num)()
-                for i, (p, o, s) in enumerate(host_chunks):
-                    c_ptrs[i], c_offs[i], c_sizes[i] = p, ctypes.c_uint64(o.value), s
-                
-                rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs, c_offs, c_sizes, num)
+                rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs_host, c_offs_host, c_sizes_host, num_host)
                 if rc != 0: raise RuntimeError(f"write_batch_host failed (rc={rc})")
                 total_written += host_sz
 
-        t1 = time.time()
-        real_time = t1 - t_start
-        bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
+        t_spdk_end = time.perf_counter()
+        T_SPDK = t_spdk_end - t_spdk_start
 
+        # ============================================================
+        # 阶段 4: T_Meta (元数据账本与本地文件落盘)
+        # ============================================================
+        t_meta_start = time.perf_counter()
+        
         self.last_layout = layout
 
         # 分布式受控盖章
@@ -446,14 +473,30 @@ class DirectCheckpoint:
 
         with open(meta_path, "wb") as f:
             pickle.dump(self.meta_dict, f)
+            
+        t_meta_end = time.perf_counter()
+        T_Meta = t_meta_end - t_meta_start
 
+        # ============================================================
+        # 统计指标汇总与返回
+        # ============================================================
+        real_time = time.perf_counter() - t_start
+        bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
+        bw_pure = total_written / 1024 / 1024 / T_SPDK if T_SPDK > 0 else 0
+
+        # 保留原有的 key 防止打破外层的 CSV 记录逻辑，同时增加细粒度数据
         stats = {
-            "prep_time": t_prep - t_start,
-            "write_time": t1 - t0,
+            "prep_time": T_Prep,
+            "layout_time": T_Layout,
+            "write_time": T_SPDK,       # 原生的 write_time 对应纯 SPDK 耗时
+            "meta_time": T_Meta,
             "total_time": real_time,
-            "bw_pure": total_written/1024/1024/(t1-t0) if (t1-t0) > 0 else 0,
+            "bw_pure": bw_pure,
             "bw_e2e": bw
         }
+        
+        # 极其硬核的微秒级开销拆解打印
+        print(f"[Breakdown][Rank {self.rank_id}] Prep: {T_Prep*1000:.2f}ms | Layout: {T_Layout*1000:.2f}ms | SPDK(H/W): {T_SPDK*1000:.2f}ms | Meta: {T_Meta*1000:.2f}ms", flush=True)
         return total_written, len(dev_chunks) + len(host_chunks), real_time, bw, stats
 
     def save_async(self, models, step: int, meta_path: str, commit_meta: bool = True):
@@ -617,3 +660,13 @@ class DirectCheckpoint:
     def commit_last_layout(self, step: int):
         if self.rank_id == 0 and hasattr(self, 'last_layout'):
             self._commit_metadata(step, self.last_layout)
+
+    def close(self):
+        if not getattr(self, '_closed', True) and hasattr(self, 'ctx') and self.ctx:
+            print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down NPUNVME context...", flush=True)
+            lib.npu_nvme_cleanup(self.ctx)
+            self._closed = True
+            self.ctx = None
+
+    def __del__(self):
+        self.close()
