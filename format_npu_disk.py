@@ -61,7 +61,7 @@ def format_disk(pci_addr, npu_id=0):
     print("\n[1/4] Initializing SPDK and connecting to NVMe...")
     ctx = ctypes.c_void_p()
     # Pipeline depth 设为 1 即可，格式化不需要极速并发
-    ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'), npu_id, 1, 0, False, b".")
+    ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'), npu_id, 1, 1, False, b".")
     if ret != 0:
         print("[Error] SPDK initialization failed. Check PCI address and hugepages.")
         sys.exit(1)

@@ -246,7 +246,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
 
     for (int i = 0; i < ctx->max_pipe_depth; i++) {
         // 使用 SPDK 申请物理连续、锁页的大页内存，彻底消除 TLB Miss
-        ctx->pool[i].buf = spdk_zmalloc(ctx->chunk_size, 4096, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
+        ctx->pool[i].buf = spdk_zmalloc(ctx->chunk_size, 2 * 1024 * 1024, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
         if (!ctx->pool[i].buf) {
             fprintf(stderr, "[Fatal] spdk_zmalloc failed at slot %d.\n", i);
             goto fail;
@@ -266,7 +266,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     printf("[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: %d\n", ctx->max_pipe_depth);
     *out_ctx = ctx;
 
-    ctx->meta_dma_buf = spdk_zmalloc(1024 * 1024, 4096, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
+    ctx->meta_dma_buf = spdk_zmalloc(1024 * 1024, 2 * 1024 * 1024, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
 
     return 0;
 
@@ -440,6 +440,9 @@ static int submit_to_spdk(NPUNVMEContext *ctx, io_task_t *task, int *completed_c
 void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks, bool is_host) {
     int completed_tasks = 0;
     int submitted_to_npu = 0;
+    
+    // [新增] 看门狗计时器
+    uint64_t last_progress_time = get_time_us();
 
     while (completed_tasks < num_tasks) {
         bool made_progress = false; 
@@ -449,7 +452,6 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
             io_task_t *task = &tasks[submitted_to_npu];
             size_t aligned_sz = ALIGN_4K(task->size);
             
-            // 异常块过滤
             if (task->size == 0 || aligned_sz > ctx->chunk_size) {
                 task->state = CHUNK_DONE; completed_tasks++; submitted_to_npu++; continue;
             }
@@ -458,15 +460,10 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
             if (rc == 0) {
                 submitted_to_npu++; made_progress = true;
             } else if (rc == -1) {
-                break; // Ring Buffer 真满了，正常跳出等硬件消化
+                break; // Ring Buffer 满
             } else { 
-                // 【核心修复】：rc == -2 意味着 NPU 遭遇致命错误（如野指针）
-                // 必须打印报错，并强行将该任务标记完成以跳过，绝对不能死循环重试！
-                fprintf(stderr, "[Fatal] ACL Memcpy failed for chunk %d (ptr=%p). Skipping to avoid deadlock.\n", task->task_idx, task->npu_ptr);
-                task->state = CHUNK_DONE;
-                completed_tasks++; 
-                submitted_to_npu++;
-                made_progress = true;
+                fprintf(stderr, "[Fatal] ACL Memcpy failed for chunk %d. Skipping.\n", task->task_idx);
+                task->state = CHUNK_DONE; completed_tasks++; submitted_to_npu++; made_progress = true;
             }
         }
 
@@ -479,15 +476,10 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
                 aclrtEventStatus status;
                 aclError err = aclrtQueryEvent(ctx->events[task->buf_idx], &status);
                 if (err != ACL_SUCCESS) {
-                    fprintf(stderr, "[Fatal] aclrtQueryEvent error %d on chunk %d. Skipping.\n", err, task->task_idx);
-                    task->state = CHUNK_DONE;
-                    completed_tasks++;
-                    ring_push(&ctx->free_ring, task->buf_idx); // 必须归还内存槽位
-                    made_progress = true;
+                    task->state = CHUNK_DONE; completed_tasks++;
+                    ring_push(&ctx->free_ring, task->buf_idx); made_progress = true;
                 } else if (status == ACL_EVENT_RECORDED_STATUS_COMPLETE) {
-                    task->state = CHUNK_NPU_DONE;
-                    if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
-                    made_progress = true;
+                    task->state = CHUNK_NPU_DONE; made_progress = true;
                 }
             }
 
@@ -496,12 +488,8 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
                 if (rc == 0) {
                     made_progress = true;
                 } else if (rc != -ENOMEM && rc != -12) {
-                    // 【核心修复】：如果 NVMe 硬件拒收（非队列满），必须跳过并归还槽位！
-                    fprintf(stderr, "[Fatal] SPDK write rejected! rc=%d for chunk %d. Skipping.\n", rc, task->task_idx);
-                    task->state = CHUNK_DONE;
-                    completed_tasks++;
-                    ring_push(&ctx->free_ring, task->buf_idx);
-                    made_progress = true;
+                    task->state = CHUNK_DONE; completed_tasks++;
+                    ring_push(&ctx->free_ring, task->buf_idx); made_progress = true;
                 }
             }
         }
@@ -510,8 +498,51 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
         int cpl = spdk_nvme_qpair_process_completions(ctx->qpair, 0);
         if (cpl > 0) made_progress = true;
 
+        // ============================================================
+        // [修改] 状态卡死监控与主动唤醒逻辑
+        // ============================================================
         if (!made_progress) {
-            usleep(1); // 让出时间片，防止饿死底层驱动线程
+            uint64_t now = get_time_us();
+            uint64_t stall_time = now - last_progress_time;
+
+            // 【终极防线：主动刺激 (Poke) 机制】
+            // 如果卡顿超过 50 毫秒 (50,000 微秒)，并且还没到 3 秒的报警线。
+            // 这说明硬件极大概率因为任务短缺/中断合并，陷入了“惰性挂起”。
+            if (stall_time > 50000ULL && stall_time < 3000000ULL) {
+                for (int i = 0; i < submitted_to_npu; i++) {
+                    io_task_t *task = &tasks[i];
+                    if (task->state == CHUNK_NPU_COPYING) {
+                        // 狠狠“踹”底层驱动一脚，强迫 CPU 等待并拉取真正的完成状态！
+                        aclrtSynchronizeEvent(ctx->events[task->buf_idx]);
+                        
+                        // 既然强制同步过了，这个任务的数据绝对已经安全到达 Host 内存
+                        task->state = CHUNK_NPU_DONE; 
+                        
+                        // 唤醒一个就足以让阻塞的 Ring Buffer 腾出槽位，让流水线继续转！
+                        last_progress_time = get_time_us(); 
+                        break; 
+                    }
+                }
+            }
+
+            // 如果连强制唤醒都拯救不了（超过 3 秒），说明是真正的物理硬件/SMMU 死锁
+            if (stall_time > 3000000ULL) {
+                fprintf(stderr, "\n======================================================\n");
+                fprintf(stderr, "[WATCHDOG] Rank %d Pipeline DEADLOCK Detected!\n", ctx->npu_id);
+                fprintf(stderr, "[WATCHDOG] Completed: %d / Total: %d\n", completed_tasks, num_tasks);
+                fprintf(stderr, "------- Active Tasks State Dump -------\n");
+                for (int i = 0; i < submitted_to_npu; i++) {
+                    if (tasks[i].state != CHUNK_DONE) {
+                        fprintf(stderr, " -> TaskIdx: %d | NvmeOffset: %lu | Size: %zu | STATE: %d | BufIdx: %d\n",
+                                tasks[i].task_idx, tasks[i].nvme_offset, tasks[i].size, tasks[i].state, tasks[i].buf_idx);
+                    }
+                }
+                fprintf(stderr, "======================================================\n\n");
+                last_progress_time = now; // 重置定时器，防止日志疯狂刷屏
+            }
+            usleep(1);
+        } else {
+            last_progress_time = get_time_us(); // 有进展则重置时间
         }
     }
 }

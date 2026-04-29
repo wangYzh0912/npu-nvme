@@ -131,14 +131,14 @@ SAVE_OPTIMIZER = False
 ASYNC_SAVE = False                 
 
 SEQ_LEN = 4096
-BATCH_SIZE = 4                  
+BATCH_SIZE = 2                  
 GRAD_ACCUM_STEPS = 2            
 TRAIN_MR = "./prepare/llama2/wikitext2_data/wiki_train_4096.mindrecord"
 EVAL_MR  = "./prepare/llama2/wikitext2_data/wiki_valid_4096.mindrecord"
 CHECKPOINT_INTERVAL = 5 
 NVME_ADDR = "0000:83:00.0"
-PIPELINE_DEPTH = 4 
-CHUNK_SIZE = 4 * 1024 * 1024
+PIPELINE_DEPTH = 8 
+CHUNK_SIZE = 1 * 1024 * 1024
 SPDK_SHM_ID = int(os.getenv("SPDK_SHM_ID", "1"))  
 
 # 存储槽位配置
@@ -146,7 +146,7 @@ SLOT_SIZE_GB = 10
 KEEP_LAST_N = 3
 
 # 并行策略
-DATA_PARALLEL = 2
+DATA_PARALLEL = 1
 MODEL_PARALLEL = 2
 PIPELINE_PARALLEL = 2
 TRAIN_STEPS = 100 

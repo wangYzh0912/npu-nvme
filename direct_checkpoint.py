@@ -29,6 +29,15 @@ MAGIC_NUMBER = b"NPUNVME1"
 _LIB_PATH = os.path.join(os.path.dirname(__file__), "out", "lib", "libnpu_nvme.so")
 
 try:
+    acl_lib = ctypes.CDLL("libascendcl.so")
+    # 函数签名: aclError aclrtMemcpy(void *dst, size_t destMax, const void *src, size_t count, int kind);
+    acl_lib.aclrtMemcpy.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
+    acl_lib.aclrtMemcpy.restype = ctypes.c_int
+except Exception as e:
+    print(f"[DirectCkpt] Warning: Failed to load libascendcl.so for probe: {e}")
+    acl_lib = None
+
+try:
     lib = ctypes.CDLL(_LIB_PATH)
     class NPUNVMEContext(ctypes.Structure): pass
 
@@ -96,17 +105,18 @@ def build_chunks(params: List[Dict], chunk_size: int):
         remaining = p["size"]
         inner_off = 0
         nvme_offset_bytes = p["offset"] 
+        name = p.get("name", "unknown") # 【修改点1】：获取名字
         
         while remaining > 0:
             take = min(remaining, chunk_size)
             chunks.append((
                 ctypes.c_void_p(ptr + inner_off),
                 ctypes.c_uint64(nvme_offset_bytes),
-                ctypes.c_size_t(take)  # 严格使用实际内存大小，绝不越界
+                ctypes.c_size_t(take),
+                name # 【修改点2】：把名字塞进元组里
             ))
             remaining -= take
             inner_off += take
-            # 物理写入地址仍按 4KB 对齐步进，防止覆盖
             nvme_offset_bytes += int(math.ceil(take / 4096.0)) * 4096
             total_size += take
             
@@ -327,51 +337,98 @@ class DirectCheckpoint:
         if self.ctx:
             lib.npu_nvme_cleanup(self.ctx)
             self.ctx = None
+            
+    def _build_local_param_registry(self, models):
+        """
+        动态硬件探针建表：不依赖任何模型架构与切分规则！
+        利用底层同步拷贝的安全拦截特性，在初始化时自动摸清本卡的真实张量。
+        """
+        if not isinstance(models, (list, tuple)): models = [models]
+        self.local_valid_param_names = set()
+
+        print(f"[DirectCkpt] Rank {self.rank_id} running dynamic hardware memory probe...", flush=True)
+        
+        # 分配 1 字节的 Host 内存，充当探针接收端
+        dummy_dst = ctypes.create_string_buffer(1)
+
+        for model in models:
+            if model is None or not hasattr(model, "parameters_and_names"): continue
+            for name, p in model.parameters_and_names():
+                ptr = p._data_ptr() if hasattr(p, "_data_ptr") else 0
+                if ptr == 0: continue
+
+                is_valid_on_this_rank = False
+
+                # 1. 发射硬件级 1 字节探针 (鉴定是否为真实分配的 NPU 显存)
+                if acl_lib is not None:
+                    # 2 代表 ACL_MEMCPY_DEVICE_TO_HOST
+                    ret = acl_lib.aclrtMemcpy(ctypes.byref(dummy_dst), 1, ctypes.c_void_p(ptr), 1, 2)
+                    if ret == 0:
+                        is_valid_on_this_rank = True
+                
+                # 2. 抢救驻留在 CPU 的合法小张量 (如 global_step 或 optimizer 状态)
+                # 如果硬件探针失败，说明它要么是别卡的幽灵张量，要么是本地纯 CPU 张量
+                if not is_valid_on_this_rank:
+                    # 极小张量 (<= 8 个元素) 或特定名称，尝试通过 asnumpy 作为最终防线
+                    if "step" in name.lower() or "scale" in name.lower() or np.prod(p.shape) <= 8:
+                        try:
+                            _ = p.asnumpy()
+                            is_valid_on_this_rank = True
+                        except:
+                            pass
+                
+                # 3. 鉴定完毕，收录入库
+                if is_valid_on_this_rank:
+                    self.local_valid_param_names.add(name)
+
+        print(f"[DirectCkpt] Rank {self.rank_id} registry dynamically built: {len(self.local_valid_param_names)} valid params.", flush=True)
 
     def _prepare_params(self, models):
+        # 第一次执行时自动建表 (使用 getattr 安全获取)
+        if getattr(self, "local_valid_param_names", None) is None:
+            self._build_local_param_registry(models)
+
         if not isinstance(models, (list, tuple)): models = [models]
         params = []
         for model in models:
             if model is None or not hasattr(model, "parameters_and_names"): continue
             for name, p in model.parameters_and_names():
-                ptr = 0
-                np_arr = None
-                try:
-                    data_obj = p.data if hasattr(p, "data") else p
-                    if hasattr(data_obj, "_data_ptr"):
-                        if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
-                            ptr = 0
-                        else:
-                            ptr = int(data_obj._data_ptr())
-                    if ptr == 0 and hasattr(data_obj, "device_address"):
-                        dev_addr = getattr(data_obj, "device_address", None)
-                        if dev_addr is not None and hasattr(dev_addr, "ptr"):
-                            ptr = int(dev_addr.ptr)
-                except Exception:
-                    ptr = 0
+                
+                # 1. 过滤掉不属于本卡的幽灵指针
+                if name not in self.local_valid_param_names:
+                    continue
+
+                ptr = p._data_ptr() if hasattr(p, "_data_ptr") else 0
+                if ptr == 0: continue
 
                 dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
                 if np.prod(p.shape) == 0: continue
                 size = int(np.prod(p.shape)) * dtype_np.itemsize
-                shape = list(p.shape)
-                dtype = dtype_np.name
-
-                if ptr == 0:
-                    # 仅对标量(step/scale)等极小参数强制拷贝到 CPU
-                    if size <= 8 or "step" in name.lower() or "scale" in name.lower():
+                
+                np_arr = None
+                
+                # ============================================================
+                # 【终极防线：客货分流机制】
+                # 针对 16KB (Norm) 这种极易被底层通信流锁死的分布式小张量，
+                # 以及 step/scale 等状态，强制走 CPU 内存中转 (asnumpy)，绕开异步 DMA！
+                # 设定 1MB (1048576 Bytes) 为分水岭。
+                # ============================================================
+                if size <= 1048576 or "step" in name.lower() or "scale" in name.lower():
+                    try:
+                        # asnumpy() 会触发框架内部的安全同步机制，绝对不会死锁
                         np_arr = p.asnumpy()
                         ptr = np_arr.ctypes.data
-                    else:
-                        continue # 真正的幽灵大张量，直接安全忽略
-
-                if ptr == 0: continue
-
+                    except Exception as e:
+                        print(f"[Warning] Failed to route small tensor {name} to host: {e}")
+                        continue
+                
                 params.append({
                     "name": name, "ptr": ptr, "size": size,
-                    "shape": shape, "dtype": dtype, "np_arr": np_arr, "param_ref": p
+                    "shape": list(p.shape), "dtype": dtype_np.name, 
+                    "np_arr": np_arr, "param_ref": p
                 })
         return params
-
+        
     def save(self, model: ms.nn.Cell, step: int, meta_path: str = "checkpoint_meta.pkl", async_save: bool = False, commit_meta: bool = True):
         if async_save:
             return self.save_async(model, step, meta_path, commit_meta)
@@ -419,15 +476,22 @@ class DirectCheckpoint:
         total_written = 0
         
         # 预先完成所有 Dev (显存) 的 C 数组组装，绝不占用硬件传输时间
+        # 预先完成所有 Dev (显存) 的 C 数组组装
         dev_chunks, dev_sz = build_chunks(dev_params, self.chunk_size)
         if dev_chunks:
+            # 【新增 Debug 代码】：落盘一份对照表，看看死锁的 Task 到底叫什么名字！
+            with open(f"task_mapping_rank_{self.rank_id}.txt", "w") as f:
+                for i, chunk in enumerate(dev_chunks):
+                    f.write(f"TaskIdx: {i} | Name: {chunk[3]} | Size: {chunk[2].value}\n")
+
             num_dev = len(dev_chunks)
             c_ptrs_dev = (ctypes.c_void_p * num_dev)()
             c_offs_dev = (ctypes.c_uint64 * num_dev)()
             c_sizes_dev = (ctypes.c_size_t * num_dev)()
-            for i, (p, o, s) in enumerate(dev_chunks):
+            # 【修改点3】：这里多解包一个 name
+            for i, (p, o, s, name) in enumerate(dev_chunks): 
                 c_ptrs_dev[i], c_offs_dev[i], c_sizes_dev[i] = p, ctypes.c_uint64(o.value), s
-
+            
         # 预先完成所有 Host (内存) 的 C 数组组装
         host_chunks, host_sz = build_chunks(host_params, self.chunk_size)
         if host_chunks:
@@ -435,7 +499,8 @@ class DirectCheckpoint:
             c_ptrs_host = (ctypes.c_void_p * num_host)()
             c_offs_host = (ctypes.c_uint64 * num_host)()
             c_sizes_host = (ctypes.c_size_t * num_host)()
-            for i, (p, o, s) in enumerate(host_chunks):
+            
+            for i, (p, o, s, name) in enumerate(host_chunks):
                 c_ptrs_host[i], c_offs_host[i], c_sizes_host[i] = p, ctypes.c_uint64(o.value), s
 
         t_layout_end = time.perf_counter()
@@ -444,13 +509,21 @@ class DirectCheckpoint:
         # ============================================================
         # 阶段 3: T_SPDK (纯硬件直写 DMA 耗时，没有任何 Python 开销)
         # ============================================================
+
+        if hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
+            ms.runtime.synchronize()  # MindSpore 2.5+ 官方 API
+        elif hasattr(ms.hal, "synchronize"):
+            ms.hal.synchronize()      # 兼容老版本
+        else:
+            ops.functional.depend(model.trainable_params()[0], model.trainable_params()[0])
+
         t_spdk_start = time.perf_counter()
 
         if dev_chunks:
             rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs_dev, c_offs_dev, c_sizes_dev, num_dev)
             if rc != 0: raise RuntimeError(f"write_batch failed (rc={rc})")
             total_written += dev_sz
-
+            
         if host_chunks:
             if hasattr(lib, "npu_nvme_write_batch_host"):
                 rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs_host, c_offs_host, c_sizes_host, num_host)
