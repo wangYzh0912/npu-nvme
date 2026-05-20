@@ -78,6 +78,16 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs, 
                         uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
+/**
+ * @brief 设置 NPU 侧探针 flag 的设备地址
+ * @param ctx 全局上下文
+ * @param dev_ptr NPU 设备指针
+ * @return int 0 成功, -1 失败
+ */
+int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
+int npu_nvme_trigger_probe(NPUNVMEContext *ctx);
+int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
+
 #ifdef __cplusplus
 }
 #endif

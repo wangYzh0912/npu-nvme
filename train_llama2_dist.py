@@ -189,6 +189,12 @@ class DirectCkptCallback(Callback):
         self.has_logged_timeline = False
 
     def on_train_step_begin(self, run_context):
+        cb_params = run_context.original_args()
+        step_num = cb_params.cur_step_num
+            
+        t_now = time.perf_counter()
+        print(f"[Timeline][Rank {self.rank_id}] Step {step_num} | Forward pass STARTED at {t_now:.3f}s", flush=True)
+
         if not getattr(self, "has_logged_timeline", False):
             self.has_logged_timeline = True
             compilation_end_time = time.time()
@@ -205,68 +211,21 @@ class DirectCkptCallback(Callback):
         if step % CHECKPOINT_INTERVAL != 0:
             return
             
-        t0 = time.time()
-        save_start = time.time()
-        
         targets = [self.model]
             
-        # 1. 各 Rank 独立向自己的物理槽位盲写，禁止提前盖章
+        # 1. 触发主线程 Layout 并在后台线程发射异步写入
+        # 注意：这里将 commit_meta 设置为 True（限 rank_id==0 时），
+        # 确保元数据是由后台线程写完参数后再盖章的，而不是在回调里强制写。
         save_results = self.ckpt.save(
             targets,
             step=step,
             meta_path=self.ckpt_meta_path,
             async_save=ASYNC_SAVE,
-            commit_meta=False 
+            commit_meta=(self.rank_id == 0) 
         )
-        total, num_chunks, t_save, bw, stats = save_results[:5] 
-        save_end = time.time()
 
-        if ASYNC_SAVE and hasattr(self.ckpt, "wait_async_io"):
-            self.ckpt.wait_async_io()
-
-        # ==== 2. 分布式绝对屏障 (Global IO Barrier) ====
-        try:
-            # time_tensor = ms.Tensor(np.array([t_save], dtype=np.float32))
-            # agg_time_s = ops.AllReduce(ops.ReduceOp.MAX)(time_tensor).asnumpy().item()
-            
-            # total_mb = total / (1024 * 1024)
-            # print(f"[DirectCkpt][Rank {self.rank_id}] Passed IO Barrier! Local save: {total_mb:.2f} MB in {t_save:.3f}s | BW: {bw:.2f} MB/s", flush=True)
-            
-            agg_time_s = t_save 
-            total_mb = total / (1024 * 1024)
-            print(f"[DirectCkpt][Rank {self.rank_id}] Passed IO Barrier! Local save: {total_mb:.2f} MB in {t_save:.3f}s | BW: {bw:.2f} MB/s", flush=True)
-
-            # 【核心新增】：将每次 Checkpoint 的硬核统计数据追加到各 Rank 的 CSV 报表中
-            csv_path = os.path.join(PROFILING_OUTPUT_DIR, f"rank{self.rank_id}_write.csv")
-            file_exists = os.path.exists(csv_path)
-            with open(csv_path, "a", newline="") as f:
-                writer = csv.writer(f)
-                if not file_exists:
-                    # 首次创建时写入表头
-                    writer.writerow(["step", "total_mb", "prep_time_s", "pure_write_time_s", "e2e_time_s", "bw_pure_mb_s", "bw_e2e_mb_s"])
-                
-                # 写入当前 step 的所有详细指标（保留两位/四位小数）
-                writer.writerow([
-                    step, 
-                    round(total_mb, 2), 
-                    round(stats.get('prep_time', 0), 4), 
-                    round(stats.get('write_time', 0), 4), 
-                    round(stats.get('total_time', 0), 4), 
-                    round(stats.get('bw_pure', 0), 2), 
-                    round(stats.get('bw_e2e', 0), 2)
-                ])
-                
-        except Exception as ex:
-            if self.rank_id == 0:
-                print(f"[DirectCkpt][aggregate] IO Barrier failed: {ex}", flush=True)
-
-        # 3. 屏障安全通过，Rank 0 修改物理盘头的超级块统一盖章
-        if self.rank_id == 0:
-            if hasattr(self.ckpt, "commit_last_layout"):
-                self.ckpt.commit_last_layout(step)
-                print(f"[DirectCkpt] ALL RANKS SAFE. Rank 0 committed Meta for Step {step}!", flush=True)
-
-        print(f"[DirectCkpt][rank {self.rank_id}] step {step} Checkpoint pipeline done.", flush=True)
+        # 2. 因为此时主线程瞬间返回了，我们直接打点并释放控制权给 MindSpore
+        print(f"[Timeline][Rank {self.rank_id}] Step {step} | step_end hook finished. Unblocking training immediately!", flush=True)
 
     def on_train_step_end(self, run_context):
         return self.step_end(run_context)

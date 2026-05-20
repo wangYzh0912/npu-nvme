@@ -9,7 +9,8 @@ import threading
 from typing import List, Dict
 
 import mindspore as ms
-from mindspore import ops
+from mindspore import ops, nn, Tensor
+from mindspore.ops import MultitypeFuncGraph, HyperMap, CustomRegOp, DataType
 import numpy as np
 
 import atexit
@@ -27,6 +28,7 @@ MAGIC_NUMBER = b"NPUNVME1"
 # 绑定 C 接口
 # ============================================================
 _LIB_PATH = os.path.join(os.path.dirname(__file__), "out", "lib", "libnpu_nvme.so")
+_PROBE_LIB_PATH = os.path.join(os.path.dirname(__file__), "out", "lib", "libprobe_kernel.so")
 
 try:
     acl_lib = ctypes.CDLL("libascendcl.so")
@@ -40,6 +42,28 @@ except Exception as e:
 try:
     lib = ctypes.CDLL(_LIB_PATH)
     class NPUNVMEContext(ctypes.Structure): pass
+
+    lib.get_probe_flag_addr.argtypes = []
+    lib.get_probe_flag_addr.restype = ctypes.c_uint64
+
+    if hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
+        lib.npu_nvme_set_probe_flag_ptr.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        lib.npu_nvme_set_probe_flag_ptr.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_trigger_probe"):
+        lib.npu_nvme_trigger_probe.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+        lib.npu_nvme_trigger_probe.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_set_probe_flag_value"):
+        lib.npu_nvme_set_probe_flag_value.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.c_uint32]
+        lib.npu_nvme_set_probe_flag_value.restype = ctypes.c_int
+
+    lib.npu_nvme_register_tasks.argtypes = [
+        ctypes.c_void_p,                     # ctx
+        ctypes.POINTER(ctypes.c_void_p),     # npu_ptrs
+        ctypes.POINTER(ctypes.c_uint64),     # nvme_offsets
+        ctypes.POINTER(ctypes.c_size_t),     # sizes
+        ctypes.c_int                         # num_items
+    ]
+    lib.npu_nvme_register_tasks.restype = ctypes.c_int
 
     lib.npu_nvme_init.argtypes = [
         ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)), ctypes.c_char_p, ctypes.c_int,
@@ -169,7 +193,76 @@ def rebuild_chunks_from_meta(models, params_meta: Dict, chunk_size: int):
     host_chunks, _ = build_chunks(host_buffers, chunk_size)
 
     return dev_chunks, host_chunks, buffers
-    
+
+    from mindspore import nn, Tensor, ops
+
+bind_depend_op = MultitypeFuncGraph("bind_depend_op")
+@bind_depend_op.register("Tensor", "Tensor")
+def _bind_depend_op(sig, grad):
+    return ops.depend(grad, sig)
+
+
+def get_dev_ptr(tensor):
+    ptr = 0
+    try:
+        data_obj = tensor.data if hasattr(tensor, "data") else tensor
+        if hasattr(data_obj, "_data_ptr"):
+            if isinstance(tensor, ms.Parameter) and hasattr(tensor, "is_inited") and not tensor.is_inited:
+                tensor.init_data()
+            ptr = int(data_obj._data_ptr())
+        elif hasattr(tensor, "data_ptr"):
+            ptr = int(tensor.data_ptr())
+    except Exception:
+        ptr = 0
+    return ptr
+
+
+wait_op_info = CustomRegOp("WaitProbe") \
+    .input(0, "flag") \
+    .input(1, "expected") \
+    .output(0, "y") \
+    .dtype_format(DataType.U32_Default, DataType.U32_Default, DataType.U32_Default) \
+    .target("Ascend") \
+    .get_op_info()
+
+class ProbeTrainOneStepCell(nn.Cell):
+    def __init__(self, network, optimizer, so_path, flag_addr, enable_probe=True, probe_mode="full"):
+        super().__init__(auto_prefix=False)
+        self.network = network
+        self.network.set_grad()
+        self.optimizer = optimizer
+        self.grad_fn = ops.value_and_grad(self.network, grad_position=None, weights=self.optimizer.parameters)
+
+        self.enable_probe = enable_probe
+        self.depend = ops.Depend()
+        self.hyper_map = HyperMap()
+
+        self.probe_mode = probe_mode
+
+        if self.enable_probe:
+            # Counter flag and expected value start at 0
+            self.flag = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False)
+            self.expected = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False)
+            self.wait_probe = ops.Custom("WaitProbe", out_shape=[1], out_dtype=ms.uint32,
+                                         func_type="aicpu", reg_info=wait_op_info)
+
+    def construct(self, *inputs):
+        if not self.enable_probe:
+            loss, grads = self.grad_fn(*inputs)
+            opt_res = self.optimizer(grads)
+            loss = self.depend(loss, opt_res)
+            return loss
+
+        loss, grads = self.grad_fn(*inputs)
+
+        wait_sig = self.wait_probe(self.flag, self.expected)
+        safe_grads = self.hyper_map(ops.partial(bind_depend_op, wait_sig), grads)
+
+        opt_res = self.optimizer(safe_grads)
+        loss = self.depend(loss, opt_res)
+
+        return loss
+
 # ============================================================
 # DirectCheckpoint 主类
 # ============================================================
@@ -182,6 +275,7 @@ class DirectCheckpoint:
         keep_last_n: int = 3, slot_size_gb: int = 50      
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
+        self.npu_device_id = npu_device_id
         self.enable_profiling = enable_profiling
         self.profiling_dir = profiling_dir
         self.rank_id = rank_id
@@ -229,6 +323,8 @@ class DirectCheckpoint:
 
         atexit.register(self.close)
         self._closed = False
+
+        self.io_thread = None
 
     def _mount_filesystem(self):
         sb_buf = ctypes.create_string_buffer(4096)
@@ -331,7 +427,85 @@ class DirectCheckpoint:
             return rc == 0
         return False
 
+    def set_probe_flag_ptr(self, flag_tensor: Tensor):
+        if not hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
+            raise RuntimeError("npu_nvme_set_probe_flag_ptr is not available in the C library.")
+
+        ptr = get_dev_ptr(flag_tensor)
+        if ptr == 0:
+            raise RuntimeError("Failed to get device pointer for probe flag. Ensure tensor is allocated on NPU.")
+
+        rc = lib.npu_nvme_set_probe_flag_ptr(self.ctx, ctypes.c_void_p(ptr))
+        if rc != 0:
+            raise RuntimeError(f"Failed to set probe flag pointer. C API returned {rc}")
+        self.probe_flag_ptr = ptr
+
+    def read_probe_flag_dev(self) -> int:
+        """Read probe flag directly from device memory via ACL."""
+        if acl_lib is None:
+            raise RuntimeError("acl_lib not available for device read")
+        if not hasattr(self, "probe_flag_ptr") or self.probe_flag_ptr == 0:
+            raise RuntimeError("probe_flag_ptr is not set")
+
+        ret = acl_lib.aclrtSetDevice(self.npu_device_id)
+        if ret != 0:
+            raise RuntimeError(f"aclrtSetDevice failed, ret={ret}")
+
+        host_buf = ctypes.create_string_buffer(4)
+        # 2 is ACL_MEMCPY_DEVICE_TO_HOST
+        ret = acl_lib.aclrtMemcpy(ctypes.byref(host_buf), 4, ctypes.c_void_p(self.probe_flag_ptr), 4, 2)
+        if ret != 0:
+            raise RuntimeError(f"aclrtMemcpy device->host failed, ret={ret}")
+        return int.from_bytes(host_buf.raw[:4], byteorder="little", signed=False)
+
+    def write_probe_flag_dev(self, value: int):
+        """Write probe flag directly to device memory via ACL."""
+        if acl_lib is None:
+            raise RuntimeError("acl_lib not available for device write")
+        if not hasattr(self, "probe_flag_ptr") or self.probe_flag_ptr == 0:
+            raise RuntimeError("probe_flag_ptr is not set")
+        if value < 0:
+            raise ValueError("probe flag value must be non-negative")
+
+        ret = acl_lib.aclrtSetDevice(self.npu_device_id)
+        if ret != 0:
+            raise RuntimeError(f"aclrtSetDevice failed, ret={ret}")
+
+        host_buf = ctypes.create_string_buffer(4)
+        host_buf.raw = int(value).to_bytes(4, byteorder="little", signed=False)
+        # 1 is ACL_MEMCPY_HOST_TO_DEVICE
+        ret = acl_lib.aclrtMemcpy(ctypes.c_void_p(self.probe_flag_ptr), 4, ctypes.byref(host_buf), 4, 1)
+        if ret != 0:
+            raise RuntimeError(f"aclrtMemcpy host->device failed, ret={ret}")
+
+    def probe_flag_selftest(self):
+        """One-shot selftest to verify device pointer is writable."""
+        orig = self.read_probe_flag_dev()
+        self.write_probe_flag_dev(1)
+        after = self.read_probe_flag_dev()
+        self.write_probe_flag_dev(orig)
+        print(f"[DirectCkpt] probe flag selftest: orig={orig}, after={after}")
+
+    def trigger_probe(self):
+        """Trigger the probe listener to start a write cycle."""
+        if not hasattr(lib, "npu_nvme_trigger_probe"):
+            raise RuntimeError("npu_nvme_trigger_probe is not available in the C library.")
+        rc = lib.npu_nvme_trigger_probe(self.ctx)
+        if rc != 0:
+            raise RuntimeError(f"npu_nvme_trigger_probe failed with rc={rc}")
+
+    def set_probe_flag_value(self, value: int):
+        """Set probe flag via C to avoid cross-stream races."""
+        if not hasattr(lib, "npu_nvme_set_probe_flag_value"):
+            raise RuntimeError("npu_nvme_set_probe_flag_value is not available in the C library.")
+        if value < 0:
+            raise ValueError("probe flag value must be non-negative")
+        rc = lib.npu_nvme_set_probe_flag_value(self.ctx, ctypes.c_uint32(value))
+        if rc != 0:
+            raise RuntimeError(f"npu_nvme_set_probe_flag_value failed with rc={rc}")
+
     def cleanup(self):
+        self.wait_for_io_completion()
         if self.async_thread and self.async_thread.is_alive():
              self.async_thread.join()
         if self.ctx:
@@ -384,7 +558,7 @@ class DirectCheckpoint:
         print(f"[DirectCkpt] Rank {self.rank_id} registry dynamically built: {len(self.local_valid_param_names)} valid params.", flush=True)
 
     def _prepare_params(self, models):
-        # 第一次执行时自动建表 (使用 getattr 安全获取)
+        # 第一次执行时自动建表
         if getattr(self, "local_valid_param_names", None) is None:
             self._build_local_param_registry(models)
 
@@ -394,41 +568,164 @@ class DirectCheckpoint:
             if model is None or not hasattr(model, "parameters_and_names"): continue
             for name, p in model.parameters_and_names():
                 
-                # 1. 过滤掉不属于本卡的幽灵指针
+                # 1. 过滤不属于本卡的幽灵指针
                 if name not in self.local_valid_param_names:
                     continue
 
                 ptr = p._data_ptr() if hasattr(p, "_data_ptr") else 0
                 if ptr == 0: continue
 
+                # 2. 精准获取本地物理切片大小，防越界
                 dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
-                if np.prod(p.shape) == 0: continue
-                size = int(np.prod(p.shape)) * dtype_np.itemsize
+                local_shape = p.shape
                 
-                np_arr = None
-                
-                # ============================================================
-                # 【终极防线：客货分流机制】
-                # 针对 16KB (Norm) 这种极易被底层通信流锁死的分布式小张量，
-                # 以及 step/scale 等状态，强制走 CPU 内存中转 (asnumpy)，绕开异步 DMA！
-                # 设定 1MB (1048576 Bytes) 为分水岭。
-                # ============================================================
-                if size <= 1048576 or "step" in name.lower() or "scale" in name.lower():
-                    try:
-                        # asnumpy() 会触发框架内部的安全同步机制，绝对不会死锁
-                        np_arr = p.asnumpy()
-                        ptr = np_arr.ctypes.data
-                    except Exception as e:
-                        print(f"[Warning] Failed to route small tensor {name} to host: {e}")
-                        continue
+                if hasattr(p, "sliced_shape") and p.sliced_shape:
+                    local_shape = p.sliced_shape
+                elif hasattr(p, "data") and hasattr(p.data, "shape"):
+                    if np.prod(p.data.shape) < np.prod(p.shape):
+                        local_shape = p.data.shape
+
+                if np.prod(local_shape) == 0: continue
+                size = int(np.prod(local_shape)) * dtype_np.itemsize
                 
                 params.append({
                     "name": name, "ptr": ptr, "size": size,
                     "shape": list(p.shape), "dtype": dtype_np.name, 
-                    "np_arr": np_arr, "param_ref": p
+                    "np_arr": None,  # 全部设为 None，强行走 dev_chunks 硬件通道
+                    "param_ref": p
                 })
         return params
+
+    def wait_for_io_completion(self):
+        """
+        强制阻塞屏障：如果后台 I/O 线程还在写盘，主线程必须在此等待，
+        以防止下一步的优化器更新破坏 NPU 显存中的参数。
+        """
+        if getattr(self, 'io_thread', None) is not None and self.io_thread.is_alive():
+            t_wait_start = time.perf_counter()
+            print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for background SPDK flush to finish...", flush=True)
+            
+            self.io_thread.join()  # 阻塞 Python 主线程，释放 GIL，等待 C 语言线程退出
+            
+            t_wait_end = time.perf_counter()
+            print(f"[Timeline][Rank {self.rank_id}] I/O Barrier Cleared! Wait time: {(t_wait_end - t_wait_start):.3f}s", flush=True)
+            self.io_thread = None    
+
+    def build_layout(self, models, step: int = 0):
+        """
+        生成用于后台探针的分块布局（按 chunk_size 切分），并缓存到 self.chunks。
+        注意：该布局会绑定到某个 slot 的 base offset。
+        """
+        if not isinstance(models, (list, tuple)):
+            models = [models]
+
+        params = self._prepare_params(models)
+        base_offset_bytes = self._get_current_slot_base_offset(step)
+        current_offset = base_offset_bytes
+
+        chunks = []
+        for p in params:
+            remaining = p["size"]
+            inner_off = 0
+            nvme_offset_bytes = current_offset
+
+            while remaining > 0:
+                take = min(remaining, self.chunk_size)
+                aligned_take = int(math.ceil(take / 4096.0)) * 4096
+
+                if nvme_offset_bytes + aligned_take > self.total_bytes:
+                    raise MemoryError("CRITICAL: DMA write exceeds disk capacity during build_layout.")
+
+                if (nvme_offset_bytes - base_offset_bytes) + aligned_take > self.slot_bytes:
+                    raise MemoryError(f"OOM: Tensor {p['name']} exceeds slot size during build_layout.")
+
+                chunks.append({
+                    "name": p["name"],
+                    "param_ref": p.get("param_ref"),
+                    "npu_ptr": p["ptr"] + inner_off,
+                    "size": take,
+                    "nvme_offset": nvme_offset_bytes,
+                })
+
+                remaining -= take
+                inner_off += take
+                nvme_offset_bytes += aligned_take
+
+            current_offset = nvme_offset_bytes
+
+        self.chunks = chunks
+        return chunks
+
+    def register_tasks(self, model: ms.nn.Cell, step: int = 0):
+        """
+        [新增] 将所有权重的物理指针和偏移量一次性注册给底层的 C 后台线程。
+        【警告】必须在图编译完成、显存分配后（例如 step == 1 的 step_end 或独立调用的 build 之后）调用！
+        """
+        print(f"[DirectCkpt] Rank {self.rank_id} Registering Layout to NPU-NVMe Background Thread...")
         
+        # 1. 确保 NVMe 落盘的物理布局规划已经生成
+        if not hasattr(self, 'chunks') or len(self.chunks) == 0:
+            self.build_layout(model, step=step)
+            
+        num_items = len(self.chunks)
+        if num_items == 0:
+            print("[DirectCkpt] Warning: No chunks to register!")
+            return
+
+        # 2. 构造 ctypes C 语言兼容的数组
+        npu_ptrs = (ctypes.c_void_p * num_items)()
+        nvme_offsets = (ctypes.c_uint64 * num_items)()
+        sizes = (ctypes.c_size_t * num_items)()
+
+        # 3. 提取真实的物理指针
+        for i, chunk in enumerate(self.chunks):
+            # 获取 MindSpore 的 Parameter 对象
+            param = chunk.get("param_ref")
+            if param is None:
+                raise ValueError(f"[DirectCkpt] Chunk {i} is missing 'param_ref'.")
+
+            # ---------------------------------------------------------
+            # 核心：获取 NPU 显存物理地址
+            # ---------------------------------------------------------
+            ptr = 0
+            
+            # 方法 A: 尝试通过用户原有的自定义扩展获取（如果你在 build_layout 中已经拿到了）
+            if "npu_ptr" in chunk and chunk["npu_ptr"] != 0:
+                ptr = chunk["npu_ptr"]
+            else:
+                # 方法 B: 使用 MindSpore 原生 API 获取设备物理地址 (支持 MS 2.x)
+                try:
+                    # 获取内部张量对象的底层设备地址
+                    ptr = param.data_ptr() 
+                    if ptr is None or ptr == 0:
+                        # 兜底：尝试获取其 value() 的物理地址
+                        ptr = param.value().data_ptr()
+                except AttributeError:
+                    raise RuntimeError(f"Failed to get data_ptr from parameter {param.name}. Please ensure you are using MindSpore 2.x.")
+
+            # 致命错误防御：如果指针为 0，说明框架还没有为它分配显存！
+            if ptr == 0 or ptr is None:
+                raise RuntimeError(
+                    f"\n[Fatal Error] Parameter '{param.name}' has an invalid physical address (0x0).\n"
+                    f"-> Reason: MindSpore uses lazy memory allocation.\n"
+                    f"-> Solution: You MUST call `register_tasks()` AFTER `model.build()` or after the first forward pass."
+                )
+
+            # 填充 C 数组
+            npu_ptrs[i] = ptr
+            nvme_offsets[i] = chunk["nvme_offset"]
+            sizes[i] = chunk["size"]
+
+        # 4. 调用我们在 npu_nvme.c 中写好的 C 接口下发至底层后台线程
+        rc = lib.npu_nvme_register_tasks(
+            self.ctx, npu_ptrs, nvme_offsets, sizes, num_items
+        )
+        
+        if rc != 0:
+            raise RuntimeError(f"[DirectCkpt] Failed to register tasks! C API returned {rc}")
+            
+        print(f"[DirectCkpt] Rank {self.rank_id} Successfully registered {num_items} tensor pointers to SPDK background thread.")
+
     def save(self, model: ms.nn.Cell, step: int, meta_path: str = "checkpoint_meta.pkl", async_save: bool = False, commit_meta: bool = True):
         if async_save:
             return self.save_async(model, step, meta_path, commit_meta)
@@ -510,67 +807,79 @@ class DirectCheckpoint:
         # 阶段 3: T_SPDK (纯硬件直写 DMA 耗时，没有任何 Python 开销)
         # ============================================================
 
+        # 【同步显存】保证前向/反向计算和优化器已完全结束
         if hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
-            ms.runtime.synchronize()  # MindSpore 2.5+ 官方 API
+            ms.runtime.synchronize()  
         elif hasattr(ms.hal, "synchronize"):
-            ms.hal.synchronize()      # 兼容老版本
+            ms.hal.synchronize()      
         else:
             ops.functional.depend(model.trainable_params()[0], model.trainable_params()[0])
 
-        t_spdk_start = time.perf_counter()
+        # 定义一个供后台线程执行的局部函数 (闭包)
+        # 注意：这里将 ctypes 指针通过参数传进去，防止它们在主线程提前被垃圾回收
+        def background_io_worker(c_ptrs_d, c_offs_d, c_sizes_d, n_dev, d_sz, 
+                                 c_ptrs_h, c_offs_h, c_sizes_h, n_host, h_sz):
+            t_spdk_start = time.perf_counter()
+            total_written = 0
 
-        if dev_chunks:
-            rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs_dev, c_offs_dev, c_sizes_dev, num_dev)
-            if rc != 0: raise RuntimeError(f"write_batch failed (rc={rc})")
-            total_written += dev_sz
+            # 1. 执行 C 引擎耗时轮询 (在此期间 Python GIL 会被释放)
+            if n_dev > 0:
+                rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs_d, c_offs_d, c_sizes_d, n_dev)
+                if rc != 0: print(f"[Fatal] write_batch failed (rc={rc})")
+                total_written += d_sz
+                
+            if n_host > 0:
+                if hasattr(lib, "npu_nvme_write_batch_host"):
+                    rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs_h, c_offs_h, c_sizes_h, n_host)
+                    if rc != 0: print(f"[Fatal] write_batch_host failed (rc={rc})")
+                    total_written += h_sz
+
+            t_spdk_end = time.perf_counter()
+            T_SPDK = t_spdk_end - t_spdk_start
+
+            # 2. 执行阶段 4: T_Meta (元数据账本落盘)
+            t_meta_start = time.perf_counter()
+            self.last_layout = layout
+            if commit_meta:
+                self._commit_metadata(step, layout)
+
+            with open(meta_path, "wb") as f:
+                pickle.dump(self.meta_dict, f)
             
-        if host_chunks:
-            if hasattr(lib, "npu_nvme_write_batch_host"):
-                rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs_host, c_offs_host, c_sizes_host, num_host)
-                if rc != 0: raise RuntimeError(f"write_batch_host failed (rc={rc})")
-                total_written += host_sz
+            t_meta_end = time.perf_counter()
+            T_Meta = t_meta_end - t_meta_start
 
-        t_spdk_end = time.perf_counter()
-        T_SPDK = t_spdk_end - t_spdk_start
-
-        # ============================================================
-        # 阶段 4: T_Meta (元数据账本与本地文件落盘)
-        # ============================================================
-        t_meta_start = time.perf_counter()
-        
-        self.last_layout = layout
-
-        # 分布式受控盖章
-        if commit_meta:
-            self._commit_metadata(step, layout)
-
-        with open(meta_path, "wb") as f:
-            pickle.dump(self.meta_dict, f)
+            # 3. 后台计算耗时并打印铁证
+            real_time = time.perf_counter() - t_start
+            bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
             
-        t_meta_end = time.perf_counter()
-        T_Meta = t_meta_end - t_meta_start
+            print(f"\n======================================================")
+            print(f"[Timeline][Rank {self.rank_id}] Step {step} | Background SPDK Flush ENDED at {time.perf_counter():.3f}s")
+            print(f"[Breakdown][Rank {self.rank_id}] Prep: {T_Prep*1000:.2f}ms | Layout: {T_Layout*1000:.2f}ms | SPDK(H/W): {T_SPDK*1000:.2f}ms | Meta: {T_Meta*1000:.2f}ms")
+            print(f"[DirectCkpt][Rank {self.rank_id}] Background Safe Write: {total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s")
+            print(f"======================================================\n", flush=True)
 
-        # ============================================================
-        # 统计指标汇总与返回
-        # ============================================================
-        real_time = time.perf_counter() - t_start
-        bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
-        bw_pure = total_written / 1024 / 1024 / T_SPDK if T_SPDK > 0 else 0
+        # 构建安全参数，启动后台线程
+        num_dev_val = num_dev if dev_chunks else 0
+        dev_sz_val = dev_sz if dev_chunks else 0
+        num_host_val = num_host if host_chunks else 0
+        host_sz_val = host_sz if host_chunks else 0
 
-        # 保留原有的 key 防止打破外层的 CSV 记录逻辑，同时增加细粒度数据
-        stats = {
-            "prep_time": T_Prep,
-            "layout_time": T_Layout,
-            "write_time": T_SPDK,       # 原生的 write_time 对应纯 SPDK 耗时
-            "meta_time": T_Meta,
-            "total_time": real_time,
-            "bw_pure": bw_pure,
-            "bw_e2e": bw
-        }
+        self.io_thread = threading.Thread(
+            target=background_io_worker,
+            args=(
+                c_ptrs_dev if dev_chunks else None, c_offs_dev if dev_chunks else None, c_sizes_dev if dev_chunks else None, num_dev_val, dev_sz_val,
+                c_ptrs_host if host_chunks else None, c_offs_host if host_chunks else None, c_sizes_host if host_chunks else None, num_host_val, host_sz_val
+            )
+        )
+        self.io_thread.start()
+
+        # 主线程极速返回，让 MindSpore 跑 Step 16
+        t_return = time.perf_counter()
+        print(f"[Timeline][Rank {self.rank_id}] Step {step} | Python save() dispatched to background thread. Layout cost: {T_Layout*1000:.2f}ms", flush=True)
         
-        # 极其硬核的微秒级开销拆解打印
-        print(f"[Breakdown][Rank {self.rank_id}] Prep: {T_Prep*1000:.2f}ms | Layout: {T_Layout*1000:.2f}ms | SPDK(H/W): {T_SPDK*1000:.2f}ms | Meta: {T_Meta*1000:.2f}ms", flush=True)
-        return total_written, len(dev_chunks) + len(host_chunks), real_time, bw, stats
+        # 因为真实写入在后台，此处返回空壳数据应对外层的回调格式
+        return 0, len(dev_chunks) + len(host_chunks), 0.0, 0.0, {"prep_time": T_Prep, "layout_time": T_Layout}
 
     def save_async(self, models, step: int, meta_path: str, commit_meta: bool = True):
         t_start = time.time()
@@ -737,9 +1046,8 @@ class DirectCheckpoint:
     def close(self):
         if not getattr(self, '_closed', True) and hasattr(self, 'ctx') and self.ctx:
             print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down NPUNVME context...", flush=True)
-            lib.npu_nvme_cleanup(self.ctx)
+            self.cleanup()
             self._closed = True
-            self.ctx = None
 
     def __del__(self):
         self.close()
