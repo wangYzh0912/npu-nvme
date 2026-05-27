@@ -1,0 +1,1054 @@
+import ctypes
+import math
+import os
+import pickle
+import json
+import struct
+import time
+import threading
+from typing import List, Dict
+
+import mindspore as ms
+from mindspore import ops, nn, Tensor
+from mindspore.ops import MultitypeFuncGraph, HyperMap, CustomRegOp, DataType
+import numpy as np
+
+import atexit
+
+# ============================================================
+# 裸盘物理布局常量 (全字节寻址 Byte Addressing)
+# ============================================================
+SUPERBLOCK_OFFSET = 0
+META_SLOT_A_OFFSET = 4096
+META_SLOT_B_OFFSET = 4096 + 400 * 1024
+META_SLOT_BYTES = 400 * 1024
+MAGIC_NUMBER = b"NPUNVME1"
+
+# ============================================================
+# 绑定 C 接口
+# ============================================================
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_LIB_PATH = os.path.join(_REPO_ROOT, "build_out", "lib", "libnpu_nvme.so")
+_PROBE_LIB_PATH = os.path.join(_REPO_ROOT, "build_out", "lib", "libprobe_kernel.so")
+
+try:
+    acl_lib = ctypes.CDLL("libascendcl.so")
+    # 函数签名: aclError aclrtMemcpy(void *dst, size_t destMax, const void *src, size_t count, int kind);
+    acl_lib.aclrtMemcpy.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
+    acl_lib.aclrtMemcpy.restype = ctypes.c_int
+except Exception as e:
+    print(f"[DirectCkpt] Warning: Failed to load libascendcl.so for probe: {e}")
+    acl_lib = None
+
+try:
+    lib = ctypes.CDLL(_LIB_PATH)
+    class NPUNVMEContext(ctypes.Structure): pass
+
+    lib.get_probe_flag_addr.argtypes = []
+    lib.get_probe_flag_addr.restype = ctypes.c_uint64
+
+    if hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
+        lib.npu_nvme_set_probe_flag_ptr.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        lib.npu_nvme_set_probe_flag_ptr.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_trigger_probe"):
+        lib.npu_nvme_trigger_probe.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+        lib.npu_nvme_trigger_probe.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_set_probe_flag_value"):
+        lib.npu_nvme_set_probe_flag_value.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.c_uint32]
+        lib.npu_nvme_set_probe_flag_value.restype = ctypes.c_int
+
+    lib.npu_nvme_register_tasks.argtypes = [
+        ctypes.c_void_p,                     # ctx
+        ctypes.POINTER(ctypes.c_void_p),     # npu_ptrs
+        ctypes.POINTER(ctypes.c_uint64),     # nvme_offsets
+        ctypes.POINTER(ctypes.c_size_t),     # sizes
+        ctypes.c_int                         # num_items
+    ]
+    lib.npu_nvme_register_tasks.restype = ctypes.c_int
+
+    lib.npu_nvme_init.argtypes = [
+        ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)), ctypes.c_char_p, ctypes.c_int,
+        ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_char_p,
+    ]
+    lib.npu_nvme_init.restype = ctypes.c_int
+
+    lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_cleanup.restype = None
+
+    lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_get_max_transfer.restype = ctypes.c_int
+
+    lib.npu_nvme_get_total_blocks.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+    lib.npu_nvme_get_total_blocks.restype = ctypes.c_uint64
+
+    lib.npu_nvme_sync_meta_io.argtypes = [
+        ctypes.POINTER(NPUNVMEContext), ctypes.c_uint64, ctypes.c_uint32, ctypes.c_int, ctypes.c_void_p
+    ]
+    lib.npu_nvme_sync_meta_io.restype = ctypes.c_int
+
+    lib.npu_nvme_write_batch.argtypes = [
+        ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
+    ]
+    lib.npu_nvme_write_batch.restype = ctypes.c_int
+
+    lib.npu_nvme_read_batch.argtypes = [
+        ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
+    ]
+    lib.npu_nvme_read_batch.restype = ctypes.c_int
+
+    if hasattr(lib, "npu_nvme_write_batch_host"):
+        lib.npu_nvme_write_batch_host.argtypes = [
+            ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
+        ]
+        lib.npu_nvme_write_batch_host.restype = ctypes.c_int
+
+    if hasattr(lib, "npu_nvme_read_batch_host"):
+        lib.npu_nvme_read_batch_host.argtypes = [
+            ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
+        ]
+        lib.npu_nvme_read_batch_host.restype = ctypes.c_int
+
+    if hasattr(lib, "npu_nvme_bind_thread"):
+        lib.npu_nvme_bind_thread.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+        lib.npu_nvme_bind_thread.restype = ctypes.c_int
+
+except OSError as e:
+    print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")
+
+# ============================================================
+# 工具：分块与合包 
+# ============================================================
+def build_chunks(params: List[Dict], chunk_size: int):
+    chunks = []
+    total_size = 0
+    for p in params:
+        ptr = p["ptr"]
+        remaining = p["size"]
+        inner_off = 0
+        nvme_offset_bytes = p["offset"] 
+        name = p.get("name", "unknown") # 【修改点1】：获取名字
+        
+        while remaining > 0:
+            take = min(remaining, chunk_size)
+            chunks.append((
+                ctypes.c_void_p(ptr + inner_off),
+                ctypes.c_uint64(nvme_offset_bytes),
+                ctypes.c_size_t(take),
+                name # 【修改点2】：把名字塞进元组里
+            ))
+            remaining -= take
+            inner_off += take
+            nvme_offset_bytes += int(math.ceil(take / 4096.0)) * 4096
+            total_size += take
+            
+    return chunks, total_size
+
+def rebuild_chunks_from_meta(models, params_meta: Dict, chunk_size: int):
+    if not isinstance(models, (list, tuple)): models = [models]
+    buffers = []
+
+    def get_dev_ptr(p):
+        ptr = 0
+        try:
+            data_obj = p.data if hasattr(p, "data") else p
+            if hasattr(data_obj, "_data_ptr"):
+                 if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
+                     p.init_data()
+                 ptr = int(data_obj._data_ptr())
+        except Exception:
+            ptr = 0
+        return ptr
+
+    for model in models:
+        if model is None or not hasattr(model, "parameters_and_names"): continue
+        for name, param in model.parameters_and_names():
+            if name not in params_meta: continue
+            info = params_meta[name]
+
+            dev_ptr = get_dev_ptr(param)
+            use_dev = (dev_ptr != 0)
+            np_arr = None
+            ptr_val = dev_ptr
+
+            if not use_dev:
+                # 恢复真实精确大小，不加 4KB 垫片
+                np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
+                ptr_val = np_arr.ctypes.data
+
+            buffers.append({
+                "name": name, "ptr": ptr_val, "size": info["size"],
+                "offset": info["offset"], "np_arr": np_arr,
+                "param_ref": param, "use_dev": use_dev
+            })
+
+    buffers.sort(key=lambda x: x["offset"])
+
+    dev_buffers = [b for b in buffers if b["use_dev"]]
+    host_buffers = [b for b in buffers if not b["use_dev"]]
+
+    dev_chunks, _ = build_chunks(dev_buffers, chunk_size)
+    host_chunks, _ = build_chunks(host_buffers, chunk_size)
+
+    return dev_chunks, host_chunks, buffers
+
+    from mindspore import nn, Tensor, ops
+
+bind_depend_op = MultitypeFuncGraph("bind_depend_op")
+@bind_depend_op.register("Tensor", "Tensor")
+def _bind_depend_op(sig, grad):
+    return ops.depend(grad, sig)
+
+
+def get_dev_ptr(tensor):
+    ptr = 0
+    try:
+        data_obj = tensor.data if hasattr(tensor, "data") else tensor
+        if hasattr(data_obj, "_data_ptr"):
+            if isinstance(tensor, ms.Parameter) and hasattr(tensor, "is_inited") and not tensor.is_inited:
+                tensor.init_data()
+            ptr = int(data_obj._data_ptr())
+        elif hasattr(tensor, "data_ptr"):
+            ptr = int(tensor.data_ptr())
+    except Exception:
+        ptr = 0
+    return ptr
+
+
+wait_op_info = CustomRegOp("WaitProbe") \
+    .input(0, "flag") \
+    .input(1, "expected") \
+    .output(0, "y") \
+    .dtype_format(DataType.U32_Default, DataType.U32_Default, DataType.U32_Default) \
+    .target("Ascend") \
+    .get_op_info()
+
+class ProbeTrainOneStepCell(nn.Cell):
+    def __init__(self, network, optimizer, so_path, flag_addr, enable_probe=True, probe_mode="full"):
+        super().__init__(auto_prefix=False)
+        self.network = network
+        self.network.set_grad()
+        self.optimizer = optimizer
+        self.grad_fn = ops.value_and_grad(self.network, grad_position=None, weights=self.optimizer.parameters)
+
+        self.enable_probe = enable_probe
+        self.depend = ops.Depend()
+        self.hyper_map = HyperMap()
+
+        self.probe_mode = probe_mode
+
+        if self.enable_probe:
+            # Counter flag and expected value start at 0
+            self.flag = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False)
+            self.expected = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False)
+            self.wait_probe = ops.Custom("WaitProbe", out_shape=[1], out_dtype=ms.uint32,
+                                         func_type="aicpu", reg_info=wait_op_info)
+
+    def construct(self, *inputs):
+        if not self.enable_probe:
+            loss, grads = self.grad_fn(*inputs)
+            opt_res = self.optimizer(grads)
+            loss = self.depend(loss, opt_res)
+            return loss
+
+        loss, grads = self.grad_fn(*inputs)
+
+        wait_sig = self.wait_probe(self.flag, self.expected)
+        safe_grads = self.hyper_map(ops.partial(bind_depend_op, wait_sig), grads)
+
+        opt_res = self.optimizer(safe_grads)
+        loss = self.depend(loss, opt_res)
+
+        return loss
+
+# ============================================================
+# DirectCheckpoint 主类
+# ============================================================
+class DirectCheckpoint:
+    def __init__(
+        self, nvme_addr: str = "0000:83:00.0", npu_device_id: int = 0, pipeline_depth: int = 4,
+        requested_chunk_size: int = 4 * 1024 * 1024, enable_profiling: bool = False,
+        profiling_dir: str = "./output/profiling", rank_id: int = 0, world_size: int = 1,
+        base_offset_bytes: int = 0, shard_span_bytes: int = None, spdk_shm_id: int = 1,
+        keep_last_n: int = 3, slot_size_gb: int = 50      
+    ):
+        self.ctx = ctypes.POINTER(NPUNVMEContext)()
+        self.npu_device_id = npu_device_id
+        self.enable_profiling = enable_profiling
+        self.profiling_dir = profiling_dir
+        self.rank_id = rank_id
+        self.world_size = world_size
+        self.base_offset_bytes = base_offset_bytes
+        self.shard_span_bytes = shard_span_bytes
+        os.environ.setdefault("SPDK_SHM_ID", str(spdk_shm_id))
+
+        self.keep_last_n = keep_last_n
+        self.slot_bytes = slot_size_gb * 1024**3
+        self.active_meta_slot = 0
+        self.stack_start_bytes = 0
+        self.meta_dict = {"checkpoints": {}}
+        self.last_layout = []
+        
+        if self.enable_profiling:
+            os.makedirs(self.profiling_dir, exist_ok=True)
+
+        print(f"[DirectCheckpoint] loading so from {_LIB_PATH}")
+
+        rc = lib.npu_nvme_init(
+            ctypes.byref(self.ctx),
+            nvme_addr.encode(),
+            npu_device_id,
+            pipeline_depth,
+            requested_chunk_size,
+            enable_profiling,
+            self.profiling_dir.encode("utf-8")
+        )
+        if rc != 0:
+            raise RuntimeError("npu_nvme_init failed")
+
+        self.total_bytes = lib.npu_nvme_get_total_blocks(self.ctx)
+        if self.total_bytes == 0:
+            raise RuntimeError("Failed to get NVMe total bytes from hardware.")
+
+        eff = lib.npu_nvme_get_max_transfer(self.ctx)
+        self.chunk_size = requested_chunk_size
+        print(f"[DirectCheckpoint] init ok. chunk={self.chunk_size/1024/1024:.2f}MB, rank={self.rank_id}/{self.world_size}")
+        
+        self.async_thread = None
+        self.async_lock = threading.Lock()
+
+        self._mount_filesystem()
+
+        atexit.register(self.close)
+        self._closed = False
+
+        self.io_thread = None
+
+    def _mount_filesystem(self):
+        sb_buf = ctypes.create_string_buffer(4096)
+        rc = lib.npu_nvme_sync_meta_io(self.ctx, SUPERBLOCK_OFFSET, 4096, 1, ctypes.c_void_p(ctypes.addressof(sb_buf)))
+        if rc != 0:
+            raise RuntimeError("Failed to read Superblock.")
+
+        header = struct.unpack("<8s I Q Q", sb_buf.raw[:28])
+        magic = header[0]
+        
+        if magic != MAGIC_NUMBER:
+            raise RuntimeError(f"Disk is NOT formatted! Found magic: {magic}. Please run format script.")
+            
+        self.active_meta_slot = header[1]
+        self.stack_start_bytes = header[3]
+        
+        # 【核心防爆修复】：检查 Superblock 中的历史堆栈起点是否还能容纳当前的分布式阵列！
+        total_stack_bytes = self.world_size * self.keep_last_n * self.slot_bytes
+        if self.stack_start_bytes == 0 or (self.stack_start_bytes + total_stack_bytes > self.total_bytes):
+            print(f"[Warning] Rank {self.rank_id}: Stale Superblock! Current config needs {total_stack_bytes/1024**3:.2f} GB, but disk bounds exceeded. Recalculating...", flush=True)
+            self.stack_start_bytes = self.total_bytes - total_stack_bytes
+            print(f"[Info] Stack dynamically re-allocated at disk end. Start Offset: {self.stack_start_bytes / 1024**3:.2f} GB")
+
+        target_offset = META_SLOT_A_OFFSET if self.active_meta_slot == 0 else META_SLOT_B_OFFSET
+        meta_buf = ctypes.create_string_buffer(META_SLOT_BYTES)
+        lib.npu_nvme_sync_meta_io(self.ctx, target_offset, META_SLOT_BYTES, 1, ctypes.c_void_p(ctypes.addressof(meta_buf)))
+        
+        meta_str = meta_buf.value.decode('utf-8', errors='ignore').rstrip('\x00')
+        if meta_str:
+            try:
+                self.meta_dict = json.loads(meta_str)
+            except json.JSONDecodeError:
+                self.meta_dict = {"checkpoints": {}}
+                print("[Warning] Parsed metadata JSON was invalid. Starting fresh.")
+            
+        print(f"[Rank {self.rank_id}] FileSystem Mounted. Active Slot: {'A' if self.active_meta_slot==0 else 'B'}")
+
+    def _get_current_slot_base_offset(self, step: int):
+        slot_idx = step % self.keep_last_n
+        rank_offset = self.rank_id * self.keep_last_n * self.slot_bytes
+        slot_offset = slot_idx * self.slot_bytes
+        return self.stack_start_bytes + rank_offset + slot_offset
+
+    def _commit_metadata(self, step: int, layout: List[Dict]):
+        if self.rank_id != 0:
+            return
+
+        ckpt_key = f"step_{step}"
+        self.meta_dict["checkpoints"][ckpt_key] = {
+            "type": "SHARD",
+            "chunk_size": self.chunk_size,
+            "rank_id": self.rank_id,
+            "world_size": self.world_size,
+            "params": {p["name"]: {
+                "offset": p["offset"],
+                "size": p["size"],
+                "shape": p["shape"],
+                "dtype": p["dtype"],
+            } for p in layout}
+        }
+        
+        saved_steps = []
+        for k in self.meta_dict["checkpoints"].keys():
+            if k.startswith("step_"):
+                try:
+                    saved_steps.append(int(k.split('_')[1]))
+                except ValueError:
+                    pass
+        saved_steps = sorted(saved_steps)
+
+        while len(saved_steps) > self.keep_last_n:
+            oldest_step = saved_steps.pop(0)
+            del self.meta_dict["checkpoints"][f"step_{oldest_step}"]
+
+        next_slot = 1 if self.active_meta_slot == 0 else 0
+        target_offset = META_SLOT_B_OFFSET if next_slot == 1 else META_SLOT_A_OFFSET
+        
+        meta_json = json.dumps(self.meta_dict).encode('utf-8')
+        if len(meta_json) > META_SLOT_BYTES:
+            raise RuntimeError(f"Metadata JSON exceeds allocated {META_SLOT_BYTES} bytes!")
+            
+        meta_buf = ctypes.create_string_buffer(meta_json, META_SLOT_BYTES)
+        
+        rc1 = lib.npu_nvme_sync_meta_io(self.ctx, target_offset, META_SLOT_BYTES, 0, ctypes.c_void_p(ctypes.addressof(meta_buf)))
+        if rc1 != 0:
+            raise RuntimeError(f"Fatal: Meta JSON write failed! C layer returned {rc1}.")
+        
+        sb_buf = ctypes.create_string_buffer(4096)
+        struct.pack_into("<8s I Q Q", sb_buf, 0, MAGIC_NUMBER, next_slot, self.total_bytes, self.stack_start_bytes)
+        rc2 = lib.npu_nvme_sync_meta_io(self.ctx, SUPERBLOCK_OFFSET, 4096, 0, ctypes.c_void_p(ctypes.addressof(sb_buf)))
+        if rc2 != 0:
+            raise RuntimeError("Fatal: Superblock write failed!")
+        
+        self.active_meta_slot = next_slot
+        print(f"[DirectCkpt] Rank 0 Meta committed safely to Slot {'B' if next_slot == 1 else 'A'} (Superblock updated).", flush=True)
+
+    def bind_thread(self):
+        if hasattr(lib, "npu_nvme_bind_thread"):
+            rc = lib.npu_nvme_bind_thread(self.ctx)
+            return rc == 0
+        return False
+
+    def set_probe_flag_ptr(self, flag_tensor: Tensor):
+        if not hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
+            raise RuntimeError("npu_nvme_set_probe_flag_ptr is not available in the C library.")
+
+        ptr = get_dev_ptr(flag_tensor)
+        if ptr == 0:
+            raise RuntimeError("Failed to get device pointer for probe flag. Ensure tensor is allocated on NPU.")
+
+        rc = lib.npu_nvme_set_probe_flag_ptr(self.ctx, ctypes.c_void_p(ptr))
+        if rc != 0:
+            raise RuntimeError(f"Failed to set probe flag pointer. C API returned {rc}")
+        self.probe_flag_ptr = ptr
+
+    def read_probe_flag_dev(self) -> int:
+        """Read probe flag directly from device memory via ACL."""
+        if acl_lib is None:
+            raise RuntimeError("acl_lib not available for device read")
+        if not hasattr(self, "probe_flag_ptr") or self.probe_flag_ptr == 0:
+            raise RuntimeError("probe_flag_ptr is not set")
+
+        ret = acl_lib.aclrtSetDevice(self.npu_device_id)
+        if ret != 0:
+            raise RuntimeError(f"aclrtSetDevice failed, ret={ret}")
+
+        host_buf = ctypes.create_string_buffer(4)
+        # 2 is ACL_MEMCPY_DEVICE_TO_HOST
+        ret = acl_lib.aclrtMemcpy(ctypes.byref(host_buf), 4, ctypes.c_void_p(self.probe_flag_ptr), 4, 2)
+        if ret != 0:
+            raise RuntimeError(f"aclrtMemcpy device->host failed, ret={ret}")
+        return int.from_bytes(host_buf.raw[:4], byteorder="little", signed=False)
+
+    def write_probe_flag_dev(self, value: int):
+        """Write probe flag directly to device memory via ACL."""
+        if acl_lib is None:
+            raise RuntimeError("acl_lib not available for device write")
+        if not hasattr(self, "probe_flag_ptr") or self.probe_flag_ptr == 0:
+            raise RuntimeError("probe_flag_ptr is not set")
+        if value < 0:
+            raise ValueError("probe flag value must be non-negative")
+
+        ret = acl_lib.aclrtSetDevice(self.npu_device_id)
+        if ret != 0:
+            raise RuntimeError(f"aclrtSetDevice failed, ret={ret}")
+
+        host_buf = ctypes.create_string_buffer(4)
+        host_buf.raw = int(value).to_bytes(4, byteorder="little", signed=False)
+        # 1 is ACL_MEMCPY_HOST_TO_DEVICE
+        ret = acl_lib.aclrtMemcpy(ctypes.c_void_p(self.probe_flag_ptr), 4, ctypes.byref(host_buf), 4, 1)
+        if ret != 0:
+            raise RuntimeError(f"aclrtMemcpy host->device failed, ret={ret}")
+
+    def probe_flag_selftest(self):
+        """One-shot selftest to verify device pointer is writable."""
+        orig = self.read_probe_flag_dev()
+        self.write_probe_flag_dev(1)
+        after = self.read_probe_flag_dev()
+        self.write_probe_flag_dev(orig)
+        print(f"[DirectCkpt] probe flag selftest: orig={orig}, after={after}")
+
+    def trigger_probe(self):
+        """Trigger the probe listener to start a write cycle."""
+        if not hasattr(lib, "npu_nvme_trigger_probe"):
+            raise RuntimeError("npu_nvme_trigger_probe is not available in the C library.")
+        rc = lib.npu_nvme_trigger_probe(self.ctx)
+        if rc != 0:
+            raise RuntimeError(f"npu_nvme_trigger_probe failed with rc={rc}")
+
+    def set_probe_flag_value(self, value: int):
+        """Set probe flag via C to avoid cross-stream races."""
+        if not hasattr(lib, "npu_nvme_set_probe_flag_value"):
+            raise RuntimeError("npu_nvme_set_probe_flag_value is not available in the C library.")
+        if value < 0:
+            raise ValueError("probe flag value must be non-negative")
+        rc = lib.npu_nvme_set_probe_flag_value(self.ctx, ctypes.c_uint32(value))
+        if rc != 0:
+            raise RuntimeError(f"npu_nvme_set_probe_flag_value failed with rc={rc}")
+
+    def cleanup(self):
+        self.wait_for_io_completion()
+        if self.async_thread and self.async_thread.is_alive():
+             self.async_thread.join()
+        if self.ctx:
+            lib.npu_nvme_cleanup(self.ctx)
+            self.ctx = None
+            
+    def _build_local_param_registry(self, models):
+        """
+        动态硬件探针建表：不依赖任何模型架构与切分规则！
+        利用底层同步拷贝的安全拦截特性，在初始化时自动摸清本卡的真实张量。
+        """
+        if not isinstance(models, (list, tuple)): models = [models]
+        self.local_valid_param_names = set()
+
+        print(f"[DirectCkpt] Rank {self.rank_id} running dynamic hardware memory probe...", flush=True)
+        
+        # 分配 1 字节的 Host 内存，充当探针接收端
+        dummy_dst = ctypes.create_string_buffer(1)
+
+        for model in models:
+            if model is None or not hasattr(model, "parameters_and_names"): continue
+            for name, p in model.parameters_and_names():
+                ptr = p._data_ptr() if hasattr(p, "_data_ptr") else 0
+                if ptr == 0: continue
+
+                is_valid_on_this_rank = False
+
+                # 1. 发射硬件级 1 字节探针 (鉴定是否为真实分配的 NPU 显存)
+                if acl_lib is not None:
+                    # 2 代表 ACL_MEMCPY_DEVICE_TO_HOST
+                    ret = acl_lib.aclrtMemcpy(ctypes.byref(dummy_dst), 1, ctypes.c_void_p(ptr), 1, 2)
+                    if ret == 0:
+                        is_valid_on_this_rank = True
+                
+                # 2. 抢救驻留在 CPU 的合法小张量 (如 global_step 或 optimizer 状态)
+                # 如果硬件探针失败，说明它要么是别卡的幽灵张量，要么是本地纯 CPU 张量
+                if not is_valid_on_this_rank:
+                    # 极小张量 (<= 8 个元素) 或特定名称，尝试通过 asnumpy 作为最终防线
+                    if "step" in name.lower() or "scale" in name.lower() or np.prod(p.shape) <= 8:
+                        try:
+                            _ = p.asnumpy()
+                            is_valid_on_this_rank = True
+                        except:
+                            pass
+                
+                # 3. 鉴定完毕，收录入库
+                if is_valid_on_this_rank:
+                    self.local_valid_param_names.add(name)
+
+        print(f"[DirectCkpt] Rank {self.rank_id} registry dynamically built: {len(self.local_valid_param_names)} valid params.", flush=True)
+
+    def _prepare_params(self, models):
+        # 第一次执行时自动建表
+        if getattr(self, "local_valid_param_names", None) is None:
+            self._build_local_param_registry(models)
+
+        if not isinstance(models, (list, tuple)): models = [models]
+        params = []
+        for model in models:
+            if model is None or not hasattr(model, "parameters_and_names"): continue
+            for name, p in model.parameters_and_names():
+                
+                # 1. 过滤不属于本卡的幽灵指针
+                if name not in self.local_valid_param_names:
+                    continue
+
+                ptr = p._data_ptr() if hasattr(p, "_data_ptr") else 0
+                if ptr == 0: continue
+
+                # 2. 精准获取本地物理切片大小，防越界
+                dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
+                local_shape = p.shape
+                
+                if hasattr(p, "sliced_shape") and p.sliced_shape:
+                    local_shape = p.sliced_shape
+                elif hasattr(p, "data") and hasattr(p.data, "shape"):
+                    if np.prod(p.data.shape) < np.prod(p.shape):
+                        local_shape = p.data.shape
+
+                if np.prod(local_shape) == 0: continue
+                size = int(np.prod(local_shape)) * dtype_np.itemsize
+                
+                params.append({
+                    "name": name, "ptr": ptr, "size": size,
+                    "shape": list(p.shape), "dtype": dtype_np.name, 
+                    "np_arr": None,  # 全部设为 None，强行走 dev_chunks 硬件通道
+                    "param_ref": p
+                })
+        return params
+
+    def wait_for_io_completion(self):
+        """
+        强制阻塞屏障：如果后台 I/O 线程还在写盘，主线程必须在此等待，
+        以防止下一步的优化器更新破坏 NPU 显存中的参数。
+        """
+        if getattr(self, 'io_thread', None) is not None and self.io_thread.is_alive():
+            t_wait_start = time.perf_counter()
+            print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for background SPDK flush to finish...", flush=True)
+            
+            self.io_thread.join()  # 阻塞 Python 主线程，释放 GIL，等待 C 语言线程退出
+            
+            t_wait_end = time.perf_counter()
+            print(f"[Timeline][Rank {self.rank_id}] I/O Barrier Cleared! Wait time: {(t_wait_end - t_wait_start):.3f}s", flush=True)
+            self.io_thread = None    
+
+    def build_layout(self, models, step: int = 0):
+        """
+        生成用于后台探针的分块布局（按 chunk_size 切分），并缓存到 self.chunks。
+        注意：该布局会绑定到某个 slot 的 base offset。
+        """
+        if not isinstance(models, (list, tuple)):
+            models = [models]
+
+        params = self._prepare_params(models)
+        base_offset_bytes = self._get_current_slot_base_offset(step)
+        current_offset = base_offset_bytes
+
+        chunks = []
+        for p in params:
+            remaining = p["size"]
+            inner_off = 0
+            nvme_offset_bytes = current_offset
+
+            while remaining > 0:
+                take = min(remaining, self.chunk_size)
+                aligned_take = int(math.ceil(take / 4096.0)) * 4096
+
+                if nvme_offset_bytes + aligned_take > self.total_bytes:
+                    raise MemoryError("CRITICAL: DMA write exceeds disk capacity during build_layout.")
+
+                if (nvme_offset_bytes - base_offset_bytes) + aligned_take > self.slot_bytes:
+                    raise MemoryError(f"OOM: Tensor {p['name']} exceeds slot size during build_layout.")
+
+                chunks.append({
+                    "name": p["name"],
+                    "param_ref": p.get("param_ref"),
+                    "npu_ptr": p["ptr"] + inner_off,
+                    "size": take,
+                    "nvme_offset": nvme_offset_bytes,
+                })
+
+                remaining -= take
+                inner_off += take
+                nvme_offset_bytes += aligned_take
+
+            current_offset = nvme_offset_bytes
+
+        self.chunks = chunks
+        return chunks
+
+    def register_tasks(self, model: ms.nn.Cell, step: int = 0):
+        """
+        [新增] 将所有权重的物理指针和偏移量一次性注册给底层的 C 后台线程。
+        【警告】必须在图编译完成、显存分配后（例如 step == 1 的 step_end 或独立调用的 build 之后）调用！
+        """
+        print(f"[DirectCkpt] Rank {self.rank_id} Registering Layout to NPU-NVMe Background Thread...")
+        
+        # 1. 确保 NVMe 落盘的物理布局规划已经生成
+        if not hasattr(self, 'chunks') or len(self.chunks) == 0:
+            self.build_layout(model, step=step)
+            
+        num_items = len(self.chunks)
+        if num_items == 0:
+            print("[DirectCkpt] Warning: No chunks to register!")
+            return
+
+        # 2. 构造 ctypes C 语言兼容的数组
+        npu_ptrs = (ctypes.c_void_p * num_items)()
+        nvme_offsets = (ctypes.c_uint64 * num_items)()
+        sizes = (ctypes.c_size_t * num_items)()
+
+        # 3. 提取真实的物理指针
+        for i, chunk in enumerate(self.chunks):
+            # 获取 MindSpore 的 Parameter 对象
+            param = chunk.get("param_ref")
+            if param is None:
+                raise ValueError(f"[DirectCkpt] Chunk {i} is missing 'param_ref'.")
+
+            # ---------------------------------------------------------
+            # 核心：获取 NPU 显存物理地址
+            # ---------------------------------------------------------
+            ptr = 0
+            
+            # 方法 A: 尝试通过用户原有的自定义扩展获取（如果你在 build_layout 中已经拿到了）
+            if "npu_ptr" in chunk and chunk["npu_ptr"] != 0:
+                ptr = chunk["npu_ptr"]
+            else:
+                # 方法 B: 使用 MindSpore 原生 API 获取设备物理地址 (支持 MS 2.x)
+                try:
+                    # 获取内部张量对象的底层设备地址
+                    ptr = param.data_ptr() 
+                    if ptr is None or ptr == 0:
+                        # 兜底：尝试获取其 value() 的物理地址
+                        ptr = param.value().data_ptr()
+                except AttributeError:
+                    raise RuntimeError(f"Failed to get data_ptr from parameter {param.name}. Please ensure you are using MindSpore 2.x.")
+
+            # 致命错误防御：如果指针为 0，说明框架还没有为它分配显存！
+            if ptr == 0 or ptr is None:
+                raise RuntimeError(
+                    f"\n[Fatal Error] Parameter '{param.name}' has an invalid physical address (0x0).\n"
+                    f"-> Reason: MindSpore uses lazy memory allocation.\n"
+                    f"-> Solution: You MUST call `register_tasks()` AFTER `model.build()` or after the first forward pass."
+                )
+
+            # 填充 C 数组
+            npu_ptrs[i] = ptr
+            nvme_offsets[i] = chunk["nvme_offset"]
+            sizes[i] = chunk["size"]
+
+        # 4. 调用我们在 npu_nvme.c 中写好的 C 接口下发至底层后台线程
+        rc = lib.npu_nvme_register_tasks(
+            self.ctx, npu_ptrs, nvme_offsets, sizes, num_items
+        )
+        
+        if rc != 0:
+            raise RuntimeError(f"[DirectCkpt] Failed to register tasks! C API returned {rc}")
+            
+        print(f"[DirectCkpt] Rank {self.rank_id} Successfully registered {num_items} tensor pointers to SPDK background thread.")
+
+    def save(self, model: ms.nn.Cell, step: int, meta_path: str = "checkpoint_meta.pkl", async_save: bool = False, commit_meta: bool = True):
+        if async_save:
+            return self.save_async(model, step, meta_path, commit_meta)
+
+        t_start = time.perf_counter()
+        
+        # ============================================================
+        # 阶段 1: T_Prep (框架遍历与内存/指针处理)
+        # ============================================================
+        t_prep_start = time.perf_counter()
+        params = self._prepare_params(model)
+        t_prep_end = time.perf_counter()
+        T_Prep = t_prep_end - t_prep_start
+
+        # ============================================================
+        # 阶段 2: T_Layout (物理寻址、越界防御与 C-types 组装)
+        # ============================================================
+        base_offset_bytes = self._get_current_slot_base_offset(step)
+        print(f"[DirectCkpt] Rank {self.rank_id} saving step {step} to offset {base_offset_bytes / 1024**3:.2f} GB ...", flush=True)
+
+        current_offset = base_offset_bytes
+        layout, dev_params, host_params = [], [], []
+
+        for p in params:
+            aligned_bytes = int(math.ceil(p["size"] / 4096.0)) * 4096
+            
+            # 【物理保险丝】：严格检查是否越出了这张 NVMe 盘的绝对物理容量
+            if current_offset + aligned_bytes > self.total_bytes:
+                raise MemoryError(f"Rank {self.rank_id} CRITICAL: DMA Write will exceed disk physical capacity! Offset: {(current_offset + aligned_bytes)/1024**3:.2f}GB > Total: {self.total_bytes/1024**3:.2f}GB")
+
+            if (current_offset - base_offset_bytes) + aligned_bytes > self.slot_bytes:
+                raise MemoryError(f"Rank {self.rank_id} OOM! Tensor {p['name']} exceeds slot size.")
+
+            p_record = {**p, "offset": current_offset}
+            layout.append(p_record)
+
+            # 客货分流：走主机内存的单独放入 host_params
+            if p.get("np_arr") is not None:
+                host_params.append(p_record)
+            else:
+                dev_params.append(p_record)
+
+            current_offset += aligned_bytes
+
+        total_written = 0
+        
+        # 预先完成所有 Dev (显存) 的 C 数组组装，绝不占用硬件传输时间
+        # 预先完成所有 Dev (显存) 的 C 数组组装
+        dev_chunks, dev_sz = build_chunks(dev_params, self.chunk_size)
+        if dev_chunks:
+            # 【新增 Debug 代码】：落盘一份对照表，看看死锁的 Task 到底叫什么名字！
+            with open(f"task_mapping_rank_{self.rank_id}.txt", "w") as f:
+                for i, chunk in enumerate(dev_chunks):
+                    f.write(f"TaskIdx: {i} | Name: {chunk[3]} | Size: {chunk[2].value}\n")
+
+            num_dev = len(dev_chunks)
+            c_ptrs_dev = (ctypes.c_void_p * num_dev)()
+            c_offs_dev = (ctypes.c_uint64 * num_dev)()
+            c_sizes_dev = (ctypes.c_size_t * num_dev)()
+            # 【修改点3】：这里多解包一个 name
+            for i, (p, o, s, name) in enumerate(dev_chunks): 
+                c_ptrs_dev[i], c_offs_dev[i], c_sizes_dev[i] = p, ctypes.c_uint64(o.value), s
+            
+        # 预先完成所有 Host (内存) 的 C 数组组装
+        host_chunks, host_sz = build_chunks(host_params, self.chunk_size)
+        if host_chunks:
+            num_host = len(host_chunks)
+            c_ptrs_host = (ctypes.c_void_p * num_host)()
+            c_offs_host = (ctypes.c_uint64 * num_host)()
+            c_sizes_host = (ctypes.c_size_t * num_host)()
+            
+            for i, (p, o, s, name) in enumerate(host_chunks):
+                c_ptrs_host[i], c_offs_host[i], c_sizes_host[i] = p, ctypes.c_uint64(o.value), s
+
+        t_layout_end = time.perf_counter()
+        T_Layout = t_layout_end - t_prep_end
+
+        # ============================================================
+        # 阶段 3: T_SPDK (纯硬件直写 DMA 耗时，没有任何 Python 开销)
+        # ============================================================
+
+        # 【同步显存】保证前向/反向计算和优化器已完全结束
+        if hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
+            ms.runtime.synchronize()  
+        elif hasattr(ms.hal, "synchronize"):
+            ms.hal.synchronize()      
+        else:
+            ops.functional.depend(model.trainable_params()[0], model.trainable_params()[0])
+
+        # 定义一个供后台线程执行的局部函数 (闭包)
+        # 注意：这里将 ctypes 指针通过参数传进去，防止它们在主线程提前被垃圾回收
+        def background_io_worker(c_ptrs_d, c_offs_d, c_sizes_d, n_dev, d_sz, 
+                                 c_ptrs_h, c_offs_h, c_sizes_h, n_host, h_sz):
+            t_spdk_start = time.perf_counter()
+            total_written = 0
+
+            # 1. 执行 C 引擎耗时轮询 (在此期间 Python GIL 会被释放)
+            if n_dev > 0:
+                rc = lib.npu_nvme_write_batch(self.ctx, c_ptrs_d, c_offs_d, c_sizes_d, n_dev)
+                if rc != 0: print(f"[Fatal] write_batch failed (rc={rc})")
+                total_written += d_sz
+                
+            if n_host > 0:
+                if hasattr(lib, "npu_nvme_write_batch_host"):
+                    rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs_h, c_offs_h, c_sizes_h, n_host)
+                    if rc != 0: print(f"[Fatal] write_batch_host failed (rc={rc})")
+                    total_written += h_sz
+
+            t_spdk_end = time.perf_counter()
+            T_SPDK = t_spdk_end - t_spdk_start
+
+            # 2. 执行阶段 4: T_Meta (元数据账本落盘)
+            t_meta_start = time.perf_counter()
+            self.last_layout = layout
+            if commit_meta:
+                self._commit_metadata(step, layout)
+
+            with open(meta_path, "wb") as f:
+                pickle.dump(self.meta_dict, f)
+            
+            t_meta_end = time.perf_counter()
+            T_Meta = t_meta_end - t_meta_start
+
+            # 3. 后台计算耗时并打印铁证
+            real_time = time.perf_counter() - t_start
+            bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
+            
+            print(f"\n======================================================")
+            print(f"[Timeline][Rank {self.rank_id}] Step {step} | Background SPDK Flush ENDED at {time.perf_counter():.3f}s")
+            print(f"[Breakdown][Rank {self.rank_id}] Prep: {T_Prep*1000:.2f}ms | Layout: {T_Layout*1000:.2f}ms | SPDK(H/W): {T_SPDK*1000:.2f}ms | Meta: {T_Meta*1000:.2f}ms")
+            print(f"[DirectCkpt][Rank {self.rank_id}] Background Safe Write: {total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s")
+            print(f"======================================================\n", flush=True)
+
+        # 构建安全参数，启动后台线程
+        num_dev_val = num_dev if dev_chunks else 0
+        dev_sz_val = dev_sz if dev_chunks else 0
+        num_host_val = num_host if host_chunks else 0
+        host_sz_val = host_sz if host_chunks else 0
+
+        self.io_thread = threading.Thread(
+            target=background_io_worker,
+            args=(
+                c_ptrs_dev if dev_chunks else None, c_offs_dev if dev_chunks else None, c_sizes_dev if dev_chunks else None, num_dev_val, dev_sz_val,
+                c_ptrs_host if host_chunks else None, c_offs_host if host_chunks else None, c_sizes_host if host_chunks else None, num_host_val, host_sz_val
+            )
+        )
+        self.io_thread.start()
+
+        # 主线程极速返回，让 MindSpore 跑 Step 16
+        t_return = time.perf_counter()
+        print(f"[Timeline][Rank {self.rank_id}] Step {step} | Python save() dispatched to background thread. Layout cost: {T_Layout*1000:.2f}ms", flush=True)
+        
+        # 因为真实写入在后台，此处返回空壳数据应对外层的回调格式
+        return 0, len(dev_chunks) + len(host_chunks), 0.0, 0.0, {"prep_time": T_Prep, "layout_time": T_Layout}
+
+    def save_async(self, models, step: int, meta_path: str, commit_meta: bool = True):
+        t_start = time.time()
+        if self.async_thread and self.async_thread.is_alive():
+            self.async_thread.join()
+            
+        t_wait = time.time()
+        models_list = [models] if not isinstance(models, (list, tuple)) else models
+        host_snapshot = []
+        total_bytes_copied = 0
+        
+        for model in models_list:
+            if model is None or not hasattr(model, "parameters_and_names"): continue
+            for name, p in model.parameters_and_names():
+                if not hasattr(p, "asnumpy"): continue
+                np_arr = p.asnumpy()
+                total_bytes_copied += np_arr.nbytes
+                host_snapshot.append({
+                    "name": name, "np_arr": np_arr, "ptr": np_arr.ctypes.data,
+                    "size": np_arr.nbytes, "shape": list(p.shape), "dtype": str(np_arr.dtype.name)
+                })
+        
+        t_snapshot = time.time()
+        snapshot_time = max(t_snapshot - t_wait, 0.0001)
+        snapshot_bw = total_bytes_copied / 1024 / 1024 / snapshot_time
+        
+        self.async_thread = threading.Thread(
+            target=self._background_write_worker,
+            args=(host_snapshot, meta_path, total_bytes_copied, step, commit_meta)
+        )
+        self.async_thread.start()
+        
+        return total_bytes_copied, len(host_snapshot), snapshot_time, snapshot_bw, {
+            "prep_time": t_wait - t_start, "write_time": 0.0,
+            "total_time": snapshot_time, "bw_pure": snapshot_bw, "bw_e2e": snapshot_bw
+        }
+
+    def _background_write_worker(self, snapshot_params, meta_path, total_size, step, commit_meta):
+        t0 = time.time()
+        try:
+            base_offset_bytes = self._get_current_slot_base_offset(step)
+            current_offset = base_offset_bytes
+            layout = []
+            
+            for p in snapshot_params:
+                aligned_bytes = int(math.ceil(p["size"] / 4096.0)) * 4096
+                p["offset"] = current_offset
+                layout.append(p)
+                current_offset += aligned_bytes
+                
+            chunks, total = build_chunks(layout, self.chunk_size)
+            
+            num = len(chunks)
+            c_ptrs = (ctypes.c_void_p * num)()
+            c_offs = (ctypes.c_uint64 * num)()
+            c_sizes = (ctypes.c_size_t * num)()
+            for i, (p, o, s) in enumerate(chunks):
+                c_ptrs[i] = p; c_offs[i] = ctypes.c_uint64(o.value); c_sizes[i] = s
+                
+            if hasattr(lib, "npu_nvme_write_batch_host"):
+                rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs, c_offs, c_sizes, num)
+            else:
+                rc = -1
+            if rc != 0: return
+
+            self.last_layout = layout
+
+            if commit_meta:
+                self._commit_metadata(step, layout)
+            
+            with open(meta_path, "wb") as f:
+                pickle.dump(self.meta_dict, f)
+                
+        except Exception as e:
+            print(f"[AsyncWorker] Exception: {e}", flush=True)
+
+    def load(self, model: ms.nn.Cell, step: int = None, meta_path: str = "checkpoint_meta.pkl"):
+        t_start = time.time()
+
+        if step is not None:
+            ckpt_key = f"step_{step}"
+        else:
+            if os.path.exists(meta_path):
+                with open(meta_path, "rb") as f:
+                    self.meta_dict = pickle.load(f)
+            valid_keys = [k for k in self.meta_dict.get("checkpoints", {}).keys() if "complete" not in k]
+            if not valid_keys:
+                raise FileNotFoundError("No checkpoints found in Meta Dictionary!")
+            ckpt_key = sorted(valid_keys, key=lambda x: int(x.split('_')[1]))[-1]
+
+        if ckpt_key not in self.meta_dict.get("checkpoints", {}):
+            raise FileNotFoundError(f"Checkpoint for {ckpt_key} not found!")
+
+        meta_info = self.meta_dict["checkpoints"][ckpt_key]
+        chunk_size = min(meta_info.get("chunk_size", self.chunk_size), self.chunk_size)
+
+        t_rebuild = time.time()
+        dev_chunks, host_chunks, buffers = rebuild_chunks_from_meta(model, meta_info["params"], chunk_size)
+        t_rebuild_end = time.time()
+
+        t0 = time.time()
+        total_read = 0
+
+        # Load NPU Data
+        if dev_chunks:
+            num = len(dev_chunks)
+            c_ptrs = (ctypes.c_void_p * num)()
+            c_offs = (ctypes.c_uint64 * num)()
+            c_sizes = (ctypes.c_size_t * num)()
+            for i, (p, o, s) in enumerate(dev_chunks):
+                c_ptrs[i], c_offs[i], c_sizes[i] = p, ctypes.c_uint64(o.value), s
+
+            rc = lib.npu_nvme_read_batch(self.ctx, c_ptrs, c_offs, c_sizes, num)
+            if rc != 0: raise RuntimeError("read_batch failed")
+            total_read += sum(c[2].value for c in dev_chunks)
+
+        # Load Host Data
+        if host_chunks:
+            if hasattr(lib, "npu_nvme_read_batch_host"):
+                num = len(host_chunks)
+                c_ptrs = (ctypes.c_void_p * num)()
+                c_offs = (ctypes.c_uint64 * num)()
+                c_sizes = (ctypes.c_size_t * num)()
+                for i, (p, o, s) in enumerate(host_chunks):
+                    c_ptrs[i], c_offs[i], c_sizes[i] = p, ctypes.c_uint64(o.value), s
+
+                rc = lib.npu_nvme_read_batch_host(self.ctx, c_ptrs, c_offs, c_sizes, num)
+                if rc != 0: raise RuntimeError("read_batch_host failed")
+                total_read += sum(c[2].value for c in host_chunks)
+
+        t1 = time.time()
+        t_update = time.time()
+
+        for buf in buffers:
+            if buf.get("use_dev", False): continue
+            param = buf["param_ref"]
+            if buf["np_arr"] is not None:
+                tensor = ms.Tensor(buf["np_arr"], dtype=param.dtype)
+                ops.assign(param, tensor)
+        t_end = time.time()
+
+        pure_read_time = t1 - t0
+        total_time = t_end - t_start
+        bw_e2e = total_read / 1024 / 1024 / total_time if total_time > 0 else 0
+
+        stats = {
+            "prepare_time": t_rebuild_end - t_rebuild,
+            "read_time": pure_read_time,
+            "set_data_time": t_end - t_update,
+            "total_time": total_time,
+            "bw_pure": total_read / 1024 / 1024 / pure_read_time if pure_read_time > 0 else 0,
+            "bw_e2e": bw_e2e
+        }
+        return total_read, len(dev_chunks) + len(host_chunks), total_time, bw_e2e, stats
+
+    def wait_async_io(self):
+        if hasattr(self, 'async_thread') and self.async_thread and self.async_thread.is_alive():
+            self.async_thread.join()
+
+    def commit_last_layout(self, step: int):
+        if self.rank_id == 0 and hasattr(self, 'last_layout'):
+            self._commit_metadata(step, self.last_layout)
+
+    def close(self):
+        if not getattr(self, '_closed', True) and hasattr(self, 'ctx') and self.ctx:
+            print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down NPUNVME context...", flush=True)
+            self.cleanup()
+            self._closed = True
+
+    def __del__(self):
+        self.close()
