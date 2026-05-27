@@ -1,0 +1,36 @@
+{
+    "WaitProbe":{
+        "input0":{
+            "format":"ND",
+            "name":"flag",
+            "paramType":"required",
+            "type":"DT_UINT32"
+        },
+        "input1":{
+            "format":"ND",
+            "name":"expected",
+            "paramType":"required",
+            "type":"DT_UINT32"
+        },
+        "opInfo":{
+            "computeCost":"100",
+            "engine":"DNN_VM_AICPU",
+            "flagAsync":"False",
+            "flagPartial":"False",
+            "formatAgnostic":"False",
+            "functionName":"RunCpuKernel",
+            "kernelSo":"libcust_aicpu_kernels.so",
+            "opKernelLib":"CUSTAICPUKernel",
+            "opsFlag":"OPS_FLAG_CLOSE",
+            "subTypeOfInferShape":"1",
+            "userDefined":"True",
+            "workspaceSize":"1024"
+        },
+        "output0":{
+            "format":"ND",
+            "name":"y",
+            "paramType":"required",
+            "type":"DT_UINT32"
+        }
+    }
+}

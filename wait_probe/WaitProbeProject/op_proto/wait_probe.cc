@@ -2,17 +2,11 @@
 namespace ge {
 
 IMPLEMT_COMMON_INFERFUNC(WaitProbeInferShape) {
-    // 获取输入 flag 的 shape 和 dtype
-    Shape shape;
-    if (op.GetInputDescByName("flag", shape) != GRAPH_SUCCESS) {
-        return GRAPH_FAILED;
-    }
-    DataType dtype;
-    if (op.GetInputDescDtype("flag", dtype) != GRAPH_SUCCESS) {
-        return GRAPH_FAILED;
-    }
+    // 获取输入 flag 的 desc，并将 shape/dtype 传递给输出
+    TensorDesc in_desc = op.GetInputDescByName("flag");
+    Shape shape = in_desc.GetShape();
+    DataType dtype = in_desc.GetDataType();
 
-    // 将同样的 shape 和 dtype 赋给输出 y
     TensorDesc td = op.GetOutputDescByName("y");
     td.SetShape(shape);
     td.SetDataType(dtype);

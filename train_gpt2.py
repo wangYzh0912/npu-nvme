@@ -156,12 +156,12 @@ def build_trainer():
     cfg.max_position_embeddings = SEQ_LEN     # 恢复为 1024
     
     # 只把厚度削薄，不改变长宽
-    cfg.num_layers = 1        # 缩减为 1 层
-    cfg.hidden_size = 32      # 缩减为 32 维
-    cfg.num_heads = 2
+    # cfg.num_layers = 1        # 缩减为 1 层
+    # cfg.hidden_size = 32      # 缩减为 32 维
+    # cfg.num_heads = 2
     
     # 保持为空，不加载 1600 维的权重
-    cfg.checkpoint_name_or_path = ""
+    # cfg.checkpoint_name_or_path = ""
     # ==========================================
 
     base_model = AutoModel.from_config(cfg)

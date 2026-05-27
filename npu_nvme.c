@@ -731,6 +731,7 @@ io_task_t* create_io_tasks(int num_tasks, void **npu_ptrs, uint64_t *nvme_offset
 //   -1 : EAGAIN (Ring Buffer 已满，需要交出控制权去轮询)
 //   -2 : 硬件调用致命错误
 // ============================================================================
+/*
 int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
     int buf_idx;
     if (ring_pop(&ctx->free_ring, &buf_idx) != 0) return -1; // Ring Buffer 满
@@ -751,6 +752,33 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
         }
         aclrtRecordEvent(ctx->events[buf_idx], ctx->copy_stream);
         task->state = CHUNK_NPU_COPYING;
+    }
+    return 0;
+}
+*/
+
+int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
+    int buf_idx;
+    if (ring_pop(&ctx->free_ring, &buf_idx) != 0) return -1; // Ring Buffer 满
+
+    task->buf_idx = buf_idx;
+    if (ctx->enable_profiling) task->ts_submit = get_time_us();
+
+    if (is_host) {
+        memcpy(ctx->pool[buf_idx].buf, task->npu_ptr, task->size);
+        if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
+        task->state = CHUNK_NPU_DONE; 
+    } else {
+        // 【核心修改】：抛弃 Async 和 Event，直接使用同步拷贝！
+        // 因为我们在后台线程，阻塞这零点几毫秒对外界毫无影响
+        aclError ret = aclrtMemcpy(ctx->pool[buf_idx].buf, task->size, task->npu_ptr, task->size, ACL_MEMCPY_DEVICE_TO_HOST);
+        if (ret != ACL_SUCCESS) {
+            ring_push(&ctx->free_ring, buf_idx); 
+            return -2;
+        }
+        // 瞬间拷贝完成，直接进入下一步！
+        if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
+        task->state = CHUNK_NPU_DONE;
     }
     return 0;
 }
