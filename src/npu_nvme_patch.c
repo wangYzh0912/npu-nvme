@@ -1,3 +1,12 @@
+/*
+ * Experimental or patched NPU-NVMe implementation variant.
+ *
+ * Usage:
+ * - Built or referenced during specific experiments.
+ *
+ * Inputs/Outputs:
+ * - Same as core NPU-NVMe library behavior.
+ */
 
 /* =========================
  * Helper: H2D Memcpy

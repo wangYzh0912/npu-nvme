@@ -1,3 +1,14 @@
+/*
+ * Pure transfer API wrapper (no checkpoint/probe logic).
+ *
+ * Usage:
+ * - Calls legacy npu_nvme_* functions internally.
+ *
+ * Inputs:
+ * - Same parameters as transfer API.
+ * Outputs:
+ * - Returns status codes from legacy implementation.
+ */
 #include "npu_nvme_transfer.h"
 #include "npu_nvme.h"
 

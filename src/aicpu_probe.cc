@@ -1,3 +1,14 @@
+/*
+ * AICPU probe operator demo or test harness.
+ *
+ * Usage:
+ * - Built as a standalone demo or integrated into experiments.
+ *
+ * Inputs:
+ * - AICPU operator inputs as defined in code.
+ * Outputs:
+ * - Console logs and status codes.
+ */
 #include <cstdint>
 
 extern "C" {

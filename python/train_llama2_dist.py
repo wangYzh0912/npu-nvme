@@ -1,3 +1,13 @@
+"""Distributed LLaMA2 training script with NVMe checkpointing support.
+
+Usage:
+- python python/train_llama2_dist.py (distributed launcher as needed)
+
+Inputs:
+- MindRecord dataset under dataset_prepare/.
+Outputs:
+- Training logs under output/ and NVMe checkpoint metadata.
+"""
 # train_llama2_dist.py
 import mindspore as ms
 from mindspore import context

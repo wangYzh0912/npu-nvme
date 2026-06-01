@@ -1,3 +1,13 @@
+"""MindSpore LLaMA2 training script using MindRecord datasets.
+
+Usage:
+- python python/train_llama2.py
+
+Inputs:
+- MindRecord dataset under dataset_prepare/.
+Outputs:
+- Training logs and checkpoints as configured by MindSpore.
+"""
 # train_llama2_mindrecord.py
 import mindspore as ms
 from mindformers import Trainer, AutoModel, AutoTokenizer, AutoConfig

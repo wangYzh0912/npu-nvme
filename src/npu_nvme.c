@@ -1,3 +1,14 @@
+/*
+ * Core NPU-NVMe implementation (legacy API + checkpoint/probe support).
+ *
+ * Usage:
+ * - Built into libnpu_nvme.so; used by Python bindings and C tests.
+ *
+ * Inputs:
+ * - NVMe PCI address, NPU device id, buffers, offsets.
+ * Outputs:
+ * - NVMe read/write operations and optional probe signaling.
+ */
 #include "npu_nvme.h"
 #include "spdk/stdinc.h"
 #include "spdk/env.h"

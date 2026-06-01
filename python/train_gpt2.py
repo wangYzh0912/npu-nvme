@@ -1,3 +1,13 @@
+"""MindSpore GPT2 training script with optional NVMe checkpoint probe.
+
+Usage:
+- python python/train_gpt2.py
+
+Inputs:
+- MindRecord dataset under dataset_prepare/.
+Outputs:
+- Training logs and optional profiling under output/.
+"""
 import os
 import time
 import mindspore as ms

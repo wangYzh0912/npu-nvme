@@ -1,3 +1,13 @@
+"""AICPU WaitProbe operator smoke test.
+
+Usage:
+- python python/test_aicpu.py
+
+Inputs:
+- Uses installed custom OPP and AICPU kernel.
+Outputs:
+- Prints operator execution results and errors if any.
+"""
 import mindspore as ms
 from mindspore import ops, Tensor
 from mindspore.ops import CustomRegOp, DataType

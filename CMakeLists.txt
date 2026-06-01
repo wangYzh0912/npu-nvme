@@ -30,6 +30,14 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type Release/Debug (default R
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/build_out" CACHE STRING "path for install()" FORCE)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--copy-dt-needed-entries")
 
+# Ensure installed binaries can find libnpu_nvme.so in ../lib without LD_LIBRARY_PATH
+set(CMAKE_SKIP_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_BUILD_RPATH "$ORIGIN/../lib")
+set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+
 # Check AscendC CMake
 if(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)
     set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)
@@ -185,6 +193,44 @@ target_link_libraries(test_npu_nvme PRIVATE
     ${ASCEND_ACL_INCLUDE_DIRS}
 )
 
+set_target_properties(test_npu_nvme PROPERTIES
+    BUILD_RPATH "$ORIGIN/../lib"
+    INSTALL_RPATH "$ORIGIN/../lib"
+)
+
+target_link_options(test_npu_nvme PRIVATE
+    "LINKER:-rpath,$ORIGIN/../lib"
+    "LINKER:--enable-new-dtags"
+)
+
+# ==================================================
+# Example Executable (npu_nvme_transfer API)
+# ==================================================
+add_executable(npu_nvme_transfer_example
+    examples/npu_nvme_transfer_example.c
+)
+
+target_include_directories(npu_nvme_transfer_example PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${ASCEND_ACL_INCLUDE_DIRS}
+)
+
+target_link_libraries(npu_nvme_transfer_example PRIVATE
+    npu_nvme
+    ${ASCEND_ACL_INCLUDE_DIRS}
+)
+
+set_target_properties(npu_nvme_transfer_example PROPERTIES
+    BUILD_RPATH "$ORIGIN/../lib"
+    INSTALL_RPATH "$ORIGIN/../lib"
+)
+
+target_link_options(npu_nvme_transfer_example PRIVATE
+    "LINKER:-rpath,$ORIGIN/../lib"
+    "LINKER:--enable-new-dtags"
+)
+
 # ==================================================
 # Installation
 # ==================================================
@@ -202,6 +248,10 @@ install(FILES include/npu_nvme_transfer.h
 )
 
 install(TARGETS test_npu_nvme
+    RUNTIME DESTINATION bin
+)
+
+install(TARGETS npu_nvme_transfer_example
     RUNTIME DESTINATION bin
 )
 

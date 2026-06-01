@@ -1,3 +1,13 @@
+"""Torch/NPU smoke test for DirectCheckpoint integration.
+
+Usage:
+- python python/test.py
+
+Inputs:
+- Model name, NVMe PCI address, chunk size (set in script).
+Outputs:
+- Logs and optional profiling under output/.
+"""
 import time
 import torch
 import torch_npu

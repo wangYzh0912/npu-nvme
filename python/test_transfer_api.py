@@ -1,3 +1,13 @@
+"""Smoke test for the pure transfer API bindings.
+
+Usage:
+- python python/test_transfer_api.py
+
+Inputs:
+- Optional NPUNVME_TEST_PCI_ADDR and NPUNVME_TEST_NPU_ID env vars.
+Outputs:
+- Prints binding status and optional init/cleanup results.
+"""
 import os
 import sys
 

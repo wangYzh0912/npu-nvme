@@ -1,3 +1,14 @@
+"""Direct checkpoint manager with MindSpore probe wrapper.
+
+Usage:
+- Import DirectCheckpoint and ProbeTrainOneStepCell from this module.
+- Used by training scripts under python/.
+
+Inputs:
+- NVMe PCI address, NPU device id, chunk size, profiling directory.
+Outputs:
+- Writes checkpoints and metadata to NVMe and optional profiling CSV under output/.
+"""
 import ctypes
 import math
 import os

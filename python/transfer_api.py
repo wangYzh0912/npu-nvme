@@ -1,3 +1,13 @@
+"""ctypes bindings for the pure transfer API (no checkpoint/probe).
+
+Usage:
+- from transfer_api import TransferAPI
+
+Inputs:
+- NVMe PCI address, NPU device id, transfer sizes.
+Outputs:
+- Returns status codes from native library calls.
+"""
 import ctypes
 import os
 

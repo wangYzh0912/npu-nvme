@@ -1,3 +1,13 @@
+"""Fast initialization helper for NVMe checkpoint metadata.
+
+Usage:
+- python python/fast_init.py
+
+Inputs:
+- NVMe PCI address and metadata settings in script.
+Outputs:
+- Initializes metadata slots on NVMe and logs status.
+"""
 import mindspore.common.initializer as init_mod
 from mindspore.common.initializer import Initializer, _register, initializer
 

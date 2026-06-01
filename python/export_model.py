@@ -1,3 +1,13 @@
+"""Export model and optional NVMe data for analysis.
+
+Usage:
+- python python/export_model.py
+
+Inputs:
+- Model configuration and NVMe parameters in script.
+Outputs:
+- Exported artifacts under output/ or specified paths.
+"""
 import ctypes
 import json
 import struct

@@ -1,3 +1,13 @@
+"""Destructive NVMe formatting utility for NPU-NVMe checkpoints.
+
+Usage:
+- python python/format_npu_disk.py --pci_addr <PCI> --npu_id <ID>
+
+Inputs:
+- PCI address and NPU device id.
+Outputs:
+- Overwrites metadata slots and prints status.
+"""
 import ctypes
 import json
 import struct

@@ -1,3 +1,13 @@
+"""Inspect NVMe metadata slots and list saved checkpoints.
+
+Usage:
+- python python/inspect_npu_disk.py --pci_addr <PCI> --npu_id <ID>
+
+Inputs:
+- PCI address and NPU device id.
+Outputs:
+- Prints parsed metadata and checkpoint summary.
+"""
 import ctypes
 import json
 import struct
