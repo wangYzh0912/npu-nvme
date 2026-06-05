@@ -1,3 +1,4 @@
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
 """MindSpore LLaMA2 training script using MindRecord datasets.
 
 Usage:

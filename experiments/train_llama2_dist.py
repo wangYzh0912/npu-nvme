@@ -1,3 +1,4 @@
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
 """Distributed LLaMA2 training script with NVMe checkpointing support.
 
 Usage:

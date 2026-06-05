@@ -1,1 +1,67 @@
-./third_party/spdk/
+# ── SPDK submodule (tracked as gitlink only, not expanded) ──
+# Already configured in .gitmodules; nothing extra needed.
+# The line below is safe but redundant — git submodule never commits
+# third_party/spdk's contents, only the commit hash pointer.
+
+# ── Generated documentation ──
+doc/
+*.md
+!README.md
+
+# ── Build artifacts ──
+build/
+build_out/
+*.o
+*.so
+*.a
+compile_commands.json
+
+# ── Python cache & env ──
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+.eggs/
+
+# ── Experiment outputs (generated at runtime) ──
+experiments/output/*.json
+experiments/figures/*.svg
+output/
+
+# ── Dataset & model weights (large, downloaded) ──
+dataset_prepare/
+checkpoint_download/
+models/
+*.ckpt
+*.pth
+*.bin
+*.safetensors
+*.mindrecord
+
+# ── IDE & editor ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS crumbs ──
+.DS_Store
+Thumbs.db
+
+# ── Runtime artifacts ──
+wandb/
+*.log
+__MACOSX/
+*.tar.gz
+
+# ── Profiling permission-denied dirs ──
+rank_0/
+python/rank_0/
+
+# Runtime NPU artifacts
+kernel_meta/
+aclinit.json
+fusion_result.json
+ge_check_op.json
