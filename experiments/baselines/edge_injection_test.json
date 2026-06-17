@@ -1,0 +1,50 @@
+{
+  "test": "Vector Engine Edge Injection",
+  "results": [
+    {
+      "level": 0,
+      "label": "L0: Pure MS baseline",
+      "ops": "none",
+      "compile_epoch_ms": 116083.0,
+      "warm_epoch_ms": 4643.0,
+      "warm_step_ms": 464.0,
+      "total_s": 120.7
+    },
+    {
+      "level": 1,
+      "label": "L1: 1 Vector op (Sub)",
+      "ops": "Sub(W, W_old) \u2014 delta detect",
+      "compile_epoch_ms": 83163.0,
+      "warm_epoch_ms": 4237.0,
+      "warm_step_ms": 424.0,
+      "total_s": 87.4
+    },
+    {
+      "level": 2,
+      "label": "L2: 2 Vector ops (Sub+ReduceSum)",
+      "ops": "Sub+ReduceSum \u2014 delta norm",
+      "compile_epoch_ms": 80138.0,
+      "warm_epoch_ms": 4273.0,
+      "warm_step_ms": 427.0,
+      "total_s": 84.4
+    },
+    {
+      "level": 3,
+      "label": "L3: 3 Vector ops (Sub+Reduce+Cast)",
+      "ops": "Sub+Reduce+Cast \u2014 delta+quant",
+      "compile_epoch_ms": 87314.0,
+      "warm_epoch_ms": 4008.0,
+      "warm_step_ms": 401.0,
+      "total_s": 91.3
+    },
+    {
+      "level": 4,
+      "label": "L4: 5 Vector ops (full I3 micro-step)",
+      "ops": "Sub+Reduce+Cast\u00d72+Mul \u2014 full I3",
+      "compile_epoch_ms": 78863.0,
+      "warm_epoch_ms": 4094.0,
+      "warm_step_ms": 409.0,
+      "total_s": 83.0
+    }
+  ]
+}

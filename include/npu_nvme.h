@@ -88,6 +88,68 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
 int npu_nvme_trigger_probe(NPUNVMEContext *ctx);
 int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
 
+/**
+ * @brief FaF: 设置 step_counter 设备指针用于监听线程轮询
+ * @param ctx 全局上下文
+ * @param dev_ptr step_counter 的 NPU 设备指针 (HBM)
+ * @param ckpt_interval 每隔 N 步触发一次 SPDK 写
+ * @return int 0 成功, -1 失败
+ */
+int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval);
+
+/**
+ * @brief FaF: 获取 C 层自分配的 probe_flag 设备地址 (fallback)
+ * @param ctx 全局上下文
+ * @return 设备指针, NULL 如果未分配
+ */
+void* npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx);
+
+// ============================================================================
+// [Phase 5 E11] Delta (增量) I/O API
+// ============================================================================
+
+/**
+ * @brief 初始化增量盘布局 (Superblock 扩展字段)
+ * @param ctx 全局上下文
+ * @param delta_slot_size  每个 delta 槽位的字节大小 (推荐 256MB = 268435456)
+ * @param delta_slot_count 环形槽位数 (推荐 128)
+ * @return int 0 成功, -1 失败
+ */
+int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size, uint32_t delta_slot_count);
+
+/**
+ * @brief 获取 delta 区域的起始字节偏移
+ */
+uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx);
+
+/**
+ * @brief 获取 delta 槽位配置
+ */
+uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx);
+uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
+
+/**
+ * @brief 写一个 delta frame 到指定槽位 (host buffer → NVMe)
+ * @param ctx 全局上下文
+ * @param slot_idx 槽位索引 (0..slot_count-1)
+ * @param data 主机端 buffer 指针
+ * @param total_bytes frame 总字节数
+ * @return int 0 成功, -1 失败
+ */
+int npu_nvme_write_delta(NPUNVMEContext *ctx, int slot_idx,
+                         const void *data, uint32_t total_bytes);
+
+/**
+ * @brief 从指定槽位读取 delta frame (NVMe → host buffer)
+ * @param ctx 全局上下文
+ * @param slot_idx 槽位索引
+ * @param out_buf 主机端输出 buffer
+ * @param max_bytes buffer 的最大大小
+ * @return int 实际读到的字节数, -1 失败
+ */
+int npu_nvme_read_delta(NPUNVMEContext *ctx, int slot_idx,
+                        void *out_buf, uint32_t max_bytes);
+
 #ifdef __cplusplus
 }
 #endif

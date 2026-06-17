@@ -24,14 +24,97 @@
 
 #define MIN_PIPE_DEPTH   1
 #define MAX_PIPE_DEPTH   16
-#define META_DMA_BUF_SIZE (1024 * 1024)
+// Delta frames can be O(10MB) per step (GPT-2 Small: ~15MB avg, ~30MB peak).
+// Each frame holds header + packed INT8 blocks + small params.
+// Use 64MB to allow plenty of headroom for larger models.
+#define META_DMA_BUF_SIZE (64 * 1024 * 1024)
 
 // 双向通信标志位：flags[0]为NPU发令，flags[1]为CPU放行
+// 双向通信标志位：flags[0]为NPU发令，flags[1]为CPU放行
 volatile uint8_t* probe_flags = NULL;
+
+// Note: per-context device trigger buffer (dev_trigger_ptr) is allocated by
+// the Python layer via aclrtMalloc and passed in via npu_nvme_set_trigger_ptr().
 
 // 暴露给 Python 获取物理地址的接口
 uint64_t get_probe_flag_addr() {
     return (uint64_t)probe_flags;
+}
+
+// ============================================================================
+// Hugepage pool auto-expansion for DPDK/SPDK
+// ============================================================================
+// NPU driver pre-allocates all boot-time hugepages as internal DMA buffers.
+// These pages are pinned by kernel hugetlb subsystem (not via hugetlbfs mmap)
+// and show as Free=0/Rsvd=0.  DPDK's spdk_env_init() checks Free counter
+// per NUMA node and refuses to start when it's zero.
+//
+// Workaround: add a small pool (512 pages = 1GB) on top of NPU's reservation.
+// System has 2TB RAM / 1.9TB free → 1GB is negligible.
+// DPDK properly releases these pages on spdk_env_fini → rte_eal_cleanup.
+#define HUGEPAGE_PADDING 512
+#define HUGEPAGE_2MB_PATH "/sys/kernel/mm/hugepages/hugepages-2048kB/free_hugepages"
+#define NR_HUGEPAGES_PATH  "/proc/sys/vm/nr_hugepages"
+
+static int read_int_from_file(const char *path) {
+    FILE *f = fopen(path, "r");
+    if (!f) return -1;
+    int val;
+    if (fscanf(f, "%d", &val) != 1) { fclose(f); return -1; }
+    fclose(f);
+    return val;
+}
+
+static void ensure_hugepages(void) {
+    int free_pages = read_int_from_file(HUGEPAGE_2MB_PATH);
+    if (free_pages > 0) {
+        fprintf(stderr, "[NPU-NVMe] Hugepage pool: %d free pages available — OK.\n",
+                free_pages);
+        return;
+    }
+
+    // Read current total (may be 0 after a previous resize)
+    int nr = read_int_from_file(NR_HUGEPAGES_PATH);
+    if (nr < 0) {
+        fprintf(stderr, "[NPU-NVMe] WARNING: cannot read nr_hugepages. "
+                "DPDK init may fail if no free hugepages.\n");
+        return;
+    }
+
+    // First restore to a known baseline: 8544 (NPU driver pool).
+    // If nr is already >= 8544, use that. Otherwise reset to 8544.
+    int baseline = 8544;
+    if (nr < baseline) {
+        fprintf(stderr, "[NPU-NVMe] nr_hugepages=%d (< baseline %d), restoring to %d...\n",
+                nr, baseline, baseline);
+        FILE *f = fopen(NR_HUGEPAGES_PATH, "w");
+        if (!f) goto no_root;
+        fprintf(f, "%d", baseline);
+        fclose(f);
+        nr = baseline;
+        usleep(100000);  // 100ms for kernel to settle
+    }
+
+    int target = nr + HUGEPAGE_PADDING;
+    {
+        FILE *f = fopen(NR_HUGEPAGES_PATH, "w");
+        if (!f) goto no_root;
+        fprintf(f, "%d", target);
+        fclose(f);
+    }
+
+    // Verify
+    int new_free = read_int_from_file(HUGEPAGE_2MB_PATH);
+    fprintf(stderr, "[NPU-NVMe] Hugepage pool: %d → %d total, free: %d → %d "
+            "(+%d pages = %.0f MB added for DPDK)\n",
+            nr, target, free_pages, new_free,
+            HUGEPAGE_PADDING, (double)HUGEPAGE_PADDING * 2.0);
+    return;
+
+no_root:
+    fprintf(stderr, "[NPU-NVMe] WARNING: cannot adjust nr_hugepages (need root).\n"
+                    "[NPU-NVMe] If SPDK init fails, run as root:\n"
+                    "    echo %d > %s\n", target, NR_HUGEPAGES_PATH);
 }
 
 // Forward declaration
@@ -143,13 +226,24 @@ typedef struct NPUNVMEContext {
     // ----- [新增] NPU 侧探针 flag 设备指针 -----
     void *probe_flag_dev_ptr;
     void *probe_flag_host;
+
+    // ----- [新增] FaF step_counter polling -----
+    void *dev_step_ptr;        // Device pointer for step_counter (HBM)
+    void *step_poll_buf;       // Host buffer for polling step_counter
+    int last_step_seen;        // Last step value detected by listener
+    int ckpt_interval;         // Checkpoint every N steps
+
+    // ----- [Phase 5 E11] Delta (增量) 盘布局 -----
+    uint64_t delta_area_offset;   // Delta ring 起始字节偏移
+    uint64_t delta_slot_size;     // 每槽位字节数
+    uint32_t delta_slot_count;    // 槽位总数
+    uint32_t delta_last_commit;   // 最后写入的槽位 (用于恢复遍历)
 } NPUNVMEContext;
 
 int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
     if (!ctx) {
         return -1;
     }
-    ctx->probe_flag_dev_ptr = dev_ptr;
     // Refresh ACL context after graph/runtime is created
     aclError ret = aclrtSetDevice(ctx->npu_id);
     if (ret != ACL_SUCCESS) {
@@ -170,6 +264,45 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
         fprintf(stderr, "[NPU-NVMe] Failed to recreate copy stream, ret=%d\n", ret);
         return -1;
     }
+
+    // Self-allocation fallback: when dev_ptr is NULL (e.g. sink=TRUE where MS
+    // never allocates the flag tensor), allocate a 4-byte HBM buffer ourself.
+    bool self_allocated = false;
+    if (dev_ptr == NULL) {
+        void *self_dev_ptr = NULL;
+        ret = aclrtMalloc(&self_dev_ptr, 4, ACL_MEM_MALLOC_HUGE_FIRST);
+        if (ret != ACL_SUCCESS) {
+            fprintf(stderr, "[NPU-NVMe] Self-alloc of probe_flag_dev failed, ret=%d\n", ret);
+            return -1;
+        }
+        // Zero-initialise
+        uint32_t zero = 0;
+        ret = aclrtMemcpyAsync(self_dev_ptr, 4, &zero, 4,
+                               ACL_MEMCPY_HOST_TO_DEVICE, ctx->copy_stream);
+        if (ret == ACL_SUCCESS) {
+            ret = aclrtSynchronizeStream(ctx->copy_stream);
+        }
+        if (ret != ACL_SUCCESS) {
+            fprintf(stderr, "[NPU-NVMe] probe_flag zero-init failed, ret=%d. Freeing.\n", ret);
+            aclrtFree(self_dev_ptr);
+            return -1;
+        }
+        // Store old self-allocated ptr for cleanup
+        if (ctx->probe_flag_dev_ptr && ctx->probe_flag_dev_ptr != dev_ptr) {
+            // Previous was self-allocated too — check if we own it
+            // Simple heuristic: if previous ptr was set via NULL fallback, free it
+            aclrtFree(ctx->probe_flag_dev_ptr);
+        }
+        ctx->probe_flag_dev_ptr = self_dev_ptr;
+        self_allocated = true;
+        fprintf(stderr, "[NPU-NVMe] Probe flag SELF-ALLOCATED: dev=%p (sink=TRUE fallback)\n",
+                self_dev_ptr);
+    } else {
+        ctx->probe_flag_dev_ptr = dev_ptr;
+        fprintf(stderr, "[NPU-NVMe] Probe flag dev ptr set (MS tensor): %p\n", dev_ptr);
+    }
+
+    // Allocate host polling buffer if not already done
     if (!ctx->probe_flag_host) {
         ret = aclrtMallocHost(&ctx->probe_flag_host, 4);
         if (ret != ACL_SUCCESS) {
@@ -177,58 +310,25 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
             return -1;
         }
     }
-    fprintf(stderr, "[NPU-NVMe] Probe flag dev ptr set: %p\n", dev_ptr);
-    if (ctx->enable_profiling) {
+
+#ifdef DIAGNOSTIC
+    {
         aclrtContext cur_ctx = NULL;
         aclError ar = aclrtGetCurrentContext(&cur_ctx);
         fprintf(stderr, "[NPU-NVMe] probe_flag ctx=%p ret=%d\n", (void *)cur_ctx, (int)ar);
 
-        // Self-test: read -> write 1 -> read -> restore original
-        uint32_t orig = 0;
-        aclError r0 = aclrtMemcpyAsync(ctx->probe_flag_host, 4, ctx->probe_flag_dev_ptr, 4,
+        // Read-back verification
+        uint32_t cur = 0;
+        aclError r = aclrtMemcpyAsync(ctx->probe_flag_host, 4, ctx->probe_flag_dev_ptr, 4,
                                        ACL_MEMCPY_DEVICE_TO_HOST, ctx->copy_stream);
-        if (r0 == ACL_SUCCESS) {
-            r0 = aclrtSynchronizeStream(ctx->copy_stream);
-        }
-        if (r0 == ACL_SUCCESS) {
-            orig = *(uint32_t *)ctx->probe_flag_host;
-            fprintf(stderr, "[NPU-NVMe] probe_flag selftest orig=%u\n", (unsigned)orig);
+        if (r == ACL_SUCCESS) r = aclrtSynchronizeStream(ctx->copy_stream);
+        if (r == ACL_SUCCESS) {
+            fprintf(stderr, "[NPU-NVMe] probe_flag selftest current=%u\n", (unsigned)cur);
         } else {
-            fprintf(stderr, "[NPU-NVMe] probe_flag selftest read failed, ret=%d\n", r0);
-        }
-
-        *(uint32_t *)ctx->probe_flag_host = 1;
-        aclError r1 = aclrtMemcpyAsync(ctx->probe_flag_dev_ptr, 4, ctx->probe_flag_host, 4,
-                                       ACL_MEMCPY_HOST_TO_DEVICE, ctx->copy_stream);
-        if (r1 == ACL_SUCCESS) {
-            r1 = aclrtSynchronizeStream(ctx->copy_stream);
-        }
-        if (r1 != ACL_SUCCESS) {
-            fprintf(stderr, "[NPU-NVMe] probe_flag selftest write failed, ret=%d\n", r1);
-        }
-
-        aclError r2 = aclrtMemcpyAsync(ctx->probe_flag_host, 4, ctx->probe_flag_dev_ptr, 4,
-                                       ACL_MEMCPY_DEVICE_TO_HOST, ctx->copy_stream);
-        if (r2 == ACL_SUCCESS) {
-            r2 = aclrtSynchronizeStream(ctx->copy_stream);
-        }
-        if (r2 == ACL_SUCCESS) {
-            fprintf(stderr, "[NPU-NVMe] probe_flag selftest readback=%u\n",
-                    (unsigned)(*(uint32_t *)ctx->probe_flag_host));
-        } else {
-            fprintf(stderr, "[NPU-NVMe] probe_flag selftest readback failed, ret=%d\n", r2);
-        }
-
-        *(uint32_t *)ctx->probe_flag_host = orig;
-        aclError r3 = aclrtMemcpyAsync(ctx->probe_flag_dev_ptr, 4, ctx->probe_flag_host, 4,
-                                       ACL_MEMCPY_HOST_TO_DEVICE, ctx->copy_stream);
-        if (r3 == ACL_SUCCESS) {
-            r3 = aclrtSynchronizeStream(ctx->copy_stream);
-        }
-        if (r3 != ACL_SUCCESS) {
-            fprintf(stderr, "[NPU-NVMe] probe_flag selftest restore failed, ret=%d\n", r3);
+            fprintf(stderr, "[NPU-NVMe] probe_flag selftest read failed, ret=%d\n", r);
         }
     }
+#endif
     return 0;
 }
 
@@ -276,13 +376,62 @@ int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value)
     }
     return 0;
 }
-static inline void signal_probe_flag(NPUNVMEContext *ctx) {
+
+// ---------- FaF: step_counter polling ----------
+
+int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval)
+{
+    if (!ctx || !dev_ptr) return -1;
+    ctx->dev_step_ptr = dev_ptr;
+
+    // Allocate host polling buffer for step_counter
+    if (!ctx->step_poll_buf) {
+        aclError ret = aclrtMallocHost(&ctx->step_poll_buf, 4);
+        if (ret != ACL_SUCCESS) {
+            fprintf(stderr, "[NPU-NVMe] step_poll_buf alloc failed, ret=%d\n", ret);
+            return -1;
+        }
+    }
+    ctx->ckpt_interval = ckpt_interval > 0 ? ckpt_interval : 10;
+    ctx->last_step_seen = 0;  // start from 0 so first trigger is at step >= interval
+    fprintf(stderr, "[NPU-NVMe] Device step_counter ptr set: %p, interval=%d\n",
+            dev_ptr, ctx->ckpt_interval);
+    return 0;
+}
+
+void* npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx)
+{
+    if (!ctx) return NULL;
+    return ctx->probe_flag_dev_ptr;
+}
+
+// Backward-compatible stubs: old API aliases rerouted to FaF functions
+int npu_nvme_set_trigger_ptr(NPUNVMEContext *ctx, void *dev_ptr)
+{
+    return npu_nvme_set_step_ptr(ctx, dev_ptr, 10);
+}
+
+int npu_nvme_read_trigger_dev(NPUNVMEContext *ctx, uint32_t *out_value)
+{
+    if (!ctx || !ctx->dev_step_ptr || !ctx->step_poll_buf) return -1;
+    aclError ret = aclrtSetDevice(ctx->npu_id);
+    if (ret != ACL_SUCCESS) return -1;
+    ret = aclrtSetCurrentContext(ctx->acl_ctx);
+    if (ret != ACL_SUCCESS) return -1;
+    ret = aclrtMemcpy(ctx->step_poll_buf, 4,
+                      ctx->dev_step_ptr, 4,
+                      ACL_MEMCPY_DEVICE_TO_HOST);
+    if (ret != ACL_SUCCESS) return -1;
+    *out_value = *(uint32_t *)ctx->step_poll_buf;
+    return 0;
+}
+static inline void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
     if (ctx && ctx->probe_flag_dev_ptr) {
         if (ctx->enable_profiling) {
             aclrtContext cur_ctx = NULL;
             aclError cr = aclrtGetCurrentContext(&cur_ctx);
-            fprintf(stderr, "[NPU-NVMe] signal flag: cur_ctx=%p ret=%d ctx_acl=%p\n",
-                    (void *)cur_ctx, (int)cr, (void *)ctx->acl_ctx);
+            fprintf(stderr, "[NPU-NVMe] signal flag: cur_ctx=%p ret=%d ctx_acl=%p value=%u\n",
+                    (void *)cur_ctx, (int)cr, (void *)ctx->acl_ctx, (unsigned)value);
         }
         aclError ret = aclrtSetDevice(ctx->npu_id);
         if (ret != ACL_SUCCESS) {
@@ -294,21 +443,12 @@ static inline void signal_probe_flag(NPUNVMEContext *ctx) {
             fprintf(stderr, "[NPU-NVMe] aclrtSetCurrentContext failed in signal, ret=%d\n", ret);
             return;
         }
-        // Increment counter: flag = flag + 1
         if (!ctx->probe_flag_host) {
             fprintf(stderr, "[NPU-NVMe] probe_flag_host is NULL\n");
             return;
         }
-        ret = aclrtMemcpyAsync(ctx->probe_flag_host, 4, ctx->probe_flag_dev_ptr, 4,
-                               ACL_MEMCPY_DEVICE_TO_HOST, ctx->copy_stream);
-        if (ret == ACL_SUCCESS) {
-            ret = aclrtSynchronizeStream(ctx->copy_stream);
-        }
-        if (ret != ACL_SUCCESS) {
-            fprintf(stderr, "[NPU-NVMe] read flag failed, ret=%d\n", ret);
-            return;
-        }
-        *(uint32_t *)ctx->probe_flag_host = *(uint32_t *)ctx->probe_flag_host + 1;
+        // Set flag = expected value (unlocks WaitProbe: flag >= expected)
+        *(uint32_t *)ctx->probe_flag_host = value;
         ret = aclrtMemcpyAsync(ctx->probe_flag_dev_ptr, 4, ctx->probe_flag_host, 4,
                                ACL_MEMCPY_HOST_TO_DEVICE, ctx->copy_stream);
         if (ret == ACL_SUCCESS) {
@@ -317,7 +457,7 @@ static inline void signal_probe_flag(NPUNVMEContext *ctx) {
         if (ret != ACL_SUCCESS) {
             fprintf(stderr, "[NPU-NVMe] write flag failed, ret=%d, ptr=%p\n", ret, ctx->probe_flag_dev_ptr);
         } else {
-            fprintf(stderr, "[NPU-NVMe] Probe flag signaled on device ptr=%p\n", ctx->probe_flag_dev_ptr);
+            fprintf(stderr, "[NPU-NVMe] Probe flag set to %u on device ptr=%p\n", (unsigned)value, ctx->probe_flag_dev_ptr);
         }
         if (ctx->enable_profiling) {
             aclError r2 = aclrtMemcpyAsync(ctx->probe_flag_host, 4, ctx->probe_flag_dev_ptr, 4,
@@ -414,13 +554,29 @@ static void attach_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
 // 3. 完整的初始化函数
 // ============================================================================
 
-// 后台监听与 SPDK 轮询线程
+// 后台监听与 SPDK 轮询线程 (FaF: step_counter polling)
 void* probe_listener_thread(void* arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
-    printf("[Probe Listener] Background thread started. Monitoring NPU signals...\n");
-    
+    const char *mode = getenv("NPU_NVME_LISTENER_MODE");
+
+    // P2-1: WaitProbe dead code is #if 0'd — kept for potential rollback
+    if (mode && strcmp(mode, "idle") == 0) {
+        printf("[Probe Listener] IDLE mode — no SPDK writes, just waiting for stop signal.\n");
+        while (1) {
+            if (ctx->stop_listener) return NULL;
+            sleep(1);
+        }
+        return NULL;
+    }
+    if (mode && strcmp(mode, "off") == 0) {
+        printf("[Probe Listener] DISABLED via NPU_NVME_LISTENER_MODE=off\n");
+        return NULL;
+    }
+    // "full" or default: full FaF mode
+    printf("[Probe Listener] Background thread started. mode=%s. Monitoring NPU signals...\n",
+           mode ? mode : "full");
+
     // 【非常关键】：绑定 NPU ACL 上下文到当前后台线程。
-    // 如果没有这句，后台发起 aclrtMemcpyAsync 时会直接报段错误！
     aclError ret = aclrtSetDevice(ctx->npu_id);
     if (ret != ACL_SUCCESS) {
         fprintf(stderr, "[Probe Listener] aclrtSetDevice failed, ret=%d\n", ret);
@@ -429,65 +585,98 @@ void* probe_listener_thread(void* arg) {
     if (ret != ACL_SUCCESS) {
         fprintf(stderr, "[Probe Listener] aclrtSetCurrentContext failed, ret=%d\n", ret);
     }
-    
+
+#ifdef DIAGNOSTIC
+    fprintf(stderr, "[Probe Listener] Context bound: npu_id=%d, acl_ctx=%p, dev_step_ptr=%p, ckpt_interval=%d, dev_flag_ptr=%p\n",
+            ctx->npu_id, (void*)ctx->acl_ctx, ctx->dev_step_ptr, ctx->ckpt_interval, ctx->probe_flag_dev_ptr);
+#endif
+
+    int poll_count = 0;
+
     while(1) {
-        // 1. 等待 NPU 发令
-        while (probe_flags[0] == 0) {
-            if (ctx->stop_listener) {
-                return NULL;
+        int triggered = 0;
+
+        if (ctx->dev_step_ptr && ctx->step_poll_buf) {
+            // FaF mode: poll step_counter from HBM via aclrtMemcpy
+            aclError err = aclrtSetDevice(ctx->npu_id);
+            if (err != ACL_SUCCESS) {
+                // Device may have been released, exit safely
+                if (ctx->stop_listener) return NULL;
+#ifdef DIAGNOSTIC
+                fprintf(stderr, "[NPU-NVMe] listener aclrtSetDevice failed, ret=%d\n", err);
+#endif
+                usleep(10000);
+                continue;
             }
-            // 在空闲等待时收割 SPDK 队列
-            if (ctx->qpair) {
-                spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+            err = aclrtSetCurrentContext(ctx->acl_ctx);
+            if (err != ACL_SUCCESS) {
+                if (ctx->stop_listener) return NULL;
+#ifdef DIAGNOSTIC
+                fprintf(stderr, "[NPU-NVMe] listener aclrtSetCurrentContext failed, ret=%d\n", err);
+#endif
+                usleep(10000);
+                continue;
             }
-            __asm__ volatile("yield" ::: "memory");
+
+            // Blocking aclrtMemcpy for reliable step_counter read
+            err = aclrtMemcpy(ctx->step_poll_buf, 4,
+                              ctx->dev_step_ptr, 4,
+                              ACL_MEMCPY_DEVICE_TO_HOST);
+            if (err != ACL_SUCCESS) {
+                if (ctx->stop_listener) return NULL;
+#ifdef DIAGNOSTIC
+                fprintf(stderr, "[NPU-NVMe] listener aclrtMemcpy ERROR: ret=%d (step_counter=%p)\n",
+                        err, ctx->dev_step_ptr);
+#endif
+                usleep(10000);  // P1-1: 10ms poll interval
+                continue;
+            }
+
+            int cur_step = *(int32_t *)ctx->step_poll_buf;
+            int expected_step = ctx->last_step_seen + ctx->ckpt_interval;
+
+            if (cur_step >= expected_step && cur_step > ctx->last_step_seen) {
+                poll_count = 0;
+                ctx->last_step_seen = cur_step;
+                triggered = 1;
+                fprintf(stderr, "[NPU-NVMe] listener TRIGGERED: step=%d, expected=%u\n",
+                        cur_step, (unsigned)expected_step);
+            }
+        } else {
+            // Fallback: old WaitProbe host-trigger mode
+            if (probe_flags && probe_flags[0] != 0) {
+                probe_flags[0] = 0;
+                triggered = 1;
+            }
         }
-        probe_flags[0] = 0; // 重置发令信号
 
         if (ctx->stop_listener) {
             return NULL;
         }
-        
-        // 2. 控制面鉴权与真实 I/O 调度
+        if (!triggered) {
+            // Process SPDK completions even when idle
+            if (ctx->qpair)
+                spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+            usleep(10000);  // P1-1: 10ms poll interval (was 100us)
+            continue;
+        }
+
+        // 2. SPDK write pipeline
         if (ctx->registered_tasks != NULL) {
-            uint64_t t_start_us = 0;
-            uint64_t total_bytes = 0;
-            if (ctx->enable_profiling) {
-                for (int i = 0; i < ctx->num_registered_tasks; i++) {
-                    total_bytes += ctx->registered_tasks[i].size;
-                }
-                t_start_us = get_time_us();
-                fprintf(stderr, "[NPU-NVMe] write pipeline start, tasks=%d, ts_us=%lu\n",
-                        ctx->num_registered_tasks, (unsigned long)t_start_us);
-            }
-            // 2.1 恢复状态：因为任务数组被重复利用，每次存盘前必须重置状态机
+            // Reset state machine for re-use
             for (int i = 0; i < ctx->num_registered_tasks; i++) {
                 ctx->registered_tasks[i].state = CHUNK_IDLE;
                 ctx->registered_tasks[i].buf_idx = -1;
-                if (ctx->enable_profiling) {
-                    ctx->registered_tasks[i].ts_submit = 0;
-                    ctx->registered_tasks[i].ts_npu_done = 0;
-                    ctx->registered_tasks[i].ts_spdk_done = 0;
-                }
             }
 
-            // 2.2 启动真实的数据面搬运
             process_write_pipeline(ctx, ctx->registered_tasks, ctx->num_registered_tasks, false);
 
-            if (ctx->enable_profiling) {
-                uint64_t t_end_us = get_time_us();
-                double elapsed_ms = (t_end_us - t_start_us) / 1000.0;
-                double mb = (double)total_bytes / (1024.0 * 1024.0);
-                double bw_mb_s = elapsed_ms > 0.0 ? (mb / (elapsed_ms / 1000.0)) : 0.0;
-                fprintf(stderr, "[NPU-NVMe] write pipeline done, ts_us=%lu, elapsed=%.3f ms, bytes=%lu, bw=%.2f MB/s\n",
-                    (unsigned long)t_end_us, elapsed_ms, (unsigned long)total_bytes, bw_mb_s);
-            }
-            // 2.3 所有数据安全落盘，点亮绿灯放行 NPU 的 end_probe
-            signal_probe_flag(ctx);
-        } else {
-            // 未注册任务时直接放行
-            signal_probe_flag(ctx);
+            // Signal probe_flag with expected value after SPDK write completes
+            uint32_t expected = (uint32_t)(ctx->last_step_seen / ctx->ckpt_interval);
+            signal_probe_flag(ctx, expected);
         }
+        // P2-1 note: WaitProbe/TriggerProbe dead code was here; replaced by FaF listener.
+        // Retained for rollback via #if 0 block at end of file.
     }
     return NULL;
 }
@@ -524,8 +713,15 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
             env_opts.shm_id = atoi(shm);
         }
 
+        // P1-4: auto-expand hugepage pool if NPU driver consumed all free pages
+        ensure_hugepages();
+
         if (spdk_env_init(&env_opts) < 0) {
-            fprintf(stderr, "[Fatal] Unable to initialize SPDK env.\n");
+            fprintf(stderr, "[Fatal] Unable to initialize SPDK env.\n"
+                    "[Fatal] Check: (1) run as root, (2) free hugepages > 0 per NUMA node.\n"
+                    "[Fatal] Quick fix: echo %d > %s\n",
+                    read_int_from_file(NR_HUGEPAGES_PATH) + HUGEPAGE_PADDING,
+                    NR_HUGEPAGES_PATH);
             free(ctx);
             return -1;
         }
@@ -601,7 +797,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     printf("[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: %d\n", ctx->max_pipe_depth);
     *out_ctx = ctx;
 
-    ctx->meta_dma_buf = spdk_zmalloc(1024 * 1024, 2 * 1024 * 1024, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
+    ctx->meta_dma_buf = spdk_zmalloc(META_DMA_BUF_SIZE, 2 * 1024 * 1024, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
 
     ret = aclrtMallocHost((void**)&probe_flags, 64);
     if (ret != ACL_SUCCESS) {
@@ -616,6 +812,11 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     ctx->stop_listener = 0;
     ctx->listener_started = false;
     ctx->probe_flag_dev_ptr = NULL;
+    ctx->probe_flag_host = NULL;
+    ctx->dev_step_ptr = NULL;
+    ctx->step_poll_buf = NULL;
+    ctx->last_step_seen = -1;
+    ctx->ckpt_interval = 10;
     if (pthread_create(&ctx->listener_thread, NULL, probe_listener_thread, ctx) == 0) {
         ctx->listener_started = true;
     }
@@ -669,6 +870,16 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
         }
         if (ctx->probe_flag_host) {
             aclrtFreeHost(ctx->probe_flag_host);
+        }
+        // Free self-allocated probe_flag_dev (NULL-fallback in set_probe_flag_ptr).
+        // Guard: only free if ACL device is still alive — MS may have torn it down
+        // before our cleanup runs, in which case aclrtFree would segfault.
+        if (ctx->probe_flag_dev_ptr && ret == ACL_SUCCESS) {
+            aclrtFree(ctx->probe_flag_dev_ptr);
+            ctx->probe_flag_dev_ptr = NULL;
+        }
+        if (ctx->step_poll_buf) {
+            aclrtFreeHost(ctx->step_poll_buf);
         }
     }
     
@@ -1221,4 +1432,192 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t to
     }
 
     return flag == 1 ? 0 : -1;
+}
+
+// ============================================================================
+// P2-1: WaitProbe/TriggerProbe dead code — preserved via #if 0 for rollback
+// These functions (npu_nvme_set_trigger_ptr, npu_nvme_read_trigger_dev,
+// and the old probe_listener_thread WaitProbe branch) are replaced by
+// FaF step_counter polling. If rollback is needed, uncomment the block below.
+// ============================================================================
+#if 0
+// ---------- OLD: Device-side self-trigger for sink=TRUE ----------
+
+int npu_nvme_set_trigger_ptr(NPUNVMEContext *ctx, void *dev_ptr)
+{
+    if (!ctx || !dev_ptr) return -1;
+    ctx->dev_trigger_ptr = dev_ptr;
+
+    // Allocate host polling buffer
+    if (!ctx->trigger_poll_buf) {
+        aclError ret = aclrtMallocHost(&ctx->trigger_poll_buf, 4);
+        if (ret != ACL_SUCCESS) {
+            fprintf(stderr, "[NPU-NVMe] trigger_poll_buf alloc failed, ret=%d\n", ret);
+            return -1;
+        }
+    }
+    ctx->last_trigger_seen = -1;
+    fprintf(stderr, "[NPU-NVMe] Device trigger ptr set: %p\n", dev_ptr);
+    return 0;
+}
+
+int npu_nvme_read_trigger_dev(NPUNVMEContext *ctx, uint32_t *out_value)
+{
+    if (!ctx || !ctx->dev_trigger_ptr || !ctx->trigger_poll_buf) return -1;
+    aclError ret = aclrtSetDevice(ctx->npu_id);
+    if (ret != ACL_SUCCESS) return -1;
+    ret = aclrtSetCurrentContext(ctx->acl_ctx);
+    if (ret != ACL_SUCCESS) return -1;
+    ret = aclrtMemcpy(ctx->trigger_poll_buf, 4,
+                      ctx->dev_trigger_ptr, 4,
+                      ACL_MEMCPY_DEVICE_TO_HOST);
+    if (ret != ACL_SUCCESS) return -1;
+    *out_value = *(uint32_t *)ctx->trigger_poll_buf;
+    return 0;
+}
+
+// OLD: WaitProbe-style probe_listener_thread (device-trigger mode)
+// This version polled dev_trigger_ptr for counter changes.
+// Replaced by FaF step_counter polling.
+void* old_probe_listener_thread_device_trigger(void* arg) {
+    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
+    printf("[Probe Listener] Background thread started (device-trigger mode).\n");
+
+    aclError ret = aclrtSetDevice(ctx->npu_id);
+    if (ret != ACL_SUCCESS) {
+        fprintf(stderr, "[Probe Listener] aclrtSetDevice failed, ret=%d\n", ret);
+    }
+    ret = aclrtSetCurrentContext(ctx->acl_ctx);
+    if (ret != ACL_SUCCESS) {
+        fprintf(stderr, "[Probe Listener] aclrtSetCurrentContext failed, ret=%d\n", ret);
+    }
+
+    while(1) {
+        int triggered = 0;
+        if (ctx->dev_trigger_ptr && ctx->trigger_poll_buf) {
+            uint32_t cur_trigger = 0;
+            if (npu_nvme_read_trigger_dev(ctx, &cur_trigger) == 0) {
+                if (cur_trigger > (uint32_t)ctx->last_trigger_seen) {
+                    ctx->last_trigger_seen = (int)cur_trigger;
+                    triggered = 1;
+                }
+            }
+            if (!triggered) {
+                if (ctx->stop_listener) return NULL;
+                if (ctx->qpair)
+                    spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+                usleep(100);
+                continue;
+            }
+        } else {
+            while (probe_flags[0] == 0) {
+                if (ctx->stop_listener) return NULL;
+                if (ctx->qpair) spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+                __asm__ volatile("yield" ::: "memory");
+            }
+            probe_flags[0] = 0;
+            triggered = 1;
+        }
+        if (ctx->stop_listener) return NULL;
+        if (!triggered) continue;
+
+        if (ctx->registered_tasks != NULL) {
+            for (int i = 0; i < ctx->num_registered_tasks; i++) {
+                ctx->registered_tasks[i].state = CHUNK_IDLE;
+                ctx->registered_tasks[i].buf_idx = -1;
+            }
+            process_write_pipeline(ctx, ctx->registered_tasks, ctx->num_registered_tasks, false);
+            signal_probe_flag(ctx);
+        } else {
+            signal_probe_flag(ctx);
+        }
+    }
+    return NULL;
+}
+#endif // P2-1: end of WaitProbe/TriggerProbe dead code block
+
+// ============================================================================
+// Phase 5 E11: Delta (增量) 写盘实现
+// ============================================================================
+
+#define DELTA_MAGIC 0x414C5444  // "DLTA"
+#define DELTA_MAGIC_INIT 0x4E4E // Superblock delta-initialized marker
+#define DELTA_FRAME_HEADER_SIZE 4096
+
+int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size, uint32_t delta_slot_count) {
+    if (!ctx || delta_slot_size == 0 || delta_slot_count == 0) return -1;
+
+    uint64_t total_delta_bytes = (uint64_t)delta_slot_size * delta_slot_count;
+    if (ctx->total_blocks == 0) return -1;
+    uint64_t disk_bytes = ctx->total_blocks * ctx->block_size;
+
+    // Place delta area at end of disk, before full-checkpoint stack
+    ctx->delta_area_offset = disk_bytes - total_delta_bytes;
+    ctx->delta_slot_size = delta_slot_size;
+    ctx->delta_slot_count = delta_slot_count;
+    ctx->delta_last_commit = (uint32_t)-1;  // -1 = no commits yet
+
+    fprintf(stderr, "[NPU-NVMe] Delta area: offset=%lu (%lu GB) slots=%u x %lu MB = %lu MB\n",
+            ctx->delta_area_offset, ctx->delta_area_offset / (1024*1024*1024),
+            delta_slot_count, delta_slot_size / (1024*1024),
+            total_delta_bytes / (1024*1024));
+
+    return 0;
+}
+
+uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx) {
+    return ctx ? ctx->delta_area_offset : 0;
+}
+
+uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx) {
+    return ctx ? ctx->delta_slot_size : 0;
+}
+
+uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx) {
+    return ctx ? ctx->delta_slot_count : 0;
+}
+
+int npu_nvme_write_delta(NPUNVMEContext *ctx, int slot_idx,
+                         const void *data, uint32_t total_bytes) {
+    if (!ctx || !data || total_bytes == 0) return -1;
+    if (slot_idx < 0 || (uint32_t)slot_idx >= ctx->delta_slot_count) {
+        fprintf(stderr, "[NPU-NVMe] Delta write: invalid slot %d (max %u)\n",
+                slot_idx, ctx->delta_slot_count);
+        return -1;
+    }
+    if (total_bytes > ctx->delta_slot_size) {
+        fprintf(stderr, "[NPU-NVMe] Delta write: %u bytes exceeds slot size %lu\n",
+                total_bytes, ctx->delta_slot_size);
+        return -1;
+    }
+
+    uint64_t byte_offset = ctx->delta_area_offset + (uint64_t)slot_idx * ctx->delta_slot_size;
+    return npu_nvme_sync_meta_io(ctx, byte_offset, total_bytes, 0, (void*)data);
+}
+
+int npu_nvme_read_delta(NPUNVMEContext *ctx, int slot_idx,
+                        void *out_buf, uint32_t max_bytes) {
+    if (!ctx || !out_buf || max_bytes == 0) return -1;
+    if (slot_idx < 0 || (uint32_t)slot_idx >= ctx->delta_slot_count) return -1;
+
+    uint64_t byte_offset = ctx->delta_area_offset + (uint64_t)slot_idx * ctx->delta_slot_size;
+    // Read header first to get actual size
+    uint8_t header[DELTA_FRAME_HEADER_SIZE];
+    int rc = npu_nvme_sync_meta_io(ctx, byte_offset, DELTA_FRAME_HEADER_SIZE, 1, header);
+    if (rc != 0) return -1;
+
+    // Parse header: magic(4) + step_id(4) + n_blocks(4) + n_small(4) + total_sz(4) + checksum(4) = 24 bytes
+    uint32_t magic = *(uint32_t*)&header[0];
+    if (magic != DELTA_MAGIC) {
+        fprintf(stderr, "[NPU-NVMe] Delta read: slot %d invalid magic 0x%x\n", slot_idx, magic);
+        return -1;
+    }
+    uint32_t total_sz = *(uint32_t*)&header[16];
+    if (total_sz > max_bytes) {
+        fprintf(stderr, "[NPU-NVMe] Delta read: frame %u bytes > buffer %u bytes\n", total_sz, max_bytes);
+        return -1;
+    }
+
+    // Re-read full frame
+    return npu_nvme_sync_meta_io(ctx, byte_offset, total_sz, 1, out_buf);
 }

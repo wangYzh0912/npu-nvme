@@ -10,7 +10,7 @@ Usage:
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
 
-import time, json, warnings
+import time, json, warnings, ctypes
 import numpy as np
 import mindspore as ms
 from mindspore import nn, context, ops
@@ -18,7 +18,7 @@ from mindspore import nn, context, ops
 warnings.filterwarnings("ignore")
 os.chdir(os.path.join(os.path.dirname(__file__), "..", "python"))
 
-import direct_checkpoint
+import direct_checkpoint as dc
 from direct_checkpoint import DirectCheckpoint, ProbeTrainOneStepCell, get_dev_ptr
 
 MODEL_NAME       = "gpt2_xl"
@@ -58,7 +58,7 @@ class TimingRecorder:
 recorder = TimingRecorder()
 
 class SpdkCkptCallback(ms.Callback):
-    def __init__(self, model, train_cell):
+    def __init__(self, model, train_cell, warmup_fn=None):
         super().__init__()
         self.model = model; self.train_cell = train_cell
         self.has_registered = False; self.step_start = 0
@@ -68,7 +68,7 @@ class SpdkCkptCallback(ms.Callback):
             nvme_addr=NVME_ADDR, npu_device_id=DEVICE_ID,
             pipeline_depth=PIPELINE_DEPTH, requested_chunk_size=CHUNK_SIZE,
             enable_profiling=ENABLE_PROFILING, keep_last_n=KEEP_LAST_N,
-            slot_size_gb=SLOT_SIZE_GB)
+            slot_size_gb=SLOT_SIZE_GB, warmup_fn=warmup_fn)
         self.total_bytes = self.ckpt.total_bytes
         print(f"[SPDK] NVMe total bytes: {self.total_bytes/1024**3:.2f} GB", flush=True)
         self.prof_dir = self.ckpt.profiling_dir
@@ -92,7 +92,19 @@ class SpdkCkptCallback(ms.Callback):
         cur_step = cb_params.cur_step_num
         if cur_step == 1 and not self.has_registered:
             self.ckpt.register_tasks(self.model)
-            self.ckpt.set_probe_flag_ptr(self.train_cell.flag)
+            # Try to set flag pointer from MS tensor; fall back to C-layer allocation
+            ptr = get_dev_ptr(self.train_cell.flag)
+            if ptr != 0:
+                self.ckpt.set_probe_flag_ptr(self.train_cell.flag)
+            else:
+                # sink=False: MS hasn't allocated the tensor yet, use C-layer fallback
+                rc = dc.lib.npu_nvme_set_probe_flag_ptr(self.ckpt.ctx, ctypes.c_void_p(0))
+                if rc == 0:
+                    dev_flag = dc.lib.npu_nvme_get_probe_flag_dev_ptr(self.ckpt.ctx)
+                    self.ckpt.probe_flag_ptr = dev_flag
+                    print(f"  [SPDK] Using C-layer allocated flag ptr: {hex(dev_flag)}", flush=True)
+                else:
+                    print(f"  [SPDK] Warning: C-layer flag alloc failed, rc={rc}", flush=True)
             if ENABLE_PROFILING:
                 try: self.ckpt.probe_flag_selftest()
                 except Exception as e: print(f"  [SPDK] selftest warning: {e}", flush=True)
@@ -145,7 +157,12 @@ def main():
     train_ds = train_ds.take(TOTAL_STEPS)
     optimizer = nn.AdamWeightDecay(base_model.trainable_params(), learning_rate=1e-5)
     probe_wrapper = ProbeTrainOneStepCell(base_model, optimizer, None, 0, enable_probe=True, probe_mode="end")
-    cb = SpdkCkptCallback(base_model, probe_wrapper)
+
+    import mindspore as ms_t
+    dummy_input = ms_t.Tensor(np.zeros((1, SEQ_LEN,), dtype=np.int32), ms.int32)
+    warmup_fn = lambda: [probe_wrapper(dummy_input[0:1], dummy_input[0:1], dummy_input[0:1]) for _ in range(2)]
+
+    cb = SpdkCkptCallback(base_model, probe_wrapper, warmup_fn=warmup_fn)
     ms_model = ms.Model(probe_wrapper)
     print(f"\n[SPDK] Starting training ({TOTAL_STEPS} steps)...\n", flush=True)
     t_train_start = time.perf_counter()

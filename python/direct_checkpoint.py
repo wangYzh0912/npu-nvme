@@ -67,6 +67,12 @@ try:
     if hasattr(lib, "npu_nvme_set_probe_flag_value"):
         lib.npu_nvme_set_probe_flag_value.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.c_uint32]
         lib.npu_nvme_set_probe_flag_value.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_get_probe_flag_dev_ptr"):
+        lib.npu_nvme_get_probe_flag_dev_ptr.argtypes = [ctypes.c_void_p]
+        lib.npu_nvme_get_probe_flag_dev_ptr.restype = ctypes.c_void_p
+    if hasattr(lib, "npu_nvme_set_step_ptr"):
+        lib.npu_nvme_set_step_ptr.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+        lib.npu_nvme_set_step_ptr.restype = ctypes.c_int
 
     lib.npu_nvme_register_tasks.argtypes = [
         ctypes.c_void_p,                     # ctx
@@ -237,8 +243,21 @@ wait_op_info = CustomRegOp("WaitProbe") \
     .target("Ascend") \
     .get_op_info()
 
+trigger_op_info = CustomRegOp("TriggerProbe") \
+    .input(0, "step") \
+    .input(1, "interval") \
+    .input(2, "trigger_buf") \
+    .input(3, "expected") \
+    .output(0, "y") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default,
+                  DataType.U32_Default, DataType.U32_Default,
+                  DataType.I32_Default) \
+    .target("Ascend") \
+    .get_op_info()
+
 class ProbeTrainOneStepCell(nn.Cell):
-    def __init__(self, network, optimizer, so_path, flag_addr, enable_probe=True, probe_mode="full"):
+    def __init__(self, network, optimizer, so_path, flag_addr, enable_probe=True, probe_mode="full",
+                 ckpt_interval=10):
         super().__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
@@ -250,13 +269,29 @@ class ProbeTrainOneStepCell(nn.Cell):
         self.hyper_map = HyperMap()
 
         self.probe_mode = probe_mode
+        self.ckpt_interval = ckpt_interval
 
         if self.enable_probe:
-            # Counter flag and expected value start at 0
-            self.flag = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False)
-            self.expected = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False)
+            # WaitProbe: flag (uint32) and expected (uint32) — shared with C layer
+            self.flag = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="probe_flag")
+            self.expected = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="probe_expected")
             self.wait_probe = ops.Custom("WaitProbe", out_shape=[1], out_dtype=ms.uint32,
                                          func_type="aicpu", reg_info=wait_op_info)
+
+            # Device-side trigger counter (int32 — Ascend Add supports int32)
+            self.step_counter = ms.Parameter(
+                ms.Tensor([0], dtype=ms.int32), requires_grad=False, name="step_counter")
+            self.one_i32 = Tensor([1], dtype=ms.int32)
+            self.interval_i32 = Tensor([ckpt_interval], dtype=ms.int32)
+
+            # Trigger buffer: uint32 scalar on device, shared with C listener
+            self.trigger_buf = ms.Parameter(
+                ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="trigger_buf")
+
+            # TriggerProbe AICPU kernel
+            self.trigger_probe = ops.Custom(
+                "TriggerProbe", out_shape=[1], out_dtype=ms.int32,
+                func_type="aicpu", reg_info=trigger_op_info)
 
     def construct(self, *inputs):
         if not self.enable_probe:
@@ -267,10 +302,15 @@ class ProbeTrainOneStepCell(nn.Cell):
 
         loss, grads = self.grad_fn(*inputs)
 
-        wait_sig = self.wait_probe(self.flag, self.expected)
-        safe_grads = self.hyper_map(ops.partial(bind_depend_op, wait_sig), grads)
+        # Fire-and-Forget: step_counter auto-increments each step.
+        # C layer listener polls step_counter directly (no AICPU kernel needed).
+        # This avoids the GE aclnn wrapper issue that prevents custom AICPU
+        # kernels from launching in sink=TRUE fused graphs.
+        # CRITICAL: depend() ensures step_counter update is included in the fused graph.
+        step = ops.assign_add(self.step_counter, self.one_i32)
+        loss = self.depend(loss, step)
 
-        opt_res = self.optimizer(safe_grads)
+        opt_res = self.optimizer(grads)
         loss = self.depend(loss, opt_res)
 
         return loss
@@ -279,12 +319,15 @@ class ProbeTrainOneStepCell(nn.Cell):
 # DirectCheckpoint 主类
 # ============================================================
 class DirectCheckpoint:
+    _ms_warmed_up = False
+
     def __init__(
         self, nvme_addr: str = "0000:83:00.0", npu_device_id: int = 0, pipeline_depth: int = 4,
         requested_chunk_size: int = 4 * 1024 * 1024, enable_profiling: bool = False,
         profiling_dir: str = "./output/profiling", rank_id: int = 0, world_size: int = 1,
         base_offset_bytes: int = 0, shard_span_bytes: int = None, spdk_shm_id: int = 1,
-        keep_last_n: int = 3, slot_size_gb: int = 50      
+        keep_last_n: int = 3, slot_size_gb: int = 50,
+        warmup_fn: callable = None
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
         self.npu_device_id = npu_device_id
@@ -302,9 +345,19 @@ class DirectCheckpoint:
         self.stack_start_bytes = 0
         self.meta_dict = {"checkpoints": {}}
         self.last_layout = []
+        # Path for auto-saved meta pickle (used by recovery)
+        self._meta_pkl = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                      "experiments", "output", "checkpoint_meta.pkl")
         
         if self.enable_profiling:
             os.makedirs(self.profiling_dir, exist_ok=True)
+
+        # P0-1: MS runtime warmup before SPDK init
+        if warmup_fn is not None and not DirectCheckpoint._ms_warmed_up:
+            print("[DirectCheckpoint] Running MS runtime warmup before SPDK init...", flush=True)
+            warmup_fn()
+            DirectCheckpoint._ms_warmed_up = True
+            print("[DirectCheckpoint] MS runtime warmup complete.", flush=True)
 
         print(f"[DirectCheckpoint] loading so from {_LIB_PATH}")
 
@@ -386,7 +439,7 @@ class DirectCheckpoint:
 
         ckpt_key = f"step_{step}"
         self.meta_dict["checkpoints"][ckpt_key] = {
-            "type": "SHARD",
+            "type": "FULL",
             "chunk_size": self.chunk_size,
             "rank_id": self.rank_id,
             "world_size": self.world_size,
@@ -407,9 +460,39 @@ class DirectCheckpoint:
                     pass
         saved_steps = sorted(saved_steps)
 
+        # Also prune delta chain entries > keep_last_n (delta and FULL share step space)
+        delta_keys = []
+        for k in self.meta_dict.get("delta_chain", {}).keys():
+            if k.startswith("step_"):
+                try:
+                    delta_keys.append(int(k.split('_')[1]))
+                except ValueError:
+                    pass
+        for ds in delta_keys:
+            if ds < saved_steps[0]:
+                del self.meta_dict["delta_chain"][f"step_{ds}"]
+
         while len(saved_steps) > self.keep_last_n:
             oldest_step = saved_steps.pop(0)
-            del self.meta_dict["checkpoints"][f"step_{oldest_step}"]
+            old_key = f"step_{oldest_step}"
+            if old_key in self.meta_dict.get("checkpoints", {}):
+                del self.meta_dict["checkpoints"][old_key]
+            if old_key in self.meta_dict.get("delta_chain", {}):
+                del self.meta_dict["delta_chain"][old_key]
+
+        # Write the FULL checkpoint meta BEFORE committing NVMe JSON.
+        # Save to pickle for recovery — includes both checkpoints + delta_chain.
+        import pickle as _pickle
+        os.makedirs(os.path.dirname(self._meta_pkl), exist_ok=True)
+        with open(self._meta_pkl, "wb") as _f:
+            _pickle.dump(self.meta_dict, _f)
+
+        # ALSO save after each delta to keep pickle up-to-date.
+        # We define a helper for internal use.
+        def _dump_meta_pkl():
+            with open(self._meta_pkl, "wb") as _f:
+                _pickle.dump(self.meta_dict, _f)
+        self._dump_meta_pkl = _dump_meta_pkl
 
         next_slot = 1 if self.active_meta_slot == 0 else 0
         target_offset = META_SLOT_B_OFFSET if next_slot == 1 else META_SLOT_A_OFFSET
@@ -439,17 +522,29 @@ class DirectCheckpoint:
             return rc == 0
         return False
 
-    def set_probe_flag_ptr(self, flag_tensor: Tensor):
+    def set_probe_flag_ptr(self, flag_tensor: Tensor = None):
+        """Set the probe flag device pointer for the C-layer listener.
+
+        When flag_tensor is provided with a valid device pointer, that pointer
+        is used directly.  When flag_tensor is None or its device pointer is 0
+        (typical in sink=TRUE graphs where MS never allocates the tensor), the
+        C layer self-allocates a 4-byte HBM buffer via aclrtMalloc instead.
+        """
         if not hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
             raise RuntimeError("npu_nvme_set_probe_flag_ptr is not available in the C library.")
 
-        ptr = get_dev_ptr(flag_tensor)
-        if ptr == 0:
-            raise RuntimeError("Failed to get device pointer for probe flag. Ensure tensor is allocated on NPU.")
+        ptr = get_dev_ptr(flag_tensor) if flag_tensor is not None else 0
 
         rc = lib.npu_nvme_set_probe_flag_ptr(self.ctx, ctypes.c_void_p(ptr))
         if rc != 0:
             raise RuntimeError(f"Failed to set probe flag pointer. C API returned {rc}")
+
+        # Always refresh probe_flag_ptr from the C layer — it may have self-allocated
+        if hasattr(lib, "npu_nvme_get_probe_flag_dev_ptr"):
+            actual_ptr = lib.npu_nvme_get_probe_flag_dev_ptr(self.ctx)
+            if actual_ptr:
+                self.probe_flag_ptr = actual_ptr
+                return
         self.probe_flag_ptr = ptr
 
     def read_probe_flag_dev(self) -> int:
@@ -1060,6 +1155,208 @@ class DirectCheckpoint:
             print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down NPUNVME context...", flush=True)
             self.cleanup()
             self._closed = True
+
+    # ============================================================
+    # I3 Delta (增量) I/O — S2/S3: 端到端打通
+    # ============================================================
+    def delta_init(self, slot_size_mb: int = 256, slot_count: int = 128):
+        """初始化增量盘布局 (C 层 npu_nvme_delta_init)。
+
+        Args:
+            slot_size_mb: 每个 delta 槽位大小 (MB)
+            slot_count:  环形槽位数量
+        """
+        slot_bytes = slot_size_mb * 1024 * 1024
+        if not hasattr(lib, "npu_nvme_delta_init"):
+            raise RuntimeError("C library missing npu_nvme_delta_init — rebuild required.")
+        rc = lib.npu_nvme_delta_init(self.ctx, ctypes.c_uint64(slot_bytes),
+                                     ctypes.c_uint32(slot_count))
+        if rc != 0:
+            raise RuntimeError(f"Delta init failed (rc={rc})")
+        self._delta_slot_size = slot_bytes
+        self._delta_slot_count = slot_count
+        self._delta_next_slot = 0
+        self._delta_step_map = {}
+        self._delta_frame_sizes = []
+        # Ensure delta chain storage in meta_dict
+        if "delta_chain" not in self.meta_dict:
+            self.meta_dict["delta_chain"] = {}
+        print(f"[DirectCkpt] Delta area initialized: {slot_count} slots × {slot_size_mb}MB", flush=True)
+
+    def delta_save(self, step: int, block_patches: list, small_patches: list):
+        """序列化并写入一个增量帧到 NVMe delta ring。
+
+        Args:
+            step:          训练步号
+            block_patches: 大参数 block, 每个 format = {layer_id, name, block_idx, int8_data, scale}
+            small_patches: 小参数,     每个 format = {layer_id, name, int8_data, scale}
+        Returns:
+            slot_idx: 写入的槽位索引
+        """
+        from i3_delta_writer import pack_delta_frame
+
+        if not hasattr(self, '_delta_slot_count'):
+            self.delta_init()
+
+        # Wait for any background full-checkpoint I/O to finish.
+        # Both full and delta I/O share the same SPDK qpair; concurrent writes would fail.
+        self.wait_for_io_completion()
+        # Also join the save_async thread if present
+        self.wait_async_io()
+
+        frame = pack_delta_frame(step, block_patches, small_patches)
+        total_bytes = len(frame)
+
+        if total_bytes > self._delta_slot_size:
+            raise RuntimeError(f"Delta frame {total_bytes} bytes > slot {self._delta_slot_size}")
+
+        slot_idx = self._delta_next_slot % self._delta_slot_count
+
+        buf = ctypes.create_string_buffer(frame, total_bytes)
+        rc = lib.npu_nvme_write_delta(self.ctx, ctypes.c_int(slot_idx),
+                                       ctypes.c_void_p(ctypes.addressof(buf)),
+                                       ctypes.c_uint32(total_bytes))
+        if rc != 0:
+            raise RuntimeError(f"Delta write failed at slot {slot_idx} (rc={rc})")
+
+        self._delta_step_map[step] = slot_idx
+        self._delta_next_slot += 1
+        self._delta_frame_sizes.append(total_bytes)
+
+        # Update meta in-memory (非阻塞 — full commit later)
+        self.meta_dict["delta_chain"][f"step_{step}"] = {
+            "type": "DELTA",
+            "slot": slot_idx,
+            "frame_size": total_bytes,
+            "n_blocks": len(block_patches),
+            "n_small": len(small_patches),
+        }
+        # Auto-save pickle after each delta write for crash-safe recovery
+        if hasattr(self, '_dump_meta_pkl'):
+            self._dump_meta_pkl()
+
+        return slot_idx
+
+    def delta_load_slot(self, slot_idx: int):
+        """从 NVMe 读取单个增量帧。Returns (step_id, block_patches, small_patches)."""
+        from i3_delta_writer import unpack_delta_frame
+
+        if not hasattr(self, '_delta_slot_size'):
+            raise RuntimeError("Delta not initialized. Call delta_init() first.")
+
+        buf = ctypes.create_string_buffer(self._delta_slot_size)
+        rc = lib.npu_nvme_read_delta(self.ctx, ctypes.c_int(slot_idx),
+                                      ctypes.c_void_p(ctypes.addressof(buf)),
+                                      ctypes.c_uint32(self._delta_slot_size))
+        if rc != 0:
+            raise RuntimeError(f"Delta read failed at slot {slot_idx} (rc={rc})")
+
+        # C返回0表示成功，数据已写入buf。需从header解析实际帧大小。
+        from i3_delta_writer import DELTA_MAGIC as _DM
+        magic, total_sz = struct.unpack_from("<I", buf.raw, 0)[0], struct.unpack_from("<I", buf.raw, 16)[0]
+        if magic != _DM:
+            raise RuntimeError(f"Delta read at slot {slot_idx}: bad magic 0x{magic:08x}")
+        frame = buf.raw[:total_sz]
+        step_id, blocks, smalls = unpack_delta_frame(frame)
+        return step_id, blocks, smalls
+
+    def delta_load_chain(self, from_step: int, to_step: int):
+        """读增量链 [from_step+1, to_step] 的所有帧。Returns list of (step, blocks, smalls)."""
+        chain = []
+        for s in range(from_step + 1, to_step + 1):
+            key = f"step_{s}"
+            if key not in self.meta_dict.get("delta_chain", {}):
+                raise FileNotFoundError(f"Delta frame for step {s} not found in metadata")
+            slot = self.meta_dict["delta_chain"][key]["slot"]
+            sid, blocks, smalls = self.delta_load_slot(slot)
+            if sid != s:
+                print(f"[DirectCkpt] WARNING: delta slot {slot} step_id={sid} != expected {s}")
+            chain.append((sid, blocks, smalls))
+        return chain
+
+    def _find_nearest_full(self, target_step: int):
+        """找到距离 target_step 最近的 (不超过) 全量检查点步号。"""
+
+        def _scan():
+            best = None
+            for k, v in self.meta_dict.get("checkpoints", {}).items():
+                if not k.startswith("step_"):
+                    continue
+                # meta entries without explicit 'type' field are legacy FULL checkpoints
+                if v.get("type", "FULL") != "FULL":
+                    continue
+                try:
+                    s = int(k.split("_")[1])
+                except ValueError:
+                    continue
+                if s <= target_step and (best is None or s > best):
+                    best = s
+            return best
+
+        best = _scan()
+        if best is not None:
+            return best
+
+        # Fallback: the in-memory dict may not have caught a commit from
+        # the async background I/O thread.  Re-read metadata from NVMe.
+        print("[DirectCkpt] Re-reading meta from NVMe to find FULL checkpoint...", flush=True)
+        self._mount_filesystem()
+        best = _scan()
+        if best is not None:
+            print(f"[DirectCkpt] Found FULL checkpoint step_{best} after disk re-read.", flush=True)
+            return best
+
+        raise FileNotFoundError(f"No FULL checkpoint found ≤ step {target_step}")
+
+    def recover(self, model: "ms.nn.Cell", target_step: int):
+        """完整增量恢复：全量 + 增量链合并 → model weights。
+
+        流程:
+          1. 找最近全量 (FULL) 检查点
+          2. npu_nvme_read_batch 恢复到 device
+          3. 如果 target_step > base_step: 读增量链 → numpy apply_delta_patches
+          4. 将 host 重建参数写回 device
+        Returns: dict with recovery stats {base_step, n_deltas, total_time, ...}
+        """
+        t_start = time.perf_counter()
+
+        base_step = self._find_nearest_full(target_step)
+        print(f"[DirectCkpt] Recover target=step_{target_step}, base=FULL step_{base_step}", flush=True)
+
+        # Phase 1: 加载全量
+        self.load(model, step=base_step)
+
+        if base_step == target_step:
+            dt = time.perf_counter() - t_start
+            print(f"[DirectCkpt] Recovery done (FULL only, no deltas): {dt:.2f}s", flush=True)
+            return {"base_step": base_step, "n_deltas": 0, "total_time": dt}
+
+        # Phase 2: 读增量链
+        chain = self.delta_load_chain(base_step, target_step)
+        print(f"[DirectCkpt] Loaded {len(chain)} delta frames (step {base_step+1}→{target_step})", flush=True)
+
+        # Phase 3: 获取当前 model weights 作为 host numpy, apply patches
+        from i3_delta_writer import apply_delta_patches
+        block_size = 524288  # 512K elements = 1MB FP16 — 与实验一致
+
+        # Read current device params → host numpy
+        host_weights = {}
+        for name, p in model.parameters_and_names():
+            host_weights[name] = p.value().asnumpy().copy()
+
+        # Apply delta chain sequentially
+        for sid, blocks, smalls in chain:
+            host_weights = apply_delta_patches(host_weights, blocks, smalls, block_size)
+
+        # Write back to device
+        for name, p in model.parameters_and_names():
+            if name in host_weights:
+                p.set_data(Tensor(host_weights[name].astype(np.float16), ms.float16))
+
+        dt = time.perf_counter() - t_start
+        n_deltas = len(chain)
+        print(f"[DirectCkpt] Recovery complete: {n_deltas} deltas applied, total {dt:.2f}s", flush=True)
+        return {"base_step": base_step, "n_deltas": n_deltas, "total_time": dt}
 
     def __del__(self):
         self.close()
