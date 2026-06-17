@@ -1,0 +1,40 @@
+{
+  "experiment": "Step 1c: SPDK FULL Checkpoint BW Benchmark",
+  "date": "2026-06-17 21:47:23",
+  "model": "GPT-2 XL (48L/1600d)",
+  "config": {
+    "n_params": 772,
+    "total_elems": 1557611200,
+    "total_bytes_fp16": 3115222400,
+    "total_gb_fp16": 3.115,
+    "actual_bytes_written": 3116367872,
+    "actual_gb": 2.902,
+    "num_chunks": 743,
+    "pipeline_depth": 8,
+    "chunk_mb": 4,
+    "slot_size_gb": 10,
+    "spdk_shm_id": 80,
+    "pci_addr": "0000:83:00.0",
+    "device_id": 1
+  },
+  "timing": {
+    "model_init_s": 37.15,
+    "spdk_init_s": 1.83,
+    "write_wall_s": 0.674,
+    "write_wall_ms": 673.6,
+    "spdk_hw_ms": 57.19
+  },
+  "bandwidth": {
+    "wall_clock_mbs": 4411.9,
+    "pipeline_dma_mbs": 51970.8
+  },
+  "profiling_csv": {
+    "num_buffers": 8,
+    "num_chunks": 743,
+    "pipeline_spdk_us": 57186,
+    "pipeline_spdk_ms": 57.19,
+    "avg_npu_us_per_chunk": 320,
+    "avg_spdk_us_per_chunk": 6875,
+    "csv_file": "/home/user7/npu-nvme/output/profiling/S1c_full_ckpt_bw/time_write.csv"
+  }
+}
