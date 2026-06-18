@@ -33,18 +33,15 @@ BENCHMARK_DIR="$REPO/experiments/baselines/benchmark"
 OUTPUT_DIR="$REPO/experiments/output/benchmark"
 PROFILING_BASE="$REPO/output/profiling_vec/step1"
 SCRIPT="$BENCHMARK_DIR/step1_benchmark.py"
+WRAPPER="$BENCHMARK_DIR/pmu_wrapper.sh"
 
 echo "═══════════════════════════════════════════════════════════════"
 echo "Step 1 Benchmark: GPT-2 XL Pure Training Baseline"
 echo "  Mode: $MODE  |  Steps: $STEPS  |  Device: $DEVICE_ID"
 echo "═══════════════════════════════════════════════════════════════"
 
-# ── Ensure output directories ──
 mkdir -p "$OUTPUT_DIR"
 mkdir -p "$PROFILING_BASE"
-
-# ── Build common sudo wrapper ──
-SUDO_CMD="echo '$SUDO_PW' | sudo -S bash -c 'source $ASCEND_SETUP && \$0 \"\$@\"'"
 
 case "$MODE" in
 
@@ -54,13 +51,18 @@ case "$MODE" in
     echo "  Profiler output → $PROFILING_BASE"
     echo ""
 
+    # Clean stale output
+    find "$PROFILING_BASE" -name "PROF_*" -mmin -120 -exec rm -rf {} + 2>/dev/null || true
+
     echo "$SUDO_PW" | sudo -S bash -c "
       source $ASCEND_SETUP && \
-      msprof --output=$PROFILING_BASE -- \
-        $PYTHON $SCRIPT --steps $STEPS --device-id $DEVICE_ID
+      msprof --output=$PROFILING_BASE --application=$WRAPPER $STEPS $DEVICE_ID
     "
 
-    # ── Find latest PROF directory ──
+    # Copy output to project dir (msprof writes with root ownership)
+    echo "$SUDO_PW" | sudo -S chown -R user7:user7 "$PROFILING_BASE" 2>/dev/null || true
+
+    # Find latest PROF directory
     PROF_DIR=$(ls -dt "$PROFILING_BASE"/PROF_* 2>/dev/null | head -1)
     if [ -z "$PROF_DIR" ]; then
       echo "ERROR: No PROF_* directory found under $PROFILING_BASE"

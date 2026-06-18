@@ -540,19 +540,28 @@ def parse_mode(profiler_dir, output_path):
             results["S1.5_hbm"]["stats"] = json.load(f)
 
     # ── Add PMU data ──
+    # NOTE: aic_mac_util_pct/aiv_vec_util_pct from msprof CSV are
+    # per-operator-internal efficiency ratios (not device-level utilization).
+    # Device-level Cube ~49.4%, Vector idle ~66.9% come from npuzt PMU counters
+    # (Phase 1a methodology). Re-running with full npuzt for Step 1 baseline.
+
+    total_dur = pmu["total_dur_us"]
+    aic_pct_s = pmu["aic_dur_us"] / total_dur * 100 if total_dur > 0 else 0
+    aiv_pct_s = pmu["aiv_dur_us"] / total_dur * 100 if total_dur > 0 else 0
+
     results["S1.3_cube"] = {
         "aic_total_ops": pmu["aic_count"],
         "aic_total_dur_s": round(pmu["aic_dur_us"] / 1e6, 4),
         "aic_mac_util_pct": pmu.get("aic_mac_util_pct"),
         "aic_scalar_util_pct": pmu.get("aic_scalar_util_pct"),
-        "aic_active_pct_of_total": round(aic_pct, 1),
+        "aic_active_pct_of_total": round(aic_pct_s, 1),
     }
     results["S1.4_vector"] = {
         "aiv_total_ops": pmu["aiv_count"],
         "aiv_total_dur_s": round(pmu["aiv_dur_us"] / 1e6, 4),
         "aiv_vec_util_pct": pmu.get("aiv_vec_util_pct"),
         "aiv_scalar_util_pct": pmu.get("aiv_scalar_util_pct"),
-        "aiv_active_pct_of_total": round(aiv_pct, 1),
+        "aiv_active_pct_of_total": round(aiv_pct_s, 1),
     }
     results["S1.6_ge_graph"] = {
         "total_kernel_instances": pmu["total_kernel_instances"],
@@ -564,14 +573,6 @@ def parse_mode(profiler_dir, output_path):
                                     "core_type": d["core_type"]}
                               for ot, d in sorted(pmu["delta_ops"].items())},
     }
-
-    # ── Add S1.7 SPDK BW reference ──
-    spdk_ref = load_spdk_bw_reference()
-    if spdk_ref:
-        results["S1.7_spdk_bw"] = spdk_ref
-        print(f"  S1.7 SPDK BW: loaded from phase5_s5_spdk_raw_bw.json")
-    else:
-        results["S1.7_spdk_bw"] = {"note": "Reuse Phase 5 S5 result; file not found, re-run phase5_s5_spdk_raw_bw.py"}
 
     # ── Add msprof source reference ──
     results["_meta"] = {

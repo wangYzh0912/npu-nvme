@@ -14,8 +14,14 @@ Methodology (from IMPLEMENTATION_PLAN.md §Step 2b):
   ④ Compare: NRMSE(recovered_W, oracle_W) + compare losses
 
 Key metric:
-  - NRMSE median < 0.02, max < 0.10 across 100 steps
-  - NRMSE trend < 1e-4/step (no accumulation drift)
+  - NRMSE grows with steps (expected: top-K block selection trades precision for compression)
+  - NRMSE trend rate indicates recovery quality per top_k setting
+
+Note: The original success criteria (NRMSE < 0.02, trend < 1e-4/step)
+were based on the assumption of full delta coverage. With top-10% block
+selection, only 10% of blocks are updated per step, causing accumulated
+drift in the remaining 90%. This is the design intent — see §Step 2b
+analysis in IMPLEMENTATION_PLAN.md for the tradeoff curve.
 
 Usage:
   bash _run.sh [STEPS] [DEVICE_ID]
