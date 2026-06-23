@@ -152,13 +152,13 @@ typedef struct {
 } dma_buf_t;
 
 typedef enum {
-    CHUNK_IDLE = 0,         
-    CHUNK_NPU_COPYING,      // 写路径：NPU -> DRAM
-    CHUNK_NPU_DONE,         // 写路径：NPU 搬运完毕
-    CHUNK_SPDK_WRITING,     // 写路径：NVMe 落盘中
-    CHUNK_SPDK_READING,     // [新增] 读路径：NVMe -> DRAM 
-    CHUNK_SPDK_DONE,        // [新增] 读路径：NVMe 读取完毕，等待 NPU 搬运
-    CHUNK_DONE              
+    CHUNK_IDLE = 0,
+    CHUNK_NPU_COPYING,      // write path: NPU -> DMA buffer
+    CHUNK_NPU_DONE,         // write path: DMA copy complete
+    CHUNK_SPDK_WRITING,     // write path: SPDK NVMe write in flight
+    CHUNK_SPDK_READING,     // read path:  SPDK NVMe read in flight
+    CHUNK_SPDK_DONE,        // read path:  NVMe -> DMA buffer complete
+    CHUNK_DONE
 } chunk_state_t;
 
 typedef struct {
@@ -451,7 +451,7 @@ static inline void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
 io_task_t* create_io_tasks(int num_tasks, void **npu_ptrs, uint64_t *nvme_offsets, size_t *sizes);
 void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks, bool is_host);
 
-/* 元数据专属的简化回调 */
+/* simplified SPDK completion callback for metadata I/O */
 static void io_complete_meta(void *arg, const struct spdk_nvme_cpl *cpl) {
     int *flag = (int *)arg;
     *flag = spdk_nvme_cpl_is_error(cpl) ? -1 : 1;
@@ -966,13 +966,7 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
     }
     return 0;
 }
-
-// ============================================================================
-// Phase 3-A: SPDK 硬件落盘完成后的回调函数 (Callback)
-// 这个函数由 spdk_nvme_qpair_process_completions 触发
-// ============================================================================
-
-// 我们定一个包装结构，方便传参
+/* SPDK write completion callback + submission helper */
 typedef struct {
     NPUNVMEContext *ctx;
     io_task_t *task;
@@ -1023,7 +1017,7 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
     int completed_tasks = 0;
     int submitted_to_npu = 0;
     
-    // [新增] 看门狗计时器
+    // stall-detection timer
     uint64_t last_progress_time = get_time_us();
 
     while (completed_tasks < num_tasks) {
@@ -1085,14 +1079,14 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
             uint64_t now = get_time_us();
             uint64_t stall_time = now - last_progress_time;
 
-            // 【终极防线：主动刺激 (Poke) 机制】
-            // 如果卡顿超过 50 毫秒 (50,000 微秒)，并且还没到 3 秒的报警线。
-            // 这说明硬件极大概率因为任务短缺/中断合并，陷入了“惰性挂起”。
+            // Stage 1 (>50 ms no progress): force-sync stalled NPU event.
+            // Hardware may enter lazy-suspend or interrupt-coalescing
+            // states when the pipeline is under-utilised.
             if (stall_time > 50000ULL && stall_time < 3000000ULL) {
                 for (int i = 0; i < submitted_to_npu; i++) {
                     io_task_t *task = &tasks[i];
                     if (task->state == CHUNK_NPU_COPYING) {
-                        // 狠狠“踹”底层驱动一脚，强迫 CPU 等待并拉取真正的完成状态！
+                        // force-sync stalled event to unblock the pipeline
                         aclrtSynchronizeEvent(ctx->events[task->buf_idx]);
                         task->state = CHUNK_NPU_DONE;
                         last_progress_time = get_time_us(); 
