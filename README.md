@@ -1,4 +1,5 @@
 # NPU NVMe Transfer
+<!-- BACKUP: baseline commit c88e1d0c90928e7042a4286e5293114aa7d49c93 before C refactor -->
 
 本仓库对外提供的主要接口是 `npu_nvme_transfer` 纯传输 API，面向 NVMe <-> NPU/Host 的高性能数据搬运，不包含 ckpt/probe 逻辑。
 
