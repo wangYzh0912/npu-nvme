@@ -36,11 +36,6 @@ volatile uint8_t* probe_flags = NULL;
 // Note: per-context device trigger buffer (dev_trigger_ptr) is allocated by
 // the Python layer via aclrtMalloc and passed in via npu_nvme_set_trigger_ptr().
 
-// 暴露给 Python 获取物理地址的接口
-uint64_t get_probe_flag_addr() {
-    return (uint64_t)probe_flags;
-}
-
 // ============================================================================
 // Hugepage pool auto-expansion for DPDK/SPDK
 // ============================================================================
@@ -405,26 +400,6 @@ void* npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx)
     return ctx->probe_flag_dev_ptr;
 }
 
-// Backward-compatible stubs: old API aliases rerouted to FaF functions
-int npu_nvme_set_trigger_ptr(NPUNVMEContext *ctx, void *dev_ptr)
-{
-    return npu_nvme_set_step_ptr(ctx, dev_ptr, 10);
-}
-
-int npu_nvme_read_trigger_dev(NPUNVMEContext *ctx, uint32_t *out_value)
-{
-    if (!ctx || !ctx->dev_step_ptr || !ctx->step_poll_buf) return -1;
-    aclError ret = aclrtSetDevice(ctx->npu_id);
-    if (ret != ACL_SUCCESS) return -1;
-    ret = aclrtSetCurrentContext(ctx->acl_ctx);
-    if (ret != ACL_SUCCESS) return -1;
-    ret = aclrtMemcpy(ctx->step_poll_buf, 4,
-                      ctx->dev_step_ptr, 4,
-                      ACL_MEMCPY_DEVICE_TO_HOST);
-    if (ret != ACL_SUCCESS) return -1;
-    *out_value = *(uint32_t *)ctx->step_poll_buf;
-    return 0;
-}
 static inline void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
     if (ctx && ctx->probe_flag_dev_ptr) {
         if (ctx->enable_profiling) {
@@ -1440,101 +1415,6 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t to
 // and the old probe_listener_thread WaitProbe branch) are replaced by
 // FaF step_counter polling. If rollback is needed, uncomment the block below.
 // ============================================================================
-#if 0
-// ---------- OLD: Device-side self-trigger for sink=TRUE ----------
-
-int npu_nvme_set_trigger_ptr(NPUNVMEContext *ctx, void *dev_ptr)
-{
-    if (!ctx || !dev_ptr) return -1;
-    ctx->dev_trigger_ptr = dev_ptr;
-
-    // Allocate host polling buffer
-    if (!ctx->trigger_poll_buf) {
-        aclError ret = aclrtMallocHost(&ctx->trigger_poll_buf, 4);
-        if (ret != ACL_SUCCESS) {
-            fprintf(stderr, "[NPU-NVMe] trigger_poll_buf alloc failed, ret=%d\n", ret);
-            return -1;
-        }
-    }
-    ctx->last_trigger_seen = -1;
-    fprintf(stderr, "[NPU-NVMe] Device trigger ptr set: %p\n", dev_ptr);
-    return 0;
-}
-
-int npu_nvme_read_trigger_dev(NPUNVMEContext *ctx, uint32_t *out_value)
-{
-    if (!ctx || !ctx->dev_trigger_ptr || !ctx->trigger_poll_buf) return -1;
-    aclError ret = aclrtSetDevice(ctx->npu_id);
-    if (ret != ACL_SUCCESS) return -1;
-    ret = aclrtSetCurrentContext(ctx->acl_ctx);
-    if (ret != ACL_SUCCESS) return -1;
-    ret = aclrtMemcpy(ctx->trigger_poll_buf, 4,
-                      ctx->dev_trigger_ptr, 4,
-                      ACL_MEMCPY_DEVICE_TO_HOST);
-    if (ret != ACL_SUCCESS) return -1;
-    *out_value = *(uint32_t *)ctx->trigger_poll_buf;
-    return 0;
-}
-
-// OLD: WaitProbe-style probe_listener_thread (device-trigger mode)
-// This version polled dev_trigger_ptr for counter changes.
-// Replaced by FaF step_counter polling.
-void* old_probe_listener_thread_device_trigger(void* arg) {
-    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
-    printf("[Probe Listener] Background thread started (device-trigger mode).\n");
-
-    aclError ret = aclrtSetDevice(ctx->npu_id);
-    if (ret != ACL_SUCCESS) {
-        fprintf(stderr, "[Probe Listener] aclrtSetDevice failed, ret=%d\n", ret);
-    }
-    ret = aclrtSetCurrentContext(ctx->acl_ctx);
-    if (ret != ACL_SUCCESS) {
-        fprintf(stderr, "[Probe Listener] aclrtSetCurrentContext failed, ret=%d\n", ret);
-    }
-
-    while(1) {
-        int triggered = 0;
-        if (ctx->dev_trigger_ptr && ctx->trigger_poll_buf) {
-            uint32_t cur_trigger = 0;
-            if (npu_nvme_read_trigger_dev(ctx, &cur_trigger) == 0) {
-                if (cur_trigger > (uint32_t)ctx->last_trigger_seen) {
-                    ctx->last_trigger_seen = (int)cur_trigger;
-                    triggered = 1;
-                }
-            }
-            if (!triggered) {
-                if (ctx->stop_listener) return NULL;
-                if (ctx->qpair)
-                    spdk_nvme_qpair_process_completions(ctx->qpair, 0);
-                usleep(100);
-                continue;
-            }
-        } else {
-            while (probe_flags[0] == 0) {
-                if (ctx->stop_listener) return NULL;
-                if (ctx->qpair) spdk_nvme_qpair_process_completions(ctx->qpair, 0);
-                __asm__ volatile("yield" ::: "memory");
-            }
-            probe_flags[0] = 0;
-            triggered = 1;
-        }
-        if (ctx->stop_listener) return NULL;
-        if (!triggered) continue;
-
-        if (ctx->registered_tasks != NULL) {
-            for (int i = 0; i < ctx->num_registered_tasks; i++) {
-                ctx->registered_tasks[i].state = CHUNK_IDLE;
-                ctx->registered_tasks[i].buf_idx = -1;
-            }
-            process_write_pipeline(ctx, ctx->registered_tasks, ctx->num_registered_tasks, false);
-            signal_probe_flag(ctx);
-        } else {
-            signal_probe_flag(ctx);
-        }
-    }
-    return NULL;
-}
-#endif // P2-1: end of WaitProbe/TriggerProbe dead code block
 
 // ============================================================================
 // Phase 5 E11: Delta (增量) 写盘实现

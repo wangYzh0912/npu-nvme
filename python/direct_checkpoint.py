@@ -55,8 +55,6 @@ try:
     lib = ctypes.CDLL(_LIB_PATH)
     class NPUNVMEContext(ctypes.Structure): pass
 
-    lib.get_probe_flag_addr.argtypes = []
-    lib.get_probe_flag_addr.restype = ctypes.c_uint64
 
     if hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
         lib.npu_nvme_set_probe_flag_ptr.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
