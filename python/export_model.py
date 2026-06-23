@@ -32,7 +32,7 @@ CHUNK_SIZE         = 4 * 1024 * 1024
 os.environ.setdefault("SPDK_SHM_ID", "1")
 
 # -- C interface (reuse direct_checkpoint bindings) --
-from direct_checkpoint import lib, NPUNVMEContext, build_chunks
+from direct_checkpoint import lib, NPUNVMEContext, build_chunks_host
 
 def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
     print(f"\n{'='*70}")

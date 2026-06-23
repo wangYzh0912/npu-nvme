@@ -704,7 +704,7 @@ class DirectCheckpoint:
         if self.enable_profiling:
             os.makedirs(self.profiling_dir, exist_ok=True)
 
-        # P0-1: MS runtime warmup before SPDK init
+        # MS runtime warmup (must complete before SPDK init)
         if warmup_fn is not None and not DirectCheckpoint._ms_warmed_up:
             print("[DirectCheckpoint] Running MS runtime warmup before SPDK init...", flush=True)
             warmup_fn()
@@ -754,7 +754,7 @@ class DirectCheckpoint:
         magic = header[0]
         
         if magic != MAGIC_NUMBER:
-            raise RuntimeError(f"Disk is NOT formatted! Found magic: {magic}. Please run format script.")
+            raise RuntimeError(f"Superblock verification failed: unexpected header 0x{magic.hex()} (expected NPUNVME1). Run format_npu_disk.py to initialize the disk.")
             
         self.active_meta_slot = header[1]
         self.stack_start_bytes = header[3]
@@ -1195,17 +1195,13 @@ class DirectCheckpoint:
 
         t_start = time.perf_counter()
         
-        # ============================================================
-        # 阶段 1: T_Prep (框架遍历与内存/指针处理)
-        # ============================================================
+        # -- T_Prep: framework traversal and pointer resolution --
         t_prep_start = time.perf_counter()
         params = self._prepare_params(model)
         t_prep_end = time.perf_counter()
         T_Prep = t_prep_end - t_prep_start
 
-        # ============================================================
-        # 阶段 2: T_Layout (物理寻址、越界防御与 C-types 组装)
-        # ============================================================
+        # -- T_Layout: physical layout, bounds check, C-types assembly --
         base_offset_bytes = self._get_current_slot_base_offset(step)
         print(f"[DirectCkpt] Rank {self.rank_id} saving step {step} to offset {base_offset_bytes / 1024**3:.2f} GB ...", flush=True)
 
@@ -1236,7 +1232,6 @@ class DirectCheckpoint:
         total_written = 0
         
         # 预先完成所有 Dev (显存) 的 C 数组组装，绝不占用硬件传输时间
-        # 预先完成所有 Dev (显存) 的 C 数组组装
         dev_chunks, dev_sz = build_chunks(dev_params, self.chunk_size)
         if dev_chunks:
             # Debug: write chunk-to-parameter mapping for stall diagnosis
@@ -1266,9 +1261,7 @@ class DirectCheckpoint:
         t_layout_end = time.perf_counter()
         T_Layout = t_layout_end - t_prep_end
 
-        # ============================================================
-        # 阶段 3: T_SPDK (纯硬件直写 DMA 耗时，没有任何 Python 开销)
-        # ============================================================
+        # -- T_SPDK: hardware DMA write (no Python overhead) --
 
         # Ensure all pending device operations are complete before reading buffers
         if hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
@@ -1300,7 +1293,7 @@ class DirectCheckpoint:
             t_spdk_end = time.perf_counter()
             T_SPDK = t_spdk_end - t_spdk_start
 
-            # 2. 执行阶段 4: T_Meta (元数据账本落盘)
+            # Write metadata ledger to NVMe
             t_meta_start = time.perf_counter()
             self.last_layout = layout
             if commit_meta:
@@ -1505,9 +1498,7 @@ class DirectCheckpoint:
             self.cleanup()
             self._closed = True
 
-    # ============================================================
-    # Delta frame I/O (incremental checkpoint)
-    # ============================================================
+    # -- Delta frame I/O (incremental checkpoint) --
     def delta_init(self, slot_size_mb: int = 256, slot_count: int = 128):
         """Initialise the delta ring-buffer layout on disk.
 
@@ -1683,7 +1674,7 @@ class DirectCheckpoint:
         base_step = self._find_nearest_full(target_step)
         print(f"[DirectCkpt] Recover target=step_{target_step}, base=FULL step_{base_step}", flush=True)
 
-        # Phase 1: 加载全量
+        # Load FULL checkpoint
         self.load(model, step=base_step)
 
         if base_step == target_step:
@@ -1691,11 +1682,11 @@ class DirectCheckpoint:
             print(f"[DirectCkpt] Recovery done (FULL only, no deltas): {dt:.2f}s", flush=True)
             return {"base_step": base_step, "n_deltas": 0, "total_time": dt}
 
-        # Phase 2: 读增量链
+        # Read delta chain
         chain = self.delta_load_chain(base_step, target_step)
         print(f"[DirectCkpt] Loaded {len(chain)} delta frames (step {base_step+1}→{target_step})", flush=True)
 
-        # Phase 3: apply delta patches on CPU, infer dtype from model parameters
+        # Apply delta patches on CPU
         # Record each parameter's MindSpore dtype before pulling to host
         param_dtypes = {}
         host_weights = {}
