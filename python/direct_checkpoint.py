@@ -27,20 +27,21 @@ import numpy as np
 import atexit
 
 # ============================================================
-# 裸盘物理布局常量 (全字节寻址 Byte Addressing)
+# Disk layout constants (byte-addressed raw block device)
 # ============================================================
-SUPERBLOCK_OFFSET = 0
-META_SLOT_A_OFFSET = 4096
-META_SLOT_B_OFFSET = 4096 + 400 * 1024
-META_SLOT_BYTES = 400 * 1024
-MAGIC_NUMBER = b"NPUNVME1"
+SUPERBLOCK_OFFSET      = 0
+SUPERBLOCK_HEADER_BYTES = 28  # "<8s I Q Q" = magic(8) + slot(4) + capacity(8) + stack(8)
+META_SLOT_A_OFFSET     = 4096
+META_SLOT_B_OFFSET     = 4096 + 400 * 1024
+META_SLOT_BYTES        = 400 * 1024
+MAGIC_NUMBER           = b"NPUNVME1"
+UINT32_BYTES           = 4
 
 # ============================================================
-# 绑定 C 接口
+# C library bindings
 # ============================================================
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_LIB_PATH = os.path.join(_REPO_ROOT, "build_out", "lib", "libnpu_nvme.so")
-_PROBE_LIB_PATH = os.path.join(_REPO_ROOT, "build_out", "lib", "libprobe_kernel.so")
+_LIB_PATH  = os.path.join(_REPO_ROOT, "build_out", "lib", "libnpu_nvme.so")
 
 try:
     acl_lib = ctypes.CDLL("libascendcl.so")
@@ -54,7 +55,6 @@ except Exception as e:
 try:
     lib = ctypes.CDLL(_LIB_PATH)
     class NPUNVMEContext(ctypes.Structure): pass
-
 
     if hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
         lib.npu_nvme_set_probe_flag_ptr.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
@@ -134,7 +134,7 @@ def build_chunks(params: List[Dict], chunk_size: int):
         remaining = p["size"]
         inner_off = 0
         nvme_offset_bytes = p["offset"] 
-        name = p.get("name", "unknown") # 【修改点1】：获取名字
+        name = p.get("name", "unknown") # chunk metadata: parameter name for debugging
         
         while remaining > 0:
             take = min(remaining, chunk_size)
@@ -142,7 +142,7 @@ def build_chunks(params: List[Dict], chunk_size: int):
                 ctypes.c_void_p(ptr + inner_off),
                 ctypes.c_uint64(nvme_offset_bytes),
                 ctypes.c_size_t(take),
-                name # 【修改点2】：把名字塞进元组里
+                name 
             ))
             remaining -= take
             inner_off += take
@@ -206,7 +206,6 @@ bind_depend_op = MultitypeFuncGraph("bind_depend_op")
 def _bind_depend_op(sig, grad):
     return ops.depend(grad, sig)
 
-
 def get_dev_ptr(tensor):
     ptr = 0
     try:
@@ -220,7 +219,6 @@ def get_dev_ptr(tensor):
     except Exception:
         ptr = 0
     return ptr
-
 
 wait_op_info = CustomRegOp("WaitProbe") \
     .input(0, "flag") \
@@ -385,7 +383,7 @@ class DirectCheckpoint:
         if rc != 0:
             raise RuntimeError("Failed to read Superblock.")
 
-        header = struct.unpack("<8s I Q Q", sb_buf.raw[:28])
+        header = struct.unpack("<8s I Q Q", sb_buf.raw[:SUPERBLOCK_HEADER_BYTES])
         magic = header[0]
         
         if magic != MAGIC_NUMBER:
@@ -394,7 +392,7 @@ class DirectCheckpoint:
         self.active_meta_slot = header[1]
         self.stack_start_bytes = header[3]
         
-        # 【核心防爆修复】：检查 Superblock 中的历史堆栈起点是否还能容纳当前的分布式阵列！
+        # Verify the stored stack start  still fits the current multi-rank configuration
         total_stack_bytes = self.world_size * self.keep_last_n * self.slot_bytes
         if self.stack_start_bytes == 0 or (self.stack_start_bytes + total_stack_bytes > self.total_bytes):
             print(f"[Warning] Rank {self.rank_id}: Stale Superblock! Current config needs {total_stack_bytes/1024**3:.2f} GB, but disk bounds exceeded. Recalculating...", flush=True)
@@ -540,12 +538,12 @@ class DirectCheckpoint:
         if ret != 0:
             raise RuntimeError(f"aclrtSetDevice failed, ret={ret}")
 
-        host_buf = ctypes.create_string_buffer(4)
-        # 2 is ACL_MEMCPY_DEVICE_TO_HOST
-        ret = acl_lib.aclrtMemcpy(ctypes.byref(host_buf), 4, ctypes.c_void_p(self.probe_flag_ptr), 4, 2)
+        host_buf = ctypes.create_string_buffer(UINT32_BYTES)
+        ret = acl_lib.aclrtMemcpy(ctypes.byref(host_buf), UINT32_BYTES,
+                                  ctypes.c_void_p(self.probe_flag_ptr), UINT32_BYTES, 2)
         if ret != 0:
             raise RuntimeError(f"aclrtMemcpy device->host failed, ret={ret}")
-        return int.from_bytes(host_buf.raw[:4], byteorder="little", signed=False)
+        return int.from_bytes(host_buf.raw[:UINT32_BYTES], byteorder="little", signed=False)
 
     def write_probe_flag_dev(self, value: int):
         """Write probe flag directly to device memory via ACL."""
@@ -560,10 +558,10 @@ class DirectCheckpoint:
         if ret != 0:
             raise RuntimeError(f"aclrtSetDevice failed, ret={ret}")
 
-        host_buf = ctypes.create_string_buffer(4)
-        host_buf.raw = int(value).to_bytes(4, byteorder="little", signed=False)
-        # 1 is ACL_MEMCPY_HOST_TO_DEVICE
-        ret = acl_lib.aclrtMemcpy(ctypes.c_void_p(self.probe_flag_ptr), 4, ctypes.byref(host_buf), 4, 1)
+        host_buf = ctypes.create_string_buffer(UINT32_BYTES)
+        host_buf.raw = int(value).to_bytes(UINT32_BYTES, byteorder="little", signed=False)
+        ret = acl_lib.aclrtMemcpy(ctypes.c_void_p(self.probe_flag_ptr), UINT32_BYTES,
+                                  ctypes.byref(host_buf), UINT32_BYTES, 1)
         if ret != 0:
             raise RuntimeError(f"aclrtMemcpy host->device failed, ret={ret}")
 
@@ -604,7 +602,7 @@ class DirectCheckpoint:
     def _build_local_param_registry(self, models):
         """
         动态硬件探针建表：不依赖任何模型架构与切分规则！
-        利用底层同步拷贝的安全拦截特性，在初始化时自动摸清本卡的真实张量。
+        Probe each parameter with a 1-byte aclrtMemcpy to determine whether it resides on this rank.。
         """
         if not isinstance(models, (list, tuple)): models = [models]
         self.local_valid_param_names = set()
@@ -624,7 +622,7 @@ class DirectCheckpoint:
 
                 # 1. 发射硬件级 1 字节探针 (鉴定是否为真实分配的 NPU 显存)
                 if acl_lib is not None:
-                    # 2 代表 ACL_MEMCPY_DEVICE_TO_HOST
+                    
                     ret = acl_lib.aclrtMemcpy(ctypes.byref(dummy_dst), 1, ctypes.c_void_p(ptr), 1, 2)
                     if ret == 0:
                         is_valid_on_this_rank = True
@@ -688,7 +686,7 @@ class DirectCheckpoint:
     def wait_for_io_completion(self):
         """
         强制阻塞屏障：如果后台 I/O 线程还在写盘，主线程必须在此等待，
-        以防止下一步的优化器更新破坏 NPU 显存中的参数。
+        以so the next optimizer step does not overwrite parameters being written。
         """
         if getattr(self, 'io_thread', None) is not None and self.io_thread.is_alive():
             t_wait_start = time.perf_counter()
@@ -747,8 +745,9 @@ class DirectCheckpoint:
 
     def register_tasks(self, model: ms.nn.Cell, step: int = 0):
         """
-        [新增] 将所有权重的物理指针和偏移量一次性注册给底层的 C 后台线程。
-        【警告】必须在图编译完成、显存分配后（例如 step == 1 的 step_end 或独立调用的 build 之后）调用！
+        Register all parameter device pointers with the C-layer background listener.
+        Must be called after graph compilation and memory allocation
+        (e.g. at the end of step 1, or after an explicit model.build()).
         """
         print(f"[DirectCkpt] Rank {self.rank_id} Registering Layout to NPU-NVMe Background Thread...")
         
@@ -841,7 +840,7 @@ class DirectCheckpoint:
         for p in params:
             aligned_bytes = int(math.ceil(p["size"] / 4096.0)) * 4096
             
-            # 【物理保险丝】：严格检查是否越出了这张 NVMe 盘的绝对物理容量
+            # Bounds check: disk physical capacity
             if current_offset + aligned_bytes > self.total_bytes:
                 raise MemoryError(f"Rank {self.rank_id} CRITICAL: DMA Write will exceed disk physical capacity! Offset: {(current_offset + aligned_bytes)/1024**3:.2f}GB > Total: {self.total_bytes/1024**3:.2f}GB")
 
@@ -851,7 +850,7 @@ class DirectCheckpoint:
             p_record = {**p, "offset": current_offset}
             layout.append(p_record)
 
-            # 客货分流：走主机内存的单独放入 host_params
+            # Host-resident params go to host_params; device params go to dev_params
             if p.get("np_arr") is not None:
                 host_params.append(p_record)
             else:
@@ -865,7 +864,7 @@ class DirectCheckpoint:
         # 预先完成所有 Dev (显存) 的 C 数组组装
         dev_chunks, dev_sz = build_chunks(dev_params, self.chunk_size)
         if dev_chunks:
-            # 【新增 Debug 代码】：落盘一份对照表，看看死锁的 Task 到底叫什么名字！
+            # Debug: write chunk-to-parameter mapping for stall diagnosis
             with open(f"task_mapping_rank_{self.rank_id}.txt", "w") as f:
                 for i, chunk in enumerate(dev_chunks):
                     f.write(f"TaskIdx: {i} | Name: {chunk[3]} | Size: {chunk[2].value}\n")
@@ -874,7 +873,7 @@ class DirectCheckpoint:
             c_ptrs_dev = (ctypes.c_void_p * num_dev)()
             c_offs_dev = (ctypes.c_uint64 * num_dev)()
             c_sizes_dev = (ctypes.c_size_t * num_dev)()
-            # 【修改点3】：这里多解包一个 name
+            
             for i, (p, o, s, name) in enumerate(dev_chunks): 
                 c_ptrs_dev[i], c_offs_dev[i], c_sizes_dev[i] = p, ctypes.c_uint64(o.value), s
             
@@ -896,7 +895,7 @@ class DirectCheckpoint:
         # 阶段 3: T_SPDK (纯硬件直写 DMA 耗时，没有任何 Python 开销)
         # ============================================================
 
-        # 【同步显存】保证前向/反向计算和优化器已完全结束
+        # Ensure all pending device operations are complete before reading buffers
         if hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
             ms.runtime.synchronize()  
         elif hasattr(ms.hal, "synchronize"):
@@ -938,7 +937,7 @@ class DirectCheckpoint:
             t_meta_end = time.perf_counter()
             T_Meta = t_meta_end - t_meta_start
 
-            # 3. 后台计算耗时并打印铁证
+            
             real_time = time.perf_counter() - t_start
             bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
             
@@ -963,11 +962,11 @@ class DirectCheckpoint:
         )
         self.io_thread.start()
 
-        # 主线程极速返回，让 MindSpore 跑 Step 16
+        # Return immediately; I/O proceeds in background thread
         t_return = time.perf_counter()
         print(f"[Timeline][Rank {self.rank_id}] Step {step} | Python save() dispatched to background thread. Layout cost: {T_Layout*1000:.2f}ms", flush=True)
         
-        # 因为真实写入在后台，此处返回空壳数据应对外层的回调格式
+        # Timing data is printed from the background thread; return values are for API compatibility only
         return 0, len(dev_chunks) + len(host_chunks), 0.0, 0.0, {"prep_time": T_Prep, "layout_time": T_Layout}
 
     def save_async(self, models, step: int, meta_path: str, commit_meta: bool = True):
@@ -1129,7 +1128,7 @@ class DirectCheckpoint:
             self._closed = True
 
     # ============================================================
-    # I3 Delta (增量) I/O — S2/S3: 端到端打通
+    # Delta frame I/O (incremental checkpoint)
     # ============================================================
     def delta_init(self, slot_size_mb: int = 256, slot_count: int = 128):
         """初始化增量盘布局 (C 层 npu_nvme_delta_init)。
@@ -1223,7 +1222,7 @@ class DirectCheckpoint:
         if rc != 0:
             raise RuntimeError(f"Delta read failed at slot {slot_idx} (rc={rc})")
 
-        # C返回0表示成功，数据已写入buf。需从header解析实际帧大小。
+        # Read succeeded; parse header to get actual frame size
         from i3_delta_writer import DELTA_MAGIC as _DM
         magic, total_sz = struct.unpack_from("<I", buf.raw, 0)[0], struct.unpack_from("<I", buf.raw, 16)[0]
         if magic != _DM:
