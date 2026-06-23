@@ -24,6 +24,8 @@
 
 #define MIN_PIPE_DEPTH   1
 #define MAX_PIPE_DEPTH   16
+#define ALIGN_4K(x)      (((x) + 4095ULL) & ~4095ULL)
+
 /* Dedicated buffer for superblock & JSON ledger I/O; 64 MB covers all
  * realistic metadata sizes including future delta ledger expansion. */
 #define META_DMA_BUF_SIZE (64 * 1024 * 1024)
@@ -988,7 +990,6 @@ static void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *comple
 }
 
 static int submit_to_spdk(NPUNVMEContext *ctx, io_task_t *task, int *completed_counter) {
-    #define ALIGN_4K(x) (((x) + 4095ULL) & ~4095ULL)
     size_t aligned_sz = ALIGN_4K(task->size);
     uint64_t lba = task->nvme_offset / ctx->block_size;
     uint32_t lba_count = aligned_sz / ctx->block_size;
@@ -1248,7 +1249,10 @@ void process_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks)
             } else if (rc == -ENOMEM || rc == -12) {
                 ring_push(&ctx->free_ring, buf_idx);
                 free(cb_arg);
-                break; 
+                task->state = CHUNK_DONE;
+                completed_tasks++;
+                submitted_to_nvme++;
+                fprintf(stderr, "[Fatal] SPDK read queue full, skip chunk %d.\n", task->task_idx);
             } else {
                 // 【核心修复】：致命读错误
                 fprintf(stderr, "[Fatal] SPDK read rejected! rc=%d for chunk %d.\n", rc, task->task_idx);

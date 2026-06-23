@@ -1,5 +1,5 @@
-#ifndef NPU_NVME_ASYNC_H
-#define NPU_NVME_ASYNC_H
+#ifndef NPU_NVME_H
+#define NPU_NVME_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -25,8 +25,9 @@ typedef struct NPUNVMEContext NPUNVMEContext;
  * @param prof_dir Profiling CSV 文件的输出目录
  * @return int 0 成功, -1 失败
  */
-int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id, 
-                  int pipe_depth, int chunk_size, bool enable_profiling, const char *prof_dir);
+int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
+                  int pipe_depth, uint32_t chunk_size, bool enable_profiling,
+                  const char *prof_dir);
 
 /**
  * @brief 释放所有软硬件资源，销毁 Stream 与 Event
@@ -75,8 +76,20 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
  * @param num_items 任务总数
  * @return int 0 成功, -1 失败
  */
-int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs, 
+int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                         uint64_t *nvme_offsets, size_t *sizes, int num_items);
+
+/**
+ * @brief 批量写 — Host DRAM -> NVMe (绕过 NPU, 直接 memcpy)
+ */
+int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
+                              uint64_t *nvme_offsets, size_t *sizes, int num_items);
+
+/**
+ * @brief 注册 NPU 指针表供后台线程持久化
+ */
+int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
+                            uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
 /**
  * @brief 设置 NPU 侧探针 flag 的设备地址
@@ -154,4 +167,4 @@ int npu_nvme_read_delta(NPUNVMEContext *ctx, int slot_idx,
 }
 #endif
 
-#endif // NPU_NVME_ASYNC_H
+#endif // NPU_NVME_H
