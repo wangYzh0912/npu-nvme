@@ -9,156 +9,148 @@
 extern "C" {
 #endif
 
-/**
- * @brief Opaque 句柄，Python 层不需要知道其内部结构
- */
+/** @brief Opaque context handle.  Python sees this as an opaque pointer. */
 typedef struct NPUNVMEContext NPUNVMEContext;
 
 /**
- * @brief 初始化 NPU 和 NVMe SPDK 异步环境
- * * @param out_ctx 输出的全局上下文指针
- * @param pci_addr NVMe 硬盘的 PCIe 地址 (如 "0000:83:00.0")
- * @param npu_id 绑定的 Ascend NPU 设备 ID
- * @param pipe_depth 异步 Ring Buffer 的深度 (推荐 4-16)
- * @param chunk_size 单个数据块切片大小 (推荐 4MB = 4194304)
- * @param enable_profiling 是否开启纳秒级微观性能打点
- * @param prof_dir Profiling CSV 文件的输出目录
- * @return int 0 成功, -1 失败
+ * @brief Initialise the NPU-NVMe SPDK environment.
+ *
+ * @param out_ctx           output context handle
+ * @param pci_addr          NVMe PCIe BDF address (e.g. "0000:83:00.0")
+ * @param npu_id            Ascend NPU device ID
+ * @param pipe_depth        DMA pipeline depth (4--16 recommended)
+ * @param chunk_size        max bytes per DMA chunk (4 MB = 4194304 recommended)
+ * @param enable_profiling  enable per-chunk timing CSV output
+ * @param prof_dir          directory for profiling CSV files (NULL = ".")
+ * @return 0 on success, -1 on error
  */
 int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                   int pipe_depth, uint32_t chunk_size, bool enable_profiling,
                   const char *prof_dir);
 
-/**
- * @brief 释放所有软硬件资源，销毁 Stream 与 Event
- */
+/** @brief Release all resources (SPDK, ACL, DMA pool, listener thread). */
 void npu_nvme_cleanup(NPUNVMEContext *ctx);
 
-/**
- * @brief 获取 NVMe 硬盘总字节容量 (用于 Python 层容量防爆校验)
- */
+/** @brief Return total NVMe capacity in bytes. */
 uint64_t npu_nvme_get_total_blocks(NPUNVMEContext *ctx);
 
-/**
- * @brief 获取配置的最大单次传输大小 (Chunk Size)
- */
+/** @brief Return the configured per-chunk transfer size. */
 int npu_nvme_get_max_transfer(NPUNVMEContext *ctx);
 
 /**
- * @brief 同步读写元数据 (Superblock & JSON Ledger)
- * * @param ctx 全局上下文
- * @param byte_offset 物理硬盘上的绝对字节偏移量
- * @param total_bytes 读写总字节数
- * @param is_read 1 为读，0 为写
- * @param meta_buffer 主机内存中的 Buffer 指针
- * @return int 0 成功, -1 失败
+ * @brief Synchronous metadata I/O (superblock and JSON ledger).
+ *
+ * @param ctx          context handle
+ * @param byte_offset  absolute byte offset on the NVMe device
+ * @param total_bytes  number of bytes to read or write
+ * @param is_read      1 = read, 0 = write
+ * @param meta_buffer  host-side buffer
+ * @return 0 on success, -1 on error
  */
-int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t total_bytes, int is_read, void *meta_buffer);
+int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
+                          uint32_t total_bytes, int is_read, void *meta_buffer);
 
 /**
- * @brief 【核心】全异步 Zero-Bubble 批量张量直写 (NPU -> NVMe)
- * * @param ctx 全局上下文
- * @param npu_ptrs NPU 显存源地址数组
- * @param nvme_offsets NVMe 目标物理偏移量数组
- * @param sizes 每个张量切片的大小数组
- * @param num_items 任务总数
- * @return int 0 成功, -1 失败
+ * @brief Batch write: NPU HBM -> NVMe (blocking).
+ *
+ * @param ctx          context handle
+ * @param npu_ptrs     array of NPU device pointers (source)
+ * @param nvme_offsets array of NVMe byte offsets (destination)
+ * @param sizes        array of per-chunk byte sizes
+ * @param num_items    number of chunks
+ * @return 0 on success, -1 on error
  */
-int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs, 
+int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                          uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
 /**
- * @brief 【核心】全异步 Zero-Bubble 批量张量直读 (NVMe -> NPU)
- * * @param ctx 全局上下文
- * @param npu_ptrs NPU 显存目标地址数组
- * @param nvme_offsets NVMe 源物理偏移量数组
- * @param sizes 每个张量切片的大小数组
- * @param num_items 任务总数
- * @return int 0 成功, -1 失败
+ * @brief Batch read: NVMe -> NPU HBM (blocking).
+ *
+ * @param ctx          context handle
+ * @param npu_ptrs     array of NPU device pointers (destination)
+ * @param nvme_offsets array of NVMe byte offsets (source)
+ * @param sizes        array of per-chunk byte sizes
+ * @param num_items    number of chunks
+ * @return 0 on success, -1 on error
  */
 int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                         uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
 /**
- * @brief 批量写 — Host DRAM -> NVMe (绕过 NPU, 直接 memcpy)
+ * @brief Batch write: Host DRAM -> NVMe (memcpy, no NPU involvement).
  */
 int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
                               uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
 /**
- * @brief 注册 NPU 指针表供后台线程持久化
+ * @brief Register parameter pointers for background persistence by the
+ *        FaF listener thread.
  */
 int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
                             uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
-/**
- * @brief 设置 NPU 侧探针 flag 的设备地址
- * @param ctx 全局上下文
- * @param dev_ptr NPU 设备指针
- * @return int 0 成功, -1 失败
- */
+// -- FaF listener control (I2) --
+
+/** @brief Set the NPU-side probe-flag device address. */
 int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
+
+/** @brief DEPRECATED: trigger the listener via probe_flags[0]=1. */
 int npu_nvme_trigger_probe(NPUNVMEContext *ctx);
+
 int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
 
 /**
- * @brief FaF: 设置 step_counter 设备指针用于监听线程轮询
- * @param ctx 全局上下文
- * @param dev_ptr step_counter 的 NPU 设备指针 (HBM)
- * @param ckpt_interval 每隔 N 步触发一次 SPDK 写
- * @return int 0 成功, -1 失败
+ * @brief Register the step_counter device pointer for the listener thread.
+ *
+ * @param ctx           context handle
+ * @param dev_ptr       step_counter device (HBM) pointer
+ * @param ckpt_interval trigger a write every N steps
+ * @return 0 on success, -1 on error
  */
 int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval);
 
-/**
- * @brief FaF: 获取 C 层自分配的 probe_flag 设备地址 (fallback)
- * @param ctx 全局上下文
- * @return 设备指针, NULL 如果未分配
- */
+/** @brief Return the self-allocated probe-flag device pointer (or NULL). */
 void* npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx);
 
-// ============================================================================
-// [Phase 5 E11] Delta (增量) I/O API
-// ============================================================================
+// -- Delta frame I/O (I3) --
 
 /**
- * @brief 初始化增量盘布局 (Superblock 扩展字段)
- * @param ctx 全局上下文
- * @param delta_slot_size  每个 delta 槽位的字节大小 (推荐 256MB = 268435456)
- * @param delta_slot_count 环形槽位数 (推荐 128)
- * @return int 0 成功, -1 失败
+ * @brief Initialise the delta ring-buffer layout on disk.
+ *
+ * @param ctx              context handle
+ * @param delta_slot_size  bytes per delta slot (256 MB = 268435456 recommended)
+ * @param delta_slot_count number of slots in the ring (128 recommended)
+ * @return 0 on success, -1 on error
  */
-int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size, uint32_t delta_slot_count);
+int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size,
+                        uint32_t delta_slot_count);
 
-/**
- * @brief 获取 delta 区域的起始字节偏移
- */
+/** @brief Return the byte offset of the delta ring on the NVMe device. */
 uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx);
 
-/**
- * @brief 获取 delta 槽位配置
- */
 uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx);
 uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
 
 /**
- * @brief 写一个 delta frame 到指定槽位 (host buffer → NVMe)
- * @param ctx 全局上下文
- * @param slot_idx 槽位索引 (0..slot_count-1)
- * @param data 主机端 buffer 指针
- * @param total_bytes frame 总字节数
- * @return int 0 成功, -1 失败
+ * @brief Write one delta frame to a delta ring slot (host buffer -> NVMe).
+ *
+ * @param ctx         context handle
+ * @param slot_idx    slot index (0 .. slot_count-1)
+ * @param data        host-side frame buffer
+ * @param total_bytes frame size in bytes
+ * @return 0 on success, -1 on error
  */
 int npu_nvme_write_delta(NPUNVMEContext *ctx, int slot_idx,
                          const void *data, uint32_t total_bytes);
 
 /**
- * @brief 从指定槽位读取 delta frame (NVMe → host buffer)
- * @param ctx 全局上下文
- * @param slot_idx 槽位索引
- * @param out_buf 主机端输出 buffer
- * @param max_bytes buffer 的最大大小
- * @return int 实际读到的字节数, -1 失败
+ * @brief Read one delta frame from a delta ring slot (NVMe -> host buffer).
+ *
+ * @param ctx       context handle
+ * @param slot_idx  slot index
+ * @param out_buf   host-side output buffer
+ * @param max_bytes size of out_buf
+ * @return actual bytes read on success, -1 on error
  */
 int npu_nvme_read_delta(NPUNVMEContext *ctx, int slot_idx,
                         void *out_buf, uint32_t max_bytes);
