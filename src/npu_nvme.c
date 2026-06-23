@@ -30,6 +30,10 @@
  * realistic metadata sizes including future delta ledger expansion. */
 #define META_DMA_BUF_SIZE (64 * 1024 * 1024)
 
+// DEPRECATED: WaitProbe-era host-trigger flag.  Still used by
+// npu_nvme_trigger_probe() and the listener fallback for legacy
+// experiment scripts (train_gpt2_spdk.py et al.).  Remove once
+// all callers migrate to the FaF step_counter API.
 volatile uint8_t* probe_flags = NULL;
 
 

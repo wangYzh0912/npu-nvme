@@ -201,6 +201,9 @@ def rebuild_chunks_from_meta(models, params_meta: Dict, chunk_size: int):
 
     from mindspore import nn, Tensor, ops
 
+# DEPRECATED: WaitProbe-era bind_depend_op.  Used only by
+# cell_overhead_analysis.py and operator_microbenchmarks.py.
+# New code should use the FaF step_counter path (ProbeTrainOneStepCell.enable_probe=False).
 bind_depend_op = MultitypeFuncGraph("bind_depend_op")
 @bind_depend_op.register("Tensor", "Tensor")
 def _bind_depend_op(sig, grad):
@@ -220,6 +223,11 @@ def get_dev_ptr(tensor):
         ptr = 0
     return ptr
 
+# DEPRECATED: WaitProbe AICPU custom-op registrations.
+# These were part of the original I2 design (graph-injected synchronisation
+# primitive).  The GE compiler cannot load custom AICPU kernels in sink=TRUE
+# mode, so the WaitProbe path was replaced by the FaF step_counter listener.
+# Kept for backward compatibility with legacy experiment scripts.
 wait_op_info = CustomRegOp("WaitProbe") \
     .input(0, "flag") \
     .input(1, "expected") \
@@ -241,6 +249,15 @@ trigger_op_info = CustomRegOp("TriggerProbe") \
     .get_op_info()
 
 class ProbeTrainOneStepCell(nn.Cell):
+    """Training cell with optional step_counter injection for the FaF listener.
+
+    DEPRECATED (WaitProbe params): ``flag``, ``expected``, ``wait_probe``,
+    and ``trigger_probe`` are created when ``enable_probe=True`` but are NOT
+    used in the GE graph.  They exist only as HBM scratch space for legacy
+    experiment scripts that poll them from Python callbacks.  These will be
+    removed once all callers migrate to the FaF step_counter-only path.
+    """
+
     def __init__(self, network, optimizer, so_path, flag_addr, enable_probe=True, probe_mode="full",
                  ckpt_interval=10):
         super().__init__(auto_prefix=False)
@@ -257,23 +274,23 @@ class ProbeTrainOneStepCell(nn.Cell):
         self.ckpt_interval = ckpt_interval
 
         if self.enable_probe:
-            # WaitProbe: flag (uint32) and expected (uint32) — shared with C layer
+            # DEPRECATED: WaitProbe flag/expected — unused in graph, kept for
+            # legacy callers that poll them from Python (train_gpt2_spdk.py et al.)
             self.flag = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="probe_flag")
             self.expected = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="probe_expected")
             self.wait_probe = ops.Custom("WaitProbe", out_shape=[1], out_dtype=ms.uint32,
                                          func_type="aicpu", reg_info=wait_op_info)
 
-            # Device-side trigger counter (int32 — Ascend Add supports int32)
+            # FaF step_counter: injected into the GE graph so the C-layer
+            # listener can poll it via aclrtMemcpy.  This is the active path.
             self.step_counter = ms.Parameter(
                 ms.Tensor([0], dtype=ms.int32), requires_grad=False, name="step_counter")
             self.one_i32 = Tensor([1], dtype=ms.int32)
             self.interval_i32 = Tensor([ckpt_interval], dtype=ms.int32)
 
-            # Trigger buffer: uint32 scalar on device, shared with C listener
+            # DEPRECATED: WaitProbe trigger_buf — unused in graph
             self.trigger_buf = ms.Parameter(
                 ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="trigger_buf")
-
-            # TriggerProbe AICPU kernel
             self.trigger_probe = ops.Custom(
                 "TriggerProbe", out_shape=[1], out_dtype=ms.int32,
                 func_type="aicpu", reg_info=trigger_op_info)
@@ -574,7 +591,12 @@ class DirectCheckpoint:
         print(f"[DirectCkpt] probe flag selftest: orig={orig}, after={after}")
 
     def trigger_probe(self):
-        """Trigger the probe listener to start a write cycle."""
+        """DEPRECATED: trigger the C-layer listener via probe_flags[0]=1.
+
+        This is the old WaitProbe synchronisation path used by
+        train_gpt2_spdk.py, spdk_end_to_end.py, and sink_test.py.
+        New code should use the FaF step_counter listener instead.
+        """
         if not hasattr(lib, "npu_nvme_trigger_probe"):
             raise RuntimeError("npu_nvme_trigger_probe is not available in the C library.")
         rc = lib.npu_nvme_trigger_probe(self.ctx)
