@@ -120,17 +120,6 @@ try:
         ]
         lib.npu_nvme_write_batch_host.restype = ctypes.c_int
 
-    if hasattr(lib, "npu_nvme_read_batch_host"):
-        lib.npu_nvme_read_batch_host.argtypes = [
-            ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
-            ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
-        ]
-        lib.npu_nvme_read_batch_host.restype = ctypes.c_int
-
-    if hasattr(lib, "npu_nvme_bind_thread"):
-        lib.npu_nvme_bind_thread.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-        lib.npu_nvme_bind_thread.restype = ctypes.c_int
-
 except OSError as e:
     print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")
 
@@ -514,12 +503,6 @@ class DirectCheckpoint:
         
         self.active_meta_slot = next_slot
         print(f"[DirectCkpt] Rank 0 Meta committed safely to Slot {'B' if next_slot == 1 else 'A'} (Superblock updated).", flush=True)
-
-    def bind_thread(self):
-        if hasattr(lib, "npu_nvme_bind_thread"):
-            rc = lib.npu_nvme_bind_thread(self.ctx)
-            return rc == 0
-        return False
 
     def set_probe_flag_ptr(self, flag_tensor: Tensor = None):
         """Set the probe flag device pointer for the C-layer listener.
@@ -1102,19 +1085,9 @@ class DirectCheckpoint:
             if rc != 0: raise RuntimeError("read_batch failed")
             total_read += sum(c[2].value for c in dev_chunks)
 
-        # Load Host Data
-        if host_chunks:
-            if hasattr(lib, "npu_nvme_read_batch_host"):
-                num = len(host_chunks)
-                c_ptrs = (ctypes.c_void_p * num)()
-                c_offs = (ctypes.c_uint64 * num)()
-                c_sizes = (ctypes.c_size_t * num)()
-                for i, (p, o, s) in enumerate(host_chunks):
-                    c_ptrs[i], c_offs[i], c_sizes[i] = p, ctypes.c_uint64(o.value), s
-
-                rc = lib.npu_nvme_read_batch_host(self.ctx, c_ptrs, c_offs, c_sizes, num)
-                if rc != 0: raise RuntimeError("read_batch_host failed")
-                total_read += sum(c[2].value for c in host_chunks)
+        # Note: host_chunks are reconstructed from metadata via
+        # rebuild_chunks_from_meta and already have valid np_arr data;
+        # no separate NVMe read needed for host-resident small params.
 
         t1 = time.time()
         t_update = time.time()
