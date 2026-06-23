@@ -116,10 +116,10 @@ def method_name(self, arg1: type, arg2: int = 0):
 
 ### 常量
 
+Python 使用简洁的 `#` 注释分组，不使用 `====` 分隔线（那是 C 的风格）。
+
 ```python
-# ============================================================
-# Group description
-# ============================================================
+# -- Group description --
 CONSTANT_NAME = value
 ```
 

@@ -26,9 +26,7 @@ import numpy as np
 
 import atexit
 
-# ============================================================
-# Disk layout constants (byte-addressed raw block device)
-# ============================================================
+# -- Disk layout constants (byte-addressed raw block device) --
 SUPERBLOCK_OFFSET      = 0
 SUPERBLOCK_HEADER_BYTES = 28  # "<8s I Q Q" = magic(8) + slot(4) + capacity(8) + stack(8)
 META_SLOT_A_OFFSET     = 4096
@@ -37,9 +35,7 @@ META_SLOT_BYTES        = 400 * 1024
 MAGIC_NUMBER           = b"NPUNVME1"
 UINT32_BYTES           = 4
 
-# ============================================================
-# C library bindings
-# ============================================================
+# -- C library bindings --
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _LIB_PATH  = os.path.join(_REPO_ROOT, "build_out", "lib", "libnpu_nvme.so")
 
@@ -123,9 +119,7 @@ try:
 except OSError as e:
     print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")
 
-# ============================================================
-# Chunk builder and layout helpers
-# ============================================================
+# -- Chunk builder and layout helpers --
 def build_chunks(params: List[Dict], chunk_size: int):
     chunks = []
     total_size = 0
@@ -317,9 +311,7 @@ class ProbeTrainOneStepCell(nn.Cell):
 
         return loss
 
-# ============================================================
-# DirectCheckpoint: NVMe-backed training checkpoint manager
-# ============================================================
+# -- DirectCheckpoint: NVMe-backed training checkpoint manager --
 class DirectCheckpoint:
     _ms_warmed_up = False
 
