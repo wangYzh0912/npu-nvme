@@ -139,7 +139,7 @@ def main():
     print(f"  {len(rotation_ids)} layers covered, {len([l for l in rotation_ids if l>=0])} transformer")
 
     # ── 1. Init FileDeltaWriter ──
-    from i3_delta_writer import FileDeltaWriter, pack_delta_frame, unpack_delta_frame, apply_delta_patches
+    from direct_checkpoint import FileDeltaWriter, pack_delta_frame, unpack_delta_frame, apply_delta_patches
 
     print("\n[1] Init FileDeltaWriter (filesystem ring buffer)...")
     writer = FileDeltaWriter(delta_dir=DELTA_DIR, delta_slot_count=args.delta_slots)

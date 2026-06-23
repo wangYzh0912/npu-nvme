@@ -20,8 +20,7 @@ import shutil
 import concurrent.futures
 import numpy as np
 from mindspore import Callback, ops
-from direct_checkpoint import DirectCheckpoint
-from fast_init import replace_with_noop_initializer
+from direct_checkpoint import DirectCheckpoint, replace_with_noop_initializer
 import psutil
 import threading
 import csv

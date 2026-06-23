@@ -22,6 +22,7 @@ from typing import List, Dict
 import mindspore as ms
 from mindspore import ops, nn, Tensor
 from mindspore.ops import MultitypeFuncGraph, HyperMap, CustomRegOp, DataType
+from mindspore.common.initializer import Initializer, _register, initializer
 import numpy as np
 
 import atexit
@@ -34,6 +35,10 @@ META_SLOT_B_OFFSET     = 4096 + 400 * 1024
 META_SLOT_BYTES        = 400 * 1024
 MAGIC_NUMBER           = b"NPUNVME1"
 UINT32_BYTES           = 4
+
+# -- Delta frame binary protocol constants --
+DELTA_MAGIC      = 0x414C5444   # "DLTA"
+FRAME_HEADER_SIZE = 4096
 
 # -- C library bindings --
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -116,6 +121,17 @@ try:
         ]
         lib.npu_nvme_write_batch_host.restype = ctypes.c_int
 
+    # Delta frame I/O bindings
+    if hasattr(lib, "npu_nvme_delta_init"):
+        lib.npu_nvme_delta_init.argtypes = [ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint32]
+        lib.npu_nvme_delta_init.restype  = ctypes.c_int
+        lib.npu_nvme_write_delta.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+        lib.npu_nvme_write_delta.restype  = ctypes.c_int
+        lib.npu_nvme_read_delta.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+        lib.npu_nvme_read_delta.restype  = ctypes.c_int
+        lib.npu_nvme_delta_get_area_offset.argtypes = [ctypes.c_void_p]
+        lib.npu_nvme_delta_get_area_offset.restype  = ctypes.c_uint64
+
 except OSError as e:
     print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")
 
@@ -144,6 +160,29 @@ def build_chunks(params: List[Dict], chunk_size: int):
             total_size += take
             
     return chunks, total_size
+
+
+def build_chunks_host(ptr_base: int, start_offset: int, total_size: int,
+                      chunk_size: int, name: str = ""):
+    """build_chunks variant for a single host-side buffer (no MindSpore param).
+
+    Wraps a raw pointer + offset + size into the params dict format expected
+    by build_chunks().  Returns (chunks_list, total_size) — same shape as
+    build_chunks().
+
+    Args:
+        ptr_base:     base Python integer address of the host buffer
+        start_offset: NVMe byte offset where writes begin
+        total_size:   total bytes to write
+        chunk_size:   max bytes per chunk (4K-aligned in build_chunks)
+        name:         label for debugging (default "")
+    Returns:
+        (list of (ptr: c_void_p, offset: c_uint64, size: c_size_t, name: str),
+         total_size: int)
+    """
+    params = [{"ptr": ptr_base, "size": total_size, "offset": start_offset, "name": name}]
+    return build_chunks(params, chunk_size)
+
 
 def rebuild_chunks_from_meta(models, params_meta: Dict, chunk_size: int):
     if not isinstance(models, (list, tuple)): models = [models]
@@ -193,7 +232,326 @@ def rebuild_chunks_from_meta(models, params_meta: Dict, chunk_size: int):
 
     return dev_chunks, host_chunks, buffers
 
-    from mindspore import nn, Tensor, ops
+
+# -- Delta frame binary protocol (serialization) ------------------------------------------------
+
+def pack_delta_frame(step_id, block_patches, small_patches):
+    """Serialize I3 delta to binary frame. Returns bytes.
+
+    Frame layout:
+      Header (28 bytes, zero-padded to 4KB):
+        magic(4) + step_id(4) + n_blocks(4) + n_small(4) + total_sz(4) + checksum(4)
+      Block Records (variable):
+        layer_id(i2) + name_len(H) + name + block_idx(i4) + data_len(i4) + scale(f4) + data(i1[])
+      Small Records (variable):
+        layer_id(i2) + name_len(H) + name + data_len(i4) + scale(f4) + data(i1[])
+    """
+    buf = bytearray(FRAME_HEADER_SIZE)
+    payload = bytearray()
+
+    # Pack block records
+    for bp in block_patches:
+        lid = bp["layer_id"]
+        name = bp["name"].encode('utf-8')
+        bidx = bp["block_idx"]
+        i8_data = bp["int8_data"]
+        i8_bytes = i8_data.tobytes() if isinstance(i8_data, np.ndarray) else bytes(i8_data)
+        scale = float(bp["scale"])
+        data_len = len(i8_bytes)
+
+        payload += struct.pack(f"<hH{len(name)}s i f", lid, len(name), name, bidx, scale)
+        payload += struct.pack(f"<i{len(i8_bytes)}s", data_len, i8_bytes)
+
+    # Pack small records
+    for sp in small_patches:
+        lid = sp["layer_id"]
+        name = sp["name"].encode('utf-8')
+        i8_data = sp["int8_data"]
+        i8_bytes = i8_data.tobytes() if isinstance(i8_data, np.ndarray) else bytes(i8_data)
+        scale = float(sp["scale"])
+        data_len = len(i8_bytes)
+
+        payload += struct.pack(f"<hH{len(name)}s f", lid, len(name), name, scale)
+        payload += struct.pack(f"<i{len(i8_bytes)}s", data_len, i8_bytes)
+
+    total_sz = FRAME_HEADER_SIZE + len(payload)
+    checksum = sum(payload) & 0xFFFFFFFF  # simple checksum
+
+    # Write header
+    struct.pack_into(f"<I I I I I I", buf, 0, DELTA_MAGIC, step_id,
+                     len(block_patches), len(small_patches), total_sz, checksum)
+
+    frame = bytes(buf) + bytes(payload)
+    return frame
+
+
+def unpack_delta_frame(frame_bytes):
+    """Deserialize binary frame back to (step_id, block_patches, small_patches)."""
+    if len(frame_bytes) < FRAME_HEADER_SIZE:
+        raise ValueError(f"Frame too short: {len(frame_bytes)} < {FRAME_HEADER_SIZE}")
+
+    magic, step_id, n_blocks, n_small, total_sz, checksum = \
+        struct.unpack_from("<I I I I I I", frame_bytes, 0)
+
+    if magic != DELTA_MAGIC:
+        raise ValueError(f"Invalid delta magic: 0x{magic:08x} (expected 0x{DELTA_MAGIC:08x})")
+
+    pos = FRAME_HEADER_SIZE
+    block_patches, small_patches = [], []
+
+    def _read_block(pos):
+        lid, name_len = struct.unpack_from("<hH", frame_bytes, pos)
+        pos += 4
+        name = frame_bytes[pos:pos+name_len].decode('utf-8')
+        pos += name_len
+        bidx, scale = struct.unpack_from("<i f", frame_bytes, pos)
+        pos += 8
+        data_len = struct.unpack_from("<i", frame_bytes, pos)[0]
+        pos += 4
+        i8_data = np.frombuffer(frame_bytes[pos:pos+data_len], dtype=np.int8)
+        pos += data_len
+        return pos, {"layer_id": lid, "name": name, "block_idx": bidx,
+                      "int8_data": i8_data, "scale": scale}
+
+    def _read_small(pos):
+        lid, name_len = struct.unpack_from("<hH", frame_bytes, pos)
+        pos += 4
+        name = frame_bytes[pos:pos+name_len].decode('utf-8')
+        pos += name_len
+        scale = struct.unpack_from("<f", frame_bytes, pos)[0]
+        pos += 4
+        data_len = struct.unpack_from("<i", frame_bytes, pos)[0]
+        pos += 4
+        i8_data = np.frombuffer(frame_bytes[pos:pos+data_len], dtype=np.int8)
+        pos += data_len
+        return pos, {"layer_id": lid, "name": name, "int8_data": i8_data, "scale": scale}
+
+    for _ in range(n_blocks):
+        pos, bp = _read_block(pos)
+        block_patches.append(bp)
+    for _ in range(n_small):
+        pos, sp = _read_small(pos)
+        small_patches.append(sp)
+
+    return step_id, block_patches, small_patches
+
+
+def apply_delta_patches(init_weights, block_patches, small_patches, block_size):
+    """Apply delta patches to a weight dictionary. Returns modified copy."""
+    import copy
+    w = copy.deepcopy(init_weights)
+    for bp in block_patches:
+        name = bp["name"]
+        bidx = bp["block_idx"]
+        i8 = bp["int8_data"]
+        s = bp["scale"]
+        if isinstance(i8, np.ndarray):
+            fp32 = i8.astype(np.float32) * s
+        else:
+            fp32 = np.frombuffer(i8, dtype=np.int8).astype(np.float32) * s
+        start = bidx * block_size
+        end = min(start + len(fp32), int(np.prod(w[name].shape)))
+        wv = w[name].astype(np.float32).flatten()
+        wv[start:end] = fp32[:end-start]
+        w[name] = wv.reshape(w[name].shape)
+    for sp in small_patches:
+        name = sp["name"]
+        i8 = sp["int8_data"]
+        s = sp["scale"]
+        if isinstance(i8, np.ndarray):
+            fp32 = i8.astype(np.float32) * s
+        else:
+            fp32 = np.frombuffer(i8, dtype=np.int8).astype(np.float32) * s
+        w[name] = fp32[:int(np.prod(w[name].shape))].reshape(w[name].shape)
+    return w
+
+
+# -- Delta frame I/O classes --------------------------------------------------------------------
+
+class I3DeltaWriter:
+    """SPDK-backed incremental checkpoint writer.
+
+    Uses host-side buffer → npu_nvme_write_delta → NVMe delta ring.
+    Reuses the module-level C library bindings.
+    """
+    def __init__(self, ctx, delta_slot_size=256*1024*1024, delta_slot_count=128):
+        self.ctx = ctx
+        self.slot_size = delta_slot_size
+        self.slot_count = delta_slot_count
+
+        # Reuse module-level lib (no separate CDLL load)
+        rc = lib.npu_nvme_delta_init(ctx, delta_slot_size, delta_slot_count)
+        if rc != 0:
+            raise RuntimeError(f"Delta init failed (rc={rc})")
+
+        self.next_slot = 0
+        self.step_map = {}   # step_id → slot_idx
+        self.frame_sizes = []
+
+    @property
+    def area_offset(self):
+        return lib.npu_nvme_delta_get_area_offset(self.ctx)
+
+    def write_frame(self, step_id, block_patches, small_patches):
+        """Serialize and write one delta frame to next slot. Returns slot_idx."""
+        frame = pack_delta_frame(step_id, block_patches, small_patches)
+        total_bytes = len(frame)
+
+        if total_bytes > self.slot_size:
+            raise ValueError(f"Frame {total_bytes} bytes > slot {self.slot_size} bytes!")
+
+        slot_idx = self.next_slot % self.slot_count
+
+        buf = ctypes.create_string_buffer(frame, total_bytes)
+        rc = lib.npu_nvme_write_delta(self.ctx, slot_idx,
+                                       ctypes.c_void_p(ctypes.addressof(buf)),
+                                       total_bytes)
+        if rc != 0:
+            raise RuntimeError(f"Delta write failed at slot {slot_idx} (rc={rc})")
+
+        self.step_map[step_id] = slot_idx
+        self.next_slot += 1
+        self.frame_sizes.append(total_bytes)
+
+        return slot_idx
+
+    def read_frame(self, slot_idx):
+        """Read a delta frame from NVMe. Returns (step_id, block_patches, small_patches)."""
+        buf = ctypes.create_string_buffer(self.slot_size)
+        rc = lib.npu_nvme_read_delta(
+            self.ctx, slot_idx,
+            ctypes.c_void_p(ctypes.addressof(buf)),
+            self.slot_size)
+        if rc != 0:
+            raise RuntimeError(f"Delta read failed at slot {slot_idx} (rc={rc})")
+
+        # Parse header to get actual frame size
+        magic, total_sz = struct.unpack_from("<I", buf.raw, 0)[0], struct.unpack_from("<I", buf.raw, 16)[0]
+        if magic != DELTA_MAGIC:
+            raise RuntimeError(f"Delta read at slot {slot_idx}: bad magic 0x{magic:08x}")
+        frame = buf.raw[:total_sz]
+        return unpack_delta_frame(frame)
+
+    def get_slot_range(self, start_step, end_step):
+        """Get list of slot indices between start_step and end_step (inclusive)."""
+        slots = []
+        for s in range(start_step, end_step + 1):
+            if s in self.step_map:
+                slots.append(self.step_map[s])
+        return slots
+
+    @property
+    def stats(self):
+        return {
+            "total_frames": len(self.frame_sizes),
+            "total_bytes": sum(self.frame_sizes),
+            "total_mb": sum(self.frame_sizes) / (1024*1024),
+            "avg_kb": (sum(self.frame_sizes) / max(len(self.frame_sizes), 1)) / 1024,
+            "max_kb": max(self.frame_sizes) / 1024 if self.frame_sizes else 0,
+            "slots_used": self.next_slot,
+            "slot_capacity": self.slot_count,
+        }
+
+    def close(self):
+        pass
+
+
+class FileDeltaWriter:
+    """Filesystem-backed delta writer. Same API as I3DeltaWriter.
+
+    Uses a ring of files under delta_dir. No SPDK/NVMe dependency.
+    """
+    def __init__(self, delta_dir, delta_slot_count=128, delta_slot_size=256*1024*1024):
+        self.delta_dir = delta_dir
+        self.slot_count = delta_slot_count
+        self.slot_size = delta_slot_size
+        os.makedirs(delta_dir, exist_ok=True)
+        self.next_slot = 0
+        self.step_map = {}
+        self.frame_sizes = []
+
+    def write_frame(self, step_id, block_patches, small_patches):
+        frame = pack_delta_frame(step_id, block_patches, small_patches)
+        total_bytes = len(frame)
+        if total_bytes > self.slot_size:
+            raise ValueError(f"Frame {total_bytes} > slot {self.slot_size}")
+
+        slot_idx = self.next_slot % self.slot_count
+        fpath = os.path.join(self.delta_dir, f"delta_slot_{slot_idx:04d}.bin")
+        with open(fpath, "wb") as f:
+            f.write(frame)
+
+        self.step_map[step_id] = slot_idx
+        self.next_slot += 1
+        self.frame_sizes.append(total_bytes)
+        return slot_idx
+
+    def read_frame(self, slot_idx):
+        fpath = os.path.join(self.delta_dir, f"delta_slot_{slot_idx:04d}.bin")
+        if not os.path.exists(fpath):
+            raise FileNotFoundError(f"Delta slot {slot_idx} not found: {fpath}")
+        with open(fpath, "rb") as f:
+            frame = f.read()
+        return unpack_delta_frame(frame)
+
+    @property
+    def stats(self):
+        return {
+            "total_frames": len(self.frame_sizes),
+            "total_bytes": sum(self.frame_sizes),
+            "total_mb": sum(self.frame_sizes) / (1024*1024),
+            "avg_kb": (sum(self.frame_sizes) / max(len(self.frame_sizes), 1)) / 1024,
+            "max_kb": max(self.frame_sizes) / 1024 if self.frame_sizes else 0,
+            "slots_used": self.next_slot,
+            "slot_capacity": self.slot_count,
+            "backend": "file",
+        }
+
+    def close(self):
+        pass
+
+
+# -- Fast initialization (skip random init when loading from NVMe) -------------------------------
+
+@_register('noop')
+class NoOpInitializer(Initializer):
+    """A 'Fake' Initializer that does nothing.
+
+    Used to bypass time-consuming random initialization when parameters will
+    be immediately overwritten with data loaded from an NVMe checkpoint via
+    DirectCheckpoint.load().
+
+    Note: ``arr`` retains uninitialized memory (garbage values).  This is
+    safe only when every parameter is overwritten by a subsequent load() call.
+    """
+    def _initialize(self, arr):
+        # Do nothing — arr retains garbage values.
+        # These will be overwritten by DirectCheckpoint.load().
+        pass
+
+
+def replace_with_noop_initializer(model):
+    """Replace all parameter initializers with NoOpInitializer.
+
+    Iterates over model.parameters_and_names() and sets each parameter's
+    init_mode to a NoOpInitializer MetaTensor.  The init_mode must be a
+    Tensor (wrapped initializer), not the Initializer object itself, so
+    that copy/clone operations work correctly.
+
+    Args:
+        model: a MindSpore nn.Cell instance
+    """
+    print("[FastInit] Replacing original initializers with NoOpInitializer...", flush=True)
+    count = 0
+    for param in model.get_parameters():
+        if param.init_mode is not None:
+            # init_mode must be a Tensor (wrapped initializer), not the
+            # Initializer object itself.  Use the initializer factory function
+            # to create a MetaTensor that holds the config.
+            param.init_mode = initializer(NoOpInitializer(), shape=param.shape, dtype=param.dtype)
+            count += 1
+    print(f"[FastInit] Replaced {count} parameter initializers.", flush=True)
+
 
 # DEPRECATED: WaitProbe-era bind_depend_op.  Used only by
 # cell_overhead_analysis.py and operator_microbenchmarks.py.
@@ -381,8 +739,8 @@ class DirectCheckpoint:
 
         self._mount_filesystem()
 
-        atexit.register(self.close)
         self._closed = False
+        atexit.register(self.close)
 
         self.io_thread = None
 
@@ -970,6 +1328,9 @@ class DirectCheckpoint:
         num_host_val = num_host if host_chunks else 0
         host_sz_val = host_sz if host_chunks else 0
 
+        # Wait for any previous background I/O before starting a new one
+        self.wait_for_io_completion()
+
         self.io_thread = threading.Thread(
             target=background_io_worker,
             args=(
@@ -1169,6 +1530,15 @@ class DirectCheckpoint:
         # Ensure delta chain storage in meta_dict
         if "delta_chain" not in self.meta_dict:
             self.meta_dict["delta_chain"] = {}
+        # Initialise _dump_meta_pkl so delta_save() can auto-save the pickle
+        # even when called before the first FULL checkpoint commit.
+        if not hasattr(self, '_dump_meta_pkl'):
+            import pickle as _pickle
+            os.makedirs(os.path.dirname(self._meta_pkl), exist_ok=True)
+            def _dump_meta_pkl():
+                with open(self._meta_pkl, "wb") as _f:
+                    _pickle.dump(self.meta_dict, _f)
+            self._dump_meta_pkl = _dump_meta_pkl
         print(f"[DirectCkpt] Delta area initialized: {slot_count} slots × {slot_size_mb}MB", flush=True)
 
     def delta_save(self, step: int, block_patches: list, small_patches: list):
@@ -1182,7 +1552,6 @@ class DirectCheckpoint:
         Returns:
             slot_idx: index of the written slot
         """
-        from i3_delta_writer import pack_delta_frame
 
         if not hasattr(self, '_delta_slot_count'):
             self.delta_init()
@@ -1230,7 +1599,6 @@ class DirectCheckpoint:
         """Read a single delta frame from NVMe.
 
         Returns (step_id, block_patches, small_patches)."""
-        from i3_delta_writer import unpack_delta_frame
 
         if not hasattr(self, '_delta_slot_size'):
             raise RuntimeError("Delta not initialized. Call delta_init() first.")
@@ -1243,9 +1611,8 @@ class DirectCheckpoint:
             raise RuntimeError(f"Delta read failed at slot {slot_idx} (rc={rc})")
 
         # Read succeeded; parse header to get actual frame size
-        from i3_delta_writer import DELTA_MAGIC as _DM
         magic, total_sz = struct.unpack_from("<I", buf.raw, 0)[0], struct.unpack_from("<I", buf.raw, 16)[0]
-        if magic != _DM:
+        if magic != DELTA_MAGIC:
             raise RuntimeError(f"Delta read at slot {slot_idx}: bad magic 0x{magic:08x}")
         frame = buf.raw[:total_sz]
         step_id, blocks, smalls = unpack_delta_frame(frame)
@@ -1328,23 +1695,24 @@ class DirectCheckpoint:
         chain = self.delta_load_chain(base_step, target_step)
         print(f"[DirectCkpt] Loaded {len(chain)} delta frames (step {base_step+1}→{target_step})", flush=True)
 
-        # Phase 3: 获取当前 model weights 作为 host numpy, apply patches
-        from i3_delta_writer import apply_delta_patches
-        block_size = 524288  # 512K elements = 1MB FP16 — 与实验一致
-
-        # Read current device params → host numpy
+        # Phase 3: apply delta patches on CPU, infer dtype from model parameters
+        # Record each parameter's MindSpore dtype before pulling to host
+        param_dtypes = {}
         host_weights = {}
         for name, p in model.parameters_and_names():
+            param_dtypes[name] = p.dtype
             host_weights[name] = p.value().asnumpy().copy()
 
         # Apply delta chain sequentially
         for sid, blocks, smalls in chain:
-            host_weights = apply_delta_patches(host_weights, blocks, smalls, block_size)
+            host_weights = apply_delta_patches(host_weights, blocks, smalls, self.chunk_size)
 
-        # Write back to device
+        # Write back to device (preserve original dtype per parameter)
         for name, p in model.parameters_and_names():
             if name in host_weights:
-                p.set_data(Tensor(host_weights[name].astype(np.float16), ms.float16))
+                ms_dtype = param_dtypes.get(name, ms.float16)
+                np_dtype = np.dtype(ms.dtype_to_nptype(ms_dtype))
+                p.set_data(Tensor(host_weights[name].astype(np_dtype), ms_dtype))
 
         dt = time.perf_counter() - t_start
         n_deltas = len(chain)

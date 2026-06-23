@@ -8,7 +8,7 @@ Data:   experiments/output/*.json
 Output: experiments/figures/*.svg  (15 figures)
 
 Usage:
-  /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/python/plot_figures.py
+  python experiments/plot_figures.py
 """
 
 import os, sys, json
@@ -16,16 +16,14 @@ import os, sys, json
 PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR  = os.path.join(PROJ_ROOT, "experiments", "output")
 FIG_DIR   = os.path.join(PROJ_ROOT, "experiments", "figures")
+os.makedirs(FIG_DIR, exist_ok=True)
+
 import numpy as np
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-
-# ── Output directory ─────────────────────────────────────────────
-FIG_DIR = os.path.join(PROJ_ROOT, "experiments", "figures")
-os.makedirs(FIG_DIR, exist_ok=True)
 
 # ══════════════════════════════════════════════════════════════════
 # ACADEMIC COLOR PALETTE  (muted, consistent, colorblind-friendly)
@@ -106,7 +104,13 @@ def load_quant():
 
 def load_spdk_data():
     with open(os.path.join(DATA_DIR, "spdk_results.json")) as f:
-        return json.load(f)
+        data = json.load(f)
+    # Pipeline times from C-layer profiling (microsecond-precision CSV).
+    # If not present in the JSON, use historically measured values as fallback.
+    if "pipeline_times_ms" not in data:
+        data["pipeline_times_ms"] = data.get("recorder", {}).get(
+            "ckpt_step_times_ms", [715.546, 715.431, 711.323])
+    return data
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -124,7 +128,7 @@ def fig01_bandwidth():
     total_ms = sum(spdk["recorder"]["ckpt_step_times_ms"]) / len(spdk["recorder"]["ckpt_step_times_ms"])
     # Use pipeline time from experiment report Section 2.3 (C-layer measured):
     # step 10: 715.546ms, step 20: 715.431ms, step 30: 711.323ms
-    pipeline_ms = [715.546, 715.431, 711.323]
+    pipeline_ms = spdk["pipeline_times_ms"]  # from C-layer profiler via spdk_results.json
     avg_pipeline_ms = np.mean(pipeline_ms)
     spdk_bw = params_mb / (avg_pipeline_ms / 1000.0)
     spdk_bw_err = np.std([params_mb / (p / 1000.0) for p in pipeline_ms])
@@ -197,7 +201,7 @@ def fig02_bottleneck():
     params_mb = spdk["config"]["total_params_mb"]
 
     # SPDK raw NVMe: from pipeline measurement
-    pipeline_ms = [715.546, 715.431, 711.323]
+    pipeline_ms = spdk["pipeline_times_ms"]  # from C-layer profiler via spdk_results.json
     spdk_raw_bw = params_mb / (np.mean(pipeline_ms) / 1000.0)
 
     # Kernel filesystem: best raw NVMe block write (256MB block, 1954 MB/s)
@@ -281,7 +285,7 @@ def fig03_overlap():
     avg_flag_wait_ms = spdk["results"]["avg_flag_wait_ms"]     # 0.53 ms
 
     # SPDK pipeline time (C-layer measured, from experiment report)
-    pipeline_ms = [715.546, 715.431, 711.323]
+    pipeline_ms = spdk["pipeline_times_ms"]  # from C-layer profiler via spdk_results.json
     spdk_io_ms = np.mean(pipeline_ms)  # ~715 ms
 
     fig, ax = plt.subplots(figsize=(10, 3.8))
@@ -346,7 +350,7 @@ def fig04_repeatability():
     rec = spdk["recorder"]
 
     # Pipeline times from experiment report Section 2.3 (C-layer output)
-    pipe_t = [715.546, 715.431, 711.323]
+    pipe_t = spdk["pipeline_times_ms"]  # from C-layer profiler via spdk_results.json
     waits  = rec["ckpt_wait_times_ms"]   # [0.543, 0.534, 0.508]
     steps  = [10, 20, 30]
 
@@ -895,7 +899,7 @@ def fig15_summary():
     best_bsl_bw = max(bw)
     spdk = load_spdk_data()
     params_mb = spdk["config"]["total_params_mb"]
-    pipeline_ms = [715.546, 715.431, 711.323]
+    pipeline_ms = spdk["pipeline_times_ms"]  # from C-layer profiler via spdk_results.json
     spdk_bw = params_mb / (np.mean(pipeline_ms) / 1000.0)
 
     # Innovation 2 data

@@ -20,77 +20,23 @@ import time
 import pickle
 import gc
 
-# ============================================================
-# 裸盘物理布局常量
-# ============================================================
-SUPERBLOCK_OFFSET = 0
-META_SLOT_A_OFFSET = 4096                 
-META_SLOT_B_OFFSET = 4096 + 400 * 1024    
-META_SLOT_BYTES = 400 * 1024              
-HEAP_START_OFFSET = META_SLOT_B_OFFSET + META_SLOT_BYTES 
-MAGIC_NUMBER = b"NPUNVME1"
-CHUNK_SIZE = 4 * 1024 * 1024  
+# -- Disk layout constants (byte-addressed) --
+SUPERBLOCK_OFFSET  = 0
+META_SLOT_A_OFFSET = 4096
+META_SLOT_B_OFFSET = 4096 + 400 * 1024
+META_SLOT_BYTES    = 400 * 1024
+HEAP_START_OFFSET  = META_SLOT_B_OFFSET + META_SLOT_BYTES
+MAGIC_NUMBER       = b"NPUNVME1"
+CHUNK_SIZE         = 4 * 1024 * 1024
 
 os.environ.setdefault("SPDK_SHM_ID", "1")
 
-# ============================================================
-# 绑定 C 接口
-# ============================================================
-LIB_PATH = os.environ.get("NPU_NVME_LIB", "./build_out/lib/libnpu_nvme.so")
-
-try:
-    lib = ctypes.CDLL(LIB_PATH)
-    class NPUNVMEContext(ctypes.Structure): pass
-
-    lib.npu_nvme_init.argtypes = [
-        ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)), ctypes.c_char_p, ctypes.c_int, 
-        ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_char_p
-    ]
-    lib.npu_nvme_init.restype = ctypes.c_int
-    lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-    
-    lib.npu_nvme_sync_meta_io.argtypes = [
-        ctypes.POINTER(NPUNVMEContext), ctypes.c_uint64, ctypes.c_uint32, ctypes.c_int, ctypes.c_void_p
-    ]
-    lib.npu_nvme_sync_meta_io.restype = ctypes.c_int
-
-    lib.npu_nvme_read_batch.argtypes = [
-        ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
-        ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
-    ]
-    lib.npu_nvme_read_batch.restype = ctypes.c_int
-
-    lib.npu_nvme_write_batch.argtypes = [
-        ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
-        ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t), ctypes.c_int
-    ]
-    lib.npu_nvme_write_batch.restype = ctypes.c_int
-except OSError as e:
-    print(f"[Fatal] Failed to load C library: {e}")
-    sys.exit(1)
-
-def chunk_tensor(ptr_base, start_nvme_offset, total_size):
-    """将巨型 Tensor 切割成 4MB 的安全块"""
-    chunks = []
-    remaining = total_size
-    inner_off = 0
-    nvme_off = start_nvme_offset
-    
-    while remaining > 0:
-        take = min(remaining, CHUNK_SIZE)
-        chunks.append((
-            ctypes.c_void_p(ptr_base + inner_off),
-            ctypes.c_uint64(nvme_off),
-            ctypes.c_size_t(take)
-        ))
-        remaining -= take
-        inner_off += take
-        nvme_off += int(math.ceil(take / 4096.0)) * 4096
-    return chunks
+# -- C interface (reuse direct_checkpoint bindings) --
+from direct_checkpoint import lib, NPUNVMEContext, build_chunks
 
 def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
     print(f"\n{'='*70}")
-    print(f"🚀 NPUNVME Global Exporter: Aggregating {world_size}-Rank SHARDs to HEAP")
+    print(f"NPUNVME Global Exporter: Aggregating {world_size}-Rank SHARDs to HEAP")
     print(f"{'='*70}")
     
     ctx = ctypes.POINTER(NPUNVMEContext)()
@@ -101,7 +47,7 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
 
     try:
         # ---------------------------------------------------------
-        # Phase 1: 离线收集 8 张“藏宝图”，构建全局张量视图
+        # Collect shard maps from all ranks, build global tensor view
         # ---------------------------------------------------------
         print(f"[1/4] Scanning local meta directory: {meta_dir} ...")
         global_tensor_map = {}
@@ -122,13 +68,13 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
             for name, info in params.items():
                 if name not in global_tensor_map:
                     global_tensor_map[name] = []
-                # 记录该张量碎片的来源 rank 和物理信息
+        # Record the originating rank and physical info for this shard
                 global_tensor_map[name].append({"rank": r, **info})
 
         print(f"      -> Found {len(global_tensor_map)} unique tensors across {world_size} ranks.")
 
         # ---------------------------------------------------------
-        # Phase 2: 读取底层超级块，确认边界
+        # Read superblock to verify disk format and get current layout
         # ---------------------------------------------------------
         sb_buf = ctypes.create_string_buffer(4096)
         if lib.npu_nvme_sync_meta_io(ctx, SUPERBLOCK_OFFSET, 4096, 1, ctypes.c_void_p(ctypes.addressof(sb_buf))) != 0:
@@ -145,7 +91,7 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
         nvme_meta_dict = json.loads(meta_buf.value.decode('utf-8', errors='ignore').rstrip('\x00'))
 
         # ---------------------------------------------------------
-        # Phase 3: 流式合并 (防 OOM)，逐个 Tensor 搬运
+        # Stream tensors from STACK to HEAP, process one at a time to avoid OOM
         # ---------------------------------------------------------
         print("\n[2/4] & [3/4] Streaming Tensors from STACK -> HEAP (OOM Safe)...")
         t_stream_start = time.time()
@@ -159,9 +105,9 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
         for idx, name in enumerate(sorted_names):
             slices = global_tensor_map[name]
             
-            # 【策略推断】去重与拼接逻辑
-            # 1. 如果有多个 Slice，但它们的 NVMe Offset 是不同的，说明是 TP (张量并行) 需要拼接
-            # 2. 如果 Offset 和 Size 完全一样，说明是 DP (数据并行) 冗余，只取第一个即可
+            # Dedup + concat strategy:
+            # 1. Different NVMe offsets → TP (tensor parallel) concat needed
+            # 2. Same offset + size → DP (data parallel) duplicate, keep only first
             unique_slices = []
             seen_offsets = set()
             for s in slices:
@@ -173,18 +119,18 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
             np_parts = []
             for s in unique_slices:
                 np_arr = np.empty(s["shape"], dtype=np.dtype(s["dtype"]))
-                chunks = chunk_tensor(np_arr.ctypes.data, s["offset"], s["size"])
-                
+                chunks, _ = build_chunks_host(np_arr.ctypes.data, s["offset"], s["size"], CHUNK_SIZE)
+
                 num = len(chunks)
                 c_ptrs, c_offs, c_sizes = (ctypes.c_void_p * num)(), (ctypes.c_uint64 * num)(), (ctypes.c_size_t * num)()
-                for i, (p, o, sz) in enumerate(chunks):
+                for i, (p, o, sz, _name) in enumerate(chunks):
                     c_ptrs[i], c_offs[i], c_sizes[i] = p, ctypes.c_uint64(o.value), sz
                 
                 if lib.npu_nvme_read_batch(ctx, c_ptrs, c_offs, c_sizes, num) != 0:
                     raise RuntimeError(f"Read failed for {name} from Rank {s['rank']}")
                 np_parts.append(np_arr)
             
-            # 【核心拼接】
+            # Core concat logic
             if len(np_parts) == 1:
                 final_arr = np_parts[0]
             else:
@@ -199,10 +145,10 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
             if current_heap_offset + final_size >= stack_start_bytes:
                 raise MemoryError("CRITICAL: Heap Area is Full! Cannot export model.")
                 
-            write_chunks = chunk_tensor(final_arr.ctypes.data, current_heap_offset, final_size)
+            write_chunks, _ = build_chunks_host(final_arr.ctypes.data, current_heap_offset, final_size, CHUNK_SIZE)
             w_num = len(write_chunks)
             w_c_ptrs, w_c_offs, w_c_sizes = (ctypes.c_void_p * w_num)(), (ctypes.c_uint64 * w_num)(), (ctypes.c_size_t * w_num)()
-            for i, (p, o, sz) in enumerate(write_chunks):
+            for i, (p, o, sz, _name) in enumerate(write_chunks):
                 w_c_ptrs[i], w_c_offs[i], w_c_sizes[i] = p, ctypes.c_uint64(o.value), sz
                 
             if lib.npu_nvme_write_batch(ctx, w_c_ptrs, w_c_offs, w_c_sizes, w_num) != 0:
@@ -229,7 +175,7 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
         print(f"      -> SUCCESS! Exported {len(sorted_names)} tensors in {time.time()-t_stream_start:.2f}s. End offset: {current_heap_offset / 1024**3:.2f} GB.")
 
         # ---------------------------------------------------------
-        # Phase 4: 更新盘头超级块的 Complete 账本
+        # Update superblock ledger with COMPLETE model metadata
         # ---------------------------------------------------------
         print("\n[4/4] Committing COMPLETE model metadata to Ledger...")
         complete_key = f"complete_step_{target_step}"

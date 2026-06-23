@@ -15,34 +15,15 @@ import argparse
 import sys
 import os
 
-# ============================================================
-# 裸盘物理布局常量 (全字节寻址)
-# ============================================================
-SUPERBLOCK_OFFSET = 0
-META_SLOT_A_OFFSET = 4096                 
-META_SLOT_B_OFFSET = 4096 + 400 * 1024    
-META_SLOT_BYTES = 400 * 1024              
-MAGIC_NUMBER = b"NPUNVME1"
+# -- Disk layout constants (byte-addressed, must match direct_checkpoint.py) --
+SUPERBLOCK_OFFSET  = 0
+META_SLOT_A_OFFSET = 4096
+META_SLOT_B_OFFSET = 4096 + 400 * 1024
+META_SLOT_BYTES    = 400 * 1024
+MAGIC_NUMBER       = b"NPUNVME1"
 
-LIB_PATH = os.environ.get("NPU_NVME_LIB", "./build_out/lib/libnpu_nvme.so")
-
-try:
-    lib = ctypes.CDLL(LIB_PATH)
-    lib.npu_nvme_init.argtypes = [
-        ctypes.POINTER(ctypes.c_void_p), ctypes.c_char_p, ctypes.c_int, 
-        ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_char_p
-    ]
-    lib.npu_nvme_init.restype = ctypes.c_int
-    lib.npu_nvme_cleanup.argtypes = [ctypes.c_void_p]
-    
-    # 全字节寻址签名
-    lib.npu_nvme_sync_meta_io.argtypes = [
-        ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint32, ctypes.c_int, ctypes.c_void_p
-    ]
-    lib.npu_nvme_sync_meta_io.restype = ctypes.c_int
-except OSError as e:
-    print(f"[Error] Failed to load C library: {e}")
-    sys.exit(1)
+# -- C interface (reuse direct_checkpoint bindings) --
+from direct_checkpoint import lib
 
 def format_size(bytes_size):
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
@@ -71,12 +52,12 @@ def parse_metadata_slot(ctx, slot_name, offset_bytes):
 
 def inspect_disk(pci_addr, npu_id=0):
     print(f"\n{'='*70}")
-    print(f"🔍 NPUNVME Disk Inspector (Byte-Addressing Edition)")
+    print(f"NPUNVME Disk Inspector")
     print(f"{'='*70}")
     print(f"Target Device : {pci_addr}")
     
     ctx = ctypes.c_void_p()
-    ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'), npu_id, 1, 0, False, b".")
+    ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'), npu_id, 1, 1, False, b".")
     if ret != 0:
         print("[Error] SPDK initialization failed.")
         sys.exit(1)
@@ -122,7 +103,7 @@ def inspect_disk(pci_addr, npu_id=0):
         slot_a_data = parse_metadata_slot(ctx, "A", META_SLOT_A_OFFSET)
         slot_b_data = parse_metadata_slot(ctx, "B", META_SLOT_B_OFFSET)
 
-        # 【新增】：健壮的数字提取器，永远取最后一个部分转换
+        # Robust step number extractor: take the last segment after '_'
         def extract_step_num(key_str):
             try:
                 return int(key_str.split('_')[-1])
@@ -143,7 +124,7 @@ def inspect_disk(pci_addr, npu_id=0):
             else:
                 print(f"  Checkpoints Found: {len(ckpts)}")
                 
-                # 【修改】：使用新的排序逻辑
+                # Use the new sort logic
                 sorted_steps = sorted(ckpts.items(), key=lambda x: extract_step_num(x[0]))
                 
                 for ckpt_name, info in sorted_steps:
@@ -154,7 +135,7 @@ def inspect_disk(pci_addr, npu_id=0):
                     
                     # 打印时做个小小的美化，让 COMPLETE 模型更醒目
                     if c_type == "COMPLETE":
-                        print(f"    🌟 [{ckpt_name}] Type: {c_type}, Tensors: {tensors_count}, Size: {format_size(ckpt_bytes)}")
+                        print(f"    * [{ckpt_name}] Type: {c_type}, Tensors: {tensors_count}, Size: {format_size(ckpt_bytes)}")
                     else:
                         print(f"    - [{ckpt_name}] Type: {c_type}, Ranks: {ranks}, Tensors: {tensors_count}, Size: {format_size(ckpt_bytes)}")
 
