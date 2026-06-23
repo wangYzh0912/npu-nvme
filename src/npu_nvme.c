@@ -1,14 +1,14 @@
-/*
- * Core NPU-NVMe implementation (legacy API + checkpoint/probe support).
+/* =======================================================================
+ * npu_nvme.c — NPU-to-NVMe Zero-Copy I/O Engine
  *
- * Usage:
- * - Built into libnpu_nvme.so; used by Python bindings and C tests.
+ * Implements three subsystems:
+ *   I1  SPDK user-space NVMe driver — HBM <-> NVMe DMA transfers
+ *   I2  FaF device-memory-polling listener — async step-boundary detection
+ *   I3  Delta-frame I/O — incremental checkpoint slot read/write
  *
- * Inputs:
- * - NVMe PCI address, NPU device id, buffers, offsets.
- * Outputs:
- * - NVMe read/write operations and optional probe signaling.
- */
+ * Built as libnpu_nvme.so; consumed by Python ctypes bindings
+ * (python/direct_checkpoint.py) and the C smoke test (src/test_npu_nvme.c).
+ * ======================================================================= */
 #include "npu_nvme.h"
 #include "spdk/stdinc.h"
 #include "spdk/env.h"
@@ -24,17 +24,12 @@
 
 #define MIN_PIPE_DEPTH   1
 #define MAX_PIPE_DEPTH   16
-// Delta frames can be O(10MB) per step (GPT-2 Small: ~15MB avg, ~30MB peak).
-// Each frame holds header + packed INT8 blocks + small params.
-// Use 64MB to allow plenty of headroom for larger models.
+/* Dedicated buffer for superblock & JSON ledger I/O; 64 MB covers all
+ * realistic metadata sizes including future delta ledger expansion. */
 #define META_DMA_BUF_SIZE (64 * 1024 * 1024)
 
-// 双向通信标志位：flags[0]为NPU发令，flags[1]为CPU放行
-// 双向通信标志位：flags[0]为NPU发令，flags[1]为CPU放行
 volatile uint8_t* probe_flags = NULL;
 
-// Note: per-context device trigger buffer (dev_trigger_ptr) is allocated by
-// the Python layer via aclrtMalloc and passed in via npu_nvme_set_trigger_ptr().
 
 // ============================================================================
 // Hugepage pool auto-expansion for DPDK/SPDK
@@ -115,9 +110,7 @@ no_root:
 // Forward declaration
 static inline uint64_t get_time_us();
 
-// ============================================================================
-// 1. 基础结构定义 (包含 NPU 异步流与事件)
-// ============================================================================
+/* ---- data structures: ring buffer, DMA pool, I/O task, context ---- */
 typedef struct {
     int *slots;
     int capacity;
@@ -125,7 +118,6 @@ typedef struct {
     int tail;
 } ring_t;
 
-// (ring_t 的 init, push, pop 等辅助函数保持不变，参考之前的回复)
 static int ring_init(ring_t *r, int cap) {
     r->slots = calloc(cap + 1, sizeof(int));
     if (!r->slots) return -1;
@@ -486,15 +478,16 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
     return 0;
 }
 
-// ============================================================================
-// 2. SPDK 探测与挂载回调
-// ============================================================================
+/* ===================================================================
+ * Section 1 - SPDK Probe & Attach Callbacks
+ * =================================================================== */
 
 static bool probe_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
                      struct spdk_nvme_ctrlr_opts *opts) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)cb_ctx;
     
-    // 【安全防御】：严格比对 PCI 地址，防止 SPDK 错误接管系统盘或其他卡正在使用的盘
+    // Strict PCI BDF matching: only attach the target NVMe device,
+    // never the system disk or a device owned by another rank.
     if (strcmp(trid->traddr, ctx->pci_addr) != 0) {
         return false; 
     }
@@ -524,9 +517,9 @@ static void attach_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
 }
 
 
-// ============================================================================
-// 3. 完整的初始化函数
-// ============================================================================
+/* ===================================================================
+ * Section 2 - Init (SPDK env + NVMe probe + ACL + DMA pool + listener)
+ * =================================================================== */
 
 // 后台监听与 SPDK 轮询线程 (FaF: step_counter polling)
 void* probe_listener_thread(void* arg) {
@@ -680,8 +673,9 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
         spdk_env_opts_init(&env_opts);
         env_opts.name = "npu_nvme_app";
         
-        // 【关键修复】：恢复多进程 SHM ID 的显式读取！
-        // 这决定了 Rank 1-7 能否作为 Secondary 进程共享 Rank 0 已经初始化的 NVMe 硬件队列
+        // Multi-rank support: secondary ranks share the NVMe hardware queue
+        // initialised by rank 0.  Set SPDK_SHM_ID to the rank-0 PID before
+        // launching secondary processes.
         const char *shm = getenv("SPDK_SHM_ID");
         if (shm) {
             env_opts.shm_id = atoi(shm);
@@ -802,9 +796,9 @@ fail:
     return -1;
 }
 
-// ============================================================================
-// 4. 清理函数 (严格的资源释放与防崩溃保护)
-// ============================================================================
+/* ===================================================================
+ * Section 3 - Cleanup (strict resource release order)
+ * =================================================================== */
 void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     if (!ctx) return;
 
@@ -823,9 +817,10 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     aclError ret = aclrtSetDevice(ctx->npu_id);
     if (ret != ACL_SUCCESS) {
         fprintf(stderr, "[Warning] Failed to set NPU device %d during cleanup. Skip ACL cleanup.\n", ctx->npu_id);
-        // 如果绑定失败（例如框架已经强行接管），为了防止暴毙，宁可泄漏也不要强行 Destroy
+        // If ACL device binding fails (e.g. framework has claimed the device),
+        // skip ACL resource destruction to avoid a crash from invalid context.
     } else {
-        // 【修复 2】：销毁前必须强制同步，确保没有正在执行的幽灵 DMA 指令
+        // Drain all in-flight DMA operations before destroying resources.
         if (ctx->copy_stream) {
             aclrtSynchronizeStream(ctx->copy_stream);
         }
@@ -888,19 +883,14 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     free(ctx);
 }
 
-// ============================================================================
-// 工具函数：获取高精度微秒时间戳 (用于微观 Profiling)
-// ============================================================================
+/* ---- utility: microsecond timestamp ---- */
 static inline uint64_t get_time_us() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (uint64_t)tv.tv_sec * 1000000ULL + tv.tv_usec;
 }
 
-// ============================================================================
-// Phase 2-A: 初始化全局任务表
-// 将 Python 传来的松散指针，封装为严格受控的 io_task_t 状态机数组
-// ============================================================================
+/* ---- io_task_t factory ---- */
 io_task_t* create_io_tasks(int num_tasks, void **npu_ptrs, uint64_t *nvme_offsets, size_t *sizes) {
     io_task_t *tasks = calloc(num_tasks, sizeof(io_task_t));
     if (!tasks) {
@@ -919,14 +909,10 @@ io_task_t* create_io_tasks(int num_tasks, void **npu_ptrs, uint64_t *nvme_offset
     return tasks;
 }
 
-// ============================================================================
-// Phase 2-B: 核心异步发射引擎
-// 尝试为一个任务分配槽位，并推入 NPU 异步流。
-// 返回值: 
-//    0 : 提交成功 (瞬间返回，不阻塞)
-//   -1 : EAGAIN (Ring Buffer 已满，需要交出控制权去轮询)
-//   -2 : 硬件调用致命错误
-// ============================================================================
+/*
+ * Submit one chunk to the NPU DMA engine.
+ * Returns 0 on success, -1 if ring buffer full, -2 on ACL error.
+ */
 /*
 int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
     int buf_idx;
@@ -1018,10 +1004,20 @@ static int submit_to_spdk(NPUNVMEContext *ctx, io_task_t *task, int *completed_c
 }
 
 
-// ============================================================================
-// Phase 3-C: 终极双轨死循环 (The Dual-Polling Pipeline)
-// 真正的 C 语言级 Zero-Bubble 异步调度核心
-// ============================================================================
+/* ===================================================================
+ * Dual-Polling Pipeline - drives NPU DMA and SPDK NVMe I/O concurrently.
+ *
+ * Three engines per iteration:
+ *   Engine 1 (submit) - pop free ring slots, launch DMA / SPDK commands
+ *   Engine 2 (drain)  - poll NPU events, submit ready chunks to SPDK
+ *   Engine 3 (reap)   - process SPDK completion queue, reclaim slots
+ *
+ * Stall recovery (two-stage):
+ *   Stage 1 (>50 ms no progress):  force-sync one stalled NPU event via
+ *     aclrtSynchronizeEvent, breaking hardware lazy-suspend stalls.
+ *   Stage 2 (>3 s no progress):   dump active task state to stderr
+ *     and reset the stall timer (diagnostic only, not a fix).
+ * =================================================================== */
 void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks, bool is_host) {
     int completed_tasks = 0;
     int submitted_to_npu = 0;
@@ -1083,9 +1079,7 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
         int cpl = spdk_nvme_qpair_process_completions(ctx->qpair, 0);
         if (cpl > 0) made_progress = true;
 
-        // ============================================================
-        // [修改] 状态卡死监控与主动唤醒逻辑
-        // ============================================================
+        // ---- stall detection and recovery ----
         if (!made_progress) {
             uint64_t now = get_time_us();
             uint64_t stall_time = now - last_progress_time;
@@ -1099,31 +1093,25 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
                     if (task->state == CHUNK_NPU_COPYING) {
                         // 狠狠“踹”底层驱动一脚，强迫 CPU 等待并拉取真正的完成状态！
                         aclrtSynchronizeEvent(ctx->events[task->buf_idx]);
-                        
-                        // 既然强制同步过了，这个任务的数据绝对已经安全到达 Host 内存
-                        task->state = CHUNK_NPU_DONE; 
-                        
-                        // 唤醒一个就足以让阻塞的 Ring Buffer 腾出槽位，让流水线继续转！
+                        task->state = CHUNK_NPU_DONE;
                         last_progress_time = get_time_us(); 
                         break; 
                     }
                 }
             }
 
-            // 如果连强制唤醒都拯救不了（超过 3 秒），说明是真正的物理硬件/SMMU 死锁
+            // Stage 2 (>3 s no progress): persistent hardware stall
             if (stall_time > 3000000ULL) {
-                fprintf(stderr, "\n======================================================\n");
-                fprintf(stderr, "[WATCHDOG] Rank %d Pipeline DEADLOCK Detected!\n", ctx->npu_id);
-                fprintf(stderr, "[WATCHDOG] Completed: %d / Total: %d\n", completed_tasks, num_tasks);
-                fprintf(stderr, "------- Active Tasks State Dump -------\n");
+                fprintf(stderr, "\n[NPU-NVMe] Pipeline STALL detected (rank %d)\n", ctx->npu_id);
+                fprintf(stderr, "[NPU-NVMe] Completed: %d / Total: %d\n", completed_tasks, num_tasks);
+                fprintf(stderr, "[NPU-NVMe] Active task state dump:\n");
                 for (int i = 0; i < submitted_to_npu; i++) {
                     if (tasks[i].state != CHUNK_DONE) {
                         fprintf(stderr, " -> TaskIdx: %d | NvmeOffset: %lu | Size: %zu | STATE: %d | BufIdx: %d\n",
                                 tasks[i].task_idx, tasks[i].nvme_offset, tasks[i].size, tasks[i].state, tasks[i].buf_idx);
                     }
                 }
-                fprintf(stderr, "======================================================\n\n");
-                last_progress_time = now; // 重置定时器，防止日志疯狂刷屏
+                last_progress_time = now;
             }
             usleep(1);
         } else {
@@ -1132,10 +1120,9 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
     }
 }
 
-// ============================================================================
-// Phase 4: 顶层封装接口 (Top-level Wrapper)
-// 这是暴露给 Python ctypes 调用的核心入口函数
-// ============================================================================
+/* ===================================================================
+ * Section 5 - Public API: write_batch / read_batch
+ * =================================================================== */
 int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs, 
                          uint64_t *nvme_offsets, size_t *sizes, int num_items) {
     
@@ -1202,9 +1189,7 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs, uint64_t *nvme_o
     free(tasks); return 0;
 }
 
-// ============================================================================
-// 1. NVMe 读取完成的回调函数
-// ============================================================================
+/* SPDK read completion callback */
 static void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
     spdk_cb_arg_t *cb_arg = (spdk_cb_arg_t *)arg;
     io_task_t *task = cb_arg->task;
@@ -1223,7 +1208,7 @@ static void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *complet
 }
 
 // ============================================================================
-// 读路径双引擎轮询核心 (同样加入防死锁机制)
+/* Read-path dual-polling pipeline - mirrors write path with SPDK-read-first ordering. */
 // ============================================================================
 void process_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
     int completed_tasks = 0;
@@ -1313,9 +1298,7 @@ void process_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks)
     }
 }
 
-// ============================================================================
-// 3. 顶层封装接口 (Top-level Wrapper)
-// ============================================================================
+
 int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs, 
                         uint64_t *nvme_offsets, size_t *sizes, int num_items) {
     if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) return -1;
@@ -1369,9 +1352,9 @@ uint64_t npu_nvme_get_total_blocks(NPUNVMEContext *ctx) {
     return ctx ? (ctx->total_blocks * ctx->block_size) : 0;
 }
 
-/* =========================================================
- * 核心新增：同步元数据 I/O 引擎 (分离控制面)
- * ========================================================= */
+/* ===================================================================
+ * Section 6 - Synchronous Metadata I/O (superblock + JSON ledger)
+ * =================================================================== */
 int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t total_bytes, int is_read, void *meta_buffer) {
     if (!ctx || !meta_buffer) return -1;
     
@@ -1415,9 +1398,9 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t to
 // FaF step_counter polling. If rollback is needed, uncomment the block below.
 // ============================================================================
 
-// ============================================================================
-// Phase 5 E11: Delta (增量) 写盘实现
-// ============================================================================
+/* ===================================================================
+ * Section 7 - Delta Frame I/O (I3)
+ * =================================================================== */
 
 #define DELTA_MAGIC 0x414C5444  // "DLTA"
 #define DELTA_MAGIC_INIT 0x4E4E // Superblock delta-initialized marker
