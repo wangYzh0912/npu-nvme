@@ -45,7 +45,7 @@ _LIB_PATH  = os.path.join(_REPO_ROOT, "build_out", "lib", "libnpu_nvme.so")
 
 try:
     acl_lib = ctypes.CDLL("libascendcl.so")
-    # 函数签名: aclError aclrtMemcpy(void *dst, size_t destMax, const void *src, size_t count, int kind);
+    # aclError aclrtMemcpy(void *dst, size_t destMax, const void *src, size_t count, int kind);
     acl_lib.aclrtMemcpy.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
     acl_lib.aclrtMemcpy.restype = ctypes.c_int
 except Exception as e:
@@ -124,7 +124,7 @@ except OSError as e:
     print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")
 
 # ============================================================
-# 工具：分块与合包 
+# Chunk builder and layout helpers
 # ============================================================
 def build_chunks(params: List[Dict], chunk_size: int):
     chunks = []
@@ -179,7 +179,7 @@ def rebuild_chunks_from_meta(models, params_meta: Dict, chunk_size: int):
             ptr_val = dev_ptr
 
             if not use_dev:
-                # 恢复真实精确大小，不加 4KB 垫片
+                # restore exact element count without 4 KB padding
                 np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
                 ptr_val = np_arr.ctypes.data
 
@@ -318,7 +318,7 @@ class ProbeTrainOneStepCell(nn.Cell):
         return loss
 
 # ============================================================
-# DirectCheckpoint 主类
+# DirectCheckpoint: NVMe-backed training checkpoint manager
 # ============================================================
 class DirectCheckpoint:
     _ms_warmed_up = False
@@ -623,15 +623,17 @@ class DirectCheckpoint:
             
     def _build_local_param_registry(self, models):
         """
-        动态硬件探针建表：不依赖任何模型架构与切分规则！
-        Probe each parameter with a 1-byte aclrtMemcpy to determine whether it resides on this rank.。
+        Probe each parameter with a 1-byte aclrtMemcpy to determine
+        whether it resides on this rank.  Parameters that fail the probe
+        but are very small or named like 'step'/'scale' are rescued
+        via asnumpy() as a fallback.
         """
         if not isinstance(models, (list, tuple)): models = [models]
         self.local_valid_param_names = set()
 
         print(f"[DirectCkpt] Rank {self.rank_id} running dynamic hardware memory probe...", flush=True)
         
-        # 分配 1 字节的 Host 内存，充当探针接收端
+        # allocate a 1-byte host buffer as a probe target
         dummy_dst = ctypes.create_string_buffer(1)
 
         for model in models:
@@ -642,17 +644,17 @@ class DirectCheckpoint:
 
                 is_valid_on_this_rank = False
 
-                # 1. 发射硬件级 1 字节探针 (鉴定是否为真实分配的 NPU 显存)
+                # 1. hardware probe: 1-byte D2H copy to test if the pointer is valid HBM
                 if acl_lib is not None:
                     
                     ret = acl_lib.aclrtMemcpy(ctypes.byref(dummy_dst), 1, ctypes.c_void_p(ptr), 1, 2)
                     if ret == 0:
                         is_valid_on_this_rank = True
                 
-                # 2. 抢救驻留在 CPU 的合法小张量 (如 global_step 或 optimizer 状态)
-                # 如果硬件探针失败，说明它要么是别卡的幽灵张量，要么是本地纯 CPU 张量
+                # 2. fallback: rescue small CPU-resident tensors (e.g. global_step)
+                # If the hardware probe fails the pointer is either on another rank or CPU-only
                 if not is_valid_on_this_rank:
-                    # 极小张量 (<= 8 个元素) 或特定名称，尝试通过 asnumpy 作为最终防线
+                    # very small tensors or known names: try asnumpy as last resort
                     if "step" in name.lower() or "scale" in name.lower() or np.prod(p.shape) <= 8:
                         try:
                             _ = p.asnumpy()
@@ -660,14 +662,14 @@ class DirectCheckpoint:
                         except:
                             pass
                 
-                # 3. 鉴定完毕，收录入库
+                # 3. record valid parameters
                 if is_valid_on_this_rank:
                     self.local_valid_param_names.add(name)
 
         print(f"[DirectCkpt] Rank {self.rank_id} registry dynamically built: {len(self.local_valid_param_names)} valid params.", flush=True)
 
     def _prepare_params(self, models):
-        # 第一次执行时自动建表
+        # build registry on first call
         if getattr(self, "local_valid_param_names", None) is None:
             self._build_local_param_registry(models)
 
@@ -677,14 +679,14 @@ class DirectCheckpoint:
             if model is None or not hasattr(model, "parameters_and_names"): continue
             for name, p in model.parameters_and_names():
                 
-                # 1. 过滤不属于本卡的幽灵指针
+                # 1. skip parameters that belong to other ranks
                 if name not in self.local_valid_param_names:
                     continue
 
                 ptr = p._data_ptr() if hasattr(p, "_data_ptr") else 0
                 if ptr == 0: continue
 
-                # 2. 精准获取本地物理切片大小，防越界
+                # 2. get the local shard size to avoid out-of-bounds access
                 dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
                 local_shape = p.shape
                 
@@ -700,21 +702,21 @@ class DirectCheckpoint:
                 params.append({
                     "name": name, "ptr": ptr, "size": size,
                     "shape": list(p.shape), "dtype": dtype_np.name, 
-                    "np_arr": None,  # 全部设为 None，强行走 dev_chunks 硬件通道
+                    "np_arr": None,  # all params use the device path (HBM -> NVMe DMA)
                     "param_ref": p
                 })
         return params
 
     def wait_for_io_completion(self):
         """
-        强制阻塞屏障：如果后台 I/O 线程还在写盘，主线程必须在此等待，
-        以so the next optimizer step does not overwrite parameters being written。
+        Wait for the background I/O thread to finish, so the next
+        optimizer step does not overwrite parameters being written.
         """
         if getattr(self, 'io_thread', None) is not None and self.io_thread.is_alive():
             t_wait_start = time.perf_counter()
             print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for background SPDK flush to finish...", flush=True)
             
-            self.io_thread.join()  # 阻塞 Python 主线程，释放 GIL，等待 C 语言线程退出
+            self.io_thread.join()  # block the main thread (releases GIL) until the C worker finishes
             
             t_wait_end = time.perf_counter()
             print(f"[Timeline][Rank {self.rank_id}] I/O Barrier Cleared! Wait time: {(t_wait_end - t_wait_start):.3f}s", flush=True)
@@ -722,8 +724,9 @@ class DirectCheckpoint:
 
     def build_layout(self, models, step: int = 0):
         """
-        生成用于后台探针的分块布局（按 chunk_size 切分），并缓存到 self.chunks。
-        注意：该布局会绑定到某个 slot 的 base offset。
+        Build a chunked layout (split by chunk_size, aligned to 4 KB)
+        and cache it in self.chunks.  The layout is bound to a specific
+        slot identified by the step number.
         """
         if not isinstance(models, (list, tuple)):
             models = [models]
@@ -773,7 +776,7 @@ class DirectCheckpoint:
         """
         print(f"[DirectCkpt] Rank {self.rank_id} Registering Layout to NPU-NVMe Background Thread...")
         
-        # 1. 确保 NVMe 落盘的物理布局规划已经生成
+        # 1. ensure the NVMe layout has been built
         if not hasattr(self, 'chunks') or len(self.chunks) == 0:
             self.build_layout(model, step=step)
             
@@ -925,8 +928,8 @@ class DirectCheckpoint:
         else:
             ops.functional.depend(model.trainable_params()[0], model.trainable_params()[0])
 
-        # 定义一个供后台线程执行的局部函数 (闭包)
-        # 注意：这里将 ctypes 指针通过参数传进去，防止它们在主线程提前被垃圾回收
+        # background I/O worker (runs in a separate thread)
+        # Pass ctypes arrays by argument to prevent early garbage collection
         def background_io_worker(c_ptrs_d, c_offs_d, c_sizes_d, n_dev, d_sz, 
                                  c_ptrs_h, c_offs_h, c_sizes_h, n_host, h_sz):
             t_spdk_start = time.perf_counter()
@@ -969,7 +972,7 @@ class DirectCheckpoint:
             print(f"[DirectCkpt][Rank {self.rank_id}] Background Safe Write: {total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s")
             print(f"======================================================\n", flush=True)
 
-        # 构建安全参数，启动后台线程
+        # launch the background I/O thread
         num_dev_val = num_dev if dev_chunks else 0
         dev_sz_val = dev_sz if dev_chunks else 0
         num_host_val = num_host if host_chunks else 0
@@ -1153,11 +1156,11 @@ class DirectCheckpoint:
     # Delta frame I/O (incremental checkpoint)
     # ============================================================
     def delta_init(self, slot_size_mb: int = 256, slot_count: int = 128):
-        """初始化增量盘布局 (C 层 npu_nvme_delta_init)。
+        """Initialise the delta ring-buffer layout on disk.
 
         Args:
-            slot_size_mb: 每个 delta 槽位大小 (MB)
-            slot_count:  环形槽位数量
+            slot_size_mb: size of each delta slot in MB
+            slot_count:   number of slots in the ring buffer
         """
         slot_bytes = slot_size_mb * 1024 * 1024
         if not hasattr(lib, "npu_nvme_delta_init"):
@@ -1177,14 +1180,15 @@ class DirectCheckpoint:
         print(f"[DirectCkpt] Delta area initialized: {slot_count} slots × {slot_size_mb}MB", flush=True)
 
     def delta_save(self, step: int, block_patches: list, small_patches: list):
-        """序列化并写入一个增量帧到 NVMe delta ring。
+        """Serialise and write one delta frame to the NVMe delta ring.
 
         Args:
-            step:          训练步号
-            block_patches: 大参数 block, 每个 format = {layer_id, name, block_idx, int8_data, scale}
-            small_patches: 小参数,     每个 format = {layer_id, name, int8_data, scale}
+            step:          training step number
+            block_patches: large-parameter blocks, each a dict
+                           {layer_id, name, block_idx, int8_data, scale}
+            small_patches: small parameters, same dict format
         Returns:
-            slot_idx: 写入的槽位索引
+            slot_idx: index of the written slot
         """
         from i3_delta_writer import pack_delta_frame
 
@@ -1231,7 +1235,9 @@ class DirectCheckpoint:
         return slot_idx
 
     def delta_load_slot(self, slot_idx: int):
-        """从 NVMe 读取单个增量帧。Returns (step_id, block_patches, small_patches)."""
+        """Read a single delta frame from NVMe.
+
+        Returns (step_id, block_patches, small_patches)."""
         from i3_delta_writer import unpack_delta_frame
 
         if not hasattr(self, '_delta_slot_size'):
@@ -1254,7 +1260,9 @@ class DirectCheckpoint:
         return step_id, blocks, smalls
 
     def delta_load_chain(self, from_step: int, to_step: int):
-        """读增量链 [from_step+1, to_step] 的所有帧。Returns list of (step, blocks, smalls)."""
+        """Read all delta frames in the range [from_step+1, to_step].
+
+        Returns a list of (step, blocks, smalls) tuples."""
         chain = []
         for s in range(from_step + 1, to_step + 1):
             key = f"step_{s}"
@@ -1268,7 +1276,7 @@ class DirectCheckpoint:
         return chain
 
     def _find_nearest_full(self, target_step: int):
-        """找到距离 target_step 最近的 (不超过) 全量检查点步号。"""
+        """Return the nearest FULL checkpoint step <= target_step."""
 
         def _scan():
             best = None
@@ -1302,14 +1310,14 @@ class DirectCheckpoint:
         raise FileNotFoundError(f"No FULL checkpoint found ≤ step {target_step}")
 
     def recover(self, model: "ms.nn.Cell", target_step: int):
-        """完整增量恢复：全量 + 增量链合并 → model weights。
+        """Full incremental recovery: FULL ckpt + delta chain -> model weights.
 
-        流程:
-          1. 找最近全量 (FULL) 检查点
-          2. npu_nvme_read_batch 恢复到 device
-          3. 如果 target_step > base_step: 读增量链 → numpy apply_delta_patches
-          4. 将 host 重建参数写回 device
-        Returns: dict with recovery stats {base_step, n_deltas, total_time, ...}
+        Steps:
+          1. locate the nearest FULL checkpoint <= target_step
+          2. npu_nvme_read_batch to restore weights to device
+          3. if target_step > base_step: read delta chain, apply patches on CPU
+          4. write reconstructed weights back to device
+        Returns: dict with {base_step, n_deltas, total_time, ...}
         """
         t_start = time.perf_counter()
 
