@@ -37,17 +37,12 @@
 volatile uint8_t* probe_flags = NULL;
 
 
-// ============================================================================
-// Hugepage pool auto-expansion for DPDK/SPDK
-// ============================================================================
-// NPU driver pre-allocates all boot-time hugepages as internal DMA buffers.
-// These pages are pinned by kernel hugetlb subsystem (not via hugetlbfs mmap)
-// and show as Free=0/Rsvd=0.  DPDK's spdk_env_init() checks Free counter
-// per NUMA node and refuses to start when it's zero.
-//
-// Workaround: add a small pool (512 pages = 1GB) on top of NPU's reservation.
-// System has 2TB RAM / 1.9TB free → 1GB is negligible.
-// DPDK properly releases these pages on spdk_env_fini → rte_eal_cleanup.
+/* ---- Hugepage pool auto-expansion for DPDK/SPDK ---- */
+/* The NPU driver reserves all boot-time hugepages (typically 8544 x 2 MB
+ * = ~17 GB) as internal DMA buffers.  DPDK's spdk_env_init() checks the
+ * per-NUMA-node free hugepage counter and refuses to start when it is
+ * zero.  We add 512 pages (1 GB) on top of the NPU reservation.
+ * DPDK releases these pages via rte_eal_cleanup() on spdk_env_fini. */
 #define HUGEPAGE_PADDING 512
 #define HUGEPAGE_2MB_PATH "/sys/kernel/mm/hugepages/hugepages-2048kB/free_hugepages"
 #define NR_HUGEPAGES_PATH  "/proc/sys/vm/nr_hugepages"
@@ -484,9 +479,7 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
     return 0;
 }
 
-/* ===================================================================
- * SPDK Probe & Attach Callbacks
- * =================================================================== */
+/* ---- SPDK Probe & Attach Callbacks ---- */
 
 static bool probe_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
                      struct spdk_nvme_ctrlr_opts *opts) {
@@ -523,9 +516,7 @@ static void attach_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
 }
 
 
-/* ===================================================================
- * Init (SPDK env + NVMe probe + ACL + DMA pool + listener)
- * =================================================================== */
+/* ---- Init: SPDK env, NVMe probe, ACL, DMA pool, listener ---- */
 
 // Background listener thread -- polls a device-side step counter via
 void* probe_listener_thread(void* arg) {
@@ -802,9 +793,7 @@ fail:
     return -1;
 }
 
-/* ===================================================================
- * Cleanup (strict resource release order)
- * =================================================================== */
+/* ---- Cleanup: strict resource release order ---- */
 void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     if (!ctx) return;
 
@@ -1003,8 +992,8 @@ static int submit_to_spdk(NPUNVMEContext *ctx, io_task_t *task, int *completed_c
 }
 
 
-/* ===================================================================
- * Dual-Polling Pipeline - drives NPU DMA and SPDK NVMe I/O concurrently.
+/* ---- Dual-Polling Pipeline ----
+ * Drives NPU DMA and SPDK NVMe I/O concurrently.
  *
  * Three engines per iteration:
  *   Engine 1 (submit) - pop free ring slots, launch DMA / SPDK commands
@@ -1119,9 +1108,7 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
     }
 }
 
-/* ===================================================================
- * Public API: write_batch / read_batch
- * =================================================================== */
+/* ---- Public API: write_batch / read_batch ---- */
 int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs, 
                          uint64_t *nvme_offsets, size_t *sizes, int num_items) {
     
@@ -1206,9 +1193,8 @@ static void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *complet
     free(cb_arg);
 }
 
-// ============================================================================
-/* Read-path dual-polling pipeline - mirrors write path with SPDK-read-first ordering. */
-// ============================================================================
+/* ---- Read-path dual-polling pipeline ----
+ * Mirrors the write path with SPDK-read-first ordering. */
 void process_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
     int completed_tasks = 0;
     int submitted_to_nvme = 0;
@@ -1354,9 +1340,7 @@ uint64_t npu_nvme_get_total_blocks(NPUNVMEContext *ctx) {
     return ctx ? (ctx->total_blocks * ctx->block_size) : 0;
 }
 
-/* ===================================================================
- * Synchronous Metadata I/O (superblock + JSON ledger)
- * =================================================================== */
+/* ---- Synchronous Metadata I/O: superblock + JSON ledger ---- */
 int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t total_bytes, int is_read, void *meta_buffer) {
     if (!ctx || !meta_buffer) return -1;
     
@@ -1393,16 +1377,7 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t to
     return flag == 1 ? 0 : -1;
 }
 
-// ============================================================================
-// DEPRECATED: WaitProbe/TriggerProbe dead code — preserved via #if 0 for rollback
-// These functions (npu_nvme_set_trigger_ptr, npu_nvme_read_trigger_dev,
-// and the old probe_listener_thread WaitProbe branch) are replaced by
-// FaF step_counter polling. If rollback is needed, uncomment the block below.
-// ============================================================================
-
-/* ===================================================================
- * Delta Frame I/O (I3)
- * =================================================================== */
+/* ---- Delta Frame I/O ---- */
 
 #define DELTA_MAGIC 0x414C5444  // "DLTA"
 #define DELTA_MAGIC_INIT 0x4E4E // Superblock delta-initialized marker
