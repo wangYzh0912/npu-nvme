@@ -207,7 +207,6 @@ typedef struct NPUNVMEContext {
     char profiling_dir[256];
 
     void *meta_dma_buf;     // 专用于元数据读写的大页内存
-    uint32_t max_transfer;  // 单次最大传输限制
 
     // ----- [新增] 探针后台持久化任务表 -----
     io_task_t *registered_tasks;
@@ -1363,7 +1362,7 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 
 
 int npu_nvme_get_max_transfer(NPUNVMEContext *ctx) {
-    return ctx ? ctx->max_transfer : 0;
+    return ctx ? (int)ctx->chunk_size : 0;
 }
 
 uint64_t npu_nvme_get_total_blocks(NPUNVMEContext *ctx) {

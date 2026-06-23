@@ -375,9 +375,10 @@ class DirectCheckpoint:
         if self.total_bytes == 0:
             raise RuntimeError("Failed to get NVMe total bytes from hardware.")
 
-        eff = lib.npu_nvme_get_max_transfer(self.ctx)
         self.chunk_size = requested_chunk_size
-        print(f"[DirectCheckpoint] init ok. chunk={self.chunk_size/1024/1024:.2f}MB, rank={self.rank_id}/{self.world_size}")
+        effective = lib.npu_nvme_get_max_transfer(self.ctx)
+        print(f"[DirectCheckpoint] init ok. chunk={self.chunk_size/1024/1024:.2f}MB "
+              f"(effective={effective/1024/1024:.2f}MB), rank={self.rank_id}/{self.world_size}")
         
         self.async_thread = None
         self.async_lock = threading.Lock()
