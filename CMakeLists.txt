@@ -130,7 +130,6 @@ message(STATUS "==============================================")
 # ==================================================
 add_library(npu_nvme SHARED
     src/npu_nvme.c
-    src/npu_nvme_transfer.c
 )
 
 target_include_directories(npu_nvme PUBLIC
@@ -204,34 +203,6 @@ target_link_options(test_npu_nvme PRIVATE
 )
 
 # ==================================================
-# Example Executable (npu_nvme_transfer API)
-# ==================================================
-add_executable(npu_nvme_transfer_example
-    examples/npu_nvme_transfer_example.c
-)
-
-target_include_directories(npu_nvme_transfer_example PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${ASCEND_ACL_INCLUDE_DIRS}
-)
-
-target_link_libraries(npu_nvme_transfer_example PRIVATE
-    npu_nvme
-    ${ASCEND_ACL_INCLUDE_DIRS}
-)
-
-set_target_properties(npu_nvme_transfer_example PROPERTIES
-    BUILD_RPATH "$ORIGIN/../lib"
-    INSTALL_RPATH "$ORIGIN/../lib"
-)
-
-target_link_options(npu_nvme_transfer_example PRIVATE
-    "LINKER:-rpath,$ORIGIN/../lib"
-    "LINKER:--enable-new-dtags"
-)
-
-# ==================================================
 # Installation
 # ==================================================
 install(TARGETS npu_nvme
@@ -243,15 +214,7 @@ install(FILES include/npu_nvme.h
     DESTINATION include
 )
 
-install(FILES include/npu_nvme_transfer.h
-    DESTINATION include
-)
-
 install(TARGETS test_npu_nvme
-    RUNTIME DESTINATION bin
-)
-
-install(TARGETS npu_nvme_transfer_example
     RUNTIME DESTINATION bin
 )
 
