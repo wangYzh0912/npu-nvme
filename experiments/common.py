@@ -128,6 +128,69 @@ def setup_faf_checkpointing(ckpt, model, cell, ckpt_interval=10):
     return dev_flag, dev_step
 
 
+# -- Delta-checkpoint helpers -----------------------------------------------
+
+def setup_delta_faf(ckpt, delta_cell, ckpt_interval=5):
+    """Wire a DeltaTrainCell to the FaF listener and initialise the delta area.
+
+    Calls build_layout_for_delta + register_delta_tasks + delta_init.
+    Must be called AFTER graph compilation (one dummy forward pass).
+
+    Args:
+        ckpt:           DirectCheckpoint instance.
+        delta_cell:     compiled DeltaTrainCell.
+        ckpt_interval:  trigger delta write every N steps.
+
+    Returns:
+        (dev_flag: int, dev_step: int) — HBM addresses.
+    """
+    # Build layout for delta output buffers
+    ckpt.build_layout_for_delta(delta_cell)
+
+    # Register with C-layer FaF listener
+    dev_flag, dev_step = ckpt.register_delta_tasks(delta_cell, ckpt_interval)
+
+    # Initialise delta ring area on NVMe
+    ckpt.delta_init(slot_size_mb=256, slot_count=128)
+
+    print(f"[Common] Delta FaF setup complete: flag={hex(dev_flag)} "
+          f"step={hex(dev_step)} interval={ckpt_interval}", flush=True)
+    return dev_flag, dev_step
+
+
+def make_delta_training(total_steps=20, device_id=1, seq_len=1024,
+                        block_size=524288, top_k_frac=0.10,
+                        ckpt_interval=5, pipeline_depth=8,
+                        profiling=False):
+    """Create a full delta-checkpoint training environment.
+
+    Returns:
+        (model, dataset, optimizer, delta_cell, ckpt)
+    """
+    from delta_cell import DeltaTrainCell
+
+    # Standard training setup
+    model, ds, opt = make_gpt2xl_training(
+        total_steps=total_steps, device_id=device_id, seq_len=seq_len)
+
+    # Build delta cell
+    print("[Common] Building DeltaTrainCell...", flush=True)
+    delta_cell = DeltaTrainCell(
+        model, opt,
+        block_size=block_size,
+        top_k_frac=top_k_frac)
+
+    # DirectCheckpoint for epoch-boundary FULL ckpt
+    ckpt = make_ckpt(
+        device_id=device_id,
+        pipeline_depth=pipeline_depth,
+        profiling=profiling,
+        keep_last_n=3,
+        slot_size_gb=10)
+
+    return model, ds, opt, delta_cell, ckpt
+
+
 # -- Timing callbacks -------------------------------------------------------
 
 class StepTimer(ms.Callback):

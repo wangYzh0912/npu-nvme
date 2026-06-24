@@ -616,6 +616,123 @@ class DirectCheckpoint:
         print(f"[DirectCkpt] Rank {self.rank_id} Successfully registered "
               f"{num_items} tensor pointers to SPDK background thread.")
 
+    # -- Delta-buffer layout (for DeltaTrainCell) --------------------------------
+
+    def build_layout_for_delta(self, delta_cell):
+        """Build NVMe layout for DeltaTrainCell output buffers.
+
+        Maps the delta_quant_buf, delta_scale_buf, and delta_idx_buf
+        HBM Parameters to NVMe byte offsets within the delta ring area.
+        Populates ``self.chunks`` for subsequent FaF registration.
+
+        Args:
+            delta_cell: a DeltaTrainCell instance (must be compiled).
+
+        Returns:
+            list[dict] — chunk descriptors suitable for C-layer registration.
+        """
+        if not hasattr(self, '_delta_slot_count'):
+            self.delta_init()
+
+        from delta_cell import DeltaTrainCell
+        if not isinstance(delta_cell, DeltaTrainCell):
+            raise TypeError("build_layout_for_delta expects a DeltaTrainCell")
+
+        slot_offset = (lib.npu_nvme_delta_get_area_offset(self.ctx)
+                       + self._delta_next_slot % self._delta_slot_count
+                       * self._delta_slot_size)
+
+        # Use get_dev_ptr for HBM addresses
+        quant_ptr = get_dev_ptr(delta_cell.delta_quant_buf)
+        scale_ptr = get_dev_ptr(delta_cell.delta_scale_buf)
+        idx_ptr = get_dev_ptr(delta_cell.delta_idx_buf)
+        if quant_ptr == 0 or scale_ptr == 0 or idx_ptr == 0:
+            raise RuntimeError(
+                "DeltaTrainCell buffers have null device pointers. "
+                "Ensure the cell has been compiled (one forward pass) "
+                "before calling build_layout_for_delta.")
+
+        k = delta_cell.k
+        bs = delta_cell.bs
+        quant_bytes = int(k * bs * np.dtype(np.int8).itemsize)
+        scale_bytes = int(k * np.dtype(np.float32).itemsize)
+        idx_bytes = int(k * np.dtype(np.int32).itemsize)
+
+        chunks = [
+            {'name': 'delta_quant_buf', 'npu_ptr': quant_ptr,
+             'nvme_offset': slot_offset,
+             'size': quant_bytes, 'param_ref': delta_cell.delta_quant_buf},
+            {'name': 'delta_scale_buf', 'npu_ptr': scale_ptr,
+             'nvme_offset': slot_offset + int(math.ceil(quant_bytes / 4096.0)) * 4096,
+             'size': scale_bytes, 'param_ref': delta_cell.delta_scale_buf},
+            {'name': 'delta_idx_buf', 'npu_ptr': idx_ptr,
+             'nvme_offset': (slot_offset
+                              + int(math.ceil(quant_bytes / 4096.0)) * 4096
+                              + int(math.ceil(scale_bytes / 4096.0)) * 4096),
+             'size': idx_bytes, 'param_ref': delta_cell.delta_idx_buf},
+        ]
+
+        self.chunks = chunks
+        return chunks
+
+    def register_delta_tasks(self, delta_cell, ckpt_interval: int = 5):
+        """Register DeltaTrainCell output buffers with the FaF listener.
+
+        Also wires the step_counter to the C-layer poller and initialises
+        the delta ring area if not already done.
+
+        Args:
+            delta_cell:  a compiled DeltaTrainCell.
+            ckpt_interval: trigger delta write every N steps.
+
+        Returns:
+            (dev_flag: int, dev_step: int) — HBM addresses.
+        """
+        if not hasattr(self, 'chunks') or len(self.chunks) == 0:
+            self.build_layout_for_delta(delta_cell)
+
+        num_items = len(self.chunks)
+        npu_ptrs = (ctypes.c_void_p * num_items)()
+        nvme_offsets = (ctypes.c_uint64 * num_items)()
+        sizes = (ctypes.c_size_t * num_items)()
+
+        for i, ch in enumerate(self.chunks):
+            npu_ptrs[i] = ch['npu_ptr']
+            nvme_offsets[i] = ch['nvme_offset']
+            sizes[i] = ch['size']
+
+        rc = lib.npu_nvme_register_tasks(
+            self.ctx, npu_ptrs, nvme_offsets, sizes, num_items)
+        if rc != 0:
+            raise RuntimeError(
+                f"register_delta_tasks: C API returned {rc}")
+
+        # Wire step counter
+        dev_step = get_dev_ptr(delta_cell.step_counter)
+        rc = lib.npu_nvme_set_step_ptr(
+            self.ctx, ctypes.c_void_p(dev_step), ckpt_interval)
+        if rc != 0:
+            raise RuntimeError(f"set_step_ptr failed: {rc}")
+
+        # Wire probe flag
+        dev_flag = get_dev_ptr(getattr(delta_cell, 'flag',
+                                        delta_cell.step_counter))
+        if hasattr(delta_cell, 'flag'):
+            dev_flag = get_dev_ptr(delta_cell.flag)
+            lib.npu_nvme_set_probe_flag_ptr(self.ctx, ctypes.c_void_p(dev_flag))
+        else:
+            lib.npu_nvme_set_probe_flag_ptr(self.ctx, ctypes.c_void_p(0))
+
+        if dev_flag == 0 and hasattr(lib, "npu_nvme_get_probe_flag_dev_ptr"):
+            dev_flag = lib.npu_nvme_get_probe_flag_dev_ptr(self.ctx)
+        self.probe_flag_ptr = dev_flag
+
+        print(f"[DirectCkpt] Rank {self.rank_id} Registered {num_items} delta "
+              f"buffers to FaF listener. step_counter={hex(dev_step)} "
+              f"flag={hex(dev_flag)} interval={ckpt_interval}",
+              flush=True)
+        return dev_flag, dev_step
+
     # -- Save / Load ---------------------------------------------------------
 
     def save(self, model: ms.nn.Cell, step: int,
