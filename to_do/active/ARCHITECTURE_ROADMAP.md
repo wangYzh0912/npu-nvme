@@ -12,7 +12,7 @@ npu-nvme/
   to_do/archive/   17 归档文档
 ```
 
-## 核心 API (C 层 16 函数)
+## 核心 API (C 层 17 函数)
 
 | 类别 | 函数 |
 |------|------|
@@ -28,8 +28,8 @@ npu-nvme/
 | 指标 | 重构前 | 重构后 |
 |------|:---:|:---:|
 | `npu_nvme.c` | 1354 行 | 894 行 (-34%) |
-| `direct_checkpoint.py` | 1525 行 | 800 行 + 7 子模块 |
-| to_do 目录 | 20 文件 | active/4 + archive/17 |
+| `direct_checkpoint.py` | 1525 行 | 1049 行 + 7 子模块 |
+| to_do 目录 | 20 文件 | active/4 + archive/23 |
 
 ## 当前任务
 

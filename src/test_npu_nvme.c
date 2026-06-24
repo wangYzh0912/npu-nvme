@@ -156,22 +156,14 @@ static void test_get_max_transfer(const char *pci_addr, int npu_id)
     PASS();
 }
 
+/* WIP: write_batch + read_batch roundtrip.
+ * The test body requires aclrtMalloc + aclrtMemcpy for NPU buffer setup,
+ * which pulls in ACL symbols not available in pure-logic builds.
+ * Enable once the build system supports HAS_NPU conditional compilation. */
 static void test_write_read_roundtrip(const char *pci_addr, int npu_id)
 {
-    /* Write a known pattern, read it back, compare. */
-    TEST("write_batch + read_batch roundtrip (4 KB)");
-    NPUNVMEContext *ctx = NULL;
-    if (npu_nvme_init(&ctx, pci_addr, npu_id, 4, 64*1024, false, ".") != 0) {
-        FAIL("init failed"); return;
-    }
-
-    /* Allocate NPU buffer and fill with a pattern via memcpy H2D.
-     * This requires aclrtMalloc — skip if ACL symbols are unavailable
-     * at link time (pure-logic build). */
-    /* ... hardware-specific ACL calls omitted in pure-logic mode ... */
-
-    npu_nvme_cleanup(ctx);
-    PASS();
+    (void)pci_addr; (void)npu_id;
+    /* test body TBD */
 }
 
 static void test_sync_meta_io(const char *pci_addr, int npu_id)

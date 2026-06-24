@@ -186,15 +186,15 @@ E0 (sink_size 扫描) ← 最先
      E3 (I3)  ────── 依赖 Step 3 ───────┘
 ```
 
-### 实验脚本位置
+### 实验脚本位置 (规划中，目录待创建)
 
 ```
 experiments/
-  e0_sink_sweep/           sink_size 扫描
-  e1_spdk/                 E1.1-E1.6 SPDK 基准
-  e2_faf/                  E2.1-E2.7 FaF 监听器
-  e3_i3/                   E3.1-E3.8 I3 增量管线
-  step3/                   Step 3 全路径打通
+  step3/                   Step 3 全路径打通 (待实现)
+  e0_sink_sweep/           论文实验 E0 (待实现)
+  e1_spdk/                 论文实验 E1.1-E1.6 (待实现)
+  e2_faf/                  论文实验 E2.1-E2.7 (待实现)
+  e3_i3/                   论文实验 E3.1-E3.8 (待实现)
 ```
 
 ---

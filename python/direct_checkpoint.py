@@ -44,6 +44,7 @@ import numpy as np
 import atexit
 
 # -- Re-exports from sub-modules (backward-compatible surface) ---------------
+import c_bindings  # keep module reference for _LIB_PATH
 from c_bindings import lib, acl_lib, NPUNVMEContext
 from disk_layout import (SUPERBLOCK_OFFSET, SUPERBLOCK_HEADER_BYTES,
                           META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
@@ -930,8 +931,12 @@ class DirectCheckpoint:
             ctypes.addressof(header_buf), slot_offset,
             FRAME_HEADER_SIZE, self.chunk_size)
         h_ptrs, h_offs, h_sizes = build_ctypes_arrays(h_chunks)
-        rc = lib.npu_nvme_read_batch(
-            self.ctx, h_ptrs, h_offs, h_sizes, len(h_chunks))
+        if hasattr(lib, "npu_nvme_read_batch_host"):
+            rc = lib.npu_nvme_read_batch_host(
+                self.ctx, h_ptrs, h_offs, h_sizes, len(h_chunks))
+        else:
+            rc = lib.npu_nvme_read_batch(
+                self.ctx, h_ptrs, h_offs, h_sizes, len(h_chunks))
         if rc != 0:
             raise RuntimeError(
                 f"Delta header read failed at slot {slot_idx} (rc={rc})")
@@ -951,8 +956,12 @@ class DirectCheckpoint:
             ctypes.addressof(data_buf), slot_offset,
             total_sz, self.chunk_size)
         d_ptrs, d_offs, d_sizes = build_ctypes_arrays(d_chunks)
-        rc = lib.npu_nvme_read_batch(
-            self.ctx, d_ptrs, d_offs, d_sizes, len(d_chunks))
+        if hasattr(lib, "npu_nvme_read_batch_host"):
+            rc = lib.npu_nvme_read_batch_host(
+                self.ctx, d_ptrs, d_offs, d_sizes, len(d_chunks))
+        else:
+            rc = lib.npu_nvme_read_batch(
+                self.ctx, d_ptrs, d_offs, d_sizes, len(d_chunks))
         if rc != 0:
             raise RuntimeError(
                 f"Delta data read failed at slot {slot_idx} (rc={rc})")

@@ -8,13 +8,13 @@
 
 | 层 | 重构内容 | 效果 |
 |------|------|------|
-| Python | `direct_checkpoint.py` 拆分 1→8 模块 | 1525→800 行, 消除重复常量/ctypes/协议 |
+| Python | `direct_checkpoint.py` 拆分 1→8 模块 | 1525→1049 行, 消除重复常量/ctypes/协议 |
 | Python | Delta I/O 迁移到 ring buffer pipeline | 解除 64MB 限制, 支持任意大小 delta frame |
 | Python | 6 bug 修复 | lib=None, 悬垂指针, sync no-op 等 |
 | C | 删除 `write_delta`/`read_delta` | −106 行, API 18→16 函数 |
-| C | 内部头文件 + pipeline 统一 + profilng 统一 | −554 行, `npu_nvme.c` 1354→894 |
-| 实验 | `common.py` 5 共享函数 | 消除 ~900-1050 行样板 |
-| 文档 | to_do/ 整理 | active/4 + archive/17 |
+| C | 内部头文件 + pipeline 统一 + profiling 统一 | 894 行 (重构后) |
+| 实验 | `common.py` 4 共享函数 | 消除 ~900-1050 行样板 |
+| 文档 | to_do/ 整理 | active/4 + archive/23 |
 
 ## 研究进展
 

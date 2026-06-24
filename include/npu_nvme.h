@@ -77,6 +77,12 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                         uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
 /**
+ * @brief Batch read: NVMe -> Host DRAM (memcpy, no NPU involvement).
+ */
+int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
+                              uint64_t *nvme_offsets, size_t *sizes, int num_items);
+
+/**
  * @brief Batch write: Host DRAM -> NVMe (memcpy, no NPU involvement).
  */
 int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,

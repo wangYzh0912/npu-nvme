@@ -1,7 +1,7 @@
 # Claude 会话指令与上下文恢复
 
-> 创建: 2026-06-17 | 最后更新: 2026-06-27 (服务器可用, Phase 0-3 完成)
-> 状态: **Phase A 服务器验证进行中 → Phase B(I3 Step 3)**
+> 创建: 2026-06-17 | 最后更新: 2026-06-24 (重构完成, 待服务器验证)
+> 状态: **Phase A 服务器验证 → Phase B(I3 Step 3)**
 
 ---
 
@@ -21,7 +21,7 @@
 
 **C**:
 - `npu_nvme.c` 使用 `include/internal/` 头文件。子结构体: `ctx->acl.*`, `ctx->dma.*`, `ctx->listener.*`, `ctx->delta.*`。
-- 公共 API 16 函数 (删除 `write_delta`/`read_delta`)。
+- 公共 API 17 函数 (删除 `write_delta`/`read_delta`)。
 - `meta_dma_buf` 从 64MB 缩小到 1MB。Profiling CSV 统一为 `write_profiling_csv()`。
 - 修复: 双重 `if (enable_profiling)` bug (read_batch line 1198)。
 
@@ -29,6 +29,7 @@
 ```
 git pull && bash scripts/verify_phaseA.sh
 # A.1-A.7: 编译 → 测试 → Python 导入 → FULL roundtrip → Delta >64MB
+# 修改前分支保存在 delta 分支上
 ```
 
 ## 一、项目核心信息
@@ -43,7 +44,7 @@ git pull && bash scripts/verify_phaseA.sh
 
 ```
 python/
-  direct_checkpoint.py   800 行  DirectCheckpoint + 重新导出 (入口)
+  direct_checkpoint.py   1049 行  DirectCheckpoint + 重新导出 (入口)
   c_bindings.py          131 行  C 库 ctypes
   disk_layout.py          28 行  裸盘偏移常量
   chunk_helpers.py        135 行  build_chunks / build_ctypes_arrays
@@ -57,18 +58,18 @@ python/
   inspect_npu_disk.py     工具
 
 src/
-  npu_nvme.c             894 行  C 引擎 (重构后, -460 行)
-  test_npu_nvme.c         279 行  测试
+  npu_nvme.c             894 行  C 引擎 (重构后)
+  test_npu_nvme.c         271 行  测试
 include/
-  npu_nvme.h             139 行  16 公共 API
-  internal/                4 个内部头文件 (ring_buffer/io_task/pipeline/context)
+  npu_nvme.h             139 行  17 公共 API
+  internal/                4 个内部头文件 (93+57+49+55 行)
 
 experiments/
-  common.py              173 行  5 共享函数
+  common.py              173 行  4 共享函数
 
 to_do/
   active/                 4 个活跃文件
-  archive/               17 个归档文档
+  archive/               23 个归档文档
 ```
 
 ### 1.3 关键约束

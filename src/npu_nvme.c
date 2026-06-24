@@ -69,7 +69,7 @@ static void ensure_hugepages(void) {
 
 /* ---- SPDK probe / attach callbacks ---- */
 
-static int probe_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
+static bool probe_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
                     struct spdk_nvme_ctrlr_opts *opts) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)cb_ctx;
     if (strncmp(trid->traddr, ctx->pci_addr, sizeof(ctx->pci_addr)) == 0) {
@@ -471,6 +471,77 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     return 0;
 }
 
+int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
+                             uint64_t *nvme_offsets, size_t *sizes,
+                             int num_items) {
+    if (!ctx || !host_ptrs || !nvme_offsets || !sizes || num_items <= 0)
+        return -1;
+
+    aclrtSetCurrentContext(ctx->acl.acl_ctx);
+
+    io_task_t *tasks = create_io_tasks(num_items, host_ptrs, nvme_offsets, sizes);
+    if (!tasks) return -1;
+
+    int completed_tasks = 0;
+    int submitted = 0;
+
+    while (completed_tasks < num_items) {
+
+        while (submitted < num_items) {
+            io_task_t *task = &tasks[submitted];
+            size_t aligned_sz = ALIGN_4K(task->size);
+
+            if (task->size == 0 || aligned_sz > ctx->dma.chunk_size) {
+                task->state = CHUNK_DONE; completed_tasks++;
+                submitted++; continue;
+            }
+
+            if (ring_is_empty(&ctx->dma.free_ring)) break;
+
+            int buf_idx;
+            ring_pop(&ctx->dma.free_ring, &buf_idx);
+            task->buf_idx = buf_idx;
+
+            spdk_cb_arg_t *cb_arg = malloc(sizeof(spdk_cb_arg_t));
+            cb_arg->ctx = ctx; cb_arg->task = task;
+            cb_arg->completed_counter = &completed_tasks;
+
+            uint64_t lba = task->nvme_offset / ctx->block_size;
+            uint32_t lba_count = aligned_sz / ctx->block_size;
+
+            int rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair,
+                                            ctx->dma.pool[buf_idx].buf,
+                                            lba, lba_count,
+                                            nvme_read_complete_cb, cb_arg, 0);
+            if (rc == 0) {
+                task->state = CHUNK_SPDK_READING;
+                submitted++;
+            } else {
+                ring_push(&ctx->dma.free_ring, buf_idx);
+                free(cb_arg);
+                task->state = CHUNK_DONE; completed_tasks++;
+                submitted++;
+            }
+        }
+
+        /* Copy completed DMA buffers back to host memory */
+        for (int i = 0; i < submitted; i++) {
+            io_task_t *task = &tasks[i];
+            if (task->state == CHUNK_SPDK_DONE) {
+                memcpy(task->npu_ptr, ctx->dma.pool[task->buf_idx].buf, task->size);
+                task->state = CHUNK_DONE;
+                ring_push(&ctx->dma.free_ring, task->buf_idx);
+                completed_tasks++;
+            }
+        }
+
+        spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+    }
+
+    free(tasks);
+    return 0;
+}
+
 /* ---- Public API: query ---- */
 
 int npu_nvme_get_max_transfer(NPUNVMEContext *ctx) {
@@ -671,7 +742,7 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
 /* ---- Initialisation / cleanup ---- */
 
 int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
-                  int pipe_depth, int chunk_size, bool enable_profiling,
+                  int pipe_depth, uint32_t chunk_size, bool enable_profiling,
                   const char *prof_dir) {
     NPUNVMEContext *ctx = calloc(1, sizeof(NPUNVMEContext));
     if (!ctx) return -1;

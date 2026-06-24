@@ -8,6 +8,11 @@
 
 #include "io_task.h"
 
+/* SPDK completion callback — the callback struct is defined in spdk/nvme.h,
+ * which pulls in the full SPDK headers.  Only declare the signature here;
+ * the implementation in npu_nvme.c includes spdk/nvme.h first. */
+struct spdk_nvme_cpl;
+
 struct NPUNVMEContext;
 
 /* --- Pipeline entry points --- */

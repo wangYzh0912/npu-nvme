@@ -84,7 +84,7 @@ import sys, os, time, numpy as np
 sys.path.insert(0, 'python')
 import mindspore as ms
 from mindspore import Tensor
-from direct_checkpoint import DirectCheckpoint, format_npu_disk
+from direct_checkpoint import DirectCheckpoint
 
 msg = ms.Tensor(np.random.randn(1000, 1000).astype(np.float16))
 ckpt = DirectCheckpoint(nvme_addr='0000:83:00.0', npu_device_id=1,

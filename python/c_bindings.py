@@ -103,6 +103,14 @@ try:
     ]
     lib.npu_nvme_read_batch.restype = ctypes.c_int
 
+    if hasattr(lib, "npu_nvme_read_batch_host"):
+        lib.npu_nvme_read_batch_host.argtypes = [
+            ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t),
+            ctypes.c_int,
+        ]
+        lib.npu_nvme_read_batch_host.restype = ctypes.c_int
+
     if hasattr(lib, "npu_nvme_write_batch_host"):
         lib.npu_nvme_write_batch_host.argtypes = [
             ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
