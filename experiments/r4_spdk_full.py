@@ -12,7 +12,7 @@ ds = ms.dataset.MindDataset("dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025
 ds = ds.batch(1, drop_remainder=True).take(20)
 opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
 from direct_checkpoint import ProbeTrainOneStepCell, DirectCheckpoint
-cell = ProbeTrainOneStepCell(model, opt, None, 0, enable_probe=False, probe_mode="end")
+cell = ProbeTrainOneStepCell(model, opt, enable_probe=False)
 ckpt = DirectCheckpoint(nvme_addr="0000:83:00.0", npu_device_id=1, pipeline_depth=8,
                         requested_chunk_size=4*1024*1024, enable_profiling=False, keep_last_n=3, slot_size_gb=10)
 times = []

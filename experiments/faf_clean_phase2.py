@@ -51,7 +51,7 @@ def run_R5():
     model, ds, opt = build_model_and_ds()
 
     from direct_checkpoint import ProbeTrainOneStepCell
-    cell = ProbeTrainOneStepCell(model, opt, None, 0, enable_probe=False, probe_mode="end")
+    cell = ProbeTrainOneStepCell(model, opt, enable_probe=False)
 
     # MS warmup (ensures MS runtime initialized before any later SPDK init)
     warmup_ds = ms.dataset.MindDataset(
@@ -97,8 +97,7 @@ def run_R6():
     model, ds, opt = build_model_and_ds()
 
     from direct_checkpoint import ProbeTrainOneStepCell
-    cell = ProbeTrainOneStepCell(model, opt, None, 0,
-                                 enable_probe=True, probe_mode="end",
+    cell = ProbeTrainOneStepCell(model, opt, enable_probe=True,
                                  ckpt_interval=CKPT_INTERVAL)
 
     # Warmup function: direct cell() calls to force MS runtime init before SPDK.

@@ -132,7 +132,7 @@ def main():
 
     optimizer = nn.AdamWeightDecay(base_model.trainable_params(), learning_rate=1e-5)
     probe_wrapper = ProbeTrainOneStepCell(
-        base_model, optimizer, None, 0, enable_probe=True, probe_mode="end",
+        base_model, optimizer, enable_probe=True,
         ckpt_interval=CKPT_INTERVAL)
 
     # Warmup: direct cell() calls force MS runtime init before SPDK.

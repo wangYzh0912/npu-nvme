@@ -85,7 +85,7 @@ def run_baseline():
     base_model, train_ds = build_model_and_ds()
     optimizer = nn.AdamWeightDecay(base_model.trainable_params(), learning_rate=1e-5)
     train_cell = ProbeTrainOneStepCell(
-        base_model, optimizer, None, 0, enable_probe=False, probe_mode="end")
+        base_model, optimizer, None, 0, enable_probe=False)
     cb = WallClockCallback()
     ms_model = ms.Model(train_cell)
 
@@ -132,7 +132,7 @@ def run_faf(label, setup_func=None):
     optimizer = nn.AdamWeightDecay(base_model.trainable_params(), learning_rate=1e-5)
     train_cell = ProbeTrainOneStepCell(
         base_model, optimizer, None, 0,
-        enable_probe=True, probe_mode="end", ckpt_interval=CKPT_INTERVAL)
+        enable_probe=True, ckpt_interval=CKPT_INTERVAL)
     cb = WallClockCallback()
     ms_model = ms.Model(train_cell)
 

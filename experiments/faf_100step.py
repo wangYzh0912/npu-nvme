@@ -39,8 +39,7 @@ ds = ds.batch(1, drop_remainder=True).take(TOTAL_STEPS)
 opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
 
 from direct_checkpoint import ProbeTrainOneStepCell
-cell = ProbeTrainOneStepCell(model, opt, None, 0,
-                             enable_probe=True, probe_mode="end",
+cell = ProbeTrainOneStepCell(model, opt, enable_probe=True,
                              ckpt_interval=CKPT_INTERVAL)
 
 # Warmup via DirectCheckpoint.__init__

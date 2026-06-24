@@ -15,7 +15,7 @@ ds1 = ms.dataset.MindDataset("dataset_prepare/gpt2/wikitext2_data/gpt2_train_102
 ds1 = ds1.batch(1, drop_remainder=True).take(5)
 opt1 = nn.AdamWeightDecay(model1.trainable_params(), learning_rate=1e-5)
 from direct_checkpoint import ProbeTrainOneStepCell
-cell1 = ProbeTrainOneStepCell(model1, opt1, None, 0, enable_probe=False, probe_mode="end")
+cell1 = ProbeTrainOneStepCell(model1, opt1, enable_probe=False)
 times1 = []
 class CB1(ms.Callback):
     def on_train_step_begin(self,rc): self.t0=time.perf_counter()
@@ -33,7 +33,7 @@ model2 = AutoModel.from_config(cfg)  # reuse cfg
 ds2 = ms.dataset.MindDataset("dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025.mindrecord", shuffle=True)
 ds2 = ds2.batch(1, drop_remainder=True).take(5)
 opt2 = nn.AdamWeightDecay(model2.trainable_params(), learning_rate=1e-5)
-cell2 = ProbeTrainOneStepCell(model2, opt2, None, 0, enable_probe=False, probe_mode="end")
+cell2 = ProbeTrainOneStepCell(model2, opt2, enable_probe=False)
 
 # SPDK init AFTER first model.train()
 from direct_checkpoint import DirectCheckpoint

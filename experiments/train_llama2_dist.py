@@ -137,8 +137,7 @@ FAST_INIT_CKPT_DIR = "./checkpoint_meta"
 ENABLE_PROFILING = True            
 PROFILING_OUTPUT_DIR = "./output/profiling"  
 META_OUTPUT_DIR = "./checkpoint_meta"             
-SAVE_OPTIMIZER = False             
-ASYNC_SAVE = False                 
+SAVE_OPTIMIZER = False
 
 SEQ_LEN = 4096
 BATCH_SIZE = 2                  
@@ -230,8 +229,7 @@ class DirectCkptCallback(Callback):
             targets,
             step=step,
             meta_path=self.ckpt_meta_path,
-            async_save=ASYNC_SAVE,
-            commit_meta=(self.rank_id == 0) 
+            commit_meta=(self.rank_id == 0)
         )
 
         # 2. 因为此时主线程瞬间返回了，我们直接打点并释放控制权给 MindSpore

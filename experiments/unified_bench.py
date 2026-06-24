@@ -62,7 +62,7 @@ def run_sink_false(enable_probe):
     from direct_checkpoint import ProbeTrainOneStepCell
     cell = ProbeTrainOneStepCell(
         model, opt, None, 0,
-        enable_probe=enable_probe, probe_mode="end", ckpt_interval=CKPT_INTERVAL)
+        enable_probe=enable_probe, ckpt_interval=CKPT_INTERVAL)
 
     step_times = []
     t_last = [0]
@@ -106,7 +106,7 @@ def run_sink_true(enable_probe):
     from direct_checkpoint import ProbeTrainOneStepCell
     cell = ProbeTrainOneStepCell(
         model, opt, None, 0,
-        enable_probe=enable_probe, probe_mode="end", ckpt_interval=CKPT_INTERVAL)
+        enable_probe=enable_probe, ckpt_interval=CKPT_INTERVAL)
 
     epoch_times = []
 
@@ -159,7 +159,7 @@ def run_sink_true_faf():
     model, ds, opt = build()
     cell = ProbeTrainOneStepCell(
         model, opt, None, 0,
-        enable_probe=True, probe_mode="end", ckpt_interval=CKPT_INTERVAL)
+        enable_probe=True, ckpt_interval=CKPT_INTERVAL)
 
     # Dry-run to allocate
     dummy = Tensor(np.zeros((1, SEQ_LEN), dtype=np.int32), ms.int32)

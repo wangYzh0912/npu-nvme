@@ -77,7 +77,7 @@ ds = ms.dataset.MindDataset("dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025
 ds = ds.batch(1, drop_remainder=True).take(20)
 opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
 from direct_checkpoint import ProbeTrainOneStepCell
-cell = ProbeTrainOneStepCell(model, opt, None, 0, enable_probe=False, probe_mode="end")
+cell = ProbeTrainOneStepCell(model, opt, enable_probe=False)
 {spdk_init}
 times = []
 class CB(ms.Callback):
@@ -152,7 +152,7 @@ ds = ms.dataset.MindDataset("dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025
 ds = ds.batch(1, drop_remainder=True).take(20)
 opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
 from direct_checkpoint import ProbeTrainOneStepCell
-cell = ProbeTrainOneStepCell(model, opt, None, 0, enable_probe={enable_probe}, probe_mode="end", ckpt_interval=5)
+cell = ProbeTrainOneStepCell(model, opt, enable_probe={enable_probe}, ckpt_interval=5)
 {spdk_init}
 epoch_times = []
 class CB(ms.Callback):
@@ -215,7 +215,7 @@ ds = ms.dataset.MindDataset("dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025
 ds = ds.batch(1, drop_remainder=True).take(20)
 opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
 from direct_checkpoint import ProbeTrainOneStepCell
-cell = ProbeTrainOneStepCell(model, opt, None, 0, enable_probe=True, probe_mode="end", ckpt_interval=5)
+cell = ProbeTrainOneStepCell(model, opt, enable_probe=True, ckpt_interval=5)
 {spdk_init}
 times = []
 class CB(ms.Callback):

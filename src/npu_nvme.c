@@ -30,13 +30,6 @@
  * realistic metadata sizes including future delta ledger expansion. */
 #define META_DMA_BUF_SIZE (64 * 1024 * 1024)
 
-// DEPRECATED: WaitProbe-era host-trigger flag.  Still used by
-// npu_nvme_trigger_probe() and the listener fallback for legacy
-// experiment scripts (train_gpt2_spdk.py et al.).  Remove once
-// all callers migrate to the FaF step_counter API.
-volatile uint8_t* probe_flags = NULL;
-
-
 /* ---- Hugepage pool auto-expansion for DPDK/SPDK ---- */
 /* The NPU driver reserves all boot-time hugepages (typically 8544 x 2 MB
  * = ~17 GB) as internal DMA buffers.  DPDK's spdk_env_init() checks the
@@ -224,7 +217,6 @@ typedef struct NPUNVMEContext {
     uint64_t delta_area_offset;   // byte offset of delta ring on NVMe
     uint64_t delta_slot_size;     // bytes per delta slot
     uint32_t delta_slot_count;    // total number of delta slots
-    uint32_t delta_last_commit;   // index of last committed slot
 } NPUNVMEContext;
 
 int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
@@ -254,7 +246,6 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
 
     // Self-allocation fallback: when dev_ptr is NULL (e.g. sink=TRUE where MS
     // never allocates the flag tensor), allocate a 4-byte HBM buffer ourself.
-    bool self_allocated = false;
     if (dev_ptr == NULL) {
         void *self_dev_ptr = NULL;
         ret = aclrtMalloc(&self_dev_ptr, 4, ACL_MEM_MALLOC_HUGE_FIRST);
@@ -281,7 +272,6 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
             aclrtFree(ctx->probe_flag_dev_ptr);
         }
         ctx->probe_flag_dev_ptr = self_dev_ptr;
-        self_allocated = true;
         fprintf(stderr, "[NPU-NVMe] Probe flag SELF-ALLOCATED: dev=%p (sink=TRUE fallback)\n",
                 self_dev_ptr);
     } else {
@@ -319,19 +309,6 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
     return 0;
 }
 
-
-int npu_nvme_trigger_probe(NPUNVMEContext *ctx)
-{
-    if (!ctx) {
-        return -1;
-    }
-    if (probe_flags) {
-        probe_flags[0] = 1;
-        __sync_synchronize();
-        return 0;
-    }
-    return -1;
-}
 
 int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value)
 {
@@ -441,10 +418,7 @@ static inline void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
         }
         return;
     }
-    if (probe_flags) {
-        __sync_synchronize();
-        probe_flags[1] = 1;
-    }
+    return;
 }
 
 io_task_t* create_io_tasks(int num_tasks, void **npu_ptrs, uint64_t *nvme_offsets, size_t *sizes);
@@ -523,7 +497,6 @@ void* probe_listener_thread(void* arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
     const char *mode = getenv("NPU_NVME_LISTENER_MODE");
 
-    // DEPRECATED: WaitProbe dead code is #if 0'd — kept for potential rollback
     if (mode && strcmp(mode, "idle") == 0) {
         printf("[Probe Listener] IDLE mode — no SPDK writes, just waiting for stop signal.\n");
         while (1) {
@@ -606,12 +579,6 @@ void* probe_listener_thread(void* arg) {
                 fprintf(stderr, "[NPU-NVMe] listener TRIGGERED: step=%d, expected=%u\n",
                         cur_step, (unsigned)expected_step);
             }
-        } else {
-            // Fallback: old WaitProbe host-trigger mode
-            if (probe_flags && probe_flags[0] != 0) {
-                probe_flags[0] = 0;
-                triggered = 1;
-            }
         }
 
         if (ctx->stop_listener) {
@@ -639,8 +606,6 @@ void* probe_listener_thread(void* arg) {
             uint32_t expected = (uint32_t)(ctx->last_step_seen / ctx->ckpt_interval);
             signal_probe_flag(ctx, expected);
         }
-        //  WaitProbe/TriggerProbe dead code was here; replaced by FaF listener.
-        // Retained for rollback via #if 0 block at end of file.
     }
     return NULL;
 }
@@ -764,15 +729,6 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
 
     ctx->meta_dma_buf = spdk_zmalloc(META_DMA_BUF_SIZE, 2 * 1024 * 1024, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
 
-    ret = aclrtMallocHost((void**)&probe_flags, 64);
-    if (ret != ACL_SUCCESS) {
-        fprintf(stderr, "[Error] Failed to allocate probe flags.\n");
-        return -1;
-    }
-    probe_flags[0] = 0;
-    // initialise probe_flags to unblock the first training step
-    probe_flags[1] = 1;
-    
     // launch the background listener thread
     ctx->stop_listener = 0;
     ctx->listener_started = false;
@@ -799,10 +755,6 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
 
     // stop the background thread before tearing down SPDK resources
     ctx->stop_listener = 1;
-    if (probe_flags) {
-        probe_flags[0] = 1; // wake the listener thread if it is sleeping
-        __sync_synchronize();
-    }
     if (ctx->listener_started) {
         pthread_join(ctx->listener_thread, NULL);
         ctx->listener_started = false;
@@ -903,36 +855,6 @@ io_task_t* create_io_tasks(int num_tasks, void **npu_ptrs, uint64_t *nvme_offset
     }
     return tasks;
 }
-
-/*
- * Submit one chunk to the NPU DMA engine.
- * Returns 0 on success, -1 if ring buffer full, -2 on ACL error.
- */
-/*
-int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
-    int buf_idx;
-    if (ring_pop(&ctx->free_ring, &buf_idx) != 0) return -1; // ring buffer full
-
-    task->buf_idx = buf_idx;
-    if (ctx->enable_profiling) task->ts_submit = get_time_us();
-
-    if (is_host) {
-        // Host buffer: plain memcpy to hugepage-backed DMA buffer
-        memcpy(ctx->pool[buf_idx].buf, task->npu_ptr, task->size);
-        if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
-        task->state = CHUNK_NPU_DONE; 
-    } else {
-        // NPU device memory: launch DMA copy
-        aclError ret = aclrtMemcpyAsync(ctx->pool[buf_idx].buf, task->size, task->npu_ptr, task->size, ACL_MEMCPY_DEVICE_TO_HOST, ctx->copy_stream);
-        if (ret != ACL_SUCCESS) {
-            ring_push(&ctx->free_ring, buf_idx); return -2;
-        }
-        aclrtRecordEvent(ctx->events[buf_idx], ctx->copy_stream);
-        task->state = CHUNK_NPU_COPYING;
-    }
-    return 0;
-}
-*/
 
 int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
     int buf_idx;
@@ -1041,17 +963,6 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
             io_task_t *task = &tasks[i];
             if (task->state == CHUNK_DONE) continue;
 
-            if (task->state == CHUNK_NPU_COPYING) {
-                aclrtEventStatus status;
-                aclError err = aclrtQueryEvent(ctx->events[task->buf_idx], &status);
-                if (err != ACL_SUCCESS) {
-                    task->state = CHUNK_DONE; completed_tasks++;
-                    ring_push(&ctx->free_ring, task->buf_idx); made_progress = true;
-                } else if (status == ACL_EVENT_RECORDED_STATUS_COMPLETE) {
-                    task->state = CHUNK_NPU_DONE; made_progress = true;
-                }
-            }
-
             if (task->state == CHUNK_NPU_DONE) {
                 int rc = submit_to_spdk(ctx, task, &completed_tasks);
                 if (rc == 0) {
@@ -1072,23 +983,7 @@ void process_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks
             uint64_t now = get_time_us();
             uint64_t stall_time = now - last_progress_time;
 
-            // Stage 1 (>50 ms no progress): force-sync stalled NPU event.
-            // Hardware may enter lazy-suspend or interrupt-coalescing
-            // states when the pipeline is under-utilised.
-            if (stall_time > 50000ULL && stall_time < 3000000ULL) {
-                for (int i = 0; i < submitted_to_npu; i++) {
-                    io_task_t *task = &tasks[i];
-                    if (task->state == CHUNK_NPU_COPYING) {
-                        // force-sync stalled event to unblock the pipeline
-                        aclrtSynchronizeEvent(ctx->events[task->buf_idx]);
-                        task->state = CHUNK_NPU_DONE;
-                        last_progress_time = get_time_us(); 
-                        break; 
-                    }
-                }
-            }
-
-            // Stage 2 (>3 s no progress): persistent hardware stall
+            // Persistent hardware stall (>3 s no progress)
             if (stall_time > 3000000ULL) {
                 fprintf(stderr, "\n[NPU-NVMe] Pipeline STALL detected (rank %d)\n", ctx->npu_id);
                 fprintf(stderr, "[NPU-NVMe] Completed: %d / Total: %d\n", completed_tasks, num_tasks);
@@ -1380,7 +1275,6 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t to
 /* ---- Delta Frame I/O ---- */
 
 #define DELTA_MAGIC 0x414C5444  // "DLTA"
-#define DELTA_MAGIC_INIT 0x4E4E // Superblock delta-initialized marker
 #define DELTA_FRAME_HEADER_SIZE 4096
 
 int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size, uint32_t delta_slot_count) {
@@ -1394,7 +1288,6 @@ int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size, uint32_t 
     ctx->delta_area_offset = disk_bytes - total_delta_bytes;
     ctx->delta_slot_size = delta_slot_size;
     ctx->delta_slot_count = delta_slot_count;
-    ctx->delta_last_commit = (uint32_t)-1;  // -1 = no commits yet
 
     fprintf(stderr, "[NPU-NVMe] Delta area: offset=%lu (%lu GB) slots=%u x %lu MB = %lu MB\n",
             ctx->delta_area_offset, ctx->delta_area_offset / (1024*1024*1024),

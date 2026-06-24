@@ -60,9 +60,6 @@ try:
     if hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
         lib.npu_nvme_set_probe_flag_ptr.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
         lib.npu_nvme_set_probe_flag_ptr.restype = ctypes.c_int
-    if hasattr(lib, "npu_nvme_trigger_probe"):
-        lib.npu_nvme_trigger_probe.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-        lib.npu_nvme_trigger_probe.restype = ctypes.c_int
     if hasattr(lib, "npu_nvme_set_probe_flag_value"):
         lib.npu_nvme_set_probe_flag_value.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.c_uint32]
         lib.npu_nvme_set_probe_flag_value.restype = ctypes.c_int
@@ -366,98 +363,10 @@ def apply_delta_patches(init_weights, block_patches, small_patches, block_size):
     return w
 
 
-# -- Delta frame I/O classes --------------------------------------------------------------------
-
-class I3DeltaWriter:
-    """SPDK-backed incremental checkpoint writer.
-
-    Uses host-side buffer → npu_nvme_write_delta → NVMe delta ring.
-    Reuses the module-level C library bindings.
-    """
-    def __init__(self, ctx, delta_slot_size=256*1024*1024, delta_slot_count=128):
-        self.ctx = ctx
-        self.slot_size = delta_slot_size
-        self.slot_count = delta_slot_count
-
-        # Reuse module-level lib (no separate CDLL load)
-        rc = lib.npu_nvme_delta_init(ctx, delta_slot_size, delta_slot_count)
-        if rc != 0:
-            raise RuntimeError(f"Delta init failed (rc={rc})")
-
-        self.next_slot = 0
-        self.step_map = {}   # step_id → slot_idx
-        self.frame_sizes = []
-
-    @property
-    def area_offset(self):
-        return lib.npu_nvme_delta_get_area_offset(self.ctx)
-
-    def write_frame(self, step_id, block_patches, small_patches):
-        """Serialize and write one delta frame to next slot. Returns slot_idx."""
-        frame = pack_delta_frame(step_id, block_patches, small_patches)
-        total_bytes = len(frame)
-
-        if total_bytes > self.slot_size:
-            raise ValueError(f"Frame {total_bytes} bytes > slot {self.slot_size} bytes!")
-
-        slot_idx = self.next_slot % self.slot_count
-
-        buf = ctypes.create_string_buffer(frame, total_bytes)
-        rc = lib.npu_nvme_write_delta(self.ctx, slot_idx,
-                                       ctypes.c_void_p(ctypes.addressof(buf)),
-                                       total_bytes)
-        if rc != 0:
-            raise RuntimeError(f"Delta write failed at slot {slot_idx} (rc={rc})")
-
-        self.step_map[step_id] = slot_idx
-        self.next_slot += 1
-        self.frame_sizes.append(total_bytes)
-
-        return slot_idx
-
-    def read_frame(self, slot_idx):
-        """Read a delta frame from NVMe. Returns (step_id, block_patches, small_patches)."""
-        buf = ctypes.create_string_buffer(self.slot_size)
-        rc = lib.npu_nvme_read_delta(
-            self.ctx, slot_idx,
-            ctypes.c_void_p(ctypes.addressof(buf)),
-            self.slot_size)
-        if rc != 0:
-            raise RuntimeError(f"Delta read failed at slot {slot_idx} (rc={rc})")
-
-        # Parse header to get actual frame size
-        magic, total_sz = struct.unpack_from("<I", buf.raw, 0)[0], struct.unpack_from("<I", buf.raw, 16)[0]
-        if magic != DELTA_MAGIC:
-            raise RuntimeError(f"Delta read at slot {slot_idx}: bad magic 0x{magic:08x}")
-        frame = buf.raw[:total_sz]
-        return unpack_delta_frame(frame)
-
-    def get_slot_range(self, start_step, end_step):
-        """Get list of slot indices between start_step and end_step (inclusive)."""
-        slots = []
-        for s in range(start_step, end_step + 1):
-            if s in self.step_map:
-                slots.append(self.step_map[s])
-        return slots
-
-    @property
-    def stats(self):
-        return {
-            "total_frames": len(self.frame_sizes),
-            "total_bytes": sum(self.frame_sizes),
-            "total_mb": sum(self.frame_sizes) / (1024*1024),
-            "avg_kb": (sum(self.frame_sizes) / max(len(self.frame_sizes), 1)) / 1024,
-            "max_kb": max(self.frame_sizes) / 1024 if self.frame_sizes else 0,
-            "slots_used": self.next_slot,
-            "slot_capacity": self.slot_count,
-        }
-
-    def close(self):
-        pass
-
+# -- Filesystem-backed delta writer ----------------------------------------------------------------
 
 class FileDeltaWriter:
-    """Filesystem-backed delta writer. Same API as I3DeltaWriter.
+    """Filesystem-backed delta writer.
 
     Uses a ring of files under delta_dir. No SPDK/NVMe dependency.
     """
@@ -601,17 +510,14 @@ trigger_op_info = CustomRegOp("TriggerProbe") \
     .get_op_info()
 
 class ProbeTrainOneStepCell(nn.Cell):
-    """Training cell with optional step_counter injection for the FaF listener.
+    """Training cell with optional FaF step_counter injection.
 
-    DEPRECATED (WaitProbe params): ``flag``, ``expected``, ``wait_probe``,
-    and ``trigger_probe`` are created when ``enable_probe=True`` but are NOT
-    used in the GE graph.  They exist only as HBM scratch space for legacy
-    experiment scripts that poll them from Python callbacks.  These will be
-    removed once all callers migrate to the FaF step_counter-only path.
+    When enable_probe=True, the GE graph increments a step_counter Parameter
+    each training step.  The C-layer background listener polls step_counter
+    via aclrtMemcpy and triggers SPDK writes autonomously.
     """
 
-    def __init__(self, network, optimizer, so_path, flag_addr, enable_probe=True, probe_mode="full",
-                 ckpt_interval=10):
+    def __init__(self, network, optimizer, enable_probe=True, ckpt_interval=10):
         super().__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
@@ -621,31 +527,17 @@ class ProbeTrainOneStepCell(nn.Cell):
         self.enable_probe = enable_probe
         self.depend = ops.Depend()
         self.hyper_map = HyperMap()
-
-        self.probe_mode = probe_mode
         self.ckpt_interval = ckpt_interval
 
         if self.enable_probe:
-            # DEPRECATED: WaitProbe flag/expected — unused in graph, kept for
-            # legacy callers that poll them from Python (train_gpt2_spdk.py et al.)
+            # Probe flag device pointer for the C-layer listener.
             self.flag = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="probe_flag")
-            self.expected = ms.Parameter(ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="probe_expected")
-            self.wait_probe = ops.Custom("WaitProbe", out_shape=[1], out_dtype=ms.uint32,
-                                         func_type="aicpu", reg_info=wait_op_info)
 
             # FaF step_counter: injected into the GE graph so the C-layer
-            # listener can poll it via aclrtMemcpy.  This is the active path.
+            # listener can poll it via aclrtMemcpy.
             self.step_counter = ms.Parameter(
                 ms.Tensor([0], dtype=ms.int32), requires_grad=False, name="step_counter")
             self.one_i32 = Tensor([1], dtype=ms.int32)
-            self.interval_i32 = Tensor([ckpt_interval], dtype=ms.int32)
-
-            # DEPRECATED: WaitProbe trigger_buf — unused in graph
-            self.trigger_buf = ms.Parameter(
-                ms.Tensor([0], dtype=ms.uint32), requires_grad=False, name="trigger_buf")
-            self.trigger_probe = ops.Custom(
-                "TriggerProbe", out_shape=[1], out_dtype=ms.int32,
-                func_type="aicpu", reg_info=trigger_op_info)
 
     def construct(self, *inputs):
         if not self.enable_probe:
@@ -940,19 +832,6 @@ class DirectCheckpoint:
         self.write_probe_flag_dev(orig)
         print(f"[DirectCkpt] probe flag selftest: orig={orig}, after={after}")
 
-    def trigger_probe(self):
-        """DEPRECATED: trigger the C-layer listener via probe_flags[0]=1.
-
-        This is the old WaitProbe synchronisation path used by
-        train_gpt2_spdk.py, spdk_end_to_end.py, and sink_test.py.
-        New code should use the FaF step_counter listener instead.
-        """
-        if not hasattr(lib, "npu_nvme_trigger_probe"):
-            raise RuntimeError("npu_nvme_trigger_probe is not available in the C library.")
-        rc = lib.npu_nvme_trigger_probe(self.ctx)
-        if rc != 0:
-            raise RuntimeError(f"npu_nvme_trigger_probe failed with rc={rc}")
-
     def set_probe_flag_value(self, value: int):
         """Set probe flag via C to avoid cross-stream races."""
         if not hasattr(lib, "npu_nvme_set_probe_flag_value"):
@@ -1189,10 +1068,7 @@ class DirectCheckpoint:
             
         print(f"[DirectCkpt] Rank {self.rank_id} Successfully registered {num_items} tensor pointers to SPDK background thread.")
 
-    def save(self, model: ms.nn.Cell, step: int, meta_path: str = "checkpoint_meta.pkl", async_save: bool = False, commit_meta: bool = True):
-        if async_save:
-            return self.save_async(model, step, meta_path, commit_meta)
-
+    def save(self, model: ms.nn.Cell, step: int, meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True):
         t_start = time.perf_counter()
         
         # -- T_Prep: framework traversal and pointer resolution --
@@ -1340,81 +1216,6 @@ class DirectCheckpoint:
         # Timing data is printed from the background thread; return values are for API compatibility only
         return 0, len(dev_chunks) + len(host_chunks), 0.0, 0.0, {"prep_time": T_Prep, "layout_time": T_Layout}
 
-    def save_async(self, models, step: int, meta_path: str, commit_meta: bool = True):
-        t_start = time.time()
-        if self.async_thread and self.async_thread.is_alive():
-            self.async_thread.join()
-            
-        t_wait = time.time()
-        models_list = [models] if not isinstance(models, (list, tuple)) else models
-        host_snapshot = []
-        total_bytes_copied = 0
-        
-        for model in models_list:
-            if model is None or not hasattr(model, "parameters_and_names"): continue
-            for name, p in model.parameters_and_names():
-                if not hasattr(p, "asnumpy"): continue
-                np_arr = p.asnumpy()
-                total_bytes_copied += np_arr.nbytes
-                host_snapshot.append({
-                    "name": name, "np_arr": np_arr, "ptr": np_arr.ctypes.data,
-                    "size": np_arr.nbytes, "shape": list(p.shape), "dtype": str(np_arr.dtype.name)
-                })
-        
-        t_snapshot = time.time()
-        snapshot_time = max(t_snapshot - t_wait, 0.0001)
-        snapshot_bw = total_bytes_copied / 1024 / 1024 / snapshot_time
-        
-        self.async_thread = threading.Thread(
-            target=self._background_write_worker,
-            args=(host_snapshot, meta_path, total_bytes_copied, step, commit_meta)
-        )
-        self.async_thread.start()
-        
-        return total_bytes_copied, len(host_snapshot), snapshot_time, snapshot_bw, {
-            "prep_time": t_wait - t_start, "write_time": 0.0,
-            "total_time": snapshot_time, "bw_pure": snapshot_bw, "bw_e2e": snapshot_bw
-        }
-
-    def _background_write_worker(self, snapshot_params, meta_path, total_size, step, commit_meta):
-        t0 = time.time()
-        try:
-            base_offset_bytes = self._get_current_slot_base_offset(step)
-            current_offset = base_offset_bytes
-            layout = []
-            
-            for p in snapshot_params:
-                aligned_bytes = int(math.ceil(p["size"] / 4096.0)) * 4096
-                p["offset"] = current_offset
-                layout.append(p)
-                current_offset += aligned_bytes
-                
-            chunks, total = build_chunks(layout, self.chunk_size)
-            
-            num = len(chunks)
-            c_ptrs = (ctypes.c_void_p * num)()
-            c_offs = (ctypes.c_uint64 * num)()
-            c_sizes = (ctypes.c_size_t * num)()
-            for i, (p, o, s) in enumerate(chunks):
-                c_ptrs[i] = p; c_offs[i] = ctypes.c_uint64(o.value); c_sizes[i] = s
-                
-            if hasattr(lib, "npu_nvme_write_batch_host"):
-                rc = lib.npu_nvme_write_batch_host(self.ctx, c_ptrs, c_offs, c_sizes, num)
-            else:
-                rc = -1
-            if rc != 0: return
-
-            self.last_layout = layout
-
-            if commit_meta:
-                self._commit_metadata(step, layout)
-            
-            with open(meta_path, "wb") as f:
-                pickle.dump(self.meta_dict, f)
-                
-        except Exception as e:
-            print(f"[AsyncWorker] Exception: {e}", flush=True)
-
     def load(self, model: ms.nn.Cell, step: int = None, meta_path: str = "checkpoint_meta.pkl"):
         t_start = time.time()
 
@@ -1488,10 +1289,6 @@ class DirectCheckpoint:
         if hasattr(self, 'async_thread') and self.async_thread and self.async_thread.is_alive():
             self.async_thread.join()
 
-    def commit_last_layout(self, step: int):
-        if self.rank_id == 0 and hasattr(self, 'last_layout'):
-            self._commit_metadata(step, self.last_layout)
-
     def close(self):
         if not getattr(self, '_closed', True) and hasattr(self, 'ctx') and self.ctx:
             print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down NPUNVME context...", flush=True)
@@ -1550,7 +1347,6 @@ class DirectCheckpoint:
         # Wait for any background full-checkpoint I/O to finish.
         # Both full and delta I/O share the same SPDK qpair; concurrent writes would fail.
         self.wait_for_io_completion()
-        # Also join the save_async thread if present
         self.wait_async_io()
 
         frame = pack_delta_frame(step, block_patches, small_patches)

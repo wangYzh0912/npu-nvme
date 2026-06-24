@@ -94,9 +94,6 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
 /** @brief Set the NPU-side probe-flag device address. */
 int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
 
-/** @brief DEPRECATED: trigger the listener via probe_flags[0]=1. */
-int npu_nvme_trigger_probe(NPUNVMEContext *ctx);
-
 int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
 
 /**

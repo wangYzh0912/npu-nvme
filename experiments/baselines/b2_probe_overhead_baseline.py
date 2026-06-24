@@ -61,8 +61,7 @@ opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
 from direct_checkpoint import ProbeTrainOneStepCell, DirectCheckpoint
 import direct_checkpoint as dc
 
-cell = ProbeTrainOneStepCell(model, opt, None, 0,
-                             enable_probe=True, probe_mode="end",
+cell = ProbeTrainOneStepCell(model, opt, enable_probe=True,
                              ckpt_interval=CKPT_INTERVAL)
 
 dummy = Tensor(np.zeros((1, SEQ_LEN), dtype=np.int32), ms.int32)

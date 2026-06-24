@@ -68,12 +68,12 @@ class CellMinimal(nn.Cell):
 
 # --- Cell (b): Probe cell with enable_probe=False ---
 def CellNoProbe(net, opt):
-    return ProbeTrainOneStepCell(net, opt, None, 0, enable_probe=False, probe_mode="end")
+    return ProbeTrainOneStepCell(net, opt, enable_probe=False)
 
 
 # --- Cell (c): Full WaitProbe ---
 def CellFullProbe(net, opt):
-    return ProbeTrainOneStepCell(net, opt, None, 0, enable_probe=True, probe_mode="end")
+    return ProbeTrainOneStepCell(net, opt, enable_probe=True)
 
 
 def measure(cell, x, label):

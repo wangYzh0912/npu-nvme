@@ -89,7 +89,7 @@ def main():
     # enable_probe=False → construct() uses pure training branch
     # No step_counter, no C listener, no SPDK, no DirectCheckpoint
     train_cell = ProbeTrainOneStepCell(
-        base_model, optimizer, None, 0, enable_probe=False, probe_mode="end")
+        base_model, optimizer, None, 0, enable_probe=False)
     cb = BaselineCallback()
     ms_model = ms.Model(train_cell)
 
