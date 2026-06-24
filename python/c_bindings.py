@@ -111,19 +111,19 @@ try:
         ]
         lib.npu_nvme_write_batch_host.restype = ctypes.c_int
 
-    # -- Delta frame I/O --
+    # -- Delta frame ring-buffer layout (bookkeeping only, no I/O) --
     if hasattr(lib, "npu_nvme_delta_init"):
         lib.npu_nvme_delta_init.argtypes = [
             ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint32]
         lib.npu_nvme_delta_init.restype = ctypes.c_int
-        lib.npu_nvme_write_delta.argtypes = [
-            ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
-        lib.npu_nvme_write_delta.restype = ctypes.c_int
-        lib.npu_nvme_read_delta.argtypes = [
-            ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
-        lib.npu_nvme_read_delta.restype = ctypes.c_int
         lib.npu_nvme_delta_get_area_offset.argtypes = [ctypes.c_void_p]
         lib.npu_nvme_delta_get_area_offset.restype = ctypes.c_uint64
+    if hasattr(lib, "npu_nvme_delta_get_slot_size"):
+        lib.npu_nvme_delta_get_slot_size.argtypes = [ctypes.c_void_p]
+        lib.npu_nvme_delta_get_slot_size.restype = ctypes.c_uint64
+    if hasattr(lib, "npu_nvme_delta_get_slot_count"):
+        lib.npu_nvme_delta_get_slot_count.argtypes = [ctypes.c_void_p]
+        lib.npu_nvme_delta_get_slot_count.restype = ctypes.c_uint32
 
 except OSError as e:
     print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")

@@ -254,52 +254,10 @@ static void test_delta_init(const char *pci_addr, int npu_id)
     PASS();
 }
 
-static void test_delta_write_read(const char *pci_addr, int npu_id)
-{
-    TEST("npu_nvme_write_delta + read_delta roundtrip");
-    NPUNVMEContext *ctx = NULL;
-    if (npu_nvme_init(&ctx, pci_addr, npu_id, 4, 4*1024*1024, false, ".") != 0) {
-        FAIL("init failed"); return;
-    }
-    if (npu_nvme_delta_init(ctx, 256ULL*1024*1024, 128) != 0) {
-        FAIL("delta_init failed"); npu_nvme_cleanup(ctx); return;
-    }
-
-    /* Build a minimal delta frame header: magic(4) + step_id(4) +
-     * n_blocks(4) + n_small(4) + total_sz(4) + checksum(4) = 24 bytes +
-     * zero payload.  The C layer reads the header to validate magic and
-     * determine the frame size. */
-    uint8_t frame[4096];
-    memset(frame, 0, sizeof(frame));
-    uint32_t magic    = 0x414C5444;  /* "DLTA" */
-    uint32_t step_id  = 42;
-    uint32_t n_blocks = 0;
-    uint32_t n_small  = 0;
-    uint32_t total_sz = 4096;
-    uint32_t checksum = 0;
-    memcpy(frame + 0,  &magic,    4);
-    memcpy(frame + 4,  &step_id,  4);
-    memcpy(frame + 8,  &n_blocks, 4);
-    memcpy(frame + 12, &n_small,  4);
-    memcpy(frame + 16, &total_sz, 4);
-    memcpy(frame + 20, &checksum, 4);
-
-    if (npu_nvme_write_delta(ctx, 0, frame, total_sz) != 0) {
-        FAIL("delta write failed"); npu_nvme_cleanup(ctx); return;
-    }
-
-    uint8_t read_buf[4096];
-    int nread = npu_nvme_read_delta(ctx, 0, read_buf, sizeof(read_buf));
-    if (nread != 0) {  /* read_delta returns 0 on success, not bytes */
-        FAIL("delta read failed (rc=%d)", nread); npu_nvme_cleanup(ctx); return;
-    }
-    if (memcmp(frame, read_buf, total_sz) != 0) {
-        FAIL("delta data mismatch"); npu_nvme_cleanup(ctx); return;
-    }
-
-    npu_nvme_cleanup(ctx);
-    PASS();
-}
+/* Delta write/read testing moved to Python side.
+ * Use the DirectCheckpoint.delta_save / delta_load_slot roundtrip
+ * which exercises build_chunks_host + write_batch_host / read_batch
+ * through the SPSC ring-buffer pipeline. */
 #endif /* HAS_NPU */
 
 
@@ -333,7 +291,6 @@ int main(int argc, char **argv)
         test_get_max_transfer(pci_addr, npu_id);
         test_sync_meta_io(pci_addr, npu_id);
         test_delta_init(pci_addr, npu_id);
-        test_delta_write_read(pci_addr, npu_id);
 #else
         printf("  (skipped — compiled without HAS_NPU; rebuild with -DHAS_NPU "
                "on the target server)\n");

@@ -26,9 +26,10 @@
 #define MAX_PIPE_DEPTH   16
 #define ALIGN_4K(x)      (((x) + 4095ULL) & ~4095ULL)
 
-/* Dedicated buffer for superblock & JSON ledger I/O; 64 MB covers all
- * realistic metadata sizes including future delta ledger expansion. */
-#define META_DMA_BUF_SIZE (64 * 1024 * 1024)
+/* Dedicated buffer for superblock & JSON metadata I/O.
+ * Delta frames now use the standard SPSC ring-buffer pipeline via
+ * write_batch_host / read_batch — no separate buffer needed. */
+#define META_DMA_BUF_SIZE (1 * 1024 * 1024)
 
 /* ---- Hugepage pool auto-expansion for DPDK/SPDK ---- */
 /* The NPU driver reserves all boot-time hugepages (typically 8544 x 2 MB
@@ -1274,9 +1275,6 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset, uint32_t to
 
 /* ---- Delta Frame I/O ---- */
 
-#define DELTA_MAGIC 0x414C5444  // "DLTA"
-#define DELTA_FRAME_HEADER_SIZE 4096
-
 int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size, uint32_t delta_slot_count) {
     if (!ctx || delta_slot_size == 0 || delta_slot_count == 0) return -1;
 
@@ -1309,47 +1307,6 @@ uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx) {
     return ctx ? ctx->delta_slot_count : 0;
 }
 
-int npu_nvme_write_delta(NPUNVMEContext *ctx, int slot_idx,
-                         const void *data, uint32_t total_bytes) {
-    if (!ctx || !data || total_bytes == 0) return -1;
-    if (slot_idx < 0 || (uint32_t)slot_idx >= ctx->delta_slot_count) {
-        fprintf(stderr, "[NPU-NVMe] Delta write: invalid slot %d (max %u)\n",
-                slot_idx, ctx->delta_slot_count);
-        return -1;
-    }
-    if (total_bytes > ctx->delta_slot_size) {
-        fprintf(stderr, "[NPU-NVMe] Delta write: %u bytes exceeds slot size %lu\n",
-                total_bytes, ctx->delta_slot_size);
-        return -1;
-    }
-
-    uint64_t byte_offset = ctx->delta_area_offset + (uint64_t)slot_idx * ctx->delta_slot_size;
-    return npu_nvme_sync_meta_io(ctx, byte_offset, total_bytes, 0, (void*)data);
-}
-
-int npu_nvme_read_delta(NPUNVMEContext *ctx, int slot_idx,
-                        void *out_buf, uint32_t max_bytes) {
-    if (!ctx || !out_buf || max_bytes == 0) return -1;
-    if (slot_idx < 0 || (uint32_t)slot_idx >= ctx->delta_slot_count) return -1;
-
-    uint64_t byte_offset = ctx->delta_area_offset + (uint64_t)slot_idx * ctx->delta_slot_size;
-    // Read header first to get actual size
-    uint8_t header[DELTA_FRAME_HEADER_SIZE];
-    int rc = npu_nvme_sync_meta_io(ctx, byte_offset, DELTA_FRAME_HEADER_SIZE, 1, header);
-    if (rc != 0) return -1;
-
-    // Parse header: magic(4) + step_id(4) + n_blocks(4) + n_small(4) + total_sz(4) + checksum(4) = 24 bytes
-    uint32_t magic = *(uint32_t*)&header[0];
-    if (magic != DELTA_MAGIC) {
-        fprintf(stderr, "[NPU-NVMe] Delta read: slot %d invalid magic 0x%x\n", slot_idx, magic);
-        return -1;
-    }
-    uint32_t total_sz = *(uint32_t*)&header[16];
-    if (total_sz > max_bytes) {
-        fprintf(stderr, "[NPU-NVMe] Delta read: frame %u bytes > buffer %u bytes\n", total_sz, max_bytes);
-        return -1;
-    }
-
-    // Re-read full frame
-    return npu_nvme_sync_meta_io(ctx, byte_offset, total_sz, 1, out_buf);
-}
+/* Delta frame write/read: moved to Python side via build_chunks_host +
+ * write_batch_host / read_batch.  The C layer only provides delta_init
+ * and the delta_get_* query functions (for slot layout calculation). */

@@ -128,29 +128,9 @@ uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx);
 uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx);
 uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
 
-/**
- * @brief Write one delta frame to a delta ring slot (host buffer -> NVMe).
- *
- * @param ctx         context handle
- * @param slot_idx    slot index (0 .. slot_count-1)
- * @param data        host-side frame buffer
- * @param total_bytes frame size in bytes
- * @return 0 on success, -1 on error
- */
-int npu_nvme_write_delta(NPUNVMEContext *ctx, int slot_idx,
-                         const void *data, uint32_t total_bytes);
-
-/**
- * @brief Read one delta frame from a delta ring slot (NVMe -> host buffer).
- *
- * @param ctx       context handle
- * @param slot_idx  slot index
- * @param out_buf   host-side output buffer
- * @param max_bytes size of out_buf
- * @return actual bytes read on success, -1 on error
- */
-int npu_nvme_read_delta(NPUNVMEContext *ctx, int slot_idx,
-                        void *out_buf, uint32_t max_bytes);
+/* Delta frame I/O: migrated to Python side via build_chunks_host +
+ * write_batch_host / read_batch.  The SPSC ring-buffer pipeline handles
+ * arbitrary frame sizes without the 64 MB sync_meta_io limitation. */
 
 #ifdef __cplusplus
 }
