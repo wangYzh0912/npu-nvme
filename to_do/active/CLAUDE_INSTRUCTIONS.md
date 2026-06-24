@@ -7,19 +7,39 @@
 
 ## 零、当前会话任务 (2026-06-27)
 
-1. Phase A: NPU 服务器重构验证 (编译 + 测试)
+1. Phase A: NPU 服务器重构验证 — `bash scripts/verify_phaseA.sh`
 2. Phase B: I3 Step 3 全路径打通 (图内 delta + FaF + SPDK)
-3. to_do/ 整理: 合并旧计划, 更新 STATUS_SUMMARY
+3. to_do/ 已整理完毕 — active/4 文件 + archive/17 文件
+
+### 重要: 2026-06-24 重构变更摘要
+
+**Python**:
+- `direct_checkpoint.py` 拆分为 8 个模块。所有旧 import 通过重新导出保持兼容。
+- `delta_save()` / `delta_load_slot()` 不再用 `npu_nvme_write_delta` (删除)，改用 ring buffer pipeline。
+- `export_model.py` 写路径修正为 `write_batch_host`。
+- 新增 `experiments/common.py`: `make_gpt2xl_training`, `setup_faf_checkpointing`, `make_ckpt`, `StepTimer`, `EpochTimer`, `init_env`。
+
+**C**:
+- `npu_nvme.c` 使用 `include/internal/` 头文件。子结构体: `ctx->acl.*`, `ctx->dma.*`, `ctx->listener.*`, `ctx->delta.*`。
+- 公共 API 16 函数 (删除 `write_delta`/`read_delta`)。
+- `meta_dma_buf` 从 64MB 缩小到 1MB。Profiling CSV 统一为 `write_profiling_csv()`。
+- 修复: 双重 `if (enable_profiling)` bug (read_batch line 1198)。
+
+**验证清单** (服务器上):
+```
+git pull && bash scripts/verify_phaseA.sh
+# A.1-A.7: 编译 → 测试 → Python 导入 → FULL roundtrip → Delta >64MB
+```
 
 ## 一、项目核心信息
 
-### 1.1 我是谁
+### 1.1 项目身份
 
 - **项目**: NPU-NVMe 增量检查点系统 (硕士论文项目)
 - **平台**: Ascend 910B NPU + SPDK 用户态 NVMe 驱动
-- **核心叙事**: 三大创新点 (I1: SPDK 高 IOPS, I2: FaF 设备侧轮询同步, I3: Vector Engine 增量管线)
+- **核心叙事**: 三大创新点 (I1: SPDK, I2: FaF 设备侧轮询, I3: Vector Engine 增量管线)
 
-### 1.2 代码结构 (2026-06-24 最终)
+### 1.2 代码结构 (2026-06-27)
 
 ```
 python/
@@ -51,7 +71,7 @@ to_do/
   archive/               17 个归档文档
 ```
 
-### 1.2 关键约束
+### 1.3 关键约束
 
 | 约束 | 值 |
 |------|-----|
@@ -66,20 +86,32 @@ to_do/
 | NPU device | 1 |
 | SPDK shm_id | 80 |
 
-### 1.3 核心文件位置
+### 1.4 核心文件位置 (2026-06-24 重构后)
 
 ```
-python/direct_checkpoint.py     — DirectCheckpoint 主类 (1362行) + ProbeTrainOneStepCell
-python/i3_delta_writer.py       — Delta 帧打包/解包 + FileDeltaWriter
-src/npu_nvme.c                  — C 层 SPDK init + DMA + 大页 + Delta API (1622行)
-include/npu_nvme.h              — C API 头文件
-experiments/baselines/benchmark/          — Step 1: 基准测试 (1a/1b/1c)
-experiments/baselines/step2_demo/         — Step 2: 图内量化可行性 demo
-experiments/baselines/step2b_recovery_validation/  — Step 2b: 断点续传验证
-experiments/baselines/step3_e2e/          — Step 3: 全路径打通 (待创建)
-to_do/IMPLEMENTATION_PLAN.md    — 正式实现计划 (不可变部分)
-to_do/STATUS_SUMMARY.md         — 项目进度总结 (最新)
-to_do/CLAUDE_INSTRUCTIONS.md    — 本文件
+python/direct_checkpoint.py     DirectCheckpoint 类 (~800 行) + 重新导出 (入口)
+python/disk_layout.py           裸盘偏移常量
+python/c_bindings.py            C 库 ctypes 绑定
+python/chunk_helpers.py         build_chunks / build_chunks_host / build_ctypes_arrays
+python/delta_protocol.py        pack/unpack/apply delta + FileDeltaWriter
+python/noop_init.py             NoOpInitializer 快速初始化
+python/training_cell.py         ProbeTrainOneStepCell (FaF step_counter)
+python/_legacy_compat.py        DEPRECATED: WaitProbe 遗留符号
+python/profiler.py              SpdkProfiler 统一性能监控
+
+src/npu_nvme.c                  C 引擎 (894 行, 重构后 -460 行)
+src/test_npu_nvme.c             测试 (279 行)
+include/npu_nvme.h              公共 API (16 函数)
+include/internal/               内部头文件 (ring_buffer/io_task/pipeline/context)
+
+experiments/common.py           共享测试工具 (5 函数)
+scripts/verify_phaseA.sh        Phase A 服务器验证脚本
+
+to_do/active/
+  IMPLEMENTATION_PLAN.md        合并版实现计划 (Step 3 + E0-E3 实验)
+  ARCHITECTURE_ROADMAP.md       代码结构速览
+  STATUS_SUMMARY.md             进度摘要
+  CLAUDE_INSTRUCTIONS.md        本文件
 ```
 
 ---
@@ -162,12 +194,19 @@ to_do/CLAUDE_INSTRUCTIONS.md    — 本文件
 | D6 | FULL ckpt 同步阻塞在 epoch 边界 | 2026-06-17 |
 | D7 | 恢复从 FULL ckpt (SPDK DMA) 开始 + delta chain | 2026-06-17 |
 
-### 3.6 当前阻塞项
+### 3.6 已解决/已知限制
 
-- MS 2.5 `tensor_scatter_update` INT8 GRAPH_MODE bug → P_old 更新降级到 host
-- MS 2.5 PYNATIVE `value_and_grad` + GPT-2 XL → NaN → 必须使用 GRAPH_MODE
-- 大页问题已解决 (`ensure_hugepages()`)
-- SPDK delta write 64MB DMA buffer 限制已通过 `write_batch` 绕过
+| 项目 | 状态 | 说明 |
+|------|:---:|------|
+| SPDK delta 64MB 限制 | ✅ 已解决 | Phase 0a: `delta_save()` 改用 `build_chunks_host` + `write_batch_host` |
+| SPDK 大页泄漏 | ✅ 已解决 | Phase 0: `close()` 默认值 + `_spdk_initialized` 守卫 |
+| `lib` undefined (无 .so) | ✅ 已解决 | Phase 0 fix: `except` 块中 `lib = None` |
+| `delta_save()` 悬垂指针 | ✅ 已解决 | Phase 0 fix: 命名 `frame_buf` 变量 |
+| 双重 `if (enable_profiling)` | ✅ 已解决 | Phase 2: 统一 `write_profiling_csv()` |
+| P_old 图内更新 (ScatterUpdate) | ⚠️ MS 2.5 bug | D-I3.2: 改用全量 Assign 绕过 |
+| PYNATIVE `value_and_grad` NaN | ⚠️ MS 2.5 bug | 必须使用 GRAPH_MODE |
+| C 编译 (no SPDK/NPU on dev) | ⚠️ 待服务器验证 | `scripts/verify_phaseA.sh` |
+| `nn.AdamWeightDecay` → `AdamW` | 🔲 延期 | MS 2.9+ 强制迁移
 
 ---
 
@@ -210,13 +249,31 @@ cd $REPO && echo "CGCL_2025_#$" | sudo -S chown -R user7:user7 .git/objects && \
 
 ---
 
-## 五、相关文档索引
+## 五、文档索引
+
+### active/ (当前活跃)
 
 | 文档 | 说明 |
 |------|------|
-| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | 三步实现计划 (不可变部分，v2.1) |
-| [STATUS_SUMMARY.md](STATUS_SUMMARY.md) | 项目进度总结 (最新) |
-| [DEVELOPMENT_PLAN.md](../DEVELOPMENT_PLAN.md) | 完整开发规划 |
-| [PHASE2B_DESIGN.md](PHASE2B_DESIGN.md) | Phase 2b I3 增量管线设计 |
-| [BASELINE_ANALYSIS_2026-06-17.md](BASELINE_ANALYSIS_2026-06-17.md) | 基准配置与数据质量分析 |
-| [DELTA_PIPELINE_CPU_VS_NPU_ANALYSIS.md](DELTA_PIPELINE_CPU_VS_NPU_ANALYSIS.md) | CPU vs NPU 计算负载分析 |
+| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | **合并版实现计划** — Step 1/2/3 + E0-E3 论文实验矩阵 |
+| [ARCHITECTURE_ROADMAP.md](ARCHITECTURE_ROADMAP.md) | 代码结构速览 + API 清单 |
+| [STATUS_SUMMARY.md](STATUS_SUMMARY.md) | 项目进度摘要 (最新) |
+| [CLAUDE_INSTRUCTIONS.md](CLAUDE_INSTRUCTIONS.md) | 本文件 — 会话恢复 + 环境信息 |
+
+### archive/ (参考)
+
+| 文档 | 说明 |
+|------|------|
+| `archive/I1_SPDK_plan.md` | SPDK 模块设计与 E1 实验 |
+| `archive/I2_FaF_plan.md` | FaF 监听器设计与 E2 实验 |
+| `archive/I3_VectorEngine_plan.md` | I3 增量管线设计与 E3 实验 |
+| `archive/PHASE5_FINAL_PLAN.md` | 实验优先级与执行顺序 |
+| `archive/DELTA_PIPELINE_CPU_VS_NPU_ANALYSIS.md` | CPU vs NPU 计算负载分析 |
+
+### 根目录
+
+| 文档 | 说明 |
+|------|------|
+| `C:\Users\wyf\.claude\plans\...` | **完整架构演进路线图** (Claude plan file) |
+| `scripts/verify_phaseA.sh` | Phase A 服务器验证脚本 |
+| `STYLE_GUIDE.md` | 代码规范 |
