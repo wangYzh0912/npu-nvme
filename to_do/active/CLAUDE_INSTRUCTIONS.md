@@ -1,17 +1,29 @@
 # Claude 会话指令与上下文恢复
 
-> 创建: 2026-06-17 | 最后更新: 2026-06-24 (重构完成, 待服务器验证)
-> 状态: **Phase A 服务器验证 → Phase B(I3 Step 3)**
+> 创建: 2026-06-17 | 最后更新: 2026-06-24 (Phase 0-2 完成, Step 3 详细设计完成)
+> 状态: **Step 3 待实现 → Phase C 论文实验**
 
 ---
 
-## 零、当前会话任务 (2026-06-27)
+## 零、当前会话任务 (2026-06-24)
 
-1. Phase A: NPU 服务器重构验证 — `bash scripts/verify_phaseA.sh`
-2. Phase B: I3 Step 3 全路径打通 (图内 delta + FaF + SPDK)
-3. to_do/ 已整理完毕 — active/4 文件 + archive/17 文件
+1. ~~服务器验证~~ ✅ 全部通过 (C 25/25 + A.5/A.6/A.7 + Step 1c)
+2. 增量检查点详细设计完成 → [DELTA_CHECKPOINT_DESIGN.md](DELTA_CHECKPOINT_DESIGN.md)
+3. 增量检查点全路径打通 (待实现)
 
-### 重要: 2026-06-24 重构变更摘要
+### 重要: 2026-06-24 验证结果
+
+| 测试 | 结果 | 说明 |
+|------|:---:|------|
+| C 编译 (with HAS_NPU) | ✅ | 2 warnings (deprecated API) |
+| Pure-logic tests | **10/10** | ring buffer, ALIGN_4K, constants |
+| Hardware integration tests | **15/15** | init/cleanup/capacity/max_transfer/meta_io/delta |
+| A.5 Python imports | ✅ | 全部模块导入成功 |
+| A.6 FULL ckpt roundtrip | ✅ | save→load→cleanup 通过 |
+| A.7 Delta >64MB roundtrip | ✅ | 150MB × 300 blocks 逐字节验证 |
+| Step 1c SPDK BW | **3790 MB/s** | 2.90 GB / 784ms, pipeline_depth=8 |
+
+修复的 Bug: verify_phaseA.sh import, chunk_size 类型统一, probe_cb 返回类型, pipeline.h SPDK 前向声明, c_bindings 模块名, delta read_batch_host
 
 **Python**:
 - `direct_checkpoint.py` 拆分为 8 个模块。所有旧 import 通过重新导出保持兼容。

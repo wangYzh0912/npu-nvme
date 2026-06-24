@@ -91,18 +91,20 @@ GE 图内 (construct, optimizer 后):
 
 ---
 
-## 五、进行中: Step 3 — I3 全路径打通 🔲
+## 五、进行中: 增量检查点全路径打通 🔄
+
+> 详细设计见 [DELTA_CHECKPOINT_DESIGN.md](DELTA_CHECKPOINT_DESIGN.md) (2026-06-24)
 
 ### 5.1 核心设计决策 (修订版, 2026-06-23)
 
 | # | 决策 | 理由 |
 |:---:|------|------|
-| D-I3.1 | P_old = INT8 HBM Parameter (~1.52 GB) | 模型 FP16 的 50%, HBM 占用可接受 |
-| D-I3.2 | P_old 每步**全量 Assign** 更新 (不 ScatterUpdate) | 绕开 MS 2.5 ScatterUpdate bug, ±1 bin 无累积误差 |
-| D-I3.3 | Delta = W_current - P_old (上一完整快照) | 每步独立 ±1 bin 误差, 不累积 |
-| D-I3.4 | **双量化路径**: 输出(Top-K→SPDK) + P_old(全量→Assign) | 一次前向完成全部增量计算 |
-| D-I3.5 | FaF listener 读 HBM quant_buf → write_batch → NVMe | 图内 Assign → FaF 异步持久化 |
-| D-I3.6 | FULL ckpt 同步阻塞在 epoch 边界 | 不干扰训练步 |
+| D1 | P_old = INT8 HBM Parameter (~1.52 GB) | 模型 FP16 的 50%, HBM 占用可接受 |
+| D2 | P_old 每步**全量 Assign** 更新 (不 ScatterUpdate) | 绕开 MS 2.5 ScatterUpdate bug, ±1 bin 无累积误差 |
+| D3 | Delta = W_current - P_old (上一完整快照) | 每步独立 ±1 bin 误差, 不累积 |
+| D4 | **双量化路径**: 输出(Top-K→SPDK) + P_old(全量→Assign) | 一次前向完成全部增量计算 |
+| D5 | FaF listener 读 HBM 输出缓冲 → write_batch → NVMe | 图内 Assign → FaF 异步持久化 |
+| D6 | FULL ckpt 同步阻塞在 epoch 边界 | 不干扰训练步 |
 
 ### 5.2 架构
 
@@ -124,14 +126,30 @@ Epoch 边界 callback:
 
 ### 5.3 实施步骤与验证
 
-| # | 任务 | 验证标准 |
-|:---:|------|------|
-| S3.1 | I3 Cell: Phase A-G 全部在图内 | GRAPH_MODE 编译, 不 OOM |
-| S3.2 | Phase F: P_old 全量 INT8 Assign | 跑 1 步后 P_old 非零, delta norms 非零 (Read-before-Write OK) |
-| S3.3 | 注册 quant/scales/idx buffers 到 FaF | register_tasks + set_step_ptr 无错 |
-| S3.4 | 单步 E2E | HBM buffer ptr 非零, delta norms 与 CPU 参考对比 |
-| S3.5 | 50 步训练 | I3 overhead **< 5%** vs baseline, PMU 验证 Vector 增量 |
-| S3.6 | 全恢复验证 | FULL + delta chain → NRMSE median **< 0.05** |
+| # | 任务 | 模块 | 验证标准 |
+|:---:|------|------|------|
+| S3.1 | I3TrainCell + analyze_model_layers | `python/i3_cell.py` (新建) | GRAPH_MODE 编译, 不 OOM |
+| S3.2 | build_layout_for_i3 + register_i3_tasks | `python/direct_checkpoint.py` (追加) | register_tasks 返回 0 |
+| S3.3 | setup_i3_faf + make_i3_training | `experiments/common.py` (追加) | 完整 FaF 接线 |
+| S3.4 | Step 3 E2E (6 项验证) | `experiments/step3/step3_e2e.py` (新建) | 见 STEP3_DESIGN.md §5.2 |
+| S3.5 | 文档更新 | `to_do/active/` | 设计文档 + 进度更新 |
+
+### 5.4 已实现 vs 待实现
+
+| 组件 | 状态 | 位置 |
+|------|:---:|------|
+| I3TrainCell (7-phase construct) | 🔲 待实现 | `python/i3_cell.py` |
+| analyze_model_layers | 🔲 待实现 | `python/i3_cell.py` |
+| build_layout_for_i3 | 🔲 待实现 | `python/direct_checkpoint.py` |
+| register_i3_tasks | 🔲 待实现 | `python/direct_checkpoint.py` |
+| setup_i3_faf | 🔲 待实现 | `experiments/common.py` |
+| make_i3_training | 🔲 待实现 | `experiments/common.py` |
+| step3_e2e.py (S3.1-S3.6) | 🔲 待实现 | `experiments/step3/` |
+| DirectCheckpoint (save/load/delta) | ✅ 已实现 | `python/direct_checkpoint.py` |
+| ProbeTrainOneStepCell | ✅ 已实现 | `python/training_cell.py` |
+| delta_protocol (pack/unpack/apply) | ✅ 已实现 | `python/delta_protocol.py` |
+| FaF listener (C) | ✅ 已实现 | `src/npu_nvme.c` |
+| C API (19 函数) | ✅ 已实现 | `include/npu_nvme.h` |
 
 ---
 

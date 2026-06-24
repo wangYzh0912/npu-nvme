@@ -28,9 +28,14 @@
 
 | 优先级 | 任务 | 预计 |
 |:---:|------|:---:|
-| **P0** | Phase A: 服务器验证 (`scripts/verify_phaseA.sh`) | 1h |
-| **P1** | Phase B: I3 Step 3 全路径打通 | 1-2d |
-| **P2** | Phase C: 论文实验 E0→E1/E2/E3 | 1-2w |
+| **P0** | ~~服务器验证~~ ✅ 已完成 (C 25/25 + A.5/A.6/A.7 + Step 1c) | — |
+| **P1** | 增量检查点全路径打通 (设计完成，待实现) | 1-2d |
+|        | → 详细设计: `DELTA_CHECKPOINT_DESIGN.md` | 
+|        | → 新增 `python/delta_cell.py` (DeltaTrainCell + analyze_model_layers) |
+|        | → 追加 `direct_checkpoint.py` (build_layout_for_delta, register_delta_tasks) |
+|        | → 追加 `common.py` (setup_delta_faf, make_delta_training) |
+|        | → 新建 `experiments/delta_e2e/` (E2E 测试) |
+| **P2** | 论文实验 E0→E1/E2/E3 | 1-2w |
 
 ## 文档索引
 
