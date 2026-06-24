@@ -1,6 +1,6 @@
 # Claude 会话指令与上下文恢复
 
-> 创建: 2026-06-17 | 最后更新: 2026-06-19 (Step 2b 完成)  
+> 创建: 2026-06-17 | 最后更新: 2026-06-24 (Phase 0a/0b/0c 完成)
 > 状态: **Step 3 全路径打通待开始**
 
 ---
@@ -11,7 +11,37 @@
 
 - **项目**: NPU-NVMe 增量检查点系统 (硕士论文项目)
 - **平台**: Ascend 910B NPU + SPDK 用户态 NVMe 驱动
-- **核心叙事**: 三大创新点 (I1: SPDK 高 IOPS, I2: WaitProbe 同步原语, I3: Vector Engine 增量管线) 构成统一增量检查点管线——用 NPU 闲置 Vector 算力在 GE 图内做 delta 检测+量化，结果 HBM→NVMe 直写，不抢训练算力
+- **核心叙事**: 三大创新点 (I1: SPDK 高 IOPS, I2: FaF 设备侧轮询同步, I3: Vector Engine 增量管线)
+
+### 1.2 代码结构 (2026-06-24 更新)
+
+```
+python/
+  direct_checkpoint.py   DirectCheckpoint 类 + 重新导出 (入口模块)
+  c_bindings.py          C 库 ctypes 绑定 (lib, acl_lib, NPUNVMEContext)
+  disk_layout.py         裸盘偏移常量
+  chunk_helpers.py       build_chunks / build_chunks_host / build_ctypes_arrays
+  delta_protocol.py      pack/unpack/apply delta + FileDeltaWriter
+  noop_init.py           NoOpInitializer
+  training_cell.py       ProbeTrainOneStepCell
+  _legacy_compat.py      WaitProbe 遗留 (DEPRECATED, 勿用于新代码)
+  profiler.py            SpdkProfiler (独立)
+  export_model.py        模型导出工具
+  format_npu_disk.py     磁盘格式化工具
+  inspect_npu_disk.py    磁盘检查工具
+
+experiments/
+  common.py              共享测试工具 (make_gpt2xl_training, setup_faf_checkpointing,
+                         make_ckpt, StepTimer, EpochTimer, init_env)
+
+src/
+  npu_nvme.c             C 引擎 (1354 行, 计划拆分为 7 模块)
+  test_npu_nvme.c        测试
+
+to_do/
+  active/                当前活跃规划文件
+  archive/               已完成的实验日志/设计文档 (~17 个)
+```
 
 ### 1.2 关键约束
 
