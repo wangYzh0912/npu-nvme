@@ -69,9 +69,6 @@ class FireAndForgetCallback(ms.Callback):
     def on_train_epoch_begin(self, run_context):
         self.epoch_t0 = time.perf_counter()
 
-    def on_train_epoch_begin(self, run_context):
-        self.epoch_t0 = time.perf_counter()
-
     def on_train_epoch_end(self, run_context):
         elapsed = (time.perf_counter() - self.epoch_t0)
         print(f"\n  [FaF] Epoch completed in {elapsed:.1f}s", flush=True)

@@ -8,6 +8,14 @@ Inputs:
 - NVMe PCI address, NPU device id, chunk size, profiling directory.
 Outputs:
 - Writes checkpoints and metadata to NVMe and optional profiling CSV under output/.
+
+Compatibility note:
+  This module depends on the PRIVATE MindSpore API _data_ptr() to obtain
+  NPU device pointers.  The API is available in MS 2.4+ but may break on
+  any version upgrade since it is not part of the public contract.  All
+  device-pointer access is routed through the get_dev_ptr() helper — if
+  a future MS release removes _data_ptr(), only that function needs to
+  be updated.
 """
 import ctypes
 import math
@@ -184,18 +192,6 @@ def build_chunks_host(ptr_base: int, start_offset: int, total_size: int,
 def rebuild_chunks_from_meta(models, params_meta: Dict, chunk_size: int):
     if not isinstance(models, (list, tuple)): models = [models]
     buffers = []
-
-    def get_dev_ptr(p):
-        ptr = 0
-        try:
-            data_obj = p.data if hasattr(p, "data") else p
-            if hasattr(data_obj, "_data_ptr"):
-                 if isinstance(p, ms.Parameter) and hasattr(p, "is_inited") and not p.is_inited:
-                     p.init_data()
-                 ptr = int(data_obj._data_ptr())
-        except Exception:
-            ptr = 0
-        return ptr
 
     for model in models:
         if model is None or not hasattr(model, "parameters_and_names"): continue
@@ -471,6 +467,15 @@ def _bind_depend_op(sig, grad):
     return ops.depend(grad, sig)
 
 def get_dev_ptr(tensor):
+    """Return the NPU device pointer for a MindSpore Parameter or Tensor.
+
+    Uses the private _data_ptr() API (available MS 2.4+).  Falls back to
+    the undocumented data_ptr() on older builds.  Returns 0 on failure.
+
+    NOTE: _data_ptr() is a PRIVATE MindSpore API and may break on any
+    version upgrade.  ALL device-pointer access in this codebase should
+    go through this function so there is a single point to fix.
+    """
     ptr = 0
     try:
         data_obj = tensor.data if hasattr(tensor, "data") else tensor
@@ -478,11 +483,28 @@ def get_dev_ptr(tensor):
             if isinstance(tensor, ms.Parameter) and hasattr(tensor, "is_inited") and not tensor.is_inited:
                 tensor.init_data()
             ptr = int(data_obj._data_ptr())
-        elif hasattr(tensor, "data_ptr"):
-            ptr = int(tensor.data_ptr())
+        elif hasattr(data_obj, "data_ptr"):
+            ptr = int(data_obj.data_ptr())
     except Exception:
         ptr = 0
     return ptr
+
+# -- Import-time API availability check --
+# _data_ptr() is the PRIVATE MindSpore API we rely on to obtain NPU device
+# pointers.  If it is absent at import time, we warn immediately so the user
+# knows this MS version may be incompatible.
+_MS_HAS_DATA_PTR = False
+try:
+    _dummy = ms.Tensor([0])
+    _MS_HAS_DATA_PTR = hasattr(_dummy, "_data_ptr") or hasattr(_dummy, "data_ptr")
+except Exception:
+    pass
+if not _MS_HAS_DATA_PTR:
+    import warnings
+    warnings.warn(
+        "MindSpore Tensor has neither _data_ptr() nor data_ptr().  "
+        "DirectCheckpoint will NOT be able to obtain NPU device addresses.  "
+        "Upgrade MindSpore or use MS 2.4+.")
 
 # DEPRECATED: WaitProbe AICPU custom-op registrations.
 # These were part of the original I2 design (graph-injected synchronisation
@@ -626,13 +648,13 @@ class DirectCheckpoint:
         print(f"[DirectCheckpoint] init ok. chunk={self.chunk_size/1024/1024:.2f}MB "
               f"(effective={effective/1024/1024:.2f}MB), rank={self.rank_id}/{self.world_size}")
         
-        self.async_thread = None
-        self.async_lock = threading.Lock()
-
-        self._mount_filesystem()
-
+        # Mark SPDK as initialized so cleanup() / close() release resources
+        # even if a later step (e.g. _mount_filesystem) raises.
+        self._spdk_initialized = True
         self._closed = False
         atexit.register(self.close)
+
+        self._mount_filesystem()
 
         self.io_thread = None
 
@@ -844,11 +866,10 @@ class DirectCheckpoint:
 
     def cleanup(self):
         self.wait_for_io_completion()
-        if self.async_thread and self.async_thread.is_alive():
-             self.async_thread.join()
-        if self.ctx:
+        if getattr(self, '_spdk_initialized', False) and self.ctx:
             lib.npu_nvme_cleanup(self.ctx)
             self.ctx = None
+            self._spdk_initialized = False
             
     def _build_local_param_registry(self, models):
         """
@@ -861,14 +882,14 @@ class DirectCheckpoint:
         self.local_valid_param_names = set()
 
         print(f"[DirectCkpt] Rank {self.rank_id} running dynamic hardware memory probe...", flush=True)
-        
+
         # allocate a 1-byte host buffer as a probe target
         dummy_dst = ctypes.create_string_buffer(1)
 
         for model in models:
             if model is None or not hasattr(model, "parameters_and_names"): continue
             for name, p in model.parameters_and_names():
-                ptr = p._data_ptr() if hasattr(p, "_data_ptr") else 0
+                ptr = get_dev_ptr(p)
                 if ptr == 0: continue
 
                 is_valid_on_this_rank = False
@@ -912,7 +933,7 @@ class DirectCheckpoint:
                 if name not in self.local_valid_param_names:
                     continue
 
-                ptr = p._data_ptr() if hasattr(p, "_data_ptr") else 0
+                ptr = get_dev_ptr(p)
                 if ptr == 0: continue
 
                 # 2. get the local shard size to avoid out-of-bounds access
@@ -984,6 +1005,8 @@ class DirectCheckpoint:
                     "name": p["name"],
                     "param_ref": p.get("param_ref"),
                     "npu_ptr": p["ptr"] + inner_off,
+                    "base_ptr": p["ptr"],      # un-offset base address for fallback
+                    "inner_off": inner_off,
                     "size": take,
                     "nvme_offset": nvme_offset_bytes,
                 })
@@ -1026,24 +1049,16 @@ class DirectCheckpoint:
             if param is None:
                 raise ValueError(f"[DirectCkpt] Chunk {i} is missing 'param_ref'.")
 
-            # ---------------------------------------------------------
-            # 核心：获取 NPU 显存物理地址
-            # ---------------------------------------------------------
-            ptr = 0
-            
-            # 方法 A: 尝试通过用户原有的自定义扩展获取（如果你在 build_layout 中已经拿到了）
-            if "npu_ptr" in chunk and chunk["npu_ptr"] != 0:
-                ptr = chunk["npu_ptr"]
-            else:
-                # 方法 B: 使用 MindSpore 原生 API 获取设备物理地址 (支持 MS 2.x)
-                try:
-                    # 获取内部张量对象的底层设备地址
-                    ptr = param.data_ptr() 
-                    if ptr is None or ptr == 0:
-                        # 兜底：尝试获取其 value() 的物理地址
-                        ptr = param.value().data_ptr()
-                except AttributeError:
-                    raise RuntimeError(f"Failed to get data_ptr from parameter {param.name}. Please ensure you are using MindSpore 2.x.")
+            # -- Resolve NPU device pointer --
+            # Primary path: use the pointer cached by build_layout() (includes
+            # the intra-parameter byte offset for multi-chunk parameters).
+            ptr = chunk.get("npu_ptr", 0)
+            if ptr == 0:
+                # Fallback: re-derive from the Parameter object.  This path is
+                # only exercised when build_layout() was not called (unusual).
+                base = get_dev_ptr(param)
+                inner = chunk.get("inner_off", 0)
+                ptr = base + inner if base else 0
 
             # 致命错误防御：如果指针为 0，说明框架还没有为它分配显存！
             if ptr == 0 or ptr is None:
@@ -1285,12 +1300,12 @@ class DirectCheckpoint:
         }
         return total_read, len(dev_chunks) + len(host_chunks), total_time, bw_e2e, stats
 
+    # DEPRECATED: kept as no-op for backward compatibility with external callers.
     def wait_async_io(self):
-        if hasattr(self, 'async_thread') and self.async_thread and self.async_thread.is_alive():
-            self.async_thread.join()
+        pass
 
     def close(self):
-        if not getattr(self, '_closed', True) and hasattr(self, 'ctx') and self.ctx:
+        if not getattr(self, '_closed', False) and hasattr(self, 'ctx') and self.ctx:
             print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down NPUNVME context...", flush=True)
             self.cleanup()
             self._closed = True
