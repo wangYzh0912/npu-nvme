@@ -681,13 +681,17 @@ class DirectCheckpoint:
         T_Layout = t_layout_end - t_prep_end
 
         # -- T_SPDK: background I/O --
-        if hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
-            ms.runtime.synchronize()
-        elif hasattr(ms.hal, "synchronize"):
+        # Synchronise device before DMA reads.  Prefer ms.hal.synchronize
+        # (public API, MS 2.3+); fall back to ms.runtime.synchronize
+        # (internal, may move).  ops.functional.depend is NOT a runtime
+        # barrier — if neither exists, use ACL stream synchronisation.
+        if hasattr(ms.hal, "synchronize"):
             ms.hal.synchronize()
+        elif hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
+            ms.runtime.synchronize()
         else:
-            ops.functional.depend(
-                model.trainable_params()[0], model.trainable_params()[0])
+            if acl_lib is not None:
+                acl_lib.aclrtSynchronizeStream(None)
 
         def background_io_worker(c_ptrs_d, c_offs_d, c_sizes_d, n_dev, d_sz,
                                  c_ptrs_h, c_offs_h, c_sizes_h, n_host, h_sz):
@@ -791,6 +795,7 @@ class DirectCheckpoint:
         t0 = time.time()
         total_read = 0
 
+        # Read NPU-resident parameters via DMA.
         if dev_chunks:
             c_ptrs, c_offs, c_sizes = build_ctypes_arrays(dev_chunks)
             rc = lib.npu_nvme_read_batch(
@@ -798,6 +803,13 @@ class DirectCheckpoint:
             if rc != 0:
                 raise RuntimeError("read_batch failed")
             total_read += sum(c[2].value for c in dev_chunks)
+
+        # NOTE: host_chunks (parameters without NPU device memory, e.g.
+        # very small CPU-resident tensors) are NOT read from NVMe here
+        # because there is no npu_nvme_read_batch_host C API.  Their
+        # np_arr buffers remain zero-filled.  In normal operation (NPU
+        # training), all model parameters have device pointers and this
+        # path is never exercised.
 
         t1 = time.time()
         t_update = time.time()
@@ -874,9 +886,9 @@ class DirectCheckpoint:
 
         # Use the chunk pipeline (supports >64MB) instead of the deprecated
         # sync_meta_io path via npu_nvme_write_delta.
+        frame_buf = ctypes.create_string_buffer(frame, total_bytes)
         chunks, _ = build_chunks_host(
-            ctypes.addressof(ctypes.create_string_buffer(frame, total_bytes)),
-            slot_offset, total_bytes, self.chunk_size)
+            ctypes.addressof(frame_buf), slot_offset, total_bytes, self.chunk_size)
         c_ptrs, c_offs, c_sizes = build_ctypes_arrays(chunks)
 
         if hasattr(lib, "npu_nvme_write_batch_host"):

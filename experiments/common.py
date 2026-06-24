@@ -105,8 +105,8 @@ def setup_faf_checkpointing(ckpt, model, cell, ckpt_interval=10):
     # Register parameter device pointers
     ckpt.register_tasks(model, step=0)
 
-    dev_flag = cell.flag._data_ptr()
-    dev_step = cell.step_counter._data_ptr()
+    dev_flag = get_dev_ptr(cell.flag)
+    dev_step = get_dev_ptr(cell.step_counter)
 
     rc = lib.npu_nvme_set_probe_flag_ptr(
         ckpt.ctx, ctypes.c_void_p(dev_flag))

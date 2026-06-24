@@ -127,3 +127,5 @@ try:
 
 except OSError as e:
     print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")
+    lib = None
+    acl_lib = None

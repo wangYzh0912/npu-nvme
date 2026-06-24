@@ -16,7 +16,7 @@ import sys
 
 from disk_layout import (SUPERBLOCK_OFFSET, META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
                           META_SLOT_BYTES, MAGIC_NUMBER)
-from c_bindings import lib
+from c_bindings import lib, NPUNVMEContext
 
 
 def format_size(bytes_size):
@@ -53,7 +53,7 @@ def inspect_disk(pci_addr, npu_id=0):
     print(f"{'='*70}")
     print(f"Target Device : {pci_addr}")
 
-    ctx = ctypes.c_void_p()
+    ctx = ctypes.POINTER(NPUNVMEContext)()
     ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'),
                              npu_id, 1, 1, False, b".")
     if ret != 0:

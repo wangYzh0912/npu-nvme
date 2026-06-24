@@ -16,7 +16,7 @@ import sys
 
 from disk_layout import (SUPERBLOCK_OFFSET, META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
                           META_SLOT_BYTES, MAGIC_NUMBER, BLOCK_SIZE)
-from c_bindings import lib
+from c_bindings import lib, NPUNVMEContext
 
 
 def format_disk(pci_addr, npu_id=0):
@@ -34,7 +34,7 @@ def format_disk(pci_addr, npu_id=0):
         sys.exit(0)
 
     print("\n[1/4] Initializing SPDK and connecting to NVMe...")
-    ctx = ctypes.c_void_p()
+    ctx = ctypes.POINTER(NPUNVMEContext)()
     ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'),
                              npu_id, 1, BLOCK_SIZE, False, b".")
     if ret != 0:
