@@ -1,8 +1,83 @@
-# NPU-NVMe 增量检查点 — 项目进度总结 (2026-06-24 更新)
+# NPU-NVMe 增量检查点 — 项目进度总结 (2026-06-24 最终更新)
 
 > **sink=True, GRAPH_MODE** 是必须遵守的约束条件。
 >
 > **正式实现计划**: 见 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
+>
+> **架构路线图**: `C:\Users\wyf\.claude\plans\p-old-npu-delta-top-k-cpu-delightful-minsky.md`
+
+---
+
+## 2026-06-24 全天工作总结: Code Review → Refactor → Push (6 次提交)
+
+### C 层重构 ✅ (Phase 1–3)
+
+| 指标 | 重构前 | 重构后 |
+|------|:---:|:---:|
+| `src/npu_nvme.c` | 1354 行 | **894 行** (−34%) |
+| `src/test_npu_nvme.c` | 353 行 | 279 行 |
+| 公共 API | 18 函数 | **16 函数** |
+| 内部头文件 | 0 | 4 个 (`include/internal/`) |
+| 冗余消除 | — | **−554 行 C** |
+
+已修复: 双重 `if (enable_profiling)` bug、ACL context 绑定重复、SPSC ring 测试重复、Delta 64MB 限制
+
+### Python 重构 ✅ (Phase 0)
+
+| 指标 | 重构前 | 重构后 |
+|------|:---:|:---:|
+| `direct_checkpoint.py` | 1525 行单体 | **800 行 + 7 子模块** |
+| 磁盘常量重复 | 4 文件 | **1 文件 (`disk_layout`)** |
+| Bug 修复 | — | **6 个** |
+| 实验样板 | 70 脚本重复 ~1000 行 | **`common.py` 统一 5 函数** |
+
+### to_do/ 整理 ✅ (Phase 0b)
+
+- `active/`: 3 个活跃规划文件
+- `archive/`: 17 个归档文档
+
+### 代码审查 ✅
+
+- 29 实验文件 × 42 import 站点 全部验证通过
+- MS API 兼容性审计 (2.5→2.9)
+- 指针获取统一 (`get_dev_ptr`)
+- SPDK 大页泄漏修复
+
+---
+
+## ⚠️ 需要在 NPU 服务器验证
+
+```
+1. cmake --build build && ./bin/run_test.sh          # C 编译 + 纯逻辑测试
+2. sudo ./bin/run_test.sh 0000:83:00.0 1              # 硬件集成测试
+3. python -c "from direct_checkpoint import ..."       # Delta >64MB roundtrip
+4. experiments/fire_and_forget.py                      # FaF 端到端
+5. BW 对比: write ~4412, read ~6800, delta ~3350 MB/s  # 性能无退化
+```
+
+---
+
+## 下一步 (待执行)
+
+| 阶段 | 内容 | 预计 |
+|:---:|------|:---:|
+| **NPU 验证** | 上述 5 项测试 | 1h |
+| Phase 4 | MS API 迁移 (`AdamWeightDecay`→`AdamW` 等) | 2–3d |
+| Phase 5 | experiments/ 目录重组 | 1h |
+| **I3 Step 3** | GE 图内 delta 管线 + FaF listener + SPDK 全链路打通 | 待规划 |
+| **论文实验** | E0 (sink_size 扫描) + E1 (SPDK BW) + E2 (FaF) + E3 (I3) | 待规划 |
+
+---
+
+## 基准数据 (不变, 2026-06-17)
+
+| 指标 | 值 |
+|------|:---:|
+| GPT-2 XL 步时 (GRAPH_MODE, sink=1) | **468.3 ms** |
+| GE kernel instances | **132,170** |
+| Cube MAC / Vector ALU | **55.7%** / **12.4%** (idle 87.6%) |
+| SPDK FULL ckpt 写入 BW | **4412 MB/s** |
+| Delta write BW | **3350 MB/s** (159 MB in 45ms) |
 >
 > **架构路线图**: 见 `C:\Users\wyf\.claude\plans\p-old-npu-delta-top-k-cpu-delightful-minsky.md`
 
