@@ -11,6 +11,7 @@
  */
 
 #include "npu_nvme.h"
+#include "internal/ring_buffer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,46 +42,14 @@ static void test_align_4k(void)
 
 static void test_ring_buffer(void)
 {
-    /* Re-implement a minimal ring buffer here to avoid exposing
-     * the internal ring_t in the public header.  The logic is
-     * identical to src/npu_nvme.c:ring_*. */
-    typedef struct {
-        int *slots;
-        int capacity;
-        int head;
-        int tail;
-    } ring_t;
-
-    int ring_init(ring_t *r, int cap) {
-        r->slots = calloc(cap + 1, sizeof(int));
-        if (!r->slots) return -1;
-        r->capacity = cap + 1;
-        r->head = r->tail = 0;
-        return 0;
-    }
-    void ring_free(ring_t *r) { free(r->slots); r->slots = NULL; }
-    int ring_is_full(ring_t *r)  { return ((r->tail + 1) % r->capacity) == r->head; }
-    int ring_is_empty(ring_t *r) { return r->head == r->tail; }
-    int ring_push(ring_t *r, int v) {
-        if (ring_is_full(r)) return -1;
-        r->slots[r->tail] = v;
-        r->tail = (r->tail + 1) % r->capacity;
-        return 0;
-    }
-    int ring_pop(ring_t *r, int *v) {
-        if (ring_is_empty(r)) return -1;
-        *v = r->slots[r->head];
-        r->head = (r->head + 1) % r->capacity;
-        return 0;
-    }
-
     ring_t r;
     int v;
 
     TEST("ring init capacity 4");
-    if (ring_init(&r, 4) != 0)          { FAIL("init failed"); return; }
-    if (!ring_is_empty(&r))             { FAIL("not empty after init"); ring_free(&r); return; }
-    if (ring_is_full(&r))               { FAIL("full after init"); ring_free(&r); return; }
+    /* ring_init expects total capacity including overflow slot; pass 5 for 4 usable */
+    if (ring_init(&r, 5) != 0)            { FAIL("init failed"); return; }
+    if (!ring_is_empty(&r))               { FAIL("not empty after init"); ring_free(&r); return; }
+    if (ring_is_full(&r))                 { FAIL("full after init"); ring_free(&r); return; }
     PASS();
 
     TEST("ring push 4 items");

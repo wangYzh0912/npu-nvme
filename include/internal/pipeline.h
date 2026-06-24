@@ -1,0 +1,49 @@
+/* Internal: unified dual-polling I/O pipeline.
+ *
+ * Provides the core async I/O engine used by write_batch, read_batch,
+ * and the FaF listener thread.
+ */
+#ifndef NPU_NVME_PIPELINE_H
+#define NPU_NVME_PIPELINE_H
+
+#include "io_task.h"
+
+struct NPUNVMEContext;
+
+/* --- Pipeline entry points --- */
+
+/* Run the write pipeline (NPU DMA -> SPDK NVMe).  Blocks until all
+ * tasks complete.  Pass is_host=true when the source pointers are host
+ * DRAM addresses rather than NPU HBM addresses. */
+void run_write_pipeline(struct NPUNVMEContext *ctx, io_task_t *tasks,
+                         int num_tasks, bool is_host);
+
+/* Run the read pipeline (SPDK NVMe -> NPU DMA).  Blocks until all
+ * tasks complete. */
+void run_read_pipeline(struct NPUNVMEContext *ctx, io_task_t *tasks,
+                        int num_tasks);
+
+/* --- Profiling CSV export --- */
+
+/* Write per-chunk micro-benchmark data to a CSV file.
+ * Column order depends on direction (write: npu,spdk,e2e; read: spdk,npu,e2e). */
+void write_profiling_csv(struct NPUNVMEContext *ctx, io_task_t *tasks,
+                          int num_items, pipeline_dir_t dir);
+
+/* --- SPDK submission helpers --- */
+
+int submit_to_spdk_write(struct NPUNVMEContext *ctx, io_task_t *task,
+                          int *completed_counter);
+void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion);
+void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion);
+
+/* --- NPU DMA submission --- */
+
+/* Submit a single NPU-to-DMA copy.  Returns 0 on success, -1 if the ring
+ * buffer is full, -2 on ACL error. */
+int try_submit_async(struct NPUNVMEContext *ctx, io_task_t *task, bool is_host);
+
+/* --- Timestamp --- */
+uint64_t get_time_us(void);
+
+#endif
