@@ -1,9 +1,15 @@
 # Claude 会话指令与上下文恢复
 
-> 创建: 2026-06-17 | 最后更新: 2026-06-24 (Phase 0a/0b/0c 完成)
-> 状态: **Step 3 全路径打通待开始**
+> 创建: 2026-06-17 | 最后更新: 2026-06-27 (服务器可用, Phase 0-3 完成)
+> 状态: **Phase A 服务器验证进行中 → Phase B(I3 Step 3)**
 
 ---
+
+## 零、当前会话任务 (2026-06-27)
+
+1. Phase A: NPU 服务器重构验证 (编译 + 测试)
+2. Phase B: I3 Step 3 全路径打通 (图内 delta + FaF + SPDK)
+3. to_do/ 整理: 合并旧计划, 更新 STATUS_SUMMARY
 
 ## 一、项目核心信息
 
@@ -13,34 +19,36 @@
 - **平台**: Ascend 910B NPU + SPDK 用户态 NVMe 驱动
 - **核心叙事**: 三大创新点 (I1: SPDK 高 IOPS, I2: FaF 设备侧轮询同步, I3: Vector Engine 增量管线)
 
-### 1.2 代码结构 (2026-06-24 更新)
+### 1.2 代码结构 (2026-06-24 最终)
 
 ```
 python/
-  direct_checkpoint.py   DirectCheckpoint 类 + 重新导出 (入口模块)
-  c_bindings.py          C 库 ctypes 绑定 (lib, acl_lib, NPUNVMEContext)
-  disk_layout.py         裸盘偏移常量
-  chunk_helpers.py       build_chunks / build_chunks_host / build_ctypes_arrays
-  delta_protocol.py      pack/unpack/apply delta + FileDeltaWriter
-  noop_init.py           NoOpInitializer
-  training_cell.py       ProbeTrainOneStepCell
-  _legacy_compat.py      WaitProbe 遗留 (DEPRECATED, 勿用于新代码)
-  profiler.py            SpdkProfiler (独立)
-  export_model.py        模型导出工具
-  format_npu_disk.py     磁盘格式化工具
-  inspect_npu_disk.py    磁盘检查工具
-
-experiments/
-  common.py              共享测试工具 (make_gpt2xl_training, setup_faf_checkpointing,
-                         make_ckpt, StepTimer, EpochTimer, init_env)
+  direct_checkpoint.py   800 行  DirectCheckpoint + 重新导出 (入口)
+  c_bindings.py          131 行  C 库 ctypes
+  disk_layout.py          28 行  裸盘偏移常量
+  chunk_helpers.py        135 行  build_chunks / build_ctypes_arrays
+  delta_protocol.py       214 行  pack/unpack/apply delta + FileDeltaWriter
+  noop_init.py            40 行  NoOpInitializer
+  training_cell.py        62 行  ProbeTrainOneStepCell
+  _legacy_compat.py       43 行  WaitProbe 遗留 (DEPRECATED)
+  profiler.py             253 行  SpdkProfiler
+  export_model.py         工具
+  format_npu_disk.py      工具
+  inspect_npu_disk.py     工具
 
 src/
-  npu_nvme.c             C 引擎 (1354 行, 计划拆分为 7 模块)
-  test_npu_nvme.c        测试
+  npu_nvme.c             894 行  C 引擎 (重构后, -460 行)
+  test_npu_nvme.c         279 行  测试
+include/
+  npu_nvme.h             139 行  16 公共 API
+  internal/                4 个内部头文件 (ring_buffer/io_task/pipeline/context)
+
+experiments/
+  common.py              173 行  5 共享函数
 
 to_do/
-  active/                当前活跃规划文件
-  archive/               已完成的实验日志/设计文档 (~17 个)
+  active/                 4 个活跃文件
+  archive/               17 个归档文档
 ```
 
 ### 1.2 关键约束
