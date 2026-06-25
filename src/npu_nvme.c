@@ -434,6 +434,7 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
         fprintf(stderr, "[Fatal] Invalid arguments passed to npu_nvme_write_batch.\n");
         return -1;
     }
+    if (ctx->block_size == 0) return -1;
 
     aclrtSetCurrentContext(ctx->acl.acl_ctx);
 
@@ -451,6 +452,7 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
                                uint64_t *nvme_offsets, size_t *sizes,
                                int num_items) {
     if (!ctx || num_items <= 0) return -1;
+    if (ctx->block_size == 0) return -1;
     aclrtSetCurrentContext(ctx->acl.acl_ctx);
     io_task_t *tasks = create_io_tasks(num_items, ptrs, nvme_offsets, sizes);
     if (!tasks) return -1;
@@ -464,6 +466,7 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                          uint64_t *nvme_offsets, size_t *sizes, int num_items) {
     if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0)
         return -1;
+    if (ctx->block_size == 0) return -1;
 
     aclrtSetCurrentContext(ctx->acl.acl_ctx);
 
@@ -482,6 +485,7 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
                              int num_items) {
     if (!ctx || !host_ptrs || !nvme_offsets || !sizes || num_items <= 0)
         return -1;
+    if (ctx->block_size == 0) return -1;
 
     aclrtSetCurrentContext(ctx->acl.acl_ctx);
 
@@ -706,25 +710,29 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
 
     pthread_mutex_lock(&ctx->io_lock);
 
-    /* Free previously registered tasks if any */
-    if (ctx->listener.registered_tasks) {
-        free(ctx->listener.registered_tasks);
-    }
-
-    ctx->listener.registered_tasks = calloc(num_items, sizeof(io_task_t));
-    if (!ctx->listener.registered_tasks) {
+    /* Allocate new array before freeing the old one, so that a failed
+     * allocation leaves the listener with a valid (stale) task list
+     * rather than a NULL pointer + stale count. */
+    io_task_t *new_tasks = calloc(num_items, sizeof(io_task_t));
+    if (!new_tasks) {
         pthread_mutex_unlock(&ctx->io_lock);
         return -1;
     }
 
     for (int i = 0; i < num_items; i++) {
-        ctx->listener.registered_tasks[i].task_idx = i;
-        ctx->listener.registered_tasks[i].buf_idx = -1;
-        ctx->listener.registered_tasks[i].state = CHUNK_IDLE;
-        ctx->listener.registered_tasks[i].npu_ptr = npu_ptrs[i];
-        ctx->listener.registered_tasks[i].nvme_offset = nvme_offsets[i];
-        ctx->listener.registered_tasks[i].size = sizes[i];
+        new_tasks[i].task_idx = i;
+        new_tasks[i].buf_idx = -1;
+        new_tasks[i].state = CHUNK_IDLE;
+        new_tasks[i].npu_ptr = npu_ptrs[i];
+        new_tasks[i].nvme_offset = nvme_offsets[i];
+        new_tasks[i].size = sizes[i];
     }
+
+    /* Swap: free old, install new (under io_lock — listener is blocked). */
+    if (ctx->listener.registered_tasks) {
+        free(ctx->listener.registered_tasks);
+    }
+    ctx->listener.registered_tasks = new_tasks;
     ctx->listener.num_registered_tasks = num_items;
     pthread_mutex_unlock(&ctx->io_lock);
     return 0;
