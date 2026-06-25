@@ -19,7 +19,7 @@ from disk_layout import (SUPERBLOCK_OFFSET, META_SLOT_A_OFFSET, META_SLOT_B_OFFS
 from c_bindings import lib, NPUNVMEContext
 
 
-def format_disk(pci_addr, npu_id=0):
+def format_disk(pci_addr, npu_id=0, force=False):
     print(f"\n{'='*60}")
     print(f"!!! WARNING: NPUNVME DISK FORMAT UTILITY !!!")
     print(f"{'='*60}")
@@ -28,10 +28,13 @@ def format_disk(pci_addr, npu_id=0):
     print("\nThis operation will OVERWRITE the Superblock and Metadata slots.")
     print("All previously saved Checkpoints on this disk will be rendered UNREADABLE.")
 
-    confirm = input("\nType 'YES' in all caps to proceed: ")
-    if confirm != "YES":
-        print("Format cancelled by user.")
-        sys.exit(0)
+    if not force:
+        confirm = input("\nType 'YES' in all caps to proceed: ")
+        if confirm != "YES":
+            print("Format cancelled by user.")
+            sys.exit(0)
+    else:
+        print("\n[force=True] Skipping interactive confirmation.")
 
     print("\n[1/4] Initializing SPDK and connecting to NVMe...")
     ctx = ctypes.POINTER(NPUNVMEContext)()
@@ -92,5 +95,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NPUNVME Disk Formatting Tool")
     parser.add_argument("--pci_addr", type=str, default="0000:83:00.0")
     parser.add_argument("--npu_id", type=int, default=0)
+    parser.add_argument("--yes", action="store_true",
+                        help="Skip interactive confirmation")
     args = parser.parse_args()
-    format_disk(args.pci_addr, args.npu_id)
+    format_disk(args.pci_addr, args.npu_id, force=args.yes)

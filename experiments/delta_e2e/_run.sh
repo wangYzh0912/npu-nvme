@@ -12,6 +12,7 @@ set -euo pipefail
 
 DEVICE_ID="${1:-1}"
 shift 1 2>/dev/null || true
+EXTRA_ARGS=("$@")
 
 REPO="/home/user7/npu-nvme"
 PYTHON="/root/miniconda3/envs/ms_2.5/bin/python"
@@ -30,17 +31,29 @@ SCRIPT="$REPO/experiments/delta_e2e/delta_e2e.py"
 
 echo "============================================================"
 echo "Delta-Checkpoint E2E (T4–T6)"
-echo "  Device: $DEVICE_ID"
+echo "  Device: $DEVICE_ID  |  Args: ${EXTRA_ARGS[*]:-none}"
 echo "============================================================"
 
 mkdir -p "$OUTPUT_DIR"
 
-echo "$SUDO_PW" | sudo -S bash -c "
-  source $ASCEND_SETUP && \
-  export PYTHONPATH=$REPO/python:\$PYTHONPATH && \
-  $PYTHON $SCRIPT --device-id $DEVICE_ID $@
-"
+# Write a temp script to avoid quoting hell with bash -c
+TMP_SCRIPT="$(mktemp /tmp/delta_e2e_XXXXXX.sh)"
+cat > "$TMP_SCRIPT" << SCRIPT_EOF
+#!/bin/bash
+set -e
+set +u
+source "$ASCEND_SETUP"
+set -u
+export PYTHONPATH="$REPO/python:\$PYTHONPATH"
+"$PYTHON" "$SCRIPT" --device-id "$DEVICE_ID" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
+SCRIPT_EOF
+chmod +x "$TMP_SCRIPT"
+
+sudo -S "$TMP_SCRIPT" <<< "$SUDO_PW"
+RC=$?
+rm -f "$TMP_SCRIPT"
 
 echo ""
-echo "Done. Results:"
+echo "Done (exit=$RC). Results:"
 echo "  $OUTPUT_DIR/delta_e2e.json"
+exit $RC
