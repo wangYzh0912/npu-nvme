@@ -70,9 +70,13 @@ def direct_train(cell, ds, steps, label="train"):
         t1 = time.perf_counter()
         dt = t1 - t0
         times.append(dt)
+        # loss may be a tuple (loss, overflow, ...) from some cell wrappers
+        loss_val = loss
+        if isinstance(loss_val, (tuple, list)):
+            loss_val = loss_val[0]
         if (s + 1) % 10 == 0 or s == 0:
             print(f"  [{label}] step {s + 1}/{steps}  "
-                  f"loss={float(loss.asnumpy().flat[0]):.4f}  "
+                  f"loss={float(loss_val.asnumpy().flat[0]):.4f}  "
                   f"dt={dt * 1000:.1f}ms", flush=True)
     return times
 
