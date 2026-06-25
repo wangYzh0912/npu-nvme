@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Micro-benchmark: Phase-F Full-Assign vs ScatterUpdate at GPT-2 XL scale.
+"""Micro-benchmark: Full-Assign vs ScatterUpdate P_old update at GPT-2 XL scale.
 
 Compares the two approaches on both MS 2.5 and MS 2.6.
 """
@@ -25,7 +25,7 @@ class FullAssignCell(nn.Cell):
         self.indices = Tensor(np.arange(K, dtype=np.int32))
 
     def construct(self):
-        # Phase E: quantize selected blocks
+        # Quantize selected blocks (output path)
         sel = ops.Gather()(self.all_blocks, self.indices, 0)
         sfp32 = ops.Cast()(sel, ms.float32)
         amax = ops.ReduceMax()(ops.Abs()(sfp32), 1)
@@ -33,7 +33,7 @@ class FullAssignCell(nn.Cell):
         q = ops.Cast()(ops.clip_by_value(ops.Round()(
             ops.Div()(sfp32, ops.Reshape()(scale, (K, 1)))),
             Tensor(-128, ms.float32), Tensor(127, ms.float32)), ms.int8)
-        # Phase F: full quant + Assign
+        # P_old update: full quant + Assign (current workaround)
         fp32 = ops.Cast()(self.all_blocks, ms.float32)
         amax_f = ops.ReduceMax()(ops.Abs()(fp32), 1)
         q_all = ops.Cast()(ops.clip_by_value(ops.Round()(

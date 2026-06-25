@@ -30,7 +30,7 @@ TOP_K_FRAC = 0.10
 OUTPUT_DIR = os.path.join(REPO, "experiments", "output", "delta_e2e")
 
 
-# ---- Helpers ---------------------------------------------------------------
+# -- Helpers --
 
 def compute_nrmse(recovered, oracle):
     """Per-parameter normalised RMSE."""
@@ -81,7 +81,7 @@ def direct_train(cell, ds, steps, label="train"):
     return times
 
 
-# ---- T4: Multi-step FaF trigger -------------------------------------------
+# -- T4: Multi-step FaF trigger --
 
 def test_faf_trigger(device_id, steps=10):
     """T4: Multi-step training with FaF listener — direct iteration.
@@ -147,14 +147,14 @@ def test_faf_trigger(device_id, steps=10):
     return results
 
 
-# ---- T5: Overhead comparison ----------------------------------------------
+# -- T5: Overhead comparison --
 
 def test_overhead(device_id, steps=50):
-    """T5: Step-time overhead of I3 delta pipeline vs baseline.
+    """T5: Step-time overhead of delta pipeline vs baseline.
 
     Compare two configurations over *steps* iterations:
       Baseline — ProbeTrainOneStepCell (FaF step counter, NO delta ops)
-      I3       — DeltaTrainCell (full 7-phase GE delta pipeline)
+      delta   — DeltaTrainCell (full 7-stage GE delta pipeline)
 
     Returns step-by-step times and aggregate statistics.
     """
@@ -177,43 +177,43 @@ def test_overhead(device_id, steps=50):
     _ = cell_b(*next(it_b))
     baseline_times = direct_train(cell_b, ds_b, steps, label="baseline")
 
-    # -- I3: DeltaTrainCell (full delta pipeline) --
-    print("  [T5] I3 — DeltaTrainCell...")
-    model_i3, ds_i3, opt_i3 = make_gpt2xl_training(total_steps=steps,
-                                                     device_id=device_id)
-    cell_i3 = DeltaTrainCell(model_i3, opt_i3, block_size=BLOCK_SIZE,
-                              top_k_frac=TOP_K_FRAC)
+    # -- Delta pipeline: DeltaTrainCell --
+    print("  [T5] delta pipeline — DeltaTrainCell...")
+    model_delta, ds_delta, opt_delta = make_gpt2xl_training(
+        total_steps=steps, device_id=device_id)
+    cell_delta = DeltaTrainCell(model_delta, opt_delta, block_size=BLOCK_SIZE,
+                                 top_k_frac=TOP_K_FRAC)
     ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend",
                    device_id=device_id)
     # Compile
-    it_i3 = ds_i3.create_tuple_iterator()
-    _ = cell_i3(*next(it_i3))
-    i3_times = direct_train(cell_i3, ds_i3, steps, label="i3")
+    it_delta = ds_delta.create_tuple_iterator()
+    _ = cell_delta(*next(it_delta))
+    delta_times = direct_train(cell_delta, ds_delta, steps, label="delta")
 
     bl_mean = float(np.mean(baseline_times))
     bl_std = float(np.std(baseline_times))
-    i3_mean = float(np.mean(i3_times))
-    i3_std = float(np.std(i3_times))
-    overhead_ms = (i3_mean - bl_mean) * 1000
-    overhead_pct = (i3_mean / bl_mean - 1.0) * 100 if bl_mean > 0 else 0
+    delta_mean = float(np.mean(delta_times))
+    delta_std = float(np.std(delta_times))
+    overhead_ms = (delta_mean - bl_mean) * 1000
+    overhead_pct = (delta_mean / bl_mean - 1.0) * 100 if bl_mean > 0 else 0
 
     results = {
         "status": "pass" if overhead_ms < 50 else "warn",
         "baseline": {"mean_s": bl_mean, "std_s": bl_std,
                       "times": [float(t) for t in baseline_times]},
-        "i3": {"mean_s": i3_mean, "std_s": i3_std,
-                "times": [float(t) for t in i3_times]},
+        "delta_pipeline": {"mean_s": delta_mean, "std_s": delta_std,
+                            "times": [float(t) for t in delta_times]},
         "overhead_ms": overhead_ms,
         "overhead_pct": overhead_pct,
     }
     print(f"  T5 result — baseline={bl_mean * 1000:.1f}ms ± {bl_std * 1000:.1f}  "
-          f"I3={i3_mean * 1000:.1f}ms ± {i3_std * 1000:.1f}  "
+          f"delta={delta_mean * 1000:.1f}ms ± {delta_std * 1000:.1f}  "
           f"overhead={overhead_ms:.1f}ms ({overhead_pct:+.1f}%)  "
           f"→ {results['status']}")
     return results
 
 
-# ---- T6: Recovery verification --------------------------------------------
+# -- T6: Delta buffer consistency --
 
 def test_recovery(device_id, steps=5):
     """T6: Delta buffer data consistency across training steps.
@@ -222,7 +222,7 @@ def test_recovery(device_id, steps=5):
     delta_quant_buf) change across training steps, proving the delta
     pipeline correctly computes new delta values each step.
 
-    SPDK save/load roundtrip was already verified in Phase A validation
+    SPDK save/load roundtrip was verified in prior validation
     (A.6 + A.7).  This test validates the GE-side data production.
     """
     from delta_cell import DeltaTrainCell
@@ -280,7 +280,7 @@ def test_recovery(device_id, steps=5):
     return results
 
 
-# ---- Main ------------------------------------------------------------------
+# -- Main --
 
 def main():
     parser = argparse.ArgumentParser(description="Delta-checkpoint E2E (T4-T6)")
