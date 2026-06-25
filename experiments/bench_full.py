@@ -243,10 +243,9 @@ def run_benchmark(device_id=1, steps=50, sink_size=10, ckpt_every=10):
     it3 = ds3.create_tuple_iterator()
     _ = cell3(*next(it3))
 
-    # Register model params for FULL ckpt
-    dev_flag3, dev_step3 = ckpt3.register_tasks(model3, step=0)
-    print(f"  Registered model params: flag={hex(dev_flag3)} "
-          f"step={hex(dev_step3)}")
+    # Register model params for FULL ckpt (no FaF — sync save only)
+    ckpt3.register_tasks(model3, step=0)
+    print(f"  Registered model params for FULL ckpt")
 
     full_steps = []
     full_ckpt_stats = []
