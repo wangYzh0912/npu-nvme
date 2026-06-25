@@ -425,10 +425,8 @@ class DirectCheckpoint:
             models = [models]
         self.local_valid_param_names = set()
 
-        print(f"[DirectCkpt] Rank {self.rank_id} running dynamic hardware "
-              f"memory probe...", flush=True)
-
-        dummy_dst = ctypes.create_string_buffer(1)
+        print(f"[DirectCkpt] Rank {self.rank_id} building parameter registry...",
+              flush=True)
 
         for model in models:
             if model is None or not hasattr(model, "parameters_and_names"):
@@ -437,29 +435,9 @@ class DirectCheckpoint:
                 ptr = get_dev_ptr(p)
                 if ptr == 0:
                     continue
+                self.local_valid_param_names.add(name)
 
-                is_valid_on_this_rank = False
-
-                if acl_lib is not None:
-                    ret = acl_lib.aclrtMemcpy(
-                        ctypes.byref(dummy_dst), 1,
-                        ctypes.c_void_p(ptr), 1, 2)
-                    if ret == 0:
-                        is_valid_on_this_rank = True
-
-                if not is_valid_on_this_rank:
-                    if ("step" in name.lower() or "scale" in name.lower()
-                            or np.prod(p.shape) <= 8):
-                        try:
-                            _ = p.asnumpy()
-                            is_valid_on_this_rank = True
-                        except Exception:
-                            pass
-
-                if is_valid_on_this_rank:
-                    self.local_valid_param_names.add(name)
-
-        print(f"[DirectCkpt] Rank {self.rank_id} registry dynamically built: "
+        print(f"[DirectCkpt] Rank {self.rank_id} registry: "
               f"{len(self.local_valid_param_names)} valid params.", flush=True)
 
     def _prepare_params(self, models):
