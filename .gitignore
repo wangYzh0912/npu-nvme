@@ -3,15 +3,11 @@
 # The line below is safe but redundant — git submodule never commits
 # third_party/spdk's contents, only the commit hash pointer.
 
-# ── Generated documentation ──
-doc/
+# ── Documentation & planning (local only, not in remote repo) ──
 *.md
 !README.md
-!STYLE_GUIDE.md
-!/to_do/*.md
-!/to_do/active/*.md
-!/to_do/archive/*.md
-!/to_do/archive/*.patch
+to_do/
+doc/
 
 # ── Build artifacts ──
 build/
@@ -73,3 +69,9 @@ ge_check_op.json
 
 # ── Local secrets (DO NOT COMMIT) ──
 .sudo_pw
+
+# ── Local runtime artifacts ──
+checkpoint_meta.pkl
+*.pkl
+/debug/
+/offload/
