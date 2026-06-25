@@ -4,6 +4,18 @@
 
 ---
 
+## 基础设施: SPDK 大页 + qpair 线程安全 ✅ (2026-06-25)
+
+| 检查项 | 结果 | 说明 |
+|------|:---:|------|
+| 大页状态 | **1024/1024 free** | 环境干净, SPDK 可直接使用, 无需 `ensure_hugepages` 扩容 |
+| delta 分支崩溃根因 | **已确认** | 全局 `probe_flags` 悬空指针 → cleanup 崩溃 → 大页泄漏 |
+| HEAD 修复验证 | **已确认** | 移除全局 `probe_flags`, 所有状态封装在 context 内, cleanup 安全 |
+| qpair 线程安全 | **已修复** | 新增 `pthread_mutex_t io_lock` (递归), 保护全部 I/O 入口 + `register_tasks` + probe flag/step ptr 读写 |
+| 剩余 race (6 处) | **已全部修复** | RACE 1-2: `registered_tasks` UAF; RACE 3-4: ptr 非原子读写; RACE 5: HBM flag 并发写; RACE 6: ACL context |
+
+---
+
 ## 代码重构: 完成 ✅ (2026-06-24)
 
 | 层 | 重构内容 | 效果 |
@@ -69,6 +81,7 @@
 |:---:|------|:---:|
 | **P0** | ~~服务器验证~~ ✅ | — |
 | **P0** | ~~DeltaTrainCell 模块~~ ✅ | — |
+| **P0** | ~~大页问题验证 + qpair 线程安全修复~~ ✅ | — |
 | **P1** | 修复 T4 (ms.Model.train → 直接迭代) | <1h |
 | **P1** | T5 overhead (I3 ops vs baseline 步时) | 1h |
 | **P1** | T6 恢复验证 (FULL + delta chain NRMSE) | 1h |

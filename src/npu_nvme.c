@@ -186,6 +186,8 @@ void run_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks,
     int submitted_to_npu = 0;
     uint64_t last_progress_time = get_time_us();
 
+    pthread_mutex_lock(&ctx->io_lock);
+
     while (completed_tasks < num_tasks) {
         bool made_progress = false;
 
@@ -258,6 +260,7 @@ void run_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks,
             last_progress_time = get_time_us();
         }
     }
+    pthread_mutex_unlock(&ctx->io_lock);
 }
 
 /* ---- SPDK read completion ---- */
@@ -281,6 +284,8 @@ void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
 void run_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
     int completed_tasks = 0;
     int submitted_to_nvme = 0;
+
+    pthread_mutex_lock(&ctx->io_lock);
 
     while (completed_tasks < num_tasks) {
         bool made_progress = false;
@@ -373,6 +378,7 @@ void run_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
 
         if (!made_progress) usleep(1);
     }
+    pthread_mutex_unlock(&ctx->io_lock);
 }
 
 /* ---- Profiling CSV export (shared between write and read paths) ---- */
@@ -485,6 +491,8 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
     int completed_tasks = 0;
     int submitted = 0;
 
+    pthread_mutex_lock(&ctx->io_lock);
+
     while (completed_tasks < num_items) {
 
         while (submitted < num_items) {
@@ -537,6 +545,7 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
 
         spdk_nvme_qpair_process_completions(ctx->qpair, 0);
     }
+    pthread_mutex_unlock(&ctx->io_lock);
 
     free(tasks);
     return 0;
@@ -565,6 +574,8 @@ static inline int ensure_acl_context(NPUNVMEContext *ctx) {
 int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
     if (!ctx) return -1;
 
+    pthread_mutex_lock(&ctx->io_lock);
+
     if (dev_ptr) {
         ctx->listener.probe_flag_dev_ptr = dev_ptr;
     } else {
@@ -573,6 +584,7 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
                                     ACL_MEM_MALLOC_HUGE_FIRST);
         if (ret != ACL_SUCCESS) {
             fprintf(stderr, "[NPU-NVMe] Failed to allocate probe flag device memory.\n");
+            pthread_mutex_unlock(&ctx->io_lock);
             return -1;
         }
         uint32_t zero = 0;
@@ -585,14 +597,17 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
         aclrtMallocHost(&ctx->listener.probe_flag_host, 4);
     }
 
+    pthread_mutex_unlock(&ctx->io_lock);
     return 0;
 }
 
 int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value) {
     if (!ctx || !ctx->listener.probe_flag_dev_ptr) return -1;
+    pthread_mutex_lock(&ctx->io_lock);
     ensure_acl_context(ctx);
     aclError ret = aclrtMemcpy(ctx->listener.probe_flag_dev_ptr, 4, &value, 4,
                                ACL_MEMCPY_HOST_TO_DEVICE);
+    pthread_mutex_unlock(&ctx->io_lock);
     return (ret == ACL_SUCCESS) ? 0 : -1;
 }
 
@@ -601,6 +616,7 @@ void *npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx) {
 }
 
 static void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
+    /* Called from the listener which already holds io_lock (recursive). */
     if (!ctx->listener.probe_flag_dev_ptr) return;
     ensure_acl_context(ctx);
     aclrtMemcpy(ctx->listener.probe_flag_dev_ptr, 4, &value, 4,
@@ -617,6 +633,7 @@ static void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
 
 int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval) {
     if (!ctx || !dev_ptr) return -1;
+    pthread_mutex_lock(&ctx->io_lock);
     ctx->listener.dev_step_ptr = dev_ptr;
     ctx->listener.ckpt_interval = ckpt_interval;
     ctx->listener.last_step_seen = 0;
@@ -624,6 +641,7 @@ int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval)
     if (!ctx->listener.step_poll_buf) {
         aclrtMallocHost(&ctx->listener.step_poll_buf, 4);
     }
+    pthread_mutex_unlock(&ctx->io_lock);
     return 0;
 }
 
@@ -633,11 +651,14 @@ static void *probe_listener_thread(void *arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
     aclrtSetDevice(ctx->acl.npu_id);
 
-    /* Reset all registered tasks to IDLE before the first write */
+    /* Reset all registered tasks to IDLE — hold io_lock to prevent
+     * concurrent register_tasks() from freeing the array under us. */
+    pthread_mutex_lock(&ctx->io_lock);
     for (int i = 0; i < ctx->listener.num_registered_tasks; i++) {
         ctx->listener.registered_tasks[i].state = CHUNK_IDLE;
         ctx->listener.registered_tasks[i].buf_idx = -1;
     }
+    pthread_mutex_unlock(&ctx->io_lock);
 
     while (!ctx->listener.stop_listener) {
         if (!ctx->listener.dev_step_ptr) {
@@ -662,10 +683,15 @@ static void *probe_listener_thread(void *arg) {
             fprintf(stderr, "[NPU-NVMe] Listener detected step %d, triggering SPDK write\n",
                     cur_step);
 #endif
-            /* Trigger SPDK write via the standard write pipeline */
+            /* Hold io_lock across the read of registered_tasks AND the
+             * subsequent run_write_pipeline call so that a concurrent
+             * register_tasks() cannot free the array between the two.
+             * run_write_pipeline() acquires io_lock recursively — safe. */
+            pthread_mutex_lock(&ctx->io_lock);
             run_write_pipeline(ctx, ctx->listener.registered_tasks,
                                 ctx->listener.num_registered_tasks, false);
             signal_probe_flag(ctx, (uint32_t)cur_step);
+            pthread_mutex_unlock(&ctx->io_lock);
         }
         usleep(10000); /* 10 ms poll interval */
     }
@@ -678,13 +704,18 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
                              uint64_t *nvme_offsets, size_t *sizes, int num_items) {
     if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) return -1;
 
+    pthread_mutex_lock(&ctx->io_lock);
+
     /* Free previously registered tasks if any */
     if (ctx->listener.registered_tasks) {
         free(ctx->listener.registered_tasks);
     }
 
     ctx->listener.registered_tasks = calloc(num_items, sizeof(io_task_t));
-    if (!ctx->listener.registered_tasks) return -1;
+    if (!ctx->listener.registered_tasks) {
+        pthread_mutex_unlock(&ctx->io_lock);
+        return -1;
+    }
 
     for (int i = 0; i < num_items; i++) {
         ctx->listener.registered_tasks[i].task_idx = i;
@@ -695,6 +726,7 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
         ctx->listener.registered_tasks[i].size = sizes[i];
     }
     ctx->listener.num_registered_tasks = num_items;
+    pthread_mutex_unlock(&ctx->io_lock);
     return 0;
 }
 
@@ -716,6 +748,8 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
     int done_flag = 0;
     int rc;
 
+    pthread_mutex_lock(&ctx->io_lock);
+
     if (is_read) {
         rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair, ctx->meta_dma_buf,
                                     start_lba, num_blocks, io_complete_meta,
@@ -726,7 +760,7 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
                                      start_lba, num_blocks, io_complete_meta,
                                      &done_flag, 0);
     }
-    if (rc != 0) return -1;
+    if (rc != 0) { pthread_mutex_unlock(&ctx->io_lock); return -1; }
 
     /* Busy-wait for completion */
     while (!done_flag) {
@@ -736,6 +770,7 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
     if (is_read) {
         memcpy(meta_buffer, ctx->meta_dma_buf, total_bytes);
     }
+    pthread_mutex_unlock(&ctx->io_lock);
     return 0;
 }
 
@@ -758,6 +793,19 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
         strncpy(ctx->profiling_dir, prof_dir, sizeof(ctx->profiling_dir) - 1);
     } else {
         strcpy(ctx->profiling_dir, ".");
+    }
+    /* Recursive mutex: the listener holds io_lock across the reset loop
+     * and run_write_pipeline() which also acquires io_lock internally. */
+    {
+        pthread_mutexattr_t attr;
+        pthread_mutexattr_init(&attr);
+        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+        if (pthread_mutex_init(&ctx->io_lock, &attr) != 0) {
+            fprintf(stderr, "[Fatal] Failed to init io_lock.\n");
+            pthread_mutexattr_destroy(&attr);
+            free(ctx); return -1;
+        }
+        pthread_mutexattr_destroy(&attr);
     }
 
     /* Initialise SPDK environment (once per process via SPDK_SHM_ID).
@@ -924,6 +972,7 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
         ctx->listener.num_registered_tasks = 0;
     }
 
+    pthread_mutex_destroy(&ctx->io_lock);
     free(ctx);
 }
 

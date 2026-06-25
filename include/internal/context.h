@@ -88,6 +88,11 @@ typedef struct NPUNVMEContext {
 
     /* Delta ring layout */
     delta_state_t delta;
+
+    /* I/O serialization — the listener thread and the main thread share
+     * a single SPDK qpair.  SPDK qpairs (submission + completion queues)
+     * are not thread-safe; this mutex serialises all qpair access. */
+    pthread_mutex_t io_lock;
 } NPUNVMEContext;
 
 #endif
