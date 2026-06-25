@@ -172,7 +172,8 @@ def run_benchmark(device_id=1, steps=50, sink_size=10, ckpt_every=10):
         # FULL checkpoint at epoch boundary (synchronous: wait for SPDK write)
         if s % ckpt_every == 0:
             t_full0 = time.perf_counter()
-            ckpt.save(f"/tmp/bench_full_step{s}.pkl", step=s)
+            ckpt.save(model, step=s,
+                       meta_path=f"/tmp/bench_full_step{s}.pkl")
             ckpt.wait_for_io_completion()  # block until SPDK write done
             dt_full = (time.perf_counter() - t_full0) * 1000
             full_ckpt_times.append({"step": s, "dt_ms": dt_full})
@@ -264,7 +265,8 @@ def run_benchmark(device_id=1, steps=50, sink_size=10, ckpt_every=10):
 
         if s % ckpt_every == 0:
             t_full0 = time.perf_counter()
-            ckpt3.save(f"/tmp/bench_full_only_step{s}.pkl", step=s)
+            ckpt3.save(model3, step=s,
+                        meta_path=f"/tmp/bench_full_only_step{s}.pkl")
             ckpt3.wait_for_io_completion()
             dt_full = (time.perf_counter() - t_full0) * 1000
             full_ckpt_stats.append({"step": s, "sync_ms": dt_full})
