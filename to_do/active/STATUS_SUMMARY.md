@@ -91,10 +91,26 @@
 
 | # | 决策 | 理由 |
 |:---:|------|------|
-| D1 | delta_p_old 全量 Assign (非 ScatterUpdate) | 绕开 MS 2.5 scatter bug |
+| D1 | delta_p_old 全量 Assign (非 ScatterUpdate) | MS 2.5 ScatterUpdate(INT8) 为**性能 bug** — 2.1× 慢于 Full-Assign (2087ms vs 4301ms)。已验证不是正确性 bug，是 kernel 回退到 AICPU 慢路径 |
 | D2 | checkpoint_name_or_path="" | 避免 seq_len 与预训练权重不兼容 |
 | D3 | seq_len=1025 | 匹配 gpt2_train_1025 mindrecord |
-| D4 | 禁止开发标签 (I3/Step3/Phase) | STYLE_GUIDE.md §4.3 |
+
+## 已知限制
+
+| # | 限制 | 详情 | 状态 |
+|:---:|------|------|:---:|
+| L1 | Phase F 全量 INT8 量化 | 每步量化全部 3038 blocks (~2087ms)，理想只需 quant top-K 304 blocks。ScatterUpdate(INT8) 在 Ascend 910B AICPU 慢路径上反而 2.1× 更慢 | 搁置，待 MS/CANN 更新 |
+| L2 | MS 2.6 不可用 | `/root/miniconda3/envs/mindspore` 缺少 TBE 模块，GE 初始化失败 | 待 CANN 升级 |
+| L3 | T5 overhead +147ms | 含全量 Phase F 量化开销。ScatterUpdate 修复后预期降至 +30-50ms | 论文标注 |
+| L4 | ring buffer 浪费 1 slot | capacity=N 时只有 N-1 可用 | 低优先级 |
+
+## 代码审查结果 (2026-06-25)
+
+| 类别 | 结果 |
+|------|------|
+| 逻辑审查 | F2 (calloc 失败 NULL deref) 已修复；F1 (block_size 除法 guard) 已修复；其余 4 项低风险 |
+| 规范审查 | C 缺 ~30 函数注释；Python 有 ~10 处 "I3"/"Phase" 禁止标签；后续统一清理 |
+| ScatterUpdate | 确认为 AICPU 性能回退；5 条优化方案已记录 (Parameter setitem / FP16 scatter / CANN fusion / mint.scatter / Ascend C) |
 
 ## 文档索引
 

@@ -217,9 +217,10 @@ to_do/active/
 | `lib` undefined (无 .so) | ✅ 已解决 | Phase 0 fix: `except` 块中 `lib = None` |
 | `delta_save()` 悬垂指针 | ✅ 已解决 | Phase 0 fix: 命名 `frame_buf` 变量 |
 | 双重 `if (enable_profiling)` | ✅ 已解决 | Phase 2: 统一 `write_profiling_csv()` |
-| P_old 图内更新 (ScatterUpdate) | ⚠️ MS 2.5 bug | D-I3.2: 改用全量 Assign 绕过 |
+| P_old 图内更新 (ScatterUpdate) | ⚠️ MS 2.5 性能 bug | 改用全量 Assign。ScatterUpdate(INT8) 在 Ascend 910B 上回退到 AICPU 慢路径，比 Full-Assign 慢 2.1× (2087ms vs 4301ms)。MS 2.6 缺 TBE 无法测试。5 条优化方案已记录 |
 | PYNATIVE `value_and_grad` NaN | ⚠️ MS 2.5 bug | 必须使用 GRAPH_MODE |
 | C 编译 (no SPDK/NPU on dev) | ⚠️ 待服务器验证 | `scripts/verify_phaseA.sh` |
+| ScatterUpdate INT8 优化方案 | 🔲 待测试 | A: Parameter setitem; B: masked_scatter; C: FP16 scatter+Cast; D: CANN fusion pass; E: mint.scatter |
 | `nn.AdamWeightDecay` → `AdamW` | 🔲 延期 | MS 2.9+ 强制迁移
 
 ---
