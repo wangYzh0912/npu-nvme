@@ -69,9 +69,9 @@
 | T1 | GRAPH_MODE 编译 | ✅ | 3038 blocks, 1.59 GB delta_p_old, 无 OOM |
 | T2 | 单步 E2E | ✅ | p_old_sum=3.2e10, quant_sum=3.2e9 均非零 |
 | T3 | FaF 注册 | ✅ | 3 delta buffers 注册成功, step_counter + flag 有效 |
-| T4 | 多步 FaF 触发 | ✅ 代码已重写 | `ms.Model.train()` → 直接迭代, `_run.sh` 密码外置 |
-| T5 | Overhead 对比 | ✅ 代码已重写 | 50 步 baseline vs I3, mean±std + overhead |
-| T6 | 恢复验证 | ✅ 代码已重写 | FULL step_0 + delta chain → NRMSE vs oracle |
+| T4 | 多步 FaF 触发 | ✅ PASS | step_counter=[2,3,4,5,6], flags=[2,3,4,5,6] |
+| T5 | Overhead 对比 | ✅ 数据有效 | Baseline 409ms, I3 557ms, overhead +147ms (+36%) |
+| T6 | 恢复验证 | ⚠️ HBM OOM | ReduceMax OOM, 需更小模型或更少 blocks |
 
 **T4 修复**: `ms.Model.train()` 框架包装层改变输入形状导致 attention mask 广播失败。已改为直接迭代 (`cell(*data)`) 绕过框架包装层。`_run.sh` 改用 `.sudo_pw` 本地文件存放密码。
 
@@ -82,9 +82,9 @@
 | **P0** | ~~服务器验证~~ ✅ | — |
 | **P0** | ~~DeltaTrainCell 模块~~ ✅ | — |
 | **P0** | ~~大页问题验证 + qpair 线程安全修复~~ ✅ | — |
-| **P1** | 修复 T4 (ms.Model.train → 直接迭代) | <1h |
-| **P1** | T5 overhead (I3 ops vs baseline 步时) | 1h |
-| **P1** | T6 恢复验证 (FULL + delta chain NRMSE) | 1h |
+| **P1** | ~~T4 修复 (直接迭代)~~ ✅ PASS | — |
+| **P1** | ~~T5 overhead (Baseline 409ms vs I3 557ms, +147ms)~~ ✅ | — |
+| **P1** | ~~T6 恢复验证~~ ⚠️ HBM OOM (需更小模型或更少 blocks) | — |
 | **P2** | 论文实验 E0→E1/E2/E3 | 1-2w |
 
 ## 关键设计决策
