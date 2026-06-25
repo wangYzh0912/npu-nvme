@@ -199,10 +199,9 @@ class DeltaTrainCell(nn.Cell):
             Tensor(np.zeros(self.k, dtype=np.int32)),
             name="delta_idx_buf", requires_grad=False)
 
-        # Previous-step full-model INT8 snapshot stored as 2D [nb, bs].
-        # ScatterUpdate writes only the top-K rows each step (not full Assign).
+        # Previous-step full-model INT8 snapshot (~1.52 GB for GPT-2 XL)
         self.delta_p_old = Parameter(
-            Tensor(np.zeros((info['total_nb'], block_size), dtype=np.int8)),
+            Tensor(np.zeros(info['total_nb'] * block_size, dtype=np.int8)),
             name="delta_p_old", requires_grad=False)
 
         # Step counter for FaF listener
@@ -212,7 +211,7 @@ class DeltaTrainCell(nn.Cell):
         self.one = Tensor([1], dtype=ms.int32)
 
         print(f"    Top-K: {self.k} (top {top_k_frac*100:.0f}%)")
-        print(f"    delta_p_old: {info['total_nb'] * block_size / 1e9:.2f} GB INT8 (2D [{info['total_nb']}, {block_size}])")
+        print(f"    delta_p_old: {info['total_nb'] * block_size / 1e9:.2f} GB INT8")
         print(f"    delta_quant_buf: {self.k * block_size / 1e6:.1f} MB INT8")
 
     # ---- Helpers (in-graph) ------------------------------------------------
@@ -269,8 +268,9 @@ class DeltaTrainCell(nn.Cell):
                                    mode='constant', value=0.0)
         AllBlocks = ops.Reshape()(all_flat_padded, (self.nb, self.bs))
 
-        # Dequant P_old: INT8 → FP16 (P_old is stored 2D [nb, bs])
-        P_old_fp16 = ops.Cast()(self.delta_p_old, ms.float16)
+        # Dequant P_old: INT8 → FP16
+        P_old_int8_2d = ops.Reshape()(self.delta_p_old, (self.nb, self.bs))
+        P_old_fp16 = ops.Cast()(P_old_int8_2d, ms.float16)
 
         # Phase C — delta norms per block
         deltas = ops.Sub()(AllBlocks, P_old_fp16)
@@ -285,11 +285,10 @@ class DeltaTrainCell(nn.Cell):
         selected_fp16 = ops.Gather()(AllBlocks, top_indices, 0)
         quant_int8, scales = self._int8_quantize(selected_fp16)
 
-        # Phase F — scatter top-K INT8 blocks into P_old (in-place row update).
-        # Only the k selected rows are written; the remaining nb-k rows
-        # stay unchanged.  This replaces the full-Assign workaround for the
-        # MS 2.5 ScatterUpdate bug (verified fixed in MS 2.5.0).
-        ops.ScatterUpdate()(self.delta_p_old, top_indices, quant_int8)
+        # Phase F — full P_old INT8 update (Assign, not ScatterUpdate)
+        new_p_old_int8, _ = self._int8_quantize(AllBlocks)
+        new_p_old_flat = ops.Reshape()(new_p_old_int8, (self.nb * self.bs,))
+        ops.Assign()(self.delta_p_old, new_p_old_flat)
 
         # Phase G — output buffer assignments + step_counter
         ops.Assign()(self.delta_quant_buf,
