@@ -1,15 +1,16 @@
 # Claude 会话指令与上下文恢复
 
-> 创建: 2026-06-17 | 最后更新: 2026-06-24 (Phase 0-2 完成, Step 3 详细设计完成)
-> 状态: **Step 3 待实现 → Phase C 论文实验**
+> 创建: 2026-06-17 | 最后更新: 2026-06-25 (DeltaTrainCell 模块完成, T1-T3 通过, T4 调试中)
+> 状态: **E2E 测试 T4 阻塞修复中 → T5/T6 → 论文实验**
 
 ---
 
-## 零、当前会话任务 (2026-06-24)
+## 零、当前会话任务 (2026-06-25)
 
-1. ~~服务器验证~~ ✅ 全部通过 (C 25/25 + A.5/A.6/A.7 + Step 1c)
-2. 增量检查点详细设计完成 → [DELTA_CHECKPOINT_DESIGN.md](DELTA_CHECKPOINT_DESIGN.md)
-3. 增量检查点全路径打通 (待实现)
+1. ~~服务器验证~~ ✅ 全部通过
+2. ~~DeltaTrainCell 模块~~ ✅ 已创建 (delta_cell.py + direct_checkpoint.py + common.py)
+3. E2E 测试 T1-T3 通过, T4 阻塞修复中 (ms.Model.train 形状问题)
+4. 论文实验待推进
 
 ### 重要: 2026-06-24 验证结果
 
