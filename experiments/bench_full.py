@@ -169,13 +169,16 @@ def run_benchmark(device_id=1, steps=50, sink_size=10, ckpt_every=10):
             "flag": flag, "step_counter": sc,
         })
 
-        # FULL checkpoint at epoch boundary
+        # FULL checkpoint at epoch boundary (synchronous: wait for SPDK write)
         if s % ckpt_every == 0:
-            dt_full = save_ckpt_sync(ckpt, s, f"step{s}")
+            t_full0 = time.perf_counter()
+            ckpt.save(f"/tmp/bench_full_step{s}.pkl", step=s)
+            ckpt.wait_for_io_completion()  # block until SPDK write done
+            dt_full = (time.perf_counter() - t_full0) * 1000
             full_ckpt_times.append({"step": s, "dt_ms": dt_full})
             print(f"  delta step {s:3d}/{steps}  dt={dt_ms:.1f}ms  "
                   f"loss={delta_steps[-1]['loss']:.4f}  "
-                  f"flag={flag}  sc={sc}  FULL={dt_full:.0f}ms")
+                  f"flag={flag}  sc={sc}  FULL(sync)={dt_full:.0f}ms")
         elif s % 10 == 0 or s == 1:
             print(f"  delta step {s:3d}/{steps}  dt={dt_ms:.1f}ms  "
                   f"loss={delta_steps[-1]['loss']:.4f}  "
@@ -216,6 +219,82 @@ def run_benchmark(device_id=1, steps=50, sink_size=10, ckpt_every=10):
     print(f"  P_old sum: {p_old_val:.1e}  quant sum: {quant_val:.1e}")
 
     ckpt.cleanup()
+
+    # ==================================================================
+    # Phase 3: FULL checkpoint benchmark (registered params, sync write)
+    # ==================================================================
+    print()
+    print("=" * 60)
+    print("[Phase 3] FULL ckpt benchmark — registered params, sync SPDK write")
+    print("=" * 60)
+
+    model3, ds3, opt3 = make_gpt2xl_training(
+        total_steps=steps, device_id=device_id)
+    # Use ProbeTrainOneStepCell (no delta) for pure FULL ckpt measurement
+    cell3 = ProbeTrainOneStepCell(model3, opt3, enable_probe=True,
+                                   ckpt_interval=ckpt_every)
+
+    ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend",
+                   device_id=device_id)
+
+    ckpt3 = make_ckpt(device_id=device_id, pipeline_depth=8)
+
+    # Compile
+    it3 = ds3.create_tuple_iterator()
+    _ = cell3(*next(it3))
+
+    # Register model params for FULL ckpt
+    dev_flag3, dev_step3 = ckpt3.register_tasks(model3, step=0)
+    print(f"  Registered model params: flag={hex(dev_flag3)} "
+          f"step={hex(dev_step3)}")
+
+    full_steps = []
+    full_ckpt_stats = []
+    t_start3 = time.perf_counter()
+
+    for s in range(1, steps + 1):
+        try:
+            data = next(it3)
+        except StopIteration:
+            it3 = ds3.create_tuple_iterator()
+            data = next(it3)
+        t0 = time.perf_counter()
+        loss = cell3(*data)
+        dt_ms = (time.perf_counter() - t0) * 1000
+        loss_val = loss[0] if isinstance(loss, (tuple, list)) else loss
+
+        if s % ckpt_every == 0:
+            t_full0 = time.perf_counter()
+            ckpt3.save(f"/tmp/bench_full_only_step{s}.pkl", step=s)
+            ckpt3.wait_for_io_completion()
+            dt_full = (time.perf_counter() - t_full0) * 1000
+            full_ckpt_stats.append({"step": s, "sync_ms": dt_full})
+            print(f"  FULL step {s:3d}/{steps}  step_dt={dt_ms:.1f}ms  "
+                  f"FULL(sync)={dt_full:.0f}ms  "
+                  f"loss={float(loss_val.asnumpy().flat[0]):.4f}")
+        elif s % 10 == 0 or s == 1:
+            print(f"  FULL step {s:3d}/{steps}  dt={dt_ms:.1f}ms  "
+                  f"loss={float(loss_val.asnumpy().flat[0]):.4f}")
+
+        full_steps.append({"step": s, "dt_ms": dt_ms})
+
+    dt_total3 = (time.perf_counter() - t_start3) * 1000
+    ft_times = [x["dt_ms"] for x in full_steps]
+    results["full_ckpt_bench"] = {
+        "step_mean_ms": float(np.mean(ft_times)),
+        "step_std_ms": float(np.std(ft_times)),
+        "total_ms": dt_total3,
+        "ckpt_stats": full_ckpt_stats,
+    }
+    if full_ckpt_stats:
+        avg_sync = float(np.mean([x["sync_ms"] for x in full_ckpt_stats]))
+        results["full_ckpt_bench"]["avg_sync_ms"] = avg_sync
+        print(f"  FULL ckpt sync: avg {avg_sync:.0f}ms × "
+              f"{len(full_ckpt_stats)} (every {ckpt_every} steps)")
+    print(f"  Step time: {results['full_ckpt_bench']['step_mean_ms']:.1f}ms ± "
+          f"{results['full_ckpt_bench']['step_std_ms']:.1f}ms")
+
+    ckpt3.cleanup()
 
     # Summary
     results["summary"] = {
