@@ -288,17 +288,16 @@ class DeltaTrainCell(nn.Cell):
         # Phase F — full P_old INT8 update (Assign, not ScatterUpdate)
         new_p_old_int8, _ = self._int8_quantize(AllBlocks)
         new_p_old_flat = ops.Reshape()(new_p_old_int8, (self.nb * self.bs,))
-        self.delta_p_old = ops.Assign()(self.delta_p_old, new_p_old_flat)
+        ops.Assign()(self.delta_p_old, new_p_old_flat)
 
         # Phase G — output buffer assignments + step_counter
-        self.delta_quant_buf = ops.Assign()(
-            self.delta_quant_buf,
-            ops.Reshape()(quant_int8, (self.k * self.bs,)))
-        self.delta_scale_buf = ops.Assign()(self.delta_scale_buf, scales)
-        self.delta_idx_buf = ops.Assign()(self.delta_idx_buf, top_indices)
-        self.step_counter = ops.AssignAdd()(self.step_counter, self.one)
+        ops.Assign()(self.delta_quant_buf,
+                     ops.Reshape()(quant_int8, (self.k * self.bs,)))
+        ops.Assign()(self.delta_scale_buf, scales)
+        ops.Assign()(self.delta_idx_buf, top_indices)
+        ops.AssignAdd()(self.step_counter, self.one)
 
-        # Dependency chain — prevent DCE
+        # Dependency chain — prevent DCE (reference Parameters after Assign)
         loss = ops.Depend()(loss, self.delta_quant_buf)
         loss = ops.Depend()(loss, self.delta_scale_buf)
         loss = ops.Depend()(loss, self.delta_idx_buf)

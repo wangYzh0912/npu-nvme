@@ -7,7 +7,7 @@ Validates the full incremental-checkpoint pipeline across six stages:
   T2 — single-step: P_old and quant buffers are non-zero after one step.
   T3 — FaF registration: register_delta_tasks + step_ptr + delta_init.
   T4 — multi-step FaF: listener triggers SPDK writes, probe_flag correct.
-  T5 — step-time overhead vs baseline (ProbeTrainOneStepCell without I3 ops).
+  T5 — step-time overhead vs baseline (ProbeTrainOneStepCell without delta ops).
   T6 — recovery: FULL ckpt + delta chain restore, NRMSE < threshold.
 
 Usage:
@@ -20,6 +20,7 @@ import os, sys, time, json, ctypes, argparse, math, re
 
 REPO = "/home/user7/npu-nvme"
 sys.path.insert(0, os.path.join(REPO, "python"))
+sys.path.insert(0, REPO)  # for 'experiments' package
 
 import numpy as np
 import mindspore as ms
@@ -71,12 +72,9 @@ def test_compile(device_id):
     cell = DeltaTrainCell(model, opt, block_size=BLOCK_SIZE, top_k_frac=TOP_K_FRAC)
 
     # Compile: one forward pass in GRAPH_MODE triggers JIT compilation
-    ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend",
-                   device_id=device_id)
-
-    dummy = Tensor(np.zeros((1, 512), dtype=np.int32))
-    dry_out = cell(dummy, dummy, dummy)
-    print(f"  T1 compile OK — loss shape={dry_out.shape}")
+    dummy = Tensor(np.zeros((1, 1025), dtype=np.int32))
+    _ = cell(dummy, dummy, dummy)
+    print(f"  T1 compile OK — no exceptions")
     return {"status": "pass"}
 
 
@@ -88,9 +86,6 @@ def test_single_step(device_id):
     model, ds, opt = make_gpt2xl_training(total_steps=2, device_id=device_id)
 
     cell = DeltaTrainCell(model, opt, block_size=BLOCK_SIZE, top_k_frac=TOP_K_FRAC)
-
-    ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend",
-                   device_id=device_id)
 
     for data in ds.create_tuple_iterator():
         _ = cell(*data)
@@ -266,6 +261,11 @@ def main():
     print("Delta-Checkpoint E2E Verification")
     print(f"  Device: {args.device_id}  |  Steps: {args.steps}")
     print("=" * 60)
+
+    # One-time context init — must precede any model construction
+    ms.set_recursion_limit(10000)
+    from experiments.common import init_env
+    init_env(device_id=args.device_id)
 
     results = {
         "experiment": "delta_e2e",

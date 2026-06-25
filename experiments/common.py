@@ -36,7 +36,7 @@ _DEFAULT_TRAIN_MR = os.path.join(
 
 # -- Training setup factory -------------------------------------------------
 
-def make_gpt2xl_training(total_steps=20, device_id=1, seq_len=1024,
+def make_gpt2xl_training(total_steps=20, device_id=1, seq_len=1025,
                           train_mr=None):
     """Create a standard GPT-2 XL training setup.
 
@@ -49,6 +49,7 @@ def make_gpt2xl_training(total_steps=20, device_id=1, seq_len=1024,
     cfg = AutoConfig.from_pretrained("gpt2_xl")
     cfg.seq_length = seq_len
     cfg.max_position_embeddings = seq_len
+    cfg.checkpoint_name_or_path = ""  # train from scratch
     model = AutoModel.from_config(cfg)
 
     mr_path = train_mr or _DEFAULT_TRAIN_MR
