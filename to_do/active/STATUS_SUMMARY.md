@@ -69,11 +69,11 @@
 | T1 | GRAPH_MODE 编译 | ✅ | 3038 blocks, 1.59 GB delta_p_old, 无 OOM |
 | T2 | 单步 E2E | ✅ | p_old_sum=3.2e10, quant_sum=3.2e9 均非零 |
 | T3 | FaF 注册 | ✅ | 3 delta buffers 注册成功, step_counter + flag 有效 |
-| T4 | 多步 FaF 触发 | 🔴 | 阻塞: `ms.Model.train()` 形状广播不匹配 |
-| T5 | Overhead 对比 | 🔲 | 依赖 T4 |
-| T6 | 恢复验证 | 🔲 | 依赖 T4 |
+| T4 | 多步 FaF 触发 | ✅ 代码已重写 | `ms.Model.train()` → 直接迭代, `_run.sh` 密码外置 |
+| T5 | Overhead 对比 | ✅ 代码已重写 | 50 步 baseline vs I3, mean±std + overhead |
+| T6 | 恢复验证 | ✅ 代码已重写 | FULL step_0 + delta chain → NRMSE vs oracle |
 
-**T4 阻塞原因**: `ms.Model.train()` 框架包装层改变输入形状 — GPT-2 LM 模型内部将 `input_ids` 切片为 `seq_length-1`，导致 attention mask `[1,1024,1024]` 与 lower_triangle `[1,1025,1025]` 广播失败。T2 使用直接迭代 (`cell(*data)`) 正常。修复方向：T4 改直接迭代。
+**T4 修复**: `ms.Model.train()` 框架包装层改变输入形状导致 attention mask 广播失败。已改为直接迭代 (`cell(*data)`) 绕过框架包装层。`_run.sh` 改用 `.sudo_pw` 本地文件存放密码。
 
 ## 当前任务
 
