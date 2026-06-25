@@ -42,6 +42,7 @@
 /* ---- Hugepage pool auto-expansion for DPDK/SPDK ---- */
 #define HUGEPAGE_2MB_PATH "/sys/kernel/mm/hugepages/hugepages-2048kB/free_hugepages"
 
+/* Read an integer from a sysfs / proc file.  Returns -1 on error. */
 static int read_int_from_file(const char *path) {
     FILE *f = fopen(path, "r");
     if (!f) return -1;
@@ -51,6 +52,8 @@ static int read_int_from_file(const char *path) {
     return val;
 }
 
+/* Ensure at least HUGEPAGE_PADDING free 2 MB hugepages are available
+ * for DPDK/SPDK.  Called once from npu_nvme_init before spdk_env_init. */
 static void ensure_hugepages(void) {
     int nr = read_int_from_file(NR_HUGEPAGES_PATH);
     int free_2mb = read_int_from_file(HUGEPAGE_2MB_PATH);
@@ -67,8 +70,14 @@ static void ensure_hugepages(void) {
     }
 }
 
-/* ---- SPDK probe / attach callbacks ---- */
+/* ---- SPDK probe / attach callbacks ----
+ *
+ * probe_cb matches the user-supplied PCI address against each discovered
+ * NVMe transport ID.  attach_cb stores the controller and namespace
+ * pointers into the context on a successful match.
+ */
 
+/* Return true when the probed device matches ctx->pci_addr. */
 static bool probe_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
                     struct spdk_nvme_ctrlr_opts *opts) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)cb_ctx;
@@ -79,6 +88,7 @@ static bool probe_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
     return 0;
 }
 
+/* Store the attached controller, namespace, block_size and total_blocks. */
 static void attach_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
                       struct spdk_nvme_ctrlr *ctrlr,
                       const struct spdk_nvme_ctrlr_opts *opts) {
@@ -95,6 +105,7 @@ static void attach_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
 
 /* ---- Timestamp ---- */
 
+/* Return monotonic wall-clock time in microseconds. */
 uint64_t get_time_us(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -103,6 +114,8 @@ uint64_t get_time_us(void) {
 
 /* ---- IO task factory ---- */
 
+/* Allocate and initialise an array of io_task_t descriptors.
+ * Caller owns the returned heap memory; free() when done. */
 io_task_t *create_io_tasks(int num_tasks, void **npu_ptrs,
                             uint64_t *nvme_offsets, size_t *sizes) {
     io_task_t *tasks = calloc(num_tasks, sizeof(io_task_t));
@@ -121,8 +134,14 @@ io_task_t *create_io_tasks(int num_tasks, void **npu_ptrs,
     return tasks;
 }
 
-/* ---- NPU DMA submission ---- */
+/* ---- NPU DMA submission ----
+ *
+ * try_submit_async pops a free DMA buffer slot from the ring and copies
+ * chunk data from NPU HBM (or host DRAM when is_host is set) into it.
+ */
 
+/* Submit one chunk to the DMA buffer pool.  Returns 0 on success,
+ * -1 if the ring is full, -2 on ACL memcpy error. */
 int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
     int buf_idx;
     if (ring_pop(&ctx->dma.free_ring, &buf_idx) != 0) return -1;
@@ -148,8 +167,17 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
     return 0;
 }
 
-/* ---- SPDK write completion + submission ---- */
+/* ---- SPDK write completion + submission ----
+ *
+ * nvme_write_complete_cb is invoked by SPDK when a write command finishes.
+ * It marks the task done, increments the shared counter, returns the
+ * DMA buffer slot to the free ring, and frees the callback argument.
+ *
+ * submit_to_spdk_write queues a single NVMe write command for a chunk
+ * whose DMA copy has completed.
+ */
 
+/* SPDK write-completion callback — advances task state to CHUNK_DONE. */
 void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
     spdk_cb_arg_t *cb_arg = (spdk_cb_arg_t *)arg;
     if (cb_arg->ctx->enable_profiling) cb_arg->task->ts_spdk_done = get_time_us();
@@ -159,6 +187,7 @@ void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
     free(cb_arg);
 }
 
+/* Submit a single SPDK write command for an NPU_DONE chunk. */
 int submit_to_spdk_write(NPUNVMEContext *ctx, io_task_t *task,
                           int *completed_counter) {
     size_t aligned_sz = ALIGN_4K(task->size);
@@ -178,7 +207,16 @@ int submit_to_spdk_write(NPUNVMEContext *ctx, io_task_t *task,
     return 0;
 }
 
-/* ---- Write-path dual-polling pipeline ---- */
+/* ---- Write-path dual-polling pipeline ----
+ *
+ * Three cooperating engines inside a single thread:
+ *   Engine 1 — submit NPU→DMA copies (aclrtMemcpy)
+ *   Engine 2 — poll NPU events, submit ready chunks to SPDK
+ *   Engine 3 — reap SPDK write completions
+ *
+ * Blocks until all tasks reach CHUNK_DONE.  Holds io_lock for the
+ * entire duration to serialise access to the shared SPDK qpair.
+ */
 
 void run_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks,
                          int num_tasks, bool is_host) {
@@ -265,6 +303,8 @@ void run_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks,
 
 /* ---- SPDK read completion ---- */
 
+/* SPDK read-completion callback — fatal on I/O error, otherwise marks
+ * the task CHUNK_SPDK_DONE so the read pipeline can continue. */
 void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
     spdk_cb_arg_t *cb_arg = (spdk_cb_arg_t *)arg;
     io_task_t *task = cb_arg->task;
@@ -279,7 +319,15 @@ void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
     free(cb_arg);
 }
 
-/* ---- Read-path dual-polling pipeline ---- */
+/* ---- Read-path dual-polling pipeline ----
+ *
+ * Three cooperating engines inside a single thread:
+ *   Engine 1 — submit NVMe→DMA read commands
+ *   Engine 2 — poll completions, copy from DMA buffer to NPU HBM
+ *   Engine 3 — reap SPDK read completions
+ *
+ * Blocks until all tasks reach CHUNK_DONE.
+ */
 
 void run_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
     int completed_tasks = 0;
@@ -381,7 +429,12 @@ void run_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
     pthread_mutex_unlock(&ctx->io_lock);
 }
 
-/* ---- Profiling CSV export (shared between write and read paths) ---- */
+/* ---- Profiling CSV export ----
+ *
+ * Writes per-chunk micro-benchmark timestamps to time_write.csv or
+ * time_read.csv under ctx->profiling_dir.  Column order differs by
+ * direction so that the dominant latency component appears first.
+ */
 
 void write_profiling_csv(NPUNVMEContext *ctx, io_task_t *tasks,
                           int num_items, pipeline_dir_t dir) {
@@ -426,8 +479,22 @@ void write_profiling_csv(NPUNVMEContext *ctx, io_task_t *tasks,
            (dir == PIPELINE_WRITE) ? "Write" : "Read", path);
 }
 
-/* ---- Public API: batch write / read ---- */
+/* ---- Public API: batch write / read ----
+ *
+ * These are the primary I/O entry points called from Python via ctypes.
+ * All four hold io_lock (recursively) to serialise access to the shared
+ * SPDK qpair and DMA pool across the Python caller and the FaF listener.
+ */
 
+/**
+ * @brief  Write NPU HBM buffers to NVMe (blocking batch).
+ * @param ctx        context handle
+ * @param npu_ptrs   array of NPU device pointers (source)
+ * @param nvme_offs  array of NVMe byte offsets (destination)
+ * @param sizes      array of per-chunk byte sizes
+ * @param num_items  number of chunks in the batch
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                           uint64_t *nvme_offsets, size_t *sizes, int num_items) {
     if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) {
@@ -448,6 +515,15 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     return 0;
 }
 
+/**
+ * @brief  Write host DRAM buffers to NVMe (memcpy path, no NPU DMA).
+ * @param ctx        context handle
+ * @param ptrs       array of host pointers (source)
+ * @param nvme_offs  array of NVMe byte offsets (destination)
+ * @param sizes      array of per-chunk byte sizes
+ * @param num_items  number of chunks in the batch
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
                                uint64_t *nvme_offsets, size_t *sizes,
                                int num_items) {
@@ -462,6 +538,15 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
     return 0;
 }
 
+/**
+ * @brief  Read NVMe blocks into NPU HBM buffers (blocking batch).
+ * @param ctx        context handle
+ * @param npu_ptrs   array of NPU device pointers (destination)
+ * @param nvme_offs  array of NVMe byte offsets (source)
+ * @param sizes      array of per-chunk byte sizes
+ * @param num_items  number of chunks in the batch
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                          uint64_t *nvme_offsets, size_t *sizes, int num_items) {
     if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0)
@@ -480,6 +565,15 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     return 0;
 }
 
+/**
+ * @brief  Read NVMe blocks into host DRAM (memcpy path, no NPU DMA).
+ * @param ctx        context handle
+ * @param host_ptrs  array of host pointers (destination)
+ * @param nvme_offs  array of NVMe byte offsets (source)
+ * @param sizes      array of per-chunk byte sizes
+ * @param num_items  number of chunks in the batch
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
                              uint64_t *nvme_offsets, size_t *sizes,
                              int num_items) {
@@ -557,24 +651,50 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
 
 /* ---- Public API: query ---- */
 
+/**
+ * @brief  Return the configured per-chunk transfer size.
+ * @param ctx  context handle
+ * @return chunk_size bytes, or 0 if ctx is NULL
+ */
 int npu_nvme_get_max_transfer(NPUNVMEContext *ctx) {
     return ctx ? (int)ctx->dma.chunk_size : 0;
 }
 
+/**
+ * @brief  Return total NVMe capacity in bytes.
+ * @param ctx  context handle
+ * @return total capacity in bytes, or 0 if ctx is NULL
+ */
 uint64_t npu_nvme_get_total_blocks(NPUNVMEContext *ctx) {
     return ctx ? ctx->total_blocks * ctx->block_size : 0;
 }
 
-/* ---- ACL context helper ---- */
+/* ---- ACL context helper ----
+ *
+ * ensure_acl_context binds the calling thread to the NPU device and
+ * ACL context stored in ctx.  Called from the listener thread and
+ * from the main thread under io_lock.
+ */
 
+/* (Re-)bind this thread to the configured NPU device and ACL context. */
 static inline int ensure_acl_context(NPUNVMEContext *ctx) {
     aclError ret = aclrtSetDevice(ctx->acl.npu_id);
     if (ret != 0) return -1;
     return aclrtSetCurrentContext(ctx->acl.acl_ctx);
 }
 
-/* ---- Probe flag management ---- */
+/* ---- Probe flag management ----
+ *
+ * The probe flag is a 4-byte HBM buffer that the listener writes after
+ * completing a delta write.  Python reads it to confirm persistence.
+ */
 
+/**
+ * @brief  Set or self-allocate the probe-flag HBM buffer.
+ * @param ctx      context handle
+ * @param dev_ptr  external HBM pointer (NULL to self-allocate)
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
     if (!ctx) return -1;
 
@@ -605,6 +725,12 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
     return 0;
 }
 
+/**
+ * @brief  Write a value to the probe flag in HBM.
+ * @param ctx    context handle
+ * @param value  32-bit value to write
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value) {
     if (!ctx || !ctx->listener.probe_flag_dev_ptr) return -1;
     pthread_mutex_lock(&ctx->io_lock);
@@ -615,12 +741,18 @@ int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value) {
     return (ret == ACL_SUCCESS) ? 0 : -1;
 }
 
+/**
+ * @brief  Return the probe-flag HBM device pointer.
+ * @param ctx  context handle
+ * @return device pointer, or NULL
+ */
 void *npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx) {
     return ctx ? ctx->listener.probe_flag_dev_ptr : NULL;
 }
 
+/* Signal the probe flag to the given value.  Called from the listener
+ * thread which already holds io_lock (recursive mutex). */
 static void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
-    /* Called from the listener which already holds io_lock (recursive). */
     if (!ctx->listener.probe_flag_dev_ptr) return;
     ensure_acl_context(ctx);
     aclrtMemcpy(ctx->listener.probe_flag_dev_ptr, 4, &value, 4,
@@ -633,8 +765,19 @@ static void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
     }
 }
 
-/* ---- Step counter setup ---- */
+/* ---- Step counter setup ----
+ *
+ * The step counter is an int32 HBM tensor that DeltaTrainCell increments
+ * each training step via AssignAdd.  The listener polls it every 10 ms.
+ */
 
+/**
+ * @brief  Register the step_counter HBM address for FaF listener.
+ * @param ctx            context handle
+ * @param dev_ptr        HBM address of the step_counter Parameter
+ * @param ckpt_interval  trigger a delta write every N steps
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval) {
     if (!ctx || !dev_ptr) return -1;
     pthread_mutex_lock(&ctx->io_lock);
@@ -649,7 +792,13 @@ int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval)
     return 0;
 }
 
-/* ---- Background listener thread (FaF) ---- */
+/* ---- Background listener thread (FaF) ----
+ *
+ * probe_listener_thread is a persistent pthread that polls the GE-side
+ * step_counter every 10 ms.  When a new checkpoint step is detected it
+ * calls run_write_pipeline with the pre-registered delta buffer tasks,
+ * then signals the probe flag.  All under io_lock for thread safety.
+ */
 
 static void *probe_listener_thread(void *arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
@@ -702,8 +851,24 @@ static void *probe_listener_thread(void *arg) {
     return NULL;
 }
 
-/* ---- Task registration ---- */
+/* ---- Task registration ----
+ *
+ * register_tasks copies the caller's parameter-pointers/offsets/sizes
+ * into a heap-allocated io_task array.  The listener thread uses this
+ * array directly inside run_write_pipeline.  The function allocates a
+ * new array before freeing the old one so that a failed allocation
+ * leaves the listener with a valid (stale) task list.
+ */
 
+/**
+ * @brief  Register parameter pointers for FaF background persistence.
+ * @param ctx        context handle
+ * @param npu_ptrs   array of NPU device pointers
+ * @param nvme_offs  array of NVMe byte offsets
+ * @param sizes      array of per-parameter byte sizes
+ * @param num_items  number of registered tasks
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
                              uint64_t *nvme_offsets, size_t *sizes, int num_items) {
     if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) return -1;
@@ -738,13 +903,28 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
     return 0;
 }
 
-/* ---- Synchronous metadata I/O ---- */
+/* ---- Synchronous metadata I/O ----
+ *
+ * sync_meta_io uses a dedicated 1 MB DMA buffer (ctx->meta_dma_buf)
+ * for superblock and JSON-ledger reads and writes.  The caller is
+ * responsible for keeping total_bytes ≤ 1 MB (META_DMA_BUF_SIZE).
+ */
 
+/* SPDK completion callback for metadata I/O — sets the done flag. */
 static void io_complete_meta(void *arg, const struct spdk_nvme_cpl *completion) {
     int *done = (int *)arg;
     *done = 1;
 }
 
+/**
+ * @brief  Synchronous metadata I/O (superblock and JSON ledger).
+ * @param ctx          context handle
+ * @param byte_offset  absolute byte offset on the NVMe device
+ * @param total_bytes  number of bytes to read or write (≤ 1 MB)
+ * @param is_read      1 = read, 0 = write
+ * @param meta_buffer  host-side buffer
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
                            uint32_t total_bytes, int is_read, void *meta_buffer) {
     if (!ctx || !meta_buffer) return -1;
@@ -782,8 +962,28 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
     return 0;
 }
 
-/* ---- Initialisation / cleanup ---- */
+/* ---- Initialisation / cleanup ----
+ *
+ * npu_nvme_init is the sole entry point for creating a context.  It
+ * initialises SPDK (once per process), probes the NVMe device, sets
+ * up the DMA pool + NPU events, allocates the metadata buffer, and
+ * launches the background FaF listener thread.
+ *
+ * npu_nvme_cleanup stops the listener, frees all ACL and SPDK
+ * resources in reverse allocation order, and destroys the io_lock.
+ */
 
+/**
+ * @brief  Initialise the NPU-NVMe SPDK environment and create a context.
+ * @param out_ctx           output context handle
+ * @param pci_addr          NVMe PCIe BDF address (e.g. "0000:83:00.0")
+ * @param npu_id            Ascend NPU device ID
+ * @param pipe_depth        DMA pipeline depth (1–16 recommended)
+ * @param chunk_size        max bytes per DMA chunk (4 MiB = 4194304 recommended)
+ * @param enable_profiling  enable per-chunk timing CSV output
+ * @param prof_dir          directory for profiling CSV files (NULL = ".")
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                   int pipe_depth, uint32_t chunk_size, bool enable_profiling,
                   const char *prof_dir) {
@@ -816,8 +1016,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
         pthread_mutexattr_destroy(&attr);
     }
 
-    /* Initialise SPDK environment (once per process via SPDK_SHM_ID).
-     * Tracked locally so that cleanup can release and re-init works. */
+    /* Initialise SPDK environment (once per process via SPDK_SHM_ID). */
     {
         static int spdk_inited = 0;
         if (!spdk_inited) {
@@ -933,6 +1132,10 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     return 0;
 }
 
+/**
+ * @brief  Release all resources (SPDK, ACL, DMA pool, listener thread).
+ * @param ctx  context handle (NULL is safe)
+ */
 void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     if (!ctx) return;
 
@@ -984,8 +1187,21 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     free(ctx);
 }
 
-/* ---- Delta ring-buffer layout (bookkeeping only, no I/O) ---- */
+/* ---- Delta ring-buffer layout ----
+ *
+ * The delta area occupies the last N slots on the NVMe device, each
+ * delta_slot_size bytes, organized as a ring of delta_slot_count slots.
+ * These functions only manage the layout metadata (offsets/sizes) —
+ * actual I/O goes through write_batch / read_batch as usual.
+ */
 
+/**
+ * @brief  Initialise the delta ring-buffer layout on disk.
+ * @param ctx               context handle
+ * @param delta_slot_size   bytes per delta slot (e.g. 256 MiB)
+ * @param delta_slot_count  number of slots in the ring (e.g. 128)
+ * @return 0 on success, -1 on error
+ */
 int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size,
                          uint32_t delta_slot_count) {
     if (!ctx || delta_slot_size == 0 || delta_slot_count == 0) return -1;
@@ -1009,14 +1225,17 @@ int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size,
     return 0;
 }
 
+/** @brief Return the byte offset of the delta ring on the NVMe device. */
 uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx) {
     return ctx ? ctx->delta.area_offset : 0;
 }
 
+/** @brief Return the configured per-slot size in bytes. */
 uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx) {
     return ctx ? ctx->delta.slot_size : 0;
 }
 
+/** @brief Return the configured number of delta ring slots. */
 uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx) {
     return ctx ? ctx->delta.slot_count : 0;
 }
