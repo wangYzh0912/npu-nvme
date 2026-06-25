@@ -177,9 +177,17 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
  * whose DMA copy has completed.
  */
 
-/* SPDK write-completion callback — advances task state to CHUNK_DONE. */
+/* SPDK write-completion callback — advances task state to CHUNK_DONE.
+ * Logs an error on I/O failure but still returns the buffer slot (the task
+ * is marked done so the pipeline does not stall indefinitely). */
 void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
     spdk_cb_arg_t *cb_arg = (spdk_cb_arg_t *)arg;
+    if (spdk_nvme_cpl_is_error(completion)) {
+        fprintf(stderr, "[NPU-NVMe] NVMe write error for task %d: "
+                "status=%d type=%d\n",
+                cb_arg->task->task_idx,
+                completion->status.sc, completion->status.sct);
+    }
     if (cb_arg->ctx->enable_profiling) cb_arg->task->ts_spdk_done = get_time_us();
     cb_arg->task->state = CHUNK_DONE;
     (*cb_arg->completed_counter)++;
@@ -303,16 +311,18 @@ void run_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks,
 
 /* ---- SPDK read completion ---- */
 
-/* SPDK read-completion callback — fatal on I/O error, otherwise marks
- * the task CHUNK_SPDK_DONE so the read pipeline can continue. */
+/* SPDK read-completion callback — logs errors and marks the task
+ * CHUNK_SPDK_DONE so the read pipeline can continue.  The caller is
+ * responsible for checking the I/O result via the task state. */
 void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
     spdk_cb_arg_t *cb_arg = (spdk_cb_arg_t *)arg;
     io_task_t *task = cb_arg->task;
     NPUNVMEContext *ctx = cb_arg->ctx;
 
     if (spdk_nvme_cpl_is_error(completion)) {
-        fprintf(stderr, "[Fatal] NVMe read failed for task %d!\n", task->task_idx);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "[NPU-NVMe] NVMe read error for task %d: "
+                "status=%d type=%d\n",
+                task->task_idx, completion->status.sc, completion->status.sct);
     }
     task->state = CHUNK_SPDK_DONE;
     if (ctx->enable_profiling) task->ts_spdk_done = get_time_us();
@@ -779,7 +789,7 @@ static void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
  * @return 0 on success, -1 on error
  */
 int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval) {
-    if (!ctx || !dev_ptr) return -1;
+    if (!ctx || !dev_ptr || ckpt_interval <= 0) return -1;
     pthread_mutex_lock(&ctx->io_lock);
     ctx->listener.dev_step_ptr = dev_ptr;
     ctx->listener.ckpt_interval = ckpt_interval;
@@ -802,7 +812,7 @@ int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval)
 
 static void *probe_listener_thread(void *arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
-    aclrtSetDevice(ctx->acl.npu_id);
+    ensure_acl_context(ctx);
 
     /* Reset all registered tasks to IDLE — hold io_lock to prevent
      * concurrent register_tasks() from freeing the array under us. */
@@ -910,10 +920,11 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
  * responsible for keeping total_bytes ≤ 1 MB (META_DMA_BUF_SIZE).
  */
 
-/* SPDK completion callback for metadata I/O — sets the done flag. */
+/* SPDK completion callback for metadata I/O — sets the done flag;
+ * -1 signals an I/O error, +1 signals success. */
 static void io_complete_meta(void *arg, const struct spdk_nvme_cpl *completion) {
     int *done = (int *)arg;
-    *done = 1;
+    *done = spdk_nvme_cpl_is_error(completion) ? -1 : 1;
 }
 
 /**
@@ -929,6 +940,12 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
                            uint32_t total_bytes, int is_read, void *meta_buffer) {
     if (!ctx || !meta_buffer) return -1;
     if (ctx->block_size == 0) return -1;
+    if (total_bytes > META_DMA_BUF_SIZE) {
+        fprintf(stderr, "[NPU-NVMe] sync_meta_io: total_bytes=%u exceeds "
+                "META_DMA_BUF_SIZE=%u\n", total_bytes, (unsigned)META_DMA_BUF_SIZE);
+        return -1;
+    }
+    if (!ctx->meta_dma_buf) return -1;
 
     uint64_t start_lba = byte_offset / ctx->block_size;
     uint32_t num_blocks = (total_bytes + ctx->block_size - 1) / ctx->block_size;
@@ -950,9 +967,15 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
     }
     if (rc != 0) { pthread_mutex_unlock(&ctx->io_lock); return -1; }
 
-    /* Busy-wait for completion */
+    /* Busy-wait for completion; check for I/O error via callback result. */
     while (!done_flag) {
         spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+    }
+    if (done_flag < 0) {
+        fprintf(stderr, "[NPU-NVMe] sync_meta_io: I/O error at offset=%lu\n",
+                byte_offset);
+        pthread_mutex_unlock(&ctx->io_lock);
+        return -1;
     }
 
     if (is_read) {
@@ -1083,7 +1106,8 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     /* Allocate DMA buffer pool + NPU events */
     ctx->dma.pool = calloc(ctx->dma.max_pipe_depth, sizeof(dma_buf_t));
     ctx->acl.events = calloc(ctx->dma.max_pipe_depth, sizeof(aclrtEvent));
-    ring_init(&ctx->dma.free_ring, ctx->dma.max_pipe_depth);
+    /* ring capacity = pipe_depth + 1 (one overflow slot for full-vs-empty). */
+    ring_init(&ctx->dma.free_ring, ctx->dma.max_pipe_depth + 1);
 
     for (int i = 0; i < ctx->dma.max_pipe_depth; i++) {
         ctx->dma.pool[i].buf = spdk_zmalloc(ctx->dma.chunk_size,
@@ -1111,6 +1135,12 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     /* Allocate dedicated buffer for metadata I/O */
     ctx->meta_dma_buf = spdk_zmalloc(META_DMA_BUF_SIZE, 2 * 1024 * 1024, NULL,
                                       SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
+    if (!ctx->meta_dma_buf) {
+        fprintf(stderr, "[NPU-NVMe] Failed to allocate meta DMA buffer.\n");
+        npu_nvme_cleanup(ctx);  /* releases all resources including ctx */
+        *out_ctx = NULL;
+        return -1;
+    }
 
     /* Launch the background listener thread */
     ctx->listener.stop_listener = 0;
@@ -1122,12 +1152,14 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     ctx->listener.last_step_seen = -1;
 
     if (pthread_create(&ctx->listener.listener_thread, NULL,
-                       probe_listener_thread, ctx) == 0) {
-        ctx->listener.listener_started = true;
-        printf("[Init] Background listener thread started.\n");
-    } else {
-        fprintf(stderr, "[Warning] Failed to create listener thread.\n");
+                       probe_listener_thread, ctx) != 0) {
+        fprintf(stderr, "[Fatal] Failed to create listener thread.\n");
+        npu_nvme_cleanup(ctx);
+        *out_ctx = NULL;
+        return -1;
     }
+    ctx->listener.listener_started = true;
+    printf("[Init] Background listener thread started.\n");
 
     return 0;
 }
