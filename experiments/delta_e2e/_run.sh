@@ -11,7 +11,7 @@
 set -euo pipefail
 
 DEVICE_ID="${1:-1}"
-shift 2>/dev/null || true
+shift 1 2>/dev/null || true
 
 REPO="/home/user7/npu-nvme"
 PYTHON="/root/miniconda3/envs/ms_2.5/bin/python"
