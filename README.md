@@ -24,15 +24,46 @@ Ascend NPU 与 NVMe SSD 之间的高性能零拷贝数据传输引擎，面向�
 
 ---
 
-## 二、快速开始
+## 二、环境
 
 ### 2.1 依赖
 
-- Ascend CANN Toolkit (8.0.RC3+)
-- MindSpore 2.5+
-- SPDK (仓库内 `third_party/spdk` 子模块)
+- Ascend CANN Toolkit 8.0.RC3 (`/usr/local/Ascend/ascend-toolkit/latest`)
+- MindSpore 2.5.0 + MindFormers 1.3.2
+- Python 3.9 (conda)
 
-### 2.2 初始化子模块
+### 2.2 Python 环境
+
+```bash
+# conda 环境路径
+/home/user7/miniconda3/envs/ms_2.5/bin/python
+
+# 激活
+source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
+export PYTHONPATH=/home/user7/npu-nvme/python:$PYTHONPATH
+```
+
+> **历史记录**: 环境已从 `/root/miniconda3/envs/ms_2.5` 迁移至 `/home/user7/miniconda3/envs/ms_2.5`。root 下的原环境保留作为备份。
+
+### 2.3 运行权限
+
+当前部分操作需 root 权限（NVMe 设备 `crw------- root:root`）：
+
+| 资源 | 当前状态 | 迁移到普通用户 |
+|------|:---:|:---:|
+| NVMe 设备 (`/dev/nvme1`) | root only | udev 规则 或 `chmod` (~5 min) |
+| NPU 设备 (`/dev/davinci*`) | 所有用户可读写 ✅ | 无需改动 |
+| 大页 (`/proc/sys/vm/nr_hugepages`) | root 写 | 启动时预分配 (~5 min) |
+| SPDK VFIO | root only | `vfio-noiommu` (~30 min) |
+| **迁移总工作量** | — | **~0.5 天** |
+
+---
+
+## 三、快速开始
+
+> 以下命令中 `sudo` 仅在 NVMe/SPDK 操作时需要。NPU 训练可在普通用户下运行。
+
+### 3.1 初始化子模块
 
 ```bash
 git submodule update --init --recursive
@@ -72,7 +103,7 @@ sudo python python/format_npu_disk.py --pci_addr 0000:83:00.0 --npu_id 1 --yes
 
 ---
 
-## 三、C 层传输 API (`npu_nvme_*`)
+## 四、C 层传输 API (`npu_nvme_*`)
 
 纯数据搬运，不包含检查点逻辑。头文件: `include/npu_nvme.h`
 
@@ -120,7 +151,7 @@ uint32_t npu_nvme_delta_get_slot_count(ctx);
 
 ---
 
-## 四、Python 检查点 API (`DirectCheckpoint`)
+## 五、Python 检查点 API (`DirectCheckpoint`)
 
 ### 4.1 FULL 检查点（全量保存/加载）
 
@@ -168,20 +199,24 @@ ckpt.recover(model, target_step=50)
 ckpt.cleanup()
 ```
 
-### 4.3 基准测试
+### 5.3 基准测试
 
 ```bash
+# 激活环境
+source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
+export PYTHONPATH=/home/user7/npu-nvme/python:$PYTHONPATH
+
 # 全量基准（所有阶段）
-sudo python python/bench.py --device-id 1 --steps 50
+sudo /home/user7/miniconda3/envs/ms_2.5/bin/python python/bench.py --device-id 1 --steps 50
 
 # 仅 delta 管线
-sudo python python/bench.py --device-id 1 --skip-baseline --skip-full
+sudo /home/user7/miniconda3/envs/ms_2.5/bin/python python/bench.py --device-id 1 --skip-baseline --skip-full
 
 # 仅 FULL 检查点吞吐
-sudo python python/bench.py --device-id 1 --skip-baseline --skip-delta --steps 30
+sudo /home/user7/miniconda3/envs/ms_2.5/bin/python python/bench.py --device-id 1 --skip-baseline --skip-delta --steps 30
 ```
 
-### 4.4 DirectCheckpoint 核心方法
+### 5.4 DirectCheckpoint 核心方法
 
 | 方法 | 说明 |
 |------|------|
@@ -196,20 +231,21 @@ sudo python python/bench.py --device-id 1 --skip-baseline --skip-delta --steps 3
 
 ---
 
-## 五、关键性能数据 (Ascend 910B)
+## 六、关键性能数据 (Ascend 910B, MS 2.5.0)
 
 | 指标 | 数值 |
 |------|:---:|
-| GPT-2 XL 步时 (基线) | ~400ms |
-| Delta 管线步时 (overhead) | +150ms (+37%) |
-| SPDK 写入带宽 | 3661–3926 MB/s |
-| FULL 检查点写入 (3.12 GB) | ~800ms 同步延迟 |
+| GPT-2 XL 步时 (基线) | **392ms** ± 14ms |
+| Delta 管线步时 (overhead) | **574ms** (+182ms, +46.6%) |
+| SPDK 写入带宽 | **3661–3926 MB/s** |
+| FULL 检查点写入 (3.12 GB) | **~800ms** 同步延迟 |
 | Delta 帧大小 (top 10%) | ~159 MB/步 |
 | FaF 异步写延迟 | ~45ms (不阻塞训练) |
+| Delta overhead 构成 | 参数聚合 ~35ms + INT8 全量量化 ~100ms + TopK/Gather/Assign ~15ms + 其它 ~30ms |
 
 ---
 
-## 六、运行环境
+## 七、运行环境
 
 ### 6.1 当前（root 用户）
 
