@@ -20,7 +20,7 @@ Output: experiments/baselines/edge_injection_grouped.json
 
 Usage:
   sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/edge_injection_grouped.py'
+    /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/edge_injection_grouped.py'
 """
 import os, sys, time, json, math
 REPO = "/home/user7/npu-nvme"

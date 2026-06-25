@@ -11,7 +11,7 @@ export GLOG_v=0
 export ASCEND_GLOBAL_LOG_LEVEL=0
 export ASCEND_SLOG_PRINT_TO_STDOUT=0
 
-exec /root/miniconda3/envs/ms_2.5/bin/python \
+exec /home/user7/miniconda3/envs/ms_2.5/bin/python \
   -c "
 import os, sys, time, json, math
 REPO='/home/user7/npu-nvme'

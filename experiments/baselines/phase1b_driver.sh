@@ -25,7 +25,7 @@ run_standalone() {
     echo "$PASSWD" | sudo -S bash -c "
         source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
         export GLOG_v=0 ASCEND_GLOBAL_LOG_LEVEL=0 ASCEND_SLOG_PRINT_TO_STDOUT=0
-        /root/miniconda3/envs/ms_2.5/bin/python '$SCRIPT' \
+        /home/user7/miniconda3/envs/ms_2.5/bin/python '$SCRIPT' \
             --label '$label' --preset '$preset' --inject '$inject' \
             --steps 16 --sink 4 --epochs 2
     " 2>&1 | tail -15 | tee -a "$LOG"
@@ -43,7 +43,7 @@ run_msprof() {
         export GLOG_v=0 ASCEND_GLOBAL_LOG_LEVEL=0 ASCEND_SLOG_PRINT_TO_STDOUT=0
         /usr/local/Ascend/ascend-toolkit/latest/bin/msprof \
             --output='$prof_dir' \
-            -- /root/miniconda3/envs/ms_2.5/bin/python '$SCRIPT' \
+            -- /home/user7/miniconda3/envs/ms_2.5/bin/python '$SCRIPT' \
                 --label '$label' --preset '$preset' --inject '$inject' \
                 --steps 16 --sink 4 --epochs 2
     " 2>&1 | tail -20 | tee -a "$LOG"

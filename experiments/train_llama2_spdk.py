@@ -3,7 +3,7 @@
 LLaMA2 single-card training with SPDK + WaitProbe checkpoint.
 
 Usage:
-  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/train_llama2_spdk.py'
+  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/train_llama2_spdk.py'
 """
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))

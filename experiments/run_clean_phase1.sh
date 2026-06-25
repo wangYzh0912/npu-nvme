@@ -3,7 +3,7 @@ set -e
 export ASCEND_TOOLKIT_HOME=/usr/local/Ascend/ascend-toolkit/latest
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
 export LD_LIBRARY_PATH=/home/user7/npu-nvme/build_out/lib:$LD_LIBRARY_PATH
-PY=/root/miniconda3/envs/ms_2.5/bin/python3
+PY=/home/user7/miniconda3/envs/ms_2.5/bin/python3
 cd /home/user7/npu-nvme
 
 echo "===== R0: BASELINE ====="

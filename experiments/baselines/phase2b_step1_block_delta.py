@@ -18,11 +18,11 @@ GPT-2 Small per-layer: ~7.1M elements → ~14 blocks of 512K → ~70 GE ops
 Usage:
   # PYNATIVE correctness test
   echo "CGCL_2025_#$" | sudo -S bash -c 'source .../setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python phase2b_step1_block_delta.py --mode pynative'
+    /home/user7/miniconda3/envs/ms_2.5/bin/python phase2b_step1_block_delta.py --mode pynative'
 
   # GRAPH_MODE compilation + timing test
   echo "CGCL_2025_#$" | sudo -S bash -c 'source .../setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python phase2b_step1_block_delta.py --mode graph'
+    /home/user7/miniconda3/envs/ms_2.5/bin/python phase2b_step1_block_delta.py --mode graph'
 """
 import os, sys, time, json, math, re, argparse
 

@@ -15,4 +15,4 @@ echo "HugePages_Free=$(cat /sys/kernel/mm/hugepages/hugepages-2048kB/free_hugepa
 # Now retry SPDK init
 source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
 cd /home/user7/npu-nvme
-PYTHONPATH=python:$PYTHONPATH /root/miniconda3/envs/ms_2.5/bin/python experiments/baselines/phase5_e10_spdk_delta_e2e.py --steps 10
+PYTHONPATH=python:$PYTHONPATH /home/user7/miniconda3/envs/ms_2.5/bin/python experiments/baselines/phase5_e10_spdk_delta_e2e.py --steps 10

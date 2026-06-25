@@ -13,7 +13,7 @@ Output:
 
 Usage:
   echo "CGCL_2025_#$" | sudo -S bash -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/phase1a_pmu_verify.py --exp A1,A2'
+    /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/phase1a_pmu_verify.py --exp A1,A2'
 """
 import os, sys, time, json, math, glob, csv, shutil, argparse, subprocess
 from collections import defaultdict

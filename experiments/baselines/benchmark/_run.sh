@@ -25,7 +25,7 @@ STEPS="${2:-20}"
 DEVICE_ID="${DEVICE_ID:-1}"
 
 REPO="/home/user7/npu-nvme"
-PYTHON="/root/miniconda3/envs/ms_2.5/bin/python"
+PYTHON="/home/user7/miniconda3/envs/ms_2.5/bin/python"
 SUDO_PW="CGCL_2025_#$"
 ASCEND_SETUP="/usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash"
 

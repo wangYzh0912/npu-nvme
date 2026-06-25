@@ -18,7 +18,7 @@ Output: experiments/baselines/b2_probe_overhead_baseline.json
 
 Usage:
   sudo su - root -c 'NPU_NVME_LISTENER_MODE=idle source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/b2_probe_overhead_baseline.py'
+    /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/b2_probe_overhead_baseline.py'
 """
 import os, sys, time, json, ctypes
 REPO = "/home/user7/npu-nvme"

@@ -9,7 +9,7 @@ Output: JSON with all model sizes for Vector Idle Budget curve.
 For PMU data, we reuse Phase 1a A1/A2_50 data for GPT-2 XL,
 and add msprof profiling on a few smaller models.
 
-Usage: sudo /root/miniconda3/envs/ms_2.5/bin/python phase1b_fast.py
+Usage: sudo /home/user7/miniconda3/envs/ms_2.5/bin/python phase1b_fast.py
 """
 import os, sys, time, json, gc
 

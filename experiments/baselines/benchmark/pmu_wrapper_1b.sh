@@ -11,6 +11,6 @@ export RANK_ID=0
 STEPS=${1:-12}
 DEVICE=${2:-1}
 
-exec /root/miniconda3/envs/ms_2.5/bin/python \
+exec /home/user7/miniconda3/envs/ms_2.5/bin/python \
     /home/user7/npu-nvme/experiments/baselines/benchmark/step1b_pmu.py \
     --steps "$STEPS" --device-id "$DEVICE"

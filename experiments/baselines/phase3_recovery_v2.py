@@ -8,7 +8,7 @@ from step 0 full checkpoint + incremental chain, measuring weight deviation.
 
 Usage:
   echo "CGCL_2025_#$" | sudo -S bash -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python phase3_recovery_v2.py --steps 20 --top_k_frac 0.10'
+    /home/user7/miniconda3/envs/ms_2.5/bin/python phase3_recovery_v2.py --steps 20 --top_k_frac 0.10'
 """
 import os, sys, time, json, math, re, argparse, copy
 

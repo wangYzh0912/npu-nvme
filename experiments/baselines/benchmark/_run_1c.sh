@@ -4,7 +4,7 @@
 # ═══════════════════════════════════════════════════════════════════════
 # Requirements: NVMe disk must be formatted (python/format_npu_disk.py).
 #   One-time: echo "CGCL_2025_#$" | sudo -S bash -c 'source .../setenv.bash && \
-#     /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/python/format_npu_disk.py'
+#     /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/python/format_npu_disk.py'
 #
 # Usage:
 #   bash _run_1c.sh [DEVICE_ID]
@@ -15,7 +15,7 @@ set -euo pipefail
 DEVICE_ID="${1:-1}"
 
 REPO="/home/user7/npu-nvme"
-PYTHON="/root/miniconda3/envs/ms_2.5/bin/python"
+PYTHON="/home/user7/miniconda3/envs/ms_2.5/bin/python"
 SUDO_PW="CGCL_2025_#$"
 ASCEND_SETUP="/usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash"
 

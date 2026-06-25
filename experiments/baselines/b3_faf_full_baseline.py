@@ -18,7 +18,7 @@ Output: experiments/baselines/b3_faf_full_baseline.json
 
 Usage:
   sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/b3_faf_full_baseline.py'
+    /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/b3_faf_full_baseline.py'
 """
 import os, sys, time, json, ctypes
 REPO = "/home/user7/npu-nvme"

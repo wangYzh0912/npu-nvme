@@ -2,7 +2,7 @@
 """Merge WaitProbe + TriggerProbe into MindSpore internal AICPU config."""
 import json
 
-MS_CONFIG = '/root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindspore/lib/plugin/ascend/custom_aicpu_ops/op_impl/cpu/config/cust_aicpu_kernel.json'
+MS_CONFIG = '/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindspore/lib/plugin/ascend/custom_aicpu_ops/op_impl/cpu/config/cust_aicpu_kernel.json'
 
 with open(MS_CONFIG) as f:
     cfg = json.load(f)

@@ -11,12 +11,12 @@ Each model gets TWO runs:
   - Inject=50: 50 params with Vector ops to verify GE scheduling
 
 Usage (standalone, for timing):
-  /root/miniconda3/envs/ms_2.5/bin/python phase1b_profile.py \
+  /home/user7/miniconda3/envs/ms_2.5/bin/python phase1b_profile.py \
     --label V5_baseline --preset gpt2_large --inject 0
 
 Usage (with msprof for PMU):
   msprof --output=<dir> -- \
-    /root/miniconda3/envs/ms_2.5/bin/python phase1b_profile.py \
+    /home/user7/miniconda3/envs/ms_2.5/bin/python phase1b_profile.py \
     --label V5_baseline --preset gpt2_large --inject 0
 """
 import os, sys, time, json, math, glob, csv, argparse

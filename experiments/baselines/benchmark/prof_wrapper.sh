@@ -7,7 +7,7 @@
 STEPS="${1:-20}"
 DEVICE_ID="${2:-1}"
 REPO="/home/user7/npu-nvme"
-PYTHON="/root/miniconda3/envs/ms_2.5/bin/python"
+PYTHON="/home/user7/miniconda3/envs/ms_2.5/bin/python"
 OUTDIR="/home/user7/npu-nvme/output/profiling_vec/step1"
 
 source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash

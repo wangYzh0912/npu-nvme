@@ -17,11 +17,11 @@ Models:
   LLaMA-2.7B   (32L/2560d)   ~2.7B elems, 5.40GB FP16
 
 Usage (standalone timing):
-  sudo /root/miniconda3/envs/ms_2.5/bin/python phase1b_multi.py \
+  sudo /home/user7/miniconda3/envs/ms_2.5/bin/python phase1b_multi.py \
     --label GPT2_Small_baseline --family gpt2 --size small --inject 0
 
 Usage (with msprof for PMU):
-  sudo msprof --output=<dir> --application="/root/miniconda3/envs/ms_2.5/bin/python phase1b_multi.py ..."
+  sudo msprof --output=<dir> --application="/home/user7/miniconda3/envs/ms_2.5/bin/python phase1b_multi.py ..."
 """
 import os, sys, time, json, math, gc, argparse
 

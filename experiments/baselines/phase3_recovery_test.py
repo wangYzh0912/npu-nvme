@@ -24,7 +24,7 @@ Phase 3: Recovery Fidelity Experiment
 
 Usage:
   echo "CGCL_2025_#$" | sudo -S bash -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/phase3_recovery_test.py \
+    /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/phase3_recovery_test.py \
     --steps 50 --top_k_frac 0.10'
 """
 import os, sys, time, json, math, re, argparse, copy

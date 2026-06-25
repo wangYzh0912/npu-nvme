@@ -7,10 +7,10 @@ msprof collects PMU data externally.
 Supports --inject N to control how many params get Vector ops.
 
 Usage (standalone, for timing only):
-  /root/miniconda3/envs/ms_2.5/bin/python phase1a_train.py --inject 0
+  /home/user7/miniconda3/envs/ms_2.5/bin/python phase1a_train.py --inject 0
 
 Usage (with msprof for PMU):
-  msprof --output=<dir> -- /root/miniconda3/envs/ms_2.5/bin/python phase1a_train.py --inject 0
+  msprof --output=<dir> -- /home/user7/miniconda3/envs/ms_2.5/bin/python phase1a_train.py --inject 0
 """
 import os, sys, time, json, math, glob, csv, argparse
 from collections import defaultdict

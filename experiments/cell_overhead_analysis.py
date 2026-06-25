@@ -10,7 +10,7 @@ Three Cell variants measured on a mini-network + GPT-2 XL:
 Output: experiments/output/cell_overhead.json
 
 Usage:
-  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/cell_overhead_analysis.py'
+  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/cell_overhead_analysis.py'
 """
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))

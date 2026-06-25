@@ -5,7 +5,7 @@ Vector Engine Quantization Throughput Benchmark — Q1 (pure Cast), Q2 (full pip
 Output: experiments/output/vector_quant_bench.json
 
 Usage:
-  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/vector_quant_throughput.py'
+  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/vector_quant_throughput.py'
 """
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))

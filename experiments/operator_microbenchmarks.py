@@ -5,7 +5,7 @@ Operator Microbenchmarks — WaitProbe overhead, sync schemes, race window, opti
 Output: experiments/output/operator_experiments_v2.json
 
 Usage:
-  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/operator_microbenchmarks.py'
+  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/operator_microbenchmarks.py'
 """
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))

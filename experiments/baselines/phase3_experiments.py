@@ -18,7 +18,7 @@ Architecture:
 Usage:
   # Phase 3.1: Distribution experiment (50 steps, per-step logging)
   echo "CGCL_2025_#$" | sudo -S bash -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && \
-    /root/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/phase3_experiments.py \
+    /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baselines/phase3_experiments.py \
     --exp distribution --steps 50'
 
   # Phase 3.2: INT8 precision validation

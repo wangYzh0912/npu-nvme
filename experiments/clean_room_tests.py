@@ -8,7 +8,7 @@ Output: unified_clean_results.json in experiments/output/
 import os, sys, time, json, subprocess
 
 REPO = "/home/user7/npu-nvme"
-PY = "/root/miniconda3/envs/ms_2.5/bin/python3"
+PY = "/home/user7/miniconda3/envs/ms_2.5/bin/python3"
 SUDO = ["echo", "CGCL_2025_#$", "|", "sudo", "-S"]
 ENV_PREFIX = (
     "export ASCEND_TOOLKIT_HOME=/usr/local/Ascend/ascend-toolkit/latest && "

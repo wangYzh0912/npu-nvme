@@ -15,7 +15,7 @@ shift 1 2>/dev/null || true
 EXTRA_ARGS=("$@")
 
 REPO="/home/user7/npu-nvme"
-PYTHON="/root/miniconda3/envs/ms_2.5/bin/python"
+PYTHON="/home/user7/miniconda3/envs/ms_2.5/bin/python"
 ASCEND_SETUP="/usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash"
 
 PW_FILE="$REPO/.sudo_pw"
