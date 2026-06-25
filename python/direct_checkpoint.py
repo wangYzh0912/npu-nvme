@@ -638,6 +638,10 @@ class DirectCheckpoint:
         if not isinstance(delta_cell, DeltaTrainCell):
             raise TypeError("build_layout_for_delta expects a DeltaTrainCell")
 
+        # Store the delta block size for correct recovery later.
+        # Must match the block_size used by DeltaTrainCell (default 524288).
+        self.delta_block_size = delta_cell.bs
+
         slot_offset = (lib.npu_nvme_delta_get_area_offset(self.ctx)
                        + self._delta_next_slot % self._delta_slot_count
                        * self._delta_slot_size)
@@ -1160,7 +1164,8 @@ class DirectCheckpoint:
 
         for sid, blocks, smalls in chain:
             host_weights = apply_delta_patches(
-                host_weights, blocks, smalls, self.chunk_size)
+                host_weights, blocks, smalls,
+                getattr(self, 'delta_block_size', self.chunk_size))
 
         for name, p in model.parameters_and_names():
             if name in host_weights:
