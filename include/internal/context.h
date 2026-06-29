@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <acl/acl.h>
+#include <spdk/thread.h>
 
 /* Dedicated buffer for superblock & JSON metadata I/O. */
 #define META_DMA_BUF_SIZE  (1 * 1024 * 1024)
@@ -88,6 +89,12 @@ typedef struct NPUNVMEContext {
 
     /* Delta ring layout */
     delta_state_t delta;
+
+    /* ---- Reactor thread ---- */
+    struct spdk_thread *reactor_thread;
+    pthread_t reactor_pthread;
+    pthread_barrier_t init_barrier;
+    volatile int app_should_stop;
 
     /* I/O serialization — the listener thread and the main thread share
      * a single SPDK qpair.  SPDK qpairs (submission + completion queues)

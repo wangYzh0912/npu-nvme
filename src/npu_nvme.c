@@ -693,6 +693,57 @@ static inline int ensure_acl_context(NPUNVMEContext *ctx) {
     return aclrtSetCurrentContext(ctx->acl.acl_ctx);
 }
 
+/* ---- Reactor thread functions ----
+ *
+ * The reactor pthread runs a spdk_thread_poll loop that drives SPDK
+ * pollers (step counter check, I/O state machines).  It is created
+ * by reactor_new_thread_fn when spdk_thread_create is called.
+ */
+
+/**
+ * @brief Reactor pthread main loop.
+ *
+ * Binds the SPDK thread to this OS thread, signals init completion
+ * via pthread_barrier, then loops calling spdk_thread_poll until
+ * app_should_stop is set.
+ *
+ * @param arg  NPUNVMEContext pointer
+ * @return     NULL
+ */
+static void *reactor_loop(void *arg) {
+    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
+    spdk_set_thread(ctx->reactor_thread);
+
+    pthread_barrier_wait(&ctx->init_barrier);
+
+    while (!ctx->app_should_stop) {
+        spdk_thread_poll(ctx->reactor_thread, 0, 0);
+        usleep(1000);
+    }
+
+    spdk_thread_exit(ctx->reactor_thread);
+    return NULL;
+}
+
+/**
+ * @brief SPDK new_thread_fn callback invoked by spdk_thread_create.
+ *
+ * Stores the SPDK thread handle and spawns the reactor pthread.
+ *
+ * @param thread  newly created SPDK thread
+ * @param arg     NPUNVMEContext pointer
+ */
+static void reactor_new_thread_fn(struct spdk_thread *thread, void *arg) {
+    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
+    ctx->reactor_thread = thread;
+
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    pthread_create(&ctx->reactor_pthread, &attr, reactor_loop, ctx);
+    pthread_attr_destroy(&attr);
+}
+
 /* ---- Probe flag management ----
  *
  * The probe flag is a 4-byte HBM buffer that the listener writes after
@@ -1039,6 +1090,35 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
         pthread_mutexattr_destroy(&attr);
     }
 
+    /* Start reactor pthread via SPDK thread library. */
+    ctx->app_should_stop = 0;
+    pthread_barrier_init(&ctx->init_barrier, NULL, 2);
+
+    if (spdk_thread_lib_init((spdk_new_thread_fn)reactor_new_thread_fn, 0) != 0) {
+        fprintf(stderr, "[Fatal] spdk_thread_lib_init failed.\n");
+        pthread_barrier_destroy(&ctx->init_barrier);
+        free(ctx); return -1;
+    }
+
+    /* spdk_thread_create passes its second argument through to the
+     * new_thread_fn callback as the void *ctx parameter.  The SPDK
+     * header declares this as a cpumask pointer, but the v26.01-pre
+     * library binary uses the older API where it is a context pointer.
+     * Verified working with the same pattern in reactor_v0_test.c. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
+    struct spdk_thread *th = spdk_thread_create("npu_nvme", ctx);
+#pragma GCC diagnostic pop
+    if (!th) {
+        fprintf(stderr, "[Fatal] spdk_thread_create failed.\n");
+        pthread_barrier_destroy(&ctx->init_barrier);
+        free(ctx); return -1;
+    }
+
+    /* Wait for reactor pthread to reach its main loop. */
+    pthread_barrier_wait(&ctx->init_barrier);
+    pthread_barrier_destroy(&ctx->init_barrier);
+
     /* Initialise SPDK environment (once per process via SPDK_SHM_ID). */
     {
         static int spdk_inited = 0;
@@ -1142,7 +1222,8 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
         return -1;
     }
 
-    /* Launch the background listener thread */
+    /* Launch the background listener thread (skip if NPU_NVME_NO_LISTENER=1) */
+    const char *no_listener = getenv("NPU_NVME_NO_LISTENER");
     ctx->listener.stop_listener = 0;
     ctx->listener.listener_started = false;
     ctx->listener.probe_flag_dev_ptr = NULL;
@@ -1151,15 +1232,19 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     ctx->listener.step_poll_buf = NULL;
     ctx->listener.last_step_seen = -1;
 
-    if (pthread_create(&ctx->listener.listener_thread, NULL,
-                       probe_listener_thread, ctx) != 0) {
-        fprintf(stderr, "[Fatal] Failed to create listener thread.\n");
-        npu_nvme_cleanup(ctx);
-        *out_ctx = NULL;
-        return -1;
+    if (no_listener && strcmp(no_listener, "1") == 0) {
+        printf("[Init] Listener thread SKIPPED (NPU_NVME_NO_LISTENER=1).\n");
+    } else {
+        if (pthread_create(&ctx->listener.listener_thread, NULL,
+                           probe_listener_thread, ctx) != 0) {
+            fprintf(stderr, "[Fatal] Failed to create listener thread.\n");
+            npu_nvme_cleanup(ctx);
+            *out_ctx = NULL;
+            return -1;
+        }
+        ctx->listener.listener_started = true;
+        printf("[Init] Background listener thread started.\n");
     }
-    ctx->listener.listener_started = true;
-    printf("[Init] Background listener thread started.\n");
 
     return 0;
 }
@@ -1170,6 +1255,10 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
  */
 void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     if (!ctx) return;
+
+    /* Stop reactor thread */
+    ctx->app_should_stop = 1;
+    pthread_join(ctx->reactor_pthread, NULL);
 
     /* Stop listener thread */
     if (ctx->listener.listener_started) {
