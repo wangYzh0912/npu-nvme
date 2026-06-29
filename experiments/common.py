@@ -235,3 +235,33 @@ def init_env(device_id=1, mode=None):
         mode = context.GRAPH_MODE
     context.set_context(mode=mode, device_target="Ascend", device_id=device_id)
     ms.common.set_seed(42)
+    # Required for DeltaTrainCell's loop unrolling (~772 params → deep graph)
+    ms.set_recursion_limit(10000)
+
+
+def warmup_model(model, opt, ds):
+    """Run one dummy forward pass to trigger MS lazy memory allocation.
+
+    CRITICAL: Must be called before any DirectCheckpoint operations
+    (save, register_tasks, register_delta_tasks).  Without this,
+    get_dev_ptr() returns 0 for all parameters and SPDK writes
+    transfer zero bytes.
+
+    Args:
+        model: MindSpore model
+        opt:   optimizer
+        ds:    dataset (must have at least 1 batch)
+
+    Returns:
+        The loss from the warmup step (can be ignored).
+    """
+    from direct_checkpoint import ProbeTrainOneStepCell
+
+    warmup_cell = ProbeTrainOneStepCell(
+        model, opt, enable_probe=False, ckpt_interval=9999)
+    it = ds.create_tuple_iterator()
+    loss = warmup_cell(*next(it))
+    ms.hal.synchronize()
+    print("  [Common] Warmup forward pass complete — device addresses allocated.",
+          flush=True)
+    return loss

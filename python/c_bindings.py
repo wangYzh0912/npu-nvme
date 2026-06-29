@@ -22,6 +22,10 @@ try:
         ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p,
         ctypes.c_size_t, ctypes.c_int]
     acl_lib.aclrtMemcpy.restype = ctypes.c_int
+    _set_device = getattr(acl_lib, "aclrtSetDevice", None)
+    if _set_device is not None:
+        _set_device.argtypes = [ctypes.c_int]
+        _set_device.restype = ctypes.c_int
 except Exception as e:
     print(f"[DirectCkpt] Warning: Failed to load libascendcl.so for probe: {e}")
     acl_lib = None
