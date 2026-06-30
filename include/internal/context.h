@@ -43,19 +43,15 @@ typedef struct {
     uint32_t chunk_size;
 } dma_pool_t;
 
-/* ---- FaF listener state ---- */
+/* ---- FaF listener / probe-flag state ---- */
 typedef struct {
     void *probe_flag_dev_ptr;  /* device (HBM) address of probe flag */
     void *probe_flag_host;     /* host-side mirror for polling */
     void *dev_step_ptr;        /* device (HBM) address of step_counter */
     void *step_poll_buf;       /* host buffer for polling step_counter */
-    int last_step_seen;        /* most recent step value detected */
     int ckpt_interval;         /* trigger SPDK write every N steps */
     io_task_t *registered_tasks;
     int num_registered_tasks;
-    pthread_t listener_thread;
-    volatile int stop_listener;
-    bool listener_started;
 } listener_state_t;
 
 /* ---- Delta ring-buffer layout (bookkeeping only, no I/O) ---- */
@@ -95,6 +91,10 @@ typedef struct NPUNVMEContext {
     pthread_t reactor_pthread;
     pthread_barrier_t init_barrier;
     volatile int app_should_stop;
+
+    /* ---- Step-counter poller ---- */
+    struct spdk_poller *step_poller;
+    int last_step_seen;
 
     /* I/O serialization — the listener thread and the main thread share
      * a single SPDK qpair.  SPDK qpairs (submission + completion queues)

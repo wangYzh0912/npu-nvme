@@ -160,7 +160,9 @@ target_link_libraries(npu_nvme PRIVATE
 
     # DPDK driver libs register via RTE_INIT constructors; --whole-archive
     # prevents the linker from stripping them (e.g. ring_mp_mc mempool ops).
+    # The fixed mempool_ring archive has globalized symbols for extern refs.
     -Wl,--whole-archive
+    /tmp/mp_ring_fix/librte_mempool_ring_fixed.a
     ${DPDK_LIBS_FILES}
     -Wl,--no-whole-archive
 
@@ -236,8 +238,27 @@ target_link_options(reactor_v0_spdk_thread_test PRIVATE
 )
 
 # ==================================================
-# V0 Reactor Test Executable
+# V2 Smoke Test: init + host write/read + cleanup
 # ==================================================
+add_executable(v2_smoke_test
+    src/v2_smoke_test.c
+)
+target_include_directories(v2_smoke_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${ASCEND_ACL_INCLUDE_DIRS}
+)
+target_link_libraries(v2_smoke_test PRIVATE
+    npu_nvme
+)
+set_target_properties(v2_smoke_test PROPERTIES
+    BUILD_RPATH "$ORIGIN/../lib"
+    INSTALL_RPATH "$ORIGIN/../lib"
+)
+target_link_options(v2_smoke_test PRIVATE
+    "LINKER:-rpath,$ORIGIN/../lib"
+    "LINKER:--enable-new-dtags"
+)
 add_executable(reactor_v0_test
     src/reactor_v0_test.c
 )

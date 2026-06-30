@@ -21,6 +21,9 @@
 #include "internal/ring_buffer.h"
 #include "internal/io_task.h"
 #include "internal/pipeline.h"
+#include <rte_mempool.h>
+#include <rte_malloc.h>
+#include <rte_errno.h>
 #include "internal/context.h"
 
 /* SPDK */
@@ -40,6 +43,7 @@
 #include <pthread.h>
 
 /* ---- Hugepage pool auto-expansion for DPDK/SPDK ---- */
+#define STEP_POLLER_PERIOD_US  10000   /* step counter poll interval (10 ms) */
 #define HUGEPAGE_2MB_PATH "/sys/kernel/mm/hugepages/hugepages-2048kB/free_hugepages"
 
 /* Read an integer from a sysfs / proc file.  Returns -1 on error. */
@@ -693,12 +697,26 @@ static inline int ensure_acl_context(NPUNVMEContext *ctx) {
     return aclrtSetCurrentContext(ctx->acl.acl_ctx);
 }
 
+static int step_poller_fn(void *arg);
+
+/* Verify that .init_array constructors run at dlopen time. */
+__attribute__((constructor)) static void _ctor_diag(void) {
+    fprintf(stderr, "[Diag] init_array constructor executed (pid=%d)\n",
+            (int)getpid());
+}
+
 /* ---- Reactor thread functions ----
  *
  * The reactor pthread runs a spdk_thread_poll loop that drives SPDK
  * pollers (step counter check, I/O state machines).  It is created
  * by reactor_new_thread_fn when spdk_thread_create is called.
+ *
+ * We pass NULL as the cpumask to spdk_thread_create (matching V0)
+ * and use a static context pointer to communicate ctx to the
+ * new_thread_fn callback.
  */
+
+static NPUNVMEContext *g_reactor_ctx;
 
 /**
  * @brief Reactor pthread main loop.
@@ -712,15 +730,33 @@ static inline int ensure_acl_context(NPUNVMEContext *ctx) {
  */
 static void *reactor_loop(void *arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
+    fprintf(stderr, "[Diag] reactor_loop started\n"); fflush(stderr);
     spdk_set_thread(ctx->reactor_thread);
+    fprintf(stderr, "[Diag] spdk_set_thread done\n"); fflush(stderr);
+
+    /* Reset registered tasks to IDLE (was done by listener thread init). */
+    pthread_mutex_lock(&ctx->io_lock);
+    for (int i = 0; i < ctx->listener.num_registered_tasks; i++) {
+        ctx->listener.registered_tasks[i].state = CHUNK_IDLE;
+        ctx->listener.registered_tasks[i].buf_idx = -1;
+    }
+    pthread_mutex_unlock(&ctx->io_lock);
+
+    ctx->last_step_seen = -1;
+    ctx->step_poller = spdk_poller_register(step_poller_fn, ctx,
+                                             STEP_POLLER_PERIOD_US);
+    fprintf(stderr, "[Diag] spdk_poller_register -> %p\n",
+            (void *)ctx->step_poller); fflush(stderr);
 
     pthread_barrier_wait(&ctx->init_barrier);
+    fprintf(stderr, "[Diag] reactor_loop entering poll loop\n"); fflush(stderr);
 
     while (!ctx->app_should_stop) {
         spdk_thread_poll(ctx->reactor_thread, 0, 0);
         usleep(1000);
     }
 
+    spdk_poller_unregister(&ctx->step_poller);
     spdk_thread_exit(ctx->reactor_thread);
     return NULL;
 }
@@ -734,8 +770,11 @@ static void *reactor_loop(void *arg) {
  * @param arg     NPUNVMEContext pointer
  */
 static void reactor_new_thread_fn(struct spdk_thread *thread, void *arg) {
-    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
+    (void)arg;  /* unused — ctx comes from g_reactor_ctx */
+    NPUNVMEContext *ctx = g_reactor_ctx;
     ctx->reactor_thread = thread;
+    fprintf(stderr, "[Diag] reactor_new_thread_fn (thread=%p)\n", (void *)thread);
+    fflush(stderr);
 
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -844,7 +883,7 @@ int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval)
     pthread_mutex_lock(&ctx->io_lock);
     ctx->listener.dev_step_ptr = dev_ptr;
     ctx->listener.ckpt_interval = ckpt_interval;
-    ctx->listener.last_step_seen = 0;
+    ctx->last_step_seen = -1;
 
     if (!ctx->listener.step_poll_buf) {
         aclrtMallocHost(&ctx->listener.step_poll_buf, 4);
@@ -853,63 +892,54 @@ int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval)
     return 0;
 }
 
-/* ---- Background listener thread (FaF) ----
+/* ---- Step-counter poller (SPDK poller, replaces probe_listener_thread) ----
  *
- * probe_listener_thread is a persistent pthread that polls the GE-side
- * step_counter every 10 ms.  When a new checkpoint step is detected it
- * calls run_write_pipeline with the pre-registered delta buffer tasks,
- * then signals the probe flag.  All under io_lock for thread safety.
+ * step_poller_fn runs on the reactor thread with a 10 ms period.  It
+ * reads the step counter from HBM and triggers the write pipeline when
+ * a new checkpoint step is detected.
+ *
+ * The io_lock is still held during run_write_pipeline + signal_probe_flag
+ * to protect against concurrent register_tasks() from Python threads.
  */
 
-static void *probe_listener_thread(void *arg) {
+/**
+ * @brief Periodic poller that reads the step counter from HBM.
+ *
+ * Registered on the reactor thread.  When a new checkpoint step is
+ * detected, triggers the write pipeline for all registered tasks.
+ *
+ * @param arg  NPUNVMEContext pointer
+ * @return     0 to continue, -1 to stop on app_should_stop
+ */
+static int step_poller_fn(void *arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
+
+    if (ctx->app_should_stop) return -1;
+    if (!ctx->listener.dev_step_ptr) return 0;
+
     ensure_acl_context(ctx);
 
-    /* Reset all registered tasks to IDLE — hold io_lock to prevent
-     * concurrent register_tasks() from freeing the array under us. */
-    pthread_mutex_lock(&ctx->io_lock);
-    for (int i = 0; i < ctx->listener.num_registered_tasks; i++) {
-        ctx->listener.registered_tasks[i].state = CHUNK_IDLE;
-        ctx->listener.registered_tasks[i].buf_idx = -1;
+    int cur_step = 0;
+    aclError ret = aclrtMemcpy(ctx->listener.step_poll_buf, 4,
+                                ctx->listener.dev_step_ptr, 4,
+                                ACL_MEMCPY_DEVICE_TO_HOST);
+    if (ret == ACL_SUCCESS) {
+        cur_step = *(int *)ctx->listener.step_poll_buf;
     }
-    pthread_mutex_unlock(&ctx->io_lock);
 
-    while (!ctx->listener.stop_listener) {
-        if (!ctx->listener.dev_step_ptr) {
-            usleep(100000); /* 100 ms */
-            continue;
-        }
+    if (cur_step > ctx->last_step_seen &&
+        cur_step % ctx->listener.ckpt_interval == 0 &&
+        cur_step != 0) {
+        ctx->last_step_seen = cur_step;
 
-        /* Poll step_counter from HBM via DMA */
-        int cur_step = 0;
-        aclError ret = aclrtMemcpy(ctx->listener.step_poll_buf, 4,
-                                    ctx->listener.dev_step_ptr, 4,
-                                    ACL_MEMCPY_DEVICE_TO_HOST);
-        if (ret == ACL_SUCCESS) {
-            cur_step = *(int *)ctx->listener.step_poll_buf;
-        }
-
-        if (cur_step > ctx->listener.last_step_seen &&
-            cur_step % ctx->listener.ckpt_interval == 0) {
-            ctx->listener.last_step_seen = cur_step;
-
-#ifdef DIAGNOSTIC
-            fprintf(stderr, "[NPU-NVMe] Listener detected step %d, triggering SPDK write\n",
-                    cur_step);
-#endif
-            /* Hold io_lock across the read of registered_tasks AND the
-             * subsequent run_write_pipeline call so that a concurrent
-             * register_tasks() cannot free the array between the two.
-             * run_write_pipeline() acquires io_lock recursively — safe. */
-            pthread_mutex_lock(&ctx->io_lock);
-            run_write_pipeline(ctx, ctx->listener.registered_tasks,
-                                ctx->listener.num_registered_tasks, false);
-            signal_probe_flag(ctx, (uint32_t)cur_step);
-            pthread_mutex_unlock(&ctx->io_lock);
-        }
-        usleep(10000); /* 10 ms poll interval */
+        pthread_mutex_lock(&ctx->io_lock);
+        run_write_pipeline(ctx, ctx->listener.registered_tasks,
+                            ctx->listener.num_registered_tasks, false);
+        signal_probe_flag(ctx, (uint32_t)cur_step);
+        pthread_mutex_unlock(&ctx->io_lock);
     }
-    return NULL;
+
+    return 0;
 }
 
 /* ---- Task registration ----
@@ -1090,36 +1120,10 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
         pthread_mutexattr_destroy(&attr);
     }
 
-    /* Start reactor pthread via SPDK thread library. */
-    ctx->app_should_stop = 0;
-    pthread_barrier_init(&ctx->init_barrier, NULL, 2);
-
-    if (spdk_thread_lib_init((spdk_new_thread_fn)reactor_new_thread_fn, 0) != 0) {
-        fprintf(stderr, "[Fatal] spdk_thread_lib_init failed.\n");
-        pthread_barrier_destroy(&ctx->init_barrier);
-        free(ctx); return -1;
-    }
-
-    /* spdk_thread_create passes its second argument through to the
-     * new_thread_fn callback as the void *ctx parameter.  The SPDK
-     * header declares this as a cpumask pointer, but the v26.01-pre
-     * library binary uses the older API where it is a context pointer.
-     * Verified working with the same pattern in reactor_v0_test.c. */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
-    struct spdk_thread *th = spdk_thread_create("npu_nvme", ctx);
-#pragma GCC diagnostic pop
-    if (!th) {
-        fprintf(stderr, "[Fatal] spdk_thread_create failed.\n");
-        pthread_barrier_destroy(&ctx->init_barrier);
-        free(ctx); return -1;
-    }
-
-    /* Wait for reactor pthread to reach its main loop. */
-    pthread_barrier_wait(&ctx->init_barrier);
-    pthread_barrier_destroy(&ctx->init_barrier);
-
-    /* Initialise SPDK environment (once per process via SPDK_SHM_ID). */
+    /* Initialise SPDK environment (once per process via SPDK_SHM_ID).
+     * MUST be called BEFORE spdk_thread_lib_init — the thread library
+     * internally creates spdk_ring (rte_ring/rte_mempool) which requires
+     * DPDK EAL to be fully initialised. */
     {
         static int spdk_inited = 0;
         if (!spdk_inited) {
@@ -1145,6 +1149,105 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
             spdk_inited = 1;
         }
     }
+
+    /* --- diagnostic: verify EAL state after spdk_env_init --- */
+    fprintf(stderr, "[Diag] after spdk_env_init: rte_lcore_count=%u "
+            "rte_socket_count=%u spdk_core_count=%u\n",
+            rte_lcore_count(), rte_socket_count(),
+            spdk_env_get_core_count());
+    fflush(stderr);
+
+    /* Re-register DPDK ring mempool ops after EAL init.
+     *
+     * The RTE_INIT constructors in librte_mempool_ring.a register ops at
+     * dlopen time via init_array, but EAL was not yet available.  We
+     * explicitly re-register "ring_mp_mc" (the default) here, now that
+     * spdk_env_init has completed and EAL is fully initialised.
+     */
+    {
+        extern int common_ring_alloc(struct rte_mempool *mp);
+        extern void common_ring_free(struct rte_mempool *mp);
+        extern void common_ring_mp_enqueue(struct rte_mempool *mp,
+                void * const *obj_table, unsigned n);
+        extern void common_ring_mc_dequeue(struct rte_mempool *mp,
+                void **obj_table, unsigned n);
+        extern unsigned common_ring_get_count(const struct rte_mempool *mp);
+
+        struct rte_mempool_ops ops = {
+            .name = "ring_mp_mc", .alloc = common_ring_alloc,
+            .free = common_ring_free, .enqueue = common_ring_mp_enqueue,
+            .dequeue = common_ring_mc_dequeue,
+            .get_count = common_ring_get_count,
+        };
+        int rc = rte_mempool_register_ops(&ops);
+        fprintf(stderr, "[Diag] rte_mempool_register_ops(ring_mp_mc): %d\n", rc);
+        fflush(stderr);
+
+        /* Step-by-step mempool diagnostic */
+        fprintf(stderr, "[Diag] RTE_MEMPOOL_CACHE_MAX_SIZE=%u\n",
+                RTE_MEMPOOL_CACHE_MAX_SIZE);
+        fprintf(stderr, "[Diag] rte_lcore_count=%u rte_socket_count=%u\n",
+               rte_lcore_count(), rte_socket_count());
+        /* Check rte_malloc still works */
+        rte_errno = 0;
+        void *pt = rte_malloc("diag_malloc", 4096, 64);
+        fprintf(stderr, "[Diag] rte_malloc: %s (err=%d)\n",
+               pt ? "OK" : "FAIL", rte_errno);
+        if (pt) rte_free(pt);
+        /* Check rte_memzone_reserve still works */
+        rte_errno = 0;
+        const struct rte_memzone *mzt = rte_memzone_reserve("diag_mz", 4096,
+                SOCKET_ID_ANY, 0);
+        fprintf(stderr, "[Diag] rte_memzone_reserve: %s (err=%d)\n",
+               mzt ? "OK" : "FAIL", rte_errno);
+        if (mzt) rte_memzone_free(mzt);
+        /* Try mempool with n=1, socket=0, no flags */
+        rte_errno = 0;
+        struct rte_mempool *test_mp = rte_mempool_create_empty(
+            "diag_step", 16, 64, 0, 0, 0, 0);
+        fprintf(stderr, "[Diag] create_empty(16, socket=0): %s (err=%d)\n",
+               test_mp ? "OK" : "FAIL", rte_errno);
+        if (test_mp) rte_mempool_free(test_mp);
+        fflush(stderr);
+    }
+
+    /* Start reactor pthread via SPDK thread library.
+     * spdk_thread_lib_init creates an spdk_ring (rte_ring → rte_mempool)
+     * — EAL must be initialised first (done above).
+     * Like spdk_env_init, spdk_thread_lib_init is once-per-process. */
+    ctx->app_should_stop = 0;
+    pthread_barrier_init(&ctx->init_barrier, NULL, 2);
+
+    {
+        static int thread_lib_inited = 0;
+        if (!thread_lib_inited) {
+            fprintf(stderr, "[Diag] before spdk_thread_lib_init\n"); fflush(stderr);
+            if (spdk_thread_lib_init((spdk_new_thread_fn)reactor_new_thread_fn, 0) != 0) {
+                fprintf(stderr, "[Fatal] spdk_thread_lib_init failed.\n");
+                pthread_barrier_destroy(&ctx->init_barrier);
+                free(ctx); return -1;
+            }
+            fprintf(stderr, "[Diag] spdk_thread_lib_init OK\n"); fflush(stderr);
+            thread_lib_inited = 1;
+        }
+    }
+
+    /* spdk_thread_create: the second argument is a cpumask pointer.
+     * Passing ctx as cpumask causes a SEGV on ARM64 because SPDK
+     * internally reads cpumask as a potentially large cpu_set bitmask.
+     * V0 passes NULL; we do the same and communicate ctx via g_reactor_ctx. */
+    g_reactor_ctx = ctx;
+    struct spdk_thread *th = spdk_thread_create("npu_nvme", NULL);
+    fprintf(stderr, "[Diag] spdk_thread_create -> %p\n", (void *)th); fflush(stderr);
+    if (!th) {
+        fprintf(stderr, "[Fatal] spdk_thread_create failed.\n");
+        pthread_barrier_destroy(&ctx->init_barrier);
+        free(ctx); return -1;
+    }
+
+    /* Wait for reactor pthread to reach its main loop. */
+    pthread_barrier_wait(&ctx->init_barrier);
+    pthread_barrier_destroy(&ctx->init_barrier);
 
     /* Probe and attach NVMe device */
     struct spdk_nvme_transport_id trid = {};
@@ -1222,30 +1325,15 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
         return -1;
     }
 
-    /* Launch the background listener thread (skip if NPU_NVME_NO_LISTENER=1) */
-    const char *no_listener = getenv("NPU_NVME_NO_LISTENER");
-    ctx->listener.stop_listener = 0;
-    ctx->listener.listener_started = false;
+    /* Listener poller runs on the reactor thread (registered in reactor_loop).
+     * The NPU_NVME_NO_LISTENER env var still controls whether the step poller
+     * is active — it does nothing until dev_step_ptr is set. */
     ctx->listener.probe_flag_dev_ptr = NULL;
     ctx->listener.probe_flag_host = NULL;
     ctx->listener.dev_step_ptr = NULL;
     ctx->listener.step_poll_buf = NULL;
-    ctx->listener.last_step_seen = -1;
 
-    if (no_listener && strcmp(no_listener, "1") == 0) {
-        printf("[Init] Listener thread SKIPPED (NPU_NVME_NO_LISTENER=1).\n");
-    } else {
-        if (pthread_create(&ctx->listener.listener_thread, NULL,
-                           probe_listener_thread, ctx) != 0) {
-            fprintf(stderr, "[Fatal] Failed to create listener thread.\n");
-            npu_nvme_cleanup(ctx);
-            *out_ctx = NULL;
-            return -1;
-        }
-        ctx->listener.listener_started = true;
-        printf("[Init] Background listener thread started.\n");
-    }
-
+    printf("[Init] Initialisation complete.\n");
     return 0;
 }
 
@@ -1259,12 +1347,6 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     /* Stop reactor thread */
     ctx->app_should_stop = 1;
     pthread_join(ctx->reactor_pthread, NULL);
-
-    /* Stop listener thread */
-    if (ctx->listener.listener_started) {
-        ctx->listener.stop_listener = 1;
-        pthread_join(ctx->listener.listener_thread, NULL);
-    }
 
     /* Release ACL resources */
     if (ctx->acl.events) {
