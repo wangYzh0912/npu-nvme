@@ -207,6 +207,7 @@ int submit_to_spdk_write(NPUNVMEContext *ctx, io_task_t *task,
     uint32_t lba_count = aligned_sz / ctx->block_size;
 
     spdk_cb_arg_t *cb_arg = malloc(sizeof(spdk_cb_arg_t));
+    if (!cb_arg) return -1;
     cb_arg->ctx = ctx; cb_arg->task = task;
     cb_arg->completed_counter = completed_counter;
 
@@ -370,7 +371,10 @@ void run_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
             task->ts_submit = get_time_us();
 
             spdk_cb_arg_t *cb_arg = malloc(sizeof(spdk_cb_arg_t));
-            cb_arg->ctx = ctx; cb_arg->task = task;
+            if (!cb_arg) {
+                ring_push(&ctx->dma.free_ring, buf_idx);
+                break;
+            }
             cb_arg->completed_counter = &completed_tasks;
 
             uint64_t lba = task->nvme_offset / ctx->block_size;
@@ -623,7 +627,10 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
             task->buf_idx = buf_idx;
 
             spdk_cb_arg_t *cb_arg = malloc(sizeof(spdk_cb_arg_t));
-            cb_arg->ctx = ctx; cb_arg->task = task;
+            if (!cb_arg) {
+                ring_push(&ctx->dma.free_ring, buf_idx);
+                break;
+            }
             cb_arg->completed_counter = &completed_tasks;
 
             uint64_t lba = task->nvme_offset / ctx->block_size;
@@ -1347,6 +1354,10 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     /* Stop reactor thread */
     ctx->app_should_stop = 1;
     pthread_join(ctx->reactor_pthread, NULL);
+
+    /* Bind ACL context — needed for aclrtDestroyEvent/FreeHost below. */
+    aclrtSetDevice(ctx->acl.npu_id);
+    aclrtSetCurrentContext(ctx->acl.acl_ctx);
 
     /* Release ACL resources */
     if (ctx->acl.events) {
