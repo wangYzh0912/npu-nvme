@@ -96,16 +96,26 @@ typedef struct NPUNVMEContext {
     /* ---- Step-counter poller ---- */
     struct spdk_poller *step_poller;
     struct spdk_poller *write_fsm_poller;  /* V3: async write FSM */
+    struct spdk_poller *read_fsm_poller;   /* V4: async read FSM */
+    struct spdk_poller *meta_poller;       /* V4: async metadata I/O */
     int last_step_seen;
 
-    /* I/O serialization — the listener thread and the main thread share
-     * a single SPDK qpair.  SPDK qpairs (submission + completion queues)
-     * are not thread-safe; this mutex serialises all qpair access. */
-    pthread_mutex_t io_lock;
+    /* Listener-state lock — protects registered_tasks, dev_step_ptr,
+     * probe_flag_* from concurrent access by Python thread and reactor.
+     * I/O paths (write/read/meta) no longer use this lock. */
+    pthread_mutex_t state_lock;
 
     /* ---- Async write FSM (V3) ---- */
     write_fsm_ctx_t write_fsm;
-    struct spdk_ring *write_ring;    /* Python → reactor request queue */
+    struct spdk_ring *write_ring;    /* Python → reactor write requests */
+
+    /* ---- Async read FSM (V4) ---- */
+    read_fsm_ctx_t read_fsm;
+    struct spdk_ring *read_ring;     /* Python → reactor read requests */
+
+    /* ---- Async metadata I/O (V4) ---- */
+    struct spdk_ring *meta_ring;     /* Python → reactor meta requests */
+    struct spdk_nvme_qpair *meta_qpair; /* dedicated qpair for metadata */
 } NPUNVMEContext;
 
 #endif

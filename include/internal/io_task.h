@@ -87,4 +87,35 @@ typedef struct {
     int completed_count;        /* number of fully completed chunks */
 } write_fsm_ctx_t;
 
+/* ---- Async read FSM (V4) ---- */
+
+typedef enum {
+    READ_FSM_IDLE = 0,
+    READ_FSM_RUNNING,
+} read_fsm_state_t;
+
+typedef struct {
+    io_task_t *tasks;           /* array of per-chunk descriptors */
+    int num_tasks;              /* number of chunks in this read */
+    volatile int done;          /* set to 1 when all chunks complete */
+} read_request_t;
+
+typedef struct {
+    read_fsm_state_t state;
+    read_request_t *req;        /* current active request, NULL when idle */
+    int next_submit_idx;        /* next chunk index to submit */
+    int completed_count;        /* number of fully completed chunks */
+} read_fsm_ctx_t;
+
+/* ---- Metadata I/O request (V4) ---- */
+
+typedef struct {
+    uint64_t byte_offset;       /* absolute byte offset on NVMe */
+    uint32_t total_bytes;       /* number of bytes to read/write */
+    int is_read;                /* 1 = read, 0 = write */
+    void *meta_buffer;          /* caller's host buffer */
+    volatile int done;          /* set to 1 when I/O completes */
+    int result;                 /* 0 = success, -1 = I/O error */
+} meta_request_t;
+
 #endif
