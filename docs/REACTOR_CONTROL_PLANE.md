@@ -181,6 +181,22 @@ During implementation, four unexpected issues were discovered and resolved:
    (returning error), and the FSM retried indefinitely.  Fixed by calling
    `ensure_acl_context` at the start of `write_fsm_tick`.
 
+### 3.2  C-Layer Batch Profiling
+
+To isolate pure data-path latency from Python overhead, we added
+batch-level timestamps directly in the C-layer FSM.  In `initiate_write_fsm`
+and `initiate_read_fsm`, `ts_batch_start` is recorded at the moment the first
+DMA submission begins.  In the FSM completion path (when `completed_count`
+reaches `num_tasks`), `ts_batch_end` is recorded and the difference stored
+in `ctx->last_write_io_us` or `ctx->last_read_io_us`.  A public API
+(`npu_nvme_get_last_io_us`) exposes this value to Python.
+
+On a 1 GB host write (256 chunks x 4 MiB), C-layer latency was 259.2 ms
+(4,143 MB/s), while the Python-level measurement (including numpy allocation
+and ctypes marshalling) was 260.5 ms (4,122 MB/s).  **Python overhead:
+0.5%**, confirming that the command-offload architecture introduces negligible
+software overhead—the data path is dominated by DMA and NVMe transfer time.
+
 ## 4.  Evaluation
 
 ### 4.1  Experimental Setup
@@ -199,15 +215,18 @@ During implementation, four unexpected issues were discovered and resolved:
 Sequential write bandwidth measured with 4 MiB chunks and pipeline
 depth 8:
 
-| Metric              | V2 (busy-wait) | V5 (async FSM)  |
+| Metric              | V2 (busy-wait) | V6 (async FSM)  |
 |---------------------|----------------|------------------|
 | Best single-trial   | 4,121 MB/s     | 4,432 MB/s       |
 | 3-trial average     | 3,707 MB/s     | 4,300+ MB/s      |
+| C-layer (1 GB host) | N/A            | 4,143 MB/s       |
+| Python overhead     | N/A            | 0.5%             |
 | Pipe-depth scan     | All pass       | All pass         |
 | Chunk-size scan     | Best 4 MB      | Best 4 MB        |
 
 The async FSM introduces no bandwidth degradation; minor improvements
-are attributed to reduced lock contention.
+are attributed to reduced lock contention.  The C-layer profiling
+confirms that Python marshalling overhead is negligible (0.5%).
 
 ### 4.3  Reactor CPU Utilisation
 
