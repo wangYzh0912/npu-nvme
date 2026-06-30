@@ -220,521 +220,6 @@ int submit_to_spdk_write(NPUNVMEContext *ctx, io_task_t *task,
     return 0;
 }
 
-/* ---- Write-path dual-polling pipeline ----
- *
- * Three cooperating engines inside a single thread:
- *   Engine 1 — submit NPU→DMA copies (aclrtMemcpy)
- *   Engine 2 — poll NPU events, submit ready chunks to SPDK
- *   Engine 3 — reap SPDK write completions
- *
- * Blocks until all tasks reach CHUNK_DONE.  Holds state_lock for the
- * entire duration to serialise access to the shared SPDK qpair.
- */
-
-void run_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks,
-                         int num_tasks, bool is_host) {
-    int completed_tasks = 0;
-    int submitted_to_npu = 0;
-    uint64_t last_progress_time = get_time_us();
-
-    pthread_mutex_lock(&ctx->state_lock);
-
-    while (completed_tasks < num_tasks) {
-        bool made_progress = false;
-
-        /* Engine 1: submit DMA copies */
-        while (submitted_to_npu < num_tasks) {
-            io_task_t *task = &tasks[submitted_to_npu];
-            size_t aligned_sz = ALIGN_4K(task->size);
-
-            if (task->size == 0 || aligned_sz > ctx->dma.chunk_size) {
-                task->state = CHUNK_DONE; completed_tasks++;
-                submitted_to_npu++; continue;
-            }
-
-            int rc = try_submit_async(ctx, task, is_host);
-            if (rc == 0) {
-                submitted_to_npu++; made_progress = true;
-            } else if (rc == -1) {
-                break;
-            } else {
-                fprintf(stderr, "[Fatal] ACL Memcpy failed for chunk %d. Skipping.\n",
-                        task->task_idx);
-                task->state = CHUNK_DONE; completed_tasks++;
-                submitted_to_npu++; made_progress = true;
-            }
-        }
-
-        /* Engine 2: poll NPU events, submit ready chunks to SPDK */
-        for (int i = 0; i < submitted_to_npu; i++) {
-            io_task_t *task = &tasks[i];
-            if (task->state == CHUNK_DONE) continue;
-
-            if (task->state == CHUNK_NPU_DONE) {
-                int rc = submit_to_spdk_write(ctx, task, &completed_tasks);
-                if (rc == 0) {
-                    made_progress = true;
-                } else if (rc != -ENOMEM && rc != -12) {
-                    task->state = CHUNK_DONE; completed_tasks++;
-                    ring_push(&ctx->dma.free_ring, task->buf_idx);
-                    made_progress = true;
-                }
-            }
-        }
-
-        /* Engine 3: reap SPDK completions */
-        int cpl = spdk_nvme_qpair_process_completions(ctx->qpair, 0);
-        if (cpl > 0) made_progress = true;
-
-        if (!made_progress) {
-            uint64_t now = get_time_us();
-            uint64_t stall_time = now - last_progress_time;
-            if (stall_time > 3000000ULL) {
-                fprintf(stderr, "\n[NPU-NVMe] Pipeline STALL detected (rank %d)\n",
-                        ctx->acl.npu_id);
-                fprintf(stderr, "[NPU-NVMe] Completed: %d / Total: %d\n",
-                        completed_tasks, num_tasks);
-                fprintf(stderr, "[NPU-NVMe] Active task state dump:\n");
-                for (int i = 0; i < submitted_to_npu; i++) {
-                    if (tasks[i].state != CHUNK_DONE) {
-                        fprintf(stderr,
-                                " -> TaskIdx: %d | NvmeOffset: %lu | Size: %zu | "
-                                "STATE: %d | BufIdx: %d\n",
-                                tasks[i].task_idx, tasks[i].nvme_offset,
-                                tasks[i].size, tasks[i].state, tasks[i].buf_idx);
-                    }
-                }
-                last_progress_time = now;
-            }
-            usleep(1);
-        } else {
-            last_progress_time = get_time_us();
-        }
-    }
-    pthread_mutex_unlock(&ctx->state_lock);
-}
-
-/* ---- Async write FSM (V3) ----
- *
- * Replaces the blocking run_write_pipeline for FaF (Fire-and-Forget) writes.
- * The FSM runs on the reactor thread via write_fsm_poller_fn.  Each tick
- * does bounded work: one aclrtMemcpy, submissions, and completion reaping.
- *
- * For Python-initiated writes (npu_nvme_write_batch), the caller enqueues a
- * write_request_t into ctx->write_ring and polls req->done.
- */
-
-/* Forward declarations for functions defined later in this file. */
-static inline int ensure_acl_context(NPUNVMEContext *ctx);
-static void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value);
-
-static void initiate_write_fsm(NPUNVMEContext *ctx, write_request_t *req) {
-    write_fsm_ctx_t *fsm = &ctx->write_fsm;
-    fsm->state = WRITE_FSM_RUNNING;
-    fsm->req = req;
-    fsm->next_submit_idx = 0;
-    fsm->completed_count = 0;
-    req->done = 0;
-}
-
-static void write_fsm_tick(NPUNVMEContext *ctx) {
-    write_fsm_ctx_t *fsm = &ctx->write_fsm;
-    write_request_t *req = fsm->req;
-    if (!req) return;
-
-    /* Ensure ACL context is bound to the reactor thread before any
-     * aclrtMemcpy calls (needed for HBM → host DMA).  Idempotent
-     * if already bound. */
-    ensure_acl_context(ctx);
-
-    /* 1. Process SPDK completions (triggers callbacks that update task
-     *    state and increment fsm->completed_count). */
-    spdk_nvme_qpair_process_completions(ctx->qpair, 0);
-
-    /* 2. Submit NPU_DONE chunks to SPDK. */
-    for (int i = 0; i < fsm->next_submit_idx; i++) {
-        io_task_t *task = &req->tasks[i];
-        if (task->state == CHUNK_NPU_DONE) {
-            submit_to_spdk_write(ctx, task, &fsm->completed_count);
-            /* On success: state → CHUNK_SPDK_WRITING.
-             * On queue-full (-ENOMEM / -12): retry next tick. */
-        }
-    }
-
-    /* 3. DMA one more chunk (bounded work: one aclrtMemcpy per tick). */
-    if (fsm->next_submit_idx < req->num_tasks) {
-        io_task_t *task = &req->tasks[fsm->next_submit_idx];
-        size_t aligned_sz = ALIGN_4K(task->size);
-
-        if (task->size == 0 || aligned_sz > ctx->dma.chunk_size) {
-            /* Skip zero-size or oversize chunks immediately. */
-            task->state = CHUNK_DONE;
-            fsm->completed_count++;
-            fsm->next_submit_idx++;
-        } else if (!ring_is_empty(&ctx->dma.free_ring)) {
-            int rc = try_submit_async(ctx, task, req->is_host);
-            if (rc == 0) {
-                fsm->next_submit_idx++;
-            }
-            /* On ring-full: retry next tick. */
-        }
-    }
-
-    /* 4. Check if all chunks are complete. */
-    if (fsm->completed_count >= req->num_tasks) {
-        req->done = 1;
-        fsm->state = WRITE_FSM_IDLE;
-        fsm->req = NULL;
-    }
-}
-
-/**
- * @brief SPDK poller that drives the async write state machine.
- *
- * Runs on the reactor thread with a 0 μs period (invoked on every
- * spdk_thread_poll iteration).  Checks for new requests from Python
- * (via write_ring) and advances the current FSM by one step.
- *
- * @param arg  NPUNVMEContext pointer
- * @return     0 to continue, -1 to stop when idle and shutting down
- */
-static int write_fsm_poller_fn(void *arg) {
-    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
-    write_fsm_ctx_t *fsm = &ctx->write_fsm;
-
-    /* Refuse to stop mid-write; only stop when idle. */
-    if (ctx->app_should_stop && fsm->state == WRITE_FSM_IDLE) return -1;
-
-    /* Phase 1: check for new requests from Python (ring). */
-    if (fsm->state == WRITE_FSM_IDLE) {
-        void *obj = NULL;
-        if (spdk_ring_dequeue(ctx->write_ring, &obj, 1) == 1) {
-            initiate_write_fsm(ctx, (write_request_t *)obj);
-        }
-    }
-
-    /* Phase 2: advance the current FSM. */
-    if (fsm->state == WRITE_FSM_RUNNING) {
-        bool was_faf = (fsm->req == &fsm->faf_req);
-        uint32_t faf_step = fsm->faf_step;
-
-        write_fsm_tick(ctx);
-
-        /* If just completed: signal probe flag for FaF, free deferred tasks. */
-        if (fsm->state == WRITE_FSM_IDLE) {
-            if (was_faf) {
-                ensure_acl_context(ctx);
-                signal_probe_flag(ctx, faf_step);
-            }
-            pthread_mutex_lock(&ctx->state_lock);
-            if (ctx->listener.old_tasks) {
-                free(ctx->listener.old_tasks);
-                ctx->listener.old_tasks = NULL;
-            }
-            pthread_mutex_unlock(&ctx->state_lock);
-        }
-    }
-
-    return 0;
-}
-
-/* ---- Async read FSM (V4) ----
- *
- * Mirror of the write FSM for reads.  Python enqueues read_request_t into
- * ctx->read_ring; the reactor processes them in read_fsm_poller_fn.
- * Each tick does one SPDK submission + one DMA copy + completion reaping.
- */
-
-static void initiate_read_fsm(NPUNVMEContext *ctx, read_request_t *req) {
-    read_fsm_ctx_t *fsm = &ctx->read_fsm;
-    fsm->state = READ_FSM_RUNNING;
-    fsm->req = req;
-    fsm->next_submit_idx = 0;
-    fsm->completed_count = 0;
-    req->done = 0;
-}
-
-static void read_fsm_tick(NPUNVMEContext *ctx) {
-    read_fsm_ctx_t *fsm = &ctx->read_fsm;
-    read_request_t *req = fsm->req;
-    if (!req) return;
-
-    /* 1. Process SPDK completions (triggers callbacks). */
-    spdk_nvme_qpair_process_completions(ctx->qpair, 0);
-
-    /* 2. Copy completed DMA buffers to NPU/Host. */
-    for (int i = 0; i < fsm->next_submit_idx; i++) {
-        io_task_t *task = &req->tasks[i];
-        if (task->state == CHUNK_SPDK_DONE) {
-            /* For host reads: memcpy.  For NPU reads: use aclrtMemcpy
-             * (synchronous — one chunk per tick keeps latency bounded). */
-            aclError ret = aclrtMemcpy(task->npu_ptr, task->size,
-                                        ctx->dma.pool[task->buf_idx].buf,
-                                        task->size,
-                                        ACL_MEMCPY_HOST_TO_DEVICE);
-            if (ret == ACL_SUCCESS) {
-                task->state = CHUNK_DONE;
-                fsm->completed_count++;
-                ring_push(&ctx->dma.free_ring, task->buf_idx);
-            }
-            /* On failure: retry next tick. */
-        }
-    }
-
-    /* 3. Submit one more read to SPDK. */
-    if (fsm->next_submit_idx < req->num_tasks) {
-        io_task_t *task = &req->tasks[fsm->next_submit_idx];
-        size_t aligned_sz = ALIGN_4K(task->size);
-
-        if (task->size == 0 || aligned_sz > ctx->dma.chunk_size) {
-            task->state = CHUNK_DONE;
-            fsm->completed_count++;
-            fsm->next_submit_idx++;
-        } else if (!ring_is_empty(&ctx->dma.free_ring)) {
-            int buf_idx;
-            ring_pop(&ctx->dma.free_ring, &buf_idx);
-            task->buf_idx = buf_idx;
-
-            spdk_cb_arg_t *cb_arg = malloc(sizeof(spdk_cb_arg_t));
-            if (cb_arg) {
-                cb_arg->ctx = ctx; cb_arg->task = task;
-                cb_arg->completed_counter = &fsm->completed_count;
-
-                uint64_t lba = task->nvme_offset / ctx->block_size;
-                uint32_t lba_count = aligned_sz / ctx->block_size;
-                int rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair,
-                                                ctx->dma.pool[buf_idx].buf,
-                                                lba, lba_count,
-                                                nvme_read_complete_cb, cb_arg, 0);
-                if (rc == 0) {
-                    task->state = CHUNK_SPDK_READING;
-                    fsm->next_submit_idx++;
-                } else {
-                    ring_push(&ctx->dma.free_ring, buf_idx);
-                    free(cb_arg);
-                    task->state = CHUNK_DONE;
-                    fsm->completed_count++;
-                    fsm->next_submit_idx++;
-                }
-            }
-        }
-    }
-
-    /* 4. Check completion. */
-    if (fsm->completed_count >= req->num_tasks) {
-        req->done = 1;
-        fsm->state = READ_FSM_IDLE;
-        fsm->req = NULL;
-    }
-}
-
-/**
- * @brief SPDK poller that drives the async read state machine.
- */
-static int read_fsm_poller_fn(void *arg) {
-    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
-    read_fsm_ctx_t *fsm = &ctx->read_fsm;
-
-    if (ctx->app_should_stop && fsm->state == READ_FSM_IDLE) return -1;
-
-    if (fsm->state == READ_FSM_IDLE) {
-        void *obj = NULL;
-        if (spdk_ring_dequeue(ctx->read_ring, &obj, 1) == 1) {
-            initiate_read_fsm(ctx, (read_request_t *)obj);
-        }
-    }
-
-    if (fsm->state == READ_FSM_RUNNING) {
-        read_fsm_tick(ctx);
-    }
-
-    return 0;
-}
-
-/* ---- Async metadata I/O poller (V4) ----
- *
- * Metadata I/O uses a dedicated qpair (ctx->meta_qpair) so it never
- * contends with the main data path.  Requests are enqueued via
- * ctx->meta_ring and processed here on the reactor thread.
- */
-
-static void meta_io_complete_cb(void *arg, const struct spdk_nvme_cpl *cpl) {
-    meta_request_t *req = (meta_request_t *)arg;
-    req->result = spdk_nvme_cpl_is_error(cpl) ? -1 : 0;
-    req->done = 1;
-}
-
-static int meta_poller_fn(void *arg) {
-    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
-
-    if (ctx->app_should_stop) return -1;
-
-    void *obj = NULL;
-    if (spdk_ring_dequeue(ctx->meta_ring, &obj, 1) == 1) {
-        meta_request_t *req = (meta_request_t *)obj;
-        uint64_t lba = req->byte_offset / ctx->block_size;
-        uint32_t nblk = (req->total_bytes + ctx->block_size - 1) / ctx->block_size;
-
-        if (req->is_read) {
-            int rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->meta_qpair,
-                                            ctx->meta_dma_buf, lba, nblk,
-                                            meta_io_complete_cb, req, 0);
-            if (rc != 0) { req->result = -1; req->done = 1; }
-        } else {
-            memcpy(ctx->meta_dma_buf, req->meta_buffer, req->total_bytes);
-            int rc = spdk_nvme_ns_cmd_write(ctx->ns, ctx->meta_qpair,
-                                             ctx->meta_dma_buf, lba, nblk,
-                                             meta_io_complete_cb, req, 0);
-            if (rc != 0) { req->result = -1; req->done = 1; }
-        }
-
-        /* Busy-wait for completion on reactor (metadata I/O is small). */
-        while (!req->done) {
-            spdk_nvme_qpair_process_completions(ctx->meta_qpair, 0);
-        }
-
-        /* Copy result back for reads. */
-        if (req->is_read && req->result == 0) {
-            memcpy(req->meta_buffer, ctx->meta_dma_buf, req->total_bytes);
-        }
-    }
-
-    return 0;
-}
-
-/* ---- SPDK read completion ---- */
-
-/* SPDK read-completion callback — logs errors and marks the task
- * CHUNK_SPDK_DONE so the read pipeline can continue.  The caller is
- * responsible for checking the I/O result via the task state. */
-void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
-    spdk_cb_arg_t *cb_arg = (spdk_cb_arg_t *)arg;
-    io_task_t *task = cb_arg->task;
-    NPUNVMEContext *ctx = cb_arg->ctx;
-
-    if (spdk_nvme_cpl_is_error(completion)) {
-        fprintf(stderr, "[NPU-NVMe] NVMe read error for task %d: "
-                "status=%d type=%d\n",
-                task->task_idx, completion->status.sc, completion->status.sct);
-    }
-    task->state = CHUNK_SPDK_DONE;
-    if (ctx->enable_profiling) task->ts_spdk_done = get_time_us();
-    free(cb_arg);
-}
-
-/* ---- Read-path dual-polling pipeline ----
- *
- * Three cooperating engines inside a single thread:
- *   Engine 1 — submit NVMe→DMA read commands
- *   Engine 2 — poll completions, copy from DMA buffer to NPU HBM
- *   Engine 3 — reap SPDK read completions
- *
- * Blocks until all tasks reach CHUNK_DONE.
- */
-
-void run_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
-    int completed_tasks = 0;
-    int submitted_to_nvme = 0;
-
-    pthread_mutex_lock(&ctx->state_lock);
-
-    while (completed_tasks < num_tasks) {
-        bool made_progress = false;
-
-        /* Engine 1: submit NVMe read commands */
-        while (submitted_to_nvme < num_tasks) {
-            io_task_t *task = &tasks[submitted_to_nvme];
-            size_t aligned_sz = ALIGN_4K(task->size);
-
-            if (task->size == 0 || aligned_sz > ctx->dma.chunk_size) {
-                task->state = CHUNK_DONE; completed_tasks++;
-                submitted_to_nvme++; continue;
-            }
-
-            if (ring_is_empty(&ctx->dma.free_ring)) break;
-
-            int buf_idx;
-            ring_pop(&ctx->dma.free_ring, &buf_idx);
-            task->buf_idx = buf_idx;
-            task->ts_submit = get_time_us();
-
-            spdk_cb_arg_t *cb_arg = malloc(sizeof(spdk_cb_arg_t));
-            if (!cb_arg) {
-                ring_push(&ctx->dma.free_ring, buf_idx);
-                break;
-            }
-            cb_arg->ctx = ctx; cb_arg->task = task;
-            cb_arg->completed_counter = &completed_tasks;
-
-            uint64_t lba = task->nvme_offset / ctx->block_size;
-            uint32_t lba_count = aligned_sz / ctx->block_size;
-
-            int rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->qpair,
-                                            ctx->dma.pool[buf_idx].buf,
-                                            lba, lba_count,
-                                            nvme_read_complete_cb, cb_arg, 0);
-            if (rc == 0) {
-                task->state = CHUNK_SPDK_READING;
-                submitted_to_nvme++;
-                made_progress = true;
-            } else if (rc == -ENOMEM || rc == -12) {
-                ring_push(&ctx->dma.free_ring, buf_idx);
-                free(cb_arg);
-                task->state = CHUNK_DONE; completed_tasks++;
-                submitted_to_nvme++;
-                fprintf(stderr, "[Fatal] SPDK read queue full, skip chunk %d.\n",
-                        task->task_idx);
-            } else {
-                fprintf(stderr, "[Fatal] SPDK read rejected! rc=%d for chunk %d.\n",
-                        rc, task->task_idx);
-                task->state = CHUNK_DONE; completed_tasks++;
-                submitted_to_nvme++;
-                ring_push(&ctx->dma.free_ring, buf_idx);
-                free(cb_arg);
-                made_progress = true;
-            }
-        }
-
-        /* Engine 2: DMA buffer to NPU */
-        for (int i = 0; i < submitted_to_nvme; i++) {
-            io_task_t *task = &tasks[i];
-            if (task->state == CHUNK_SPDK_DONE) {
-                aclError ret = aclrtMemcpyAsync(
-                    task->npu_ptr, task->size,
-                    ctx->dma.pool[task->buf_idx].buf, task->size,
-                    ACL_MEMCPY_HOST_TO_DEVICE, ctx->acl.copy_stream);
-                if (ret == ACL_SUCCESS) {
-                    aclrtRecordEvent(ctx->acl.events[task->buf_idx],
-                                     ctx->acl.copy_stream);
-                    task->state = CHUNK_NPU_COPYING;
-                    made_progress = true;
-                } else {
-                    fprintf(stderr, "[Fatal] ACL Memcpy D2H failed. Skipping.\n");
-                    task->state = CHUNK_DONE; completed_tasks++;
-                    ring_push(&ctx->dma.free_ring, task->buf_idx);
-                    made_progress = true;
-                }
-            }
-            if (task->state == CHUNK_NPU_COPYING) {
-                aclrtEventStatus status;
-                aclrtQueryEvent(ctx->acl.events[task->buf_idx], &status);
-                if (status == ACL_EVENT_RECORDED_STATUS_COMPLETE) {
-                    task->state = CHUNK_DONE;
-                    if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
-                    ring_push(&ctx->dma.free_ring, task->buf_idx);
-                    completed_tasks++;
-                    made_progress = true;
-                }
-            }
-        }
-
-        int cpl = spdk_nvme_qpair_process_completions(ctx->qpair, 0);
-        if (cpl > 0) made_progress = true;
-
-        if (!made_progress) usleep(1);
-    }
-    pthread_mutex_unlock(&ctx->state_lock);
-}
 
 /* ---- Profiling CSV export ----
  *
@@ -998,6 +483,9 @@ static inline int ensure_acl_context(NPUNVMEContext *ctx) {
 }
 
 static int step_poller_fn(void *arg);
+static int write_fsm_poller_fn(void *arg);
+static int read_fsm_poller_fn(void *arg);
+static int meta_poller_fn(void *arg);
 
 /* ---- Reactor thread functions ----
  *
@@ -1024,9 +512,7 @@ static NPUNVMEContext *g_reactor_ctx;
  */
 static void *reactor_loop(void *arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
-    fprintf(stderr, "[Diag] reactor_loop started\n"); fflush(stderr);
     spdk_set_thread(ctx->reactor_thread);
-    fprintf(stderr, "[Diag] spdk_set_thread done\n"); fflush(stderr);
 
     /* Reset registered tasks to IDLE. */
     pthread_mutex_lock(&ctx->state_lock);
@@ -1045,10 +531,6 @@ static void *reactor_loop(void *arg) {
                                         SPDK_ENV_SOCKET_ID_ANY);
     ctx->meta_ring  = spdk_ring_create(SPDK_RING_TYPE_MP_SC, 4,
                                         SPDK_ENV_SOCKET_ID_ANY);
-    fprintf(stderr, "[Diag] write_ring=%p read_ring=%p meta_ring=%p\n",
-            (void *)ctx->write_ring, (void *)ctx->read_ring,
-            (void *)ctx->meta_ring);
-    fflush(stderr);
 
     /* Init FSMs as idle. */
     ctx->write_fsm.state = WRITE_FSM_IDLE;
@@ -1057,19 +539,17 @@ static void *reactor_loop(void *arg) {
     ctx->read_fsm.req = NULL;
 
     /* Register pollers. */
-    fprintf(stderr, "[Diag] registering step_poller...\n"); fflush(stderr);
-    ctx->step_poller = spdk_poller_register(step_poller_fn, ctx,
-                                             STEP_POLLER_PERIOD_US);
-    fprintf(stderr, "[Diag] step_poller=%p\n", (void *)ctx->step_poller); fflush(stderr);
+    ctx->step_poller      = spdk_poller_register(step_poller_fn, ctx,
+                                                  STEP_POLLER_PERIOD_US);
     ctx->write_fsm_poller = spdk_poller_register(write_fsm_poller_fn, ctx, 0);
-    fprintf(stderr, "[Diag] write_fsm_poller=%p\n", (void *)ctx->write_fsm_poller); fflush(stderr);
-    ctx->read_fsm_poller = spdk_poller_register(read_fsm_poller_fn, ctx, 0);
-    fprintf(stderr, "[Diag] read_fsm_poller=%p\n", (void *)ctx->read_fsm_poller); fflush(stderr);
-    ctx->meta_poller = spdk_poller_register(meta_poller_fn, ctx, 0);
-    fprintf(stderr, "[Diag] meta_poller=%p\n", (void *)ctx->meta_poller); fflush(stderr);
+    ctx->read_fsm_poller  = spdk_poller_register(read_fsm_poller_fn, ctx, 0);
+    ctx->meta_poller      = spdk_poller_register(meta_poller_fn, ctx, 0);
+    fprintf(stderr, "[Diag] reactor: rings w=%p r=%p m=%p pollers s=%p w=%p r=%p m=%p\n",
+            (void *)ctx->write_ring, (void *)ctx->read_ring, (void *)ctx->meta_ring,
+            (void *)ctx->step_poller, (void *)ctx->write_fsm_poller,
+            (void *)ctx->read_fsm_poller, (void *)ctx->meta_poller);
 
     pthread_barrier_wait(&ctx->init_barrier);
-    fprintf(stderr, "[Diag] reactor_loop entering poll loop\n"); fflush(stderr);
 
     while (!ctx->app_should_stop) {
         spdk_thread_poll(ctx->reactor_thread, 0, 0);
@@ -1103,8 +583,6 @@ static void reactor_new_thread_fn(struct spdk_thread *thread, void *arg) {
     (void)arg;  /* unused — ctx comes from g_reactor_ctx */
     NPUNVMEContext *ctx = g_reactor_ctx;
     ctx->reactor_thread = thread;
-    fprintf(stderr, "[Diag] reactor_new_thread_fn (thread=%p)\n", (void *)thread);
-    fflush(stderr);
 
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -1486,7 +964,6 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
             "rte_socket_count=%u spdk_core_count=%u\n",
             rte_lcore_count(), rte_socket_count(),
             spdk_env_get_core_count());
-    fflush(stderr);
 
     /* Re-register DPDK ring mempool ops after EAL init (once per process).
      *
@@ -1513,35 +990,10 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
             .get_count = common_ring_get_count,
         };
         int rc = rte_mempool_register_ops(&ops);
-        fprintf(stderr, "[Diag] rte_mempool_register_ops(ring_mp_mc): %d\n", rc);
-        fflush(stderr);
-
-        /* Step-by-step mempool diagnostic */
-        fprintf(stderr, "[Diag] RTE_MEMPOOL_CACHE_MAX_SIZE=%u\n",
-                RTE_MEMPOOL_CACHE_MAX_SIZE);
-        fprintf(stderr, "[Diag] rte_lcore_count=%u rte_socket_count=%u\n",
-               rte_lcore_count(), rte_socket_count());
-        /* Check rte_malloc still works */
-        rte_errno = 0;
-        void *pt = rte_malloc("diag_malloc", 4096, 64);
-        fprintf(stderr, "[Diag] rte_malloc: %s (err=%d)\n",
-               pt ? "OK" : "FAIL", rte_errno);
-        if (pt) rte_free(pt);
-        /* Check rte_memzone_reserve still works */
-        rte_errno = 0;
-        const struct rte_memzone *mzt = rte_memzone_reserve("diag_mz", 4096,
-                SOCKET_ID_ANY, 0);
-        fprintf(stderr, "[Diag] rte_memzone_reserve: %s (err=%d)\n",
-               mzt ? "OK" : "FAIL", rte_errno);
-        if (mzt) rte_memzone_free(mzt);
-        /* Try mempool with n=1, socket=0, no flags */
-        rte_errno = 0;
-        struct rte_mempool *test_mp = rte_mempool_create_empty(
-            "diag_step", 16, 64, 0, 0, 0, 0);
-        fprintf(stderr, "[Diag] create_empty(16, socket=0): %s (err=%d)\n",
-               test_mp ? "OK" : "FAIL", rte_errno);
-        if (test_mp) rte_mempool_free(test_mp);
-        fflush(stderr);
+        if (rc < 0) {
+            fprintf(stderr, "[NPU-NVMe] WARNING: rte_mempool_register_ops "
+                    "(ring_mp_mc) failed (rc=%d)\n", rc);
+        }
             ops_registered = 1;
         }
     }
@@ -1556,13 +1008,11 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     {
         static int thread_lib_inited = 0;
         if (!thread_lib_inited) {
-            fprintf(stderr, "[Diag] before spdk_thread_lib_init\n"); fflush(stderr);
             if (spdk_thread_lib_init((spdk_new_thread_fn)reactor_new_thread_fn, 0) != 0) {
                 fprintf(stderr, "[Fatal] spdk_thread_lib_init failed.\n");
                 pthread_barrier_destroy(&ctx->init_barrier);
                 free(ctx); return -1;
             }
-            fprintf(stderr, "[Diag] spdk_thread_lib_init OK\n"); fflush(stderr);
             thread_lib_inited = 1;
         }
     }
@@ -1573,7 +1023,6 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
      * V0 passes NULL; we do the same and communicate ctx via g_reactor_ctx. */
     g_reactor_ctx = ctx;
     struct spdk_thread *th = spdk_thread_create("npu_nvme", NULL);
-    fprintf(stderr, "[Diag] spdk_thread_create -> %p\n", (void *)th); fflush(stderr);
     if (!th) {
         fprintf(stderr, "[Fatal] spdk_thread_create failed.\n");
         pthread_barrier_destroy(&ctx->init_barrier);
