@@ -1,271 +1,314 @@
 # NPU-NVMe Transfer
 
-Ascend NPU 与 NVMe SSD 之间的高性能零拷贝数据传输引擎，面向大模型训练增量检查点（delta checkpoint）场景。
+Ascend NPU 与 NVMe SSD 之间的高性能零拷贝数据传输引擎，面向大模型训练检查点
+（checkpoint）场景。提供两层 API：**C 层传输 API**（HBM ↔ NVMe 批量读写）和
+**Python 层检查点 API**（全量保存/加载、增量持久化）。
 
 ---
 
-## 一、架构概览
+## 版本依赖
 
-```
-┌─────────────────────────────────────────────────┐
-│  DirectCheckpoint (Python)                       │
-│  save / load / delta_save / recover / bench      │
-├─────────────────────────────────────────────────┤
-│  libnpu_nvme.so (C)                              │
-│  SPDK 用户态 NVMe 驱动 + FaF 设备侧轮询           │
-├─────────────────────────────────────────────────┤
-│  Ascend 910B NPU  │  NVMe SSD (PCIe 直通)        │
-└─────────────────────────────────────────────────┘
-```
-
-两层 API：
-- **C 层** (`npu_nvme_*`): 纯传输 API，HBM ↔ NVMe 批量读写
-- **Python 层** (`DirectCheckpoint`): 检查点管理，封装裸盘布局、增量管线、FaF 异步持久化
+| 组件 | 版本 | 说明 |
+|------|:---:|------|
+| 操作系统 | openEuler 22.03 LTS | Linux 5.10, aarch64 |
+| Ascend CANN | 8.0.RC3 | `/usr/local/Ascend/ascend-toolkit/latest` |
+| MindSpore | 2.5.0 | Python 3.9, conda 环境 |
+| MindFormers | 1.3.2 | GPT-2 模型定义 |
+| Python | 3.9 | `/home/user7/miniconda3/envs/ms_2.5` |
+| SPDK | v26.01-pre | 用户态 NVMe 驱动，捆绑的 DPDK 25.07 |
+| ISA-L | 2.30+ | Intel 存储加速库，SPDK 依赖 |
+| GCC | 7.3+ | C11 标准编译 |
+| CMake | 3.16+ | 构建系统 |
 
 ---
 
-## 二、环境
+## 初始化
 
-### 2.1 依赖
-
-- Ascend CANN Toolkit 8.0.RC3 (`/usr/local/Ascend/ascend-toolkit/latest`)
-- MindSpore 2.5.0 + MindFormers 1.3.2
-- Python 3.9 (conda)
-
-### 2.2 Python 环境
+### 1. 克隆与子模块
 
 ```bash
-# conda 环境路径
-/home/user7/miniconda3/envs/ms_2.5/bin/python
-
-# 激活
-source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
-export PYTHONPATH=/home/user7/npu-nvme/python:$PYTHONPATH
-```
-
-> **历史记录**: 环境已从 `/root/miniconda3/envs/ms_2.5` 迁移至 `/home/user7/miniconda3/envs/ms_2.5`。root 下的原环境保留作为备份。
-
-### 2.3 运行权限
-
-当前部分操作需 root 权限（NVMe 设备 `crw------- root:root`）：
-
-| 资源 | 当前状态 | 迁移到普通用户 |
-|------|:---:|:---:|
-| NVMe 设备 (`/dev/nvme1`) | root only | udev 规则 或 `chmod` (~5 min) |
-| NPU 设备 (`/dev/davinci*`) | 所有用户可读写 ✅ | 无需改动 |
-| 大页 (`/proc/sys/vm/nr_hugepages`) | root 写 | 启动时预分配 (~5 min) |
-| SPDK VFIO | root only | `vfio-noiommu` (~30 min) |
-| **迁移总工作量** | — | **~0.5 天** |
-
----
-
-## 三、快速开始
-
-> 以下命令中 `sudo` 仅在 NVMe/SPDK 操作时需要。NPU 训练可在普通用户下运行。
-
-### 3.1 初始化子模块
-
-```bash
+git clone <repo-url>
+cd npu-nvme
 git submodule update --init --recursive
 ```
 
-### 2.3 编译 SPDK
+### 2. 编译 SPDK
 
 ```bash
 cd third_party/spdk
 ./configure
 make -j$(nproc)
+cd ../..
 ```
 
-### 2.4 探测 NVMe 设备（获取 PCIe 地址）
-
-```bash
-sudo scripts/setup.sh    # SPDK 自带脚本，列出可用 NVMe 设备和 PCIe 地址
-# 输出示例: 0000:83:00.0 → NVMe SSD
-```
-
-### 2.5 编译 libnpu_nvme.so
+### 3. 编译 libnpu_nvme.so
 
 ```bash
 ./build.sh
 ```
 
-产物在 `build_out/`:
-- `lib/libnpu_nvme.so` — C 传输库
-- `include/npu_nvme.h` — C 头文件
-- `bin/test_npu_nvme` — 冒烟测试
+产物在 `build_out/`：
+| 路径 | 说明 |
+|------|------|
+| `lib/libnpu_nvme.so` | C 传输库 |
+| `include/npu_nvme.h` | C 公共头文件 |
+| `bin/test_npu_nvme` | 冒烟测试 |
+| `bin/run_test.sh` | 带环境变量的运行脚本 |
 
-### 2.6 格式化 NVMe 磁盘（首次使用）
+### 4. 运行时环境
 
 ```bash
-sudo python python/format_npu_disk.py --pci_addr 0000:83:00.0 --npu_id 1 --yes
+# 激活 CANN 工具链
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
+
+# 设置 Python 搜索路径
+export PYTHONPATH="$(pwd)/python:$PYTHONPATH"
+
+# 设置库搜索路径（SPDK 需 root 权限访问 NVMe 设备）
+export LD_LIBRARY_PATH="$(pwd)/build_out/lib:/usr/local/Ascend/ascend-toolkit/latest/lib64:$LD_LIBRARY_PATH"
+```
+
+> **注意**: SPDK 通过用户态驱动直接访问 NVMe 设备，需 root 权限。NPU 设备
+> (`/dev/davinci*`) 已对所有用户可读写，无需额外权限。
+
+### 5. 格式化 NVMe 磁盘
+
+首次使用前需初始化超级块和元数据区：
+
+```bash
+sudo python python/format_npu_disk.py --yes
+# 默认使用 PCIe 地址 0000:83:00.0，NPU 设备 0
+```
+
+### 6. 验证安装
+
+```bash
+# C 层冒烟测试
+sudo LD_LIBRARY_PATH=build_out/lib:... build/bin/test_npu_nvme
 ```
 
 ---
 
-## 四、C 层传输 API (`npu_nvme_*`)
+## C 层传输 API
 
-纯数据搬运，不包含检查点逻辑。头文件: `include/npu_nvme.h`
+C 层提供纯数据搬运能力，不包含检查点逻辑。所有函数通过 `NPUNVMEContext *` 不透明
+句柄操作。头文件：`include/npu_nvme.h`
 
 ### 初始化与清理
 
 ```c
 int  npu_nvme_init(NPUNVMEContext **ctx, const char *pci_addr, int npu_id,
                    int pipe_depth, uint32_t chunk_size,
-                   bool profiling, const char *prof_dir);
+                   bool enable_profiling, const char *prof_dir);
 void npu_nvme_cleanup(NPUNVMEContext *ctx);
+uint64_t npu_nvme_get_total_blocks(NPUNVMEContext *ctx);  // 磁盘容量 (字节)
+int      npu_nvme_get_max_transfer(NPUNVMEContext *ctx);   // 配置的块大小
 ```
+
+| 参数 | 推荐值 | 说明 |
+|------|:---:|------|
+| `pci_addr` | `"0000:83:00.0"` | NVMe 设备 PCIe BDF 地址 |
+| `npu_id` | `0` 或 `1` | 昇腾 NPU 设备 ID |
+| `pipe_depth` | `4`–`16` | DMA 管线深度，影响并发度 |
+| `chunk_size` | `4194304` (4 MiB) | 单次 DMA 块大小 |
 
 ### 批量读写
 
 ```c
-int npu_nvme_write_batch(ctx, void **npu_ptrs, uint64_t *offsets, size_t *sizes, int n);
-int npu_nvme_read_batch (ctx, void **npu_ptrs, uint64_t *offsets, size_t *sizes, int n);
-int npu_nvme_write_batch_host(ctx, void **ptrs, uint64_t *offsets, size_t *sizes, int n);
-int npu_nvme_read_batch_host (ctx, void **ptrs, uint64_t *offsets, size_t *sizes, int n);
+// HBM 路径 — 通过 aclrtMemcpy 进行 NPU ↔ DMA 缓冲区拷贝
+int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
+                         uint64_t *nvme_offsets, size_t *sizes, int num_items);
+int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
+                        uint64_t *nvme_offsets, size_t *sizes, int num_items);
+
+// 主机路径 — 通过 memcpy 在主机内存与 DMA 缓冲区之间拷贝，无需 NPU 参与
+int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
+                              uint64_t *nvme_offsets, size_t *sizes, int num_items);
+int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
+                             uint64_t *nvme_offsets, size_t *sizes, int num_items);
 ```
 
-### 元数据同步
+所有批量 I/O 为**同步阻塞调用**：函数返回时数据已到达存储介质（写）或已复制到
+用户缓冲区（读）。内部通过异步有限状态机驱动，但对外暴露为阻塞语义。
+
+### 元数据 I/O
 
 ```c
-int npu_nvme_sync_meta_io(ctx, uint64_t offset, uint32_t bytes, int is_read, void *buf);
+int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
+                          uint32_t total_bytes, int is_read, void *meta_buffer);
 ```
 
-### FaF 监听器（设备侧轮询）
+使用专用 qpair，不与数据路径竞争。适用于超级块和 JSON 账本的读写，单次 ≤ 1 MiB。
+
+### FaF 监听器控制
+
+FaF（Fire-and-Forget）模式在训练步边界自动触发后台写入，Python 训练循环不阻塞。
 
 ```c
-int  npu_nvme_register_tasks(ctx, void **ptrs, uint64_t *offsets, size_t *sizes, int n);
-int  npu_nvme_set_probe_flag_ptr(ctx, void *dev_ptr);
-int  npu_nvme_set_step_ptr(ctx, void *dev_ptr, int interval);
-void *npu_nvme_get_probe_flag_dev_ptr(ctx);
+int  npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
+                             uint64_t *nvme_offsets, size_t *sizes, int num_items);
+int  npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
+int  npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
+int  npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval);
+void *npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx);
 ```
 
-### Delta 环形区布局
+### 性能剖析
 
 ```c
-int      npu_nvme_delta_init(ctx, uint64_t slot_size, uint32_t slot_count);
-uint64_t npu_nvme_delta_get_area_offset(ctx);
-uint64_t npu_nvme_delta_get_slot_size(ctx);
-uint32_t npu_nvme_delta_get_slot_count(ctx);
+// 返回最近一次批量 I/O 的 C 层延迟 (微秒)，排除 Python 编组开销
+uint64_t npu_nvme_get_last_io_us(NPUNVMEContext *ctx, int is_read);
+// is_read: 0 = 写, 1 = 读
+```
+
+### 增量检查点磁盘布局
+
+```c
+int      npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t slot_size, uint32_t count);
+uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx);
+uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx);
+uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
 ```
 
 ---
 
-## 五、Python 检查点 API (`DirectCheckpoint`)
+## Python 检查点 API
 
-### 4.1 FULL 检查点（全量保存/加载）
+`DirectCheckpoint` 类封装裸盘布局、超级块管理、并发控制和 FaF 异步持久化，
+提供面向训练循环的检查点接口。
+
+### 全量保存与加载
 
 ```python
 from direct_checkpoint import DirectCheckpoint
 
 # 初始化
-ckpt = DirectCheckpoint(pci_addr="0000:83:00.0", npu_device_id=1,
-                         pipeline_depth=8, slot_size_gb=50)
+ckpt = DirectCheckpoint(
+    nvme_addr="0000:83:00.0",   # NVMe PCIe 地址
+    npu_device_id=1,             # NPU 设备 ID
+    pipeline_depth=8,            # DMA 管线深度
+    requested_chunk_size=4194304,# 块大小 (4 MiB)
+)
 
-# 保存（同步阻塞模式）
-ckpt.save(model, step=100, sync=True)
-# 或异步模式（默认）：
+# 保存（默认异步: 后台线程执行 SPDK 写入）
 ckpt.save(model, step=100)
+
+# 等待后台 I/O 完成
 ckpt.wait_for_io_completion()
+
+# 同步保存（save + wait 一步完成）
+ckpt.save(model, step=100, sync=True)
 
 # 加载
 ckpt.load(model, step=100)
 
-# 清理
+# 释放资源
 ckpt.cleanup()
 ```
 
-### 4.2 Delta 增量检查点（FaF 异步）
+### 增量检查点（FaF 异步持久化）
 
 ```python
 from direct_checkpoint import DirectCheckpoint
 from delta_cell import DeltaTrainCell
 
-ckpt = DirectCheckpoint(pci_addr="0000:83:00.0", npu_device_id=1)
+ckpt = DirectCheckpoint(nvme_addr="0000:83:00.0", npu_device_id=1)
 
-# 编译后注册 DeltaTrainCell 输出缓冲区
+# DeltaTrainCell: 图编译后注册输出缓冲区
 cell = DeltaTrainCell(model, optimizer, block_size=524288, top_k_frac=0.10)
 _ = cell(*next(dataset.create_tuple_iterator()))  # 触发图编译
 ckpt.register_delta_tasks(cell, ckpt_interval=1)
 
-# 训练循环 — FaF 监听器在后台异步持久化增量帧
+# FaF 模式下训练: 步边界自动触发后台写入
 for step, data in enumerate(dataset):
-    loss = cell(*data)      # GE 图内完成 delta 检测 + 量化 + Assign
-    # FaF 自动写入，无需 Python 介入
+    loss = cell(*data)
 
-# 恢复
+# 恢复到指定步数（合并 FULL + delta 链）
 ckpt.recover(model, target_step=50)
-
 ckpt.cleanup()
 ```
 
-### 5.3 基准测试
+### C 层性能剖析
 
-```bash
-# 激活环境
-source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash
-export PYTHONPATH=/home/user7/npu-nvme/python:$PYTHONPATH
-
-# 全量基准（所有阶段）
-sudo /home/user7/miniconda3/envs/ms_2.5/bin/python python/bench.py --device-id 1 --steps 50
-
-# 仅 delta 管线
-sudo /home/user7/miniconda3/envs/ms_2.5/bin/python python/bench.py --device-id 1 --skip-baseline --skip-full
-
-# 仅 FULL 检查点吞吐
-sudo /home/user7/miniconda3/envs/ms_2.5/bin/python python/bench.py --device-id 1 --skip-baseline --skip-delta --steps 30
+```python
+c_latency_us = ckpt.get_last_io_us(is_read=False)  # 最近一次写 I/O 的纯 C 层延迟
+c_bw = total_bytes / (c_latency_us / 1e6) / 1e6     # 排除 Python 开销的真实带宽
 ```
 
-### 5.4 DirectCheckpoint 核心方法
+### DirectCheckpoint 核心方法
 
 | 方法 | 说明 |
 |------|------|
-| `__init__(pci_addr, npu_device_id, ...)` | 初始化 SPDK + NVMe, 挂载文件系统 |
-| `save(model, step, sync=False)` | 全量保存; sync=True 阻塞直到 SPDK 完成 |
+| `__init__(nvme_addr, npu_device_id, ...)` | 初始化 SPDK，挂载文件系统 |
+| `save(model, step, sync=False)` | 全量保存；`sync=True` 阻塞直到写入完成 |
 | `load(model, step)` | 全量加载 |
-| `register_delta_tasks(cell, interval)` | 注册 delta 输出缓冲区, 启动 FaF 监听 |
+| `wait_for_io_completion()` | 等待后台 I/O 完成 |
+| `register_delta_tasks(cell, ckpt_interval)` | 注册 delta 输出，启动 FaF 监听 |
 | `recover(model, target_step)` | FULL + delta 链合并恢复 |
-| `delta_save(step, blocks, smalls)` | CPU 侧 delta 帧写入（同步路径） |
-| `delta_load_chain(from, to)` | 加载一段 delta 帧链 |
-| `cleanup()` | 释放所有资源 |
+| `get_last_io_us(is_read=False)` | C 层 I/O 延迟（微秒） |
+| `cleanup()` | 释放所有 SPDK 和 ACL 资源 |
 
 ---
 
-## 六、关键性能数据 (Ascend 910B, MS 2.5.0)
+## 工具
+
+以下工具脚本位于 `python/` 目录下，用于磁盘格式化、设备探查和性能基准测试：
+
+| 工具 | 说明 |
+|------|------|
+| `format_npu_disk.py` | 格式化 NVMe 磁盘，初始化超级块 |
+| `inspect_npu_disk.py` | 查看磁盘元数据信息 |
+| `bench.py` | 全量/增量检查点综合基准测试 |
+| `export_model.py` | 模型导出工具 |
+
+工具用法请查看各脚本的 `--help` 输出。
+
+---
+
+## 性能
+
+测试环境：昇腾 910B (64 GB HBM) + 三星 PM9A3 3.84 TB NVMe SSD +
+GPT-2 XL (3.28 GB FP16 参数)，4 MiB 块，管线深度 8。
 
 | 指标 | 数值 |
 |------|:---:|
-| GPT-2 XL 步时 (基线) | **392ms** ± 14ms |
-| Delta 管线步时 (overhead) | **574ms** (+182ms, +46.6%) |
-| SPDK 写入带宽 | **3661–3926 MB/s** |
-| FULL 检查点写入 (3.12 GB) | **~800ms** 同步延迟 |
-| Delta 帧大小 (top 10%) | ~159 MB/步 |
-| FaF 异步写延迟 | ~45ms (不阻塞训练) |
-| Delta overhead 构成 | 参数聚合 ~35ms + INT8 全量量化 ~100ms + TopK/Gather/Assign ~15ms + 其它 ~30ms |
+| SPDK 顺序写带宽 | **4,432 MB/s** |
+| C 层纯 I/O 延迟 (1 GB 写) | 259 ms (4,143 MB/s) |
+| Python 开销 | 0.5% |
+| Reactor CPU 占用 (稳态) | < 1% |
 
 ---
 
-## 七、运行环境
+## 目录结构
 
-### 6.1 当前（root 用户）
+```
+npu-nvme/
+├── include/
+│   ├── npu_nvme.h              # C 公共 API 头文件
+│   └── internal/                # 内部头文件 (io_task, context, ring_buffer)
+├── src/
+│   └── npu_nvme.c              # C 传输引擎实现 (SPDK + ACL)
+├── python/
+│   ├── direct_checkpoint.py    # DirectCheckpoint 检查点管理器
+│   ├── delta_cell.py           # DeltaTrainCell 增量训练封装
+│   ├── delta_protocol.py       # 增量帧打包/解包协议
+│   ├── chunk_helpers.py        # 参数 → 块数组转换
+│   ├── disk_layout.py          # 磁盘布局常量
+│   ├── c_bindings.py           # Python→C ctypes 绑定
+│   ├── format_npu_disk.py      # 磁盘格式化工具
+│   ├── inspect_npu_disk.py     # 磁盘探查工具
+│   └── bench.py                # 综合基准测试
+├── experiments/
+│   ├── i1/                     # 原始带宽 + 数据完整性
+│   ├── i2/                     # FaF 延迟 + 一致性
+│   └── i3/                     # 分阶段分解 + TopK 敏感性
+├── docs/
+│   └── REACTOR_CONTROL_PLANE.md # SPDK Reactor 控制平面论文
+├── third_party/spdk/           # SPDK 子模块
+├── CMakeLists.txt              # CMake 构建配置
+└── build.sh                    # 一键构建脚本
+```
 
-| 资源 | 为何需要 root |
-|------|--------------|
-| `/dev/nvme1` | `crw------- root:root` — 仅 root 可访问 |
-| `/proc/sys/vm/nr_hugepages` | 大页池扩容需写权限 |
-| SPDK VFIO/PCI | DPDK 用户态驱动需 PCI 设备访问权限 |
+## 许可
 
-### 6.2 迁移到普通用户的改动量评估
-
-**总工作量: ~0.5 天**
-
-| 步骤 | 操作 | 难度 |
-|:---:|------|:---:|
-| 1 | NVMe 设备权限: `chmod 666 /dev/nvme1` 或 udev 规则 | 低 (~5 min) |
-| 2 | 大页预分配: 启动时 `echo 1024 > /proc/sys/vm/nr_hugepages` | 低 (~5 min) |
-| 3 | SPDK 非 root 模式: `options vfio-pci enable_unsafe_noiommu_mode=Y` | 中 (~30 min) |
-| 4 | NPU 设备: 当前已 `crw-rw-rw-` → 无需改动 | 无 |
-| 5 | 测试验证: 重跑 bench.py 确认 BW 不退化 | 低 (~30 min) |
-
-**关键**: NPU 设备和 HBM 访问**已经**对所有用户开放。唯一的阻塞点是 NVMe 设备和 SPDK/DPDK 初始化。步骤 1-3 是一次性系统配置，不需要代码改动。
-
+Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
