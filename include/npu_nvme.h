@@ -138,6 +138,18 @@ uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
  * write_batch_host / read_batch.  The SPSC ring-buffer pipeline handles
  * arbitrary frame sizes without the 64 MB sync_meta_io limitation. */
 
+/**
+ * @brief Return the C-layer I/O latency of the most recent batch operation.
+ *
+ * Measures pure DMA + SPDK time (first DMA start to last SPDK completion),
+ * excluding Python marshalling overhead.
+ *
+ * @param ctx     context handle
+ * @param is_read 0 = last write, 1 = last read
+ * @return latency in microseconds, or 0 if no I/O has been performed
+ */
+uint64_t npu_nvme_get_last_io_us(NPUNVMEContext *ctx, int is_read);
+
 #ifdef __cplusplus
 }
 #endif

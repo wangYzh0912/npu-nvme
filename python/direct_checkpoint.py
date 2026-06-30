@@ -174,6 +174,10 @@ class DirectCheckpoint:
         self._closed = False
         atexit.register(self.close)
 
+        # Set up ctypes signature for C-layer profiling
+        lib.npu_nvme_get_last_io_us.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        lib.npu_nvme_get_last_io_us.restype = ctypes.c_uint64
+
         self._mount_filesystem()
 
         self.io_thread = None
@@ -373,9 +377,8 @@ class DirectCheckpoint:
         if ret != 0:
             raise RuntimeError(f"aclrtSetDevice failed, ret={ret}")
 
-        host_buf = ctypes.create_string_buffer(UINT32_BYTES)
-        host_buf.raw = int(value).to_bytes(UINT32_BYTES,
-                                           byteorder="little", signed=False)
+        host_buf = ctypes.create_string_buffer(
+            int(value).to_bytes(UINT32_BYTES, byteorder="little", signed=False))
         ret = acl_lib.aclrtMemcpy(
             ctypes.c_void_p(self.probe_flag_ptr), UINT32_BYTES,
             ctypes.byref(host_buf), UINT32_BYTES, 1)
@@ -409,6 +412,13 @@ class DirectCheckpoint:
             lib.npu_nvme_cleanup(self.ctx)
             self.ctx = None
             self._spdk_initialized = False
+
+    def get_last_io_us(self, is_read: bool = False) -> int:
+        """C-layer I/O latency in microseconds (DMA + SPDK only, no Python overhead).
+        Returns 0 if no I/O has been performed."""
+        if not self.ctx:
+            return 0
+        return lib.npu_nvme_get_last_io_us(self.ctx, 1 if is_read else 0)
 
     def close(self):
         if not getattr(self, '_closed', False) and hasattr(self, 'ctx') and self.ctx:

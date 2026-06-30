@@ -76,6 +76,8 @@ typedef struct {
     int num_tasks;              /* number of chunks in this write */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy D2H */
     volatile int done;          /* set to 1 when all chunks complete */
+    uint64_t ts_batch_start;    /* C-layer: first DMA submit time (us) */
+    uint64_t ts_batch_end;      /* C-layer: last SPDK completion time (us) */
 } write_request_t;
 
 typedef struct {
@@ -98,6 +100,8 @@ typedef struct {
     io_task_t *tasks;           /* array of per-chunk descriptors */
     int num_tasks;              /* number of chunks in this read */
     volatile int done;          /* set to 1 when all chunks complete */
+    uint64_t ts_batch_start;    /* C-layer: first SPDK submit time (us) */
+    uint64_t ts_batch_end;      /* C-layer: last DMA completion time (us) */
 } read_request_t;
 
 typedef struct {
