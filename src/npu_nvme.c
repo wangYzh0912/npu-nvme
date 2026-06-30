@@ -314,6 +314,130 @@ void run_write_pipeline(NPUNVMEContext *ctx, io_task_t *tasks,
     pthread_mutex_unlock(&ctx->io_lock);
 }
 
+/* ---- Async write FSM (V3) ----
+ *
+ * Replaces the blocking run_write_pipeline for FaF (Fire-and-Forget) writes.
+ * The FSM runs on the reactor thread via write_fsm_poller_fn.  Each tick
+ * does bounded work: one aclrtMemcpy, submissions, and completion reaping.
+ *
+ * For Python-initiated writes (npu_nvme_write_batch), the caller enqueues a
+ * write_request_t into ctx->write_ring and polls req->done.
+ */
+
+/* Forward declarations for functions defined later in this file. */
+static inline int ensure_acl_context(NPUNVMEContext *ctx);
+static void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value);
+
+static void initiate_write_fsm(NPUNVMEContext *ctx, write_request_t *req) {
+    write_fsm_ctx_t *fsm = &ctx->write_fsm;
+    fsm->state = WRITE_FSM_RUNNING;
+    fsm->req = req;
+    fsm->next_submit_idx = 0;
+    fsm->completed_count = 0;
+    req->done = 0;
+}
+
+static void write_fsm_tick(NPUNVMEContext *ctx) {
+    write_fsm_ctx_t *fsm = &ctx->write_fsm;
+    write_request_t *req = fsm->req;
+    if (!req) return;
+
+    /* Ensure ACL context is bound to the reactor thread before any
+     * aclrtMemcpy calls (needed for HBM → host DMA).  Idempotent
+     * if already bound. */
+    ensure_acl_context(ctx);
+
+    /* 1. Process SPDK completions (triggers callbacks that update task
+     *    state and increment fsm->completed_count). */
+    spdk_nvme_qpair_process_completions(ctx->qpair, 0);
+
+    /* 2. Submit NPU_DONE chunks to SPDK. */
+    for (int i = 0; i < fsm->next_submit_idx; i++) {
+        io_task_t *task = &req->tasks[i];
+        if (task->state == CHUNK_NPU_DONE) {
+            submit_to_spdk_write(ctx, task, &fsm->completed_count);
+            /* On success: state → CHUNK_SPDK_WRITING.
+             * On queue-full (-ENOMEM / -12): retry next tick. */
+        }
+    }
+
+    /* 3. DMA one more chunk (bounded work: one aclrtMemcpy per tick). */
+    if (fsm->next_submit_idx < req->num_tasks) {
+        io_task_t *task = &req->tasks[fsm->next_submit_idx];
+        size_t aligned_sz = ALIGN_4K(task->size);
+
+        if (task->size == 0 || aligned_sz > ctx->dma.chunk_size) {
+            /* Skip zero-size or oversize chunks immediately. */
+            task->state = CHUNK_DONE;
+            fsm->completed_count++;
+            fsm->next_submit_idx++;
+        } else if (!ring_is_empty(&ctx->dma.free_ring)) {
+            int rc = try_submit_async(ctx, task, req->is_host);
+            if (rc == 0) {
+                fsm->next_submit_idx++;
+            }
+            /* On ring-full: retry next tick. */
+        }
+    }
+
+    /* 4. Check if all chunks are complete. */
+    if (fsm->completed_count >= req->num_tasks) {
+        req->done = 1;
+        fsm->state = WRITE_FSM_IDLE;
+        fsm->req = NULL;
+    }
+}
+
+/**
+ * @brief SPDK poller that drives the async write state machine.
+ *
+ * Runs on the reactor thread with a 0 μs period (invoked on every
+ * spdk_thread_poll iteration).  Checks for new requests from Python
+ * (via write_ring) and advances the current FSM by one step.
+ *
+ * @param arg  NPUNVMEContext pointer
+ * @return     0 to continue, -1 to stop when idle and shutting down
+ */
+static int write_fsm_poller_fn(void *arg) {
+    NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
+    write_fsm_ctx_t *fsm = &ctx->write_fsm;
+
+    /* Refuse to stop mid-write; only stop when idle. */
+    if (ctx->app_should_stop && fsm->state == WRITE_FSM_IDLE) return -1;
+
+    /* Phase 1: check for new requests from Python (ring). */
+    if (fsm->state == WRITE_FSM_IDLE) {
+        void *obj = NULL;
+        if (spdk_ring_dequeue(ctx->write_ring, &obj, 1) == 1) {
+            initiate_write_fsm(ctx, (write_request_t *)obj);
+        }
+    }
+
+    /* Phase 2: advance the current FSM. */
+    if (fsm->state == WRITE_FSM_RUNNING) {
+        bool was_faf = (fsm->req == &fsm->faf_req);
+        uint32_t faf_step = fsm->faf_step;
+
+        write_fsm_tick(ctx);
+
+        /* If just completed: signal probe flag for FaF, free deferred tasks. */
+        if (fsm->state == WRITE_FSM_IDLE) {
+            if (was_faf) {
+                ensure_acl_context(ctx);
+                signal_probe_flag(ctx, faf_step);
+            }
+            pthread_mutex_lock(&ctx->io_lock);
+            if (ctx->listener.old_tasks) {
+                free(ctx->listener.old_tasks);
+                ctx->listener.old_tasks = NULL;
+            }
+            pthread_mutex_unlock(&ctx->io_lock);
+        }
+    }
+
+    return 0;
+}
+
 /* ---- SPDK read completion ---- */
 
 /* SPDK read-completion callback — logs errors and marks the task
@@ -375,6 +499,7 @@ void run_read_pipeline(NPUNVMEContext *ctx, io_task_t *tasks, int num_tasks) {
                 ring_push(&ctx->dma.free_ring, buf_idx);
                 break;
             }
+            cb_arg->ctx = ctx; cb_arg->task = task;
             cb_arg->completed_counter = &completed_tasks;
 
             uint64_t lba = task->nvme_offset / ctx->block_size;
@@ -523,13 +648,34 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 
     aclrtSetCurrentContext(ctx->acl.acl_ctx);
 
+    /* Build request on heap (Python owns it until completion). */
+    write_request_t *req = calloc(1, sizeof(write_request_t));
+    if (!req) return -1;
+
     io_task_t *tasks = create_io_tasks(num_items, npu_ptrs, nvme_offsets, sizes);
-    if (!tasks) return -1;
+    if (!tasks) { free(req); return -1; }
 
-    run_write_pipeline(ctx, tasks, num_items, false);
+    req->tasks = tasks;
+    req->num_tasks = num_items;
+    req->is_host = false;
+    req->done = 0;
+
+    /* Enqueue to reactor.  If the ring is full, the reactor is stuck —
+     * this should never happen with a 16-slot ring and 1 producer. */
+    void *obj = req;
+    if (spdk_ring_enqueue(ctx->write_ring, &obj, 1, NULL) != 1) {
+        fprintf(stderr, "[Fatal] write_ring full — reactor stalled?\n");
+        free(tasks); free(req); return -1;
+    }
+
+    /* Poll for completion (non-busy: usleep yields CPU). */
+    while (!req->done) {
+        usleep(1000);
+    }
+
     write_profiling_csv(ctx, tasks, num_items, PIPELINE_WRITE);
-
     free(tasks);
+    free(req);
     return 0;
 }
 
@@ -548,11 +694,30 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
     if (!ctx || num_items <= 0) return -1;
     if (ctx->block_size == 0) return -1;
     aclrtSetCurrentContext(ctx->acl.acl_ctx);
+
+    write_request_t *req = calloc(1, sizeof(write_request_t));
+    if (!req) return -1;
+
     io_task_t *tasks = create_io_tasks(num_items, ptrs, nvme_offsets, sizes);
-    if (!tasks) return -1;
-    run_write_pipeline(ctx, tasks, num_items, true);
+    if (!tasks) { free(req); return -1; }
+
+    req->tasks = tasks;
+    req->num_tasks = num_items;
+    req->is_host = true;
+    req->done = 0;
+
+    void *obj = req;
+    if (spdk_ring_enqueue(ctx->write_ring, &obj, 1, NULL) != 1) {
+        fprintf(stderr, "[Fatal] write_ring full — reactor stalled?\n");
+        free(tasks); free(req); return -1;
+    }
+
+    while (!req->done) {
+        usleep(1000);
+    }
     /* Host writes skip profiling (no meaningful NPU timestamps). */
     free(tasks);
+    free(req);
     return 0;
 }
 
@@ -631,6 +796,7 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
                 ring_push(&ctx->dma.free_ring, buf_idx);
                 break;
             }
+            cb_arg->ctx = ctx; cb_arg->task = task;
             cb_arg->completed_counter = &completed_tasks;
 
             uint64_t lba = task->nvme_offset / ctx->block_size;
@@ -706,12 +872,6 @@ static inline int ensure_acl_context(NPUNVMEContext *ctx) {
 
 static int step_poller_fn(void *arg);
 
-/* Verify that .init_array constructors run at dlopen time. */
-__attribute__((constructor)) static void _ctor_diag(void) {
-    fprintf(stderr, "[Diag] init_array constructor executed (pid=%d)\n",
-            (int)getpid());
-}
-
 /* ---- Reactor thread functions ----
  *
  * The reactor pthread runs a spdk_thread_poll loop that drives SPDK
@@ -741,7 +901,7 @@ static void *reactor_loop(void *arg) {
     spdk_set_thread(ctx->reactor_thread);
     fprintf(stderr, "[Diag] spdk_set_thread done\n"); fflush(stderr);
 
-    /* Reset registered tasks to IDLE (was done by listener thread init). */
+    /* Reset registered tasks to IDLE. */
     pthread_mutex_lock(&ctx->io_lock);
     for (int i = 0; i < ctx->listener.num_registered_tasks; i++) {
         ctx->listener.registered_tasks[i].state = CHUNK_IDLE;
@@ -750,20 +910,37 @@ static void *reactor_loop(void *arg) {
     pthread_mutex_unlock(&ctx->io_lock);
 
     ctx->last_step_seen = -1;
+
+    /* Create MPSC ring for Python → reactor requests (16 slots). */
+    ctx->write_ring = spdk_ring_create(SPDK_RING_TYPE_MP_SC, 16,
+                                        SPDK_ENV_SOCKET_ID_ANY);
+    fprintf(stderr, "[Diag] write_ring -> %p\n", (void *)ctx->write_ring);
+    fflush(stderr);
+
+    /* Init FSM as idle (no active request). */
+    ctx->write_fsm.state = WRITE_FSM_IDLE;
+    ctx->write_fsm.req = NULL;
+
+    /* Register pollers. */
     ctx->step_poller = spdk_poller_register(step_poller_fn, ctx,
                                              STEP_POLLER_PERIOD_US);
-    fprintf(stderr, "[Diag] spdk_poller_register -> %p\n",
-            (void *)ctx->step_poller); fflush(stderr);
+    ctx->write_fsm_poller = spdk_poller_register(write_fsm_poller_fn, ctx, 0);
+    fprintf(stderr, "[Diag] step_poller=%p write_fsm_poller=%p\n",
+            (void *)ctx->step_poller, (void *)ctx->write_fsm_poller);
+    fflush(stderr);
 
     pthread_barrier_wait(&ctx->init_barrier);
     fprintf(stderr, "[Diag] reactor_loop entering poll loop\n"); fflush(stderr);
 
     while (!ctx->app_should_stop) {
         spdk_thread_poll(ctx->reactor_thread, 0, 0);
-        usleep(1000);
+        usleep(100);  /* yield CPU to keep usage < 5% in steady state */
     }
 
     spdk_poller_unregister(&ctx->step_poller);
+    spdk_poller_unregister(&ctx->write_fsm_poller);
+    spdk_ring_free(ctx->write_ring);
+    ctx->write_ring = NULL;
     spdk_thread_exit(ctx->reactor_thread);
     return NULL;
 }
@@ -902,18 +1079,21 @@ int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval)
 /* ---- Step-counter poller (SPDK poller, replaces probe_listener_thread) ----
  *
  * step_poller_fn runs on the reactor thread with a 10 ms period.  It
- * reads the step counter from HBM and triggers the write pipeline when
- * a new checkpoint step is detected.
+ * reads the step counter from HBM and initiates an async write via the
+ * FSM when a new checkpoint step is detected.
  *
- * The io_lock is still held during run_write_pipeline + signal_probe_flag
- * to protect against concurrent register_tasks() from Python threads.
+ * At-most-1 in-flight: if the FSM is still busy with a previous write,
+ * the new trigger is silently skipped (backpressure).
+ *
+ * io_lock is held only briefly to snapshot registered_tasks and reset
+ * their state — the heavy I/O runs unlocked in the FSM poller.
  */
 
 /**
  * @brief Periodic poller that reads the step counter from HBM.
  *
  * Registered on the reactor thread.  When a new checkpoint step is
- * detected, triggers the write pipeline for all registered tasks.
+ * detected, initiates an async write via the write FSM.
  *
  * @param arg  NPUNVMEContext pointer
  * @return     0 to continue, -1 to stop on app_should_stop
@@ -923,6 +1103,9 @@ static int step_poller_fn(void *arg) {
 
     if (ctx->app_should_stop) return -1;
     if (!ctx->listener.dev_step_ptr) return 0;
+
+    /* At-most-1 in-flight: skip if previous write still running. */
+    if (ctx->write_fsm.state != WRITE_FSM_IDLE) return 0;
 
     ensure_acl_context(ctx);
 
@@ -939,11 +1122,23 @@ static int step_poller_fn(void *arg) {
         cur_step != 0) {
         ctx->last_step_seen = cur_step;
 
+        /* Snapshot registered tasks under io_lock, then initiate FSM.
+         * io_lock is released before any DMA/SPDK I/O — the FSM runs
+         * unlocked on the reactor thread. */
         pthread_mutex_lock(&ctx->io_lock);
-        run_write_pipeline(ctx, ctx->listener.registered_tasks,
-                            ctx->listener.num_registered_tasks, false);
-        signal_probe_flag(ctx, (uint32_t)cur_step);
+        for (int i = 0; i < ctx->listener.num_registered_tasks; i++) {
+            ctx->listener.registered_tasks[i].state = CHUNK_IDLE;
+            ctx->listener.registered_tasks[i].buf_idx = -1;
+        }
+        /* Use pre-allocated FaF request (same reactor thread, no ring). */
+        ctx->write_fsm.faf_req.tasks = ctx->listener.registered_tasks;
+        ctx->write_fsm.faf_req.num_tasks = ctx->listener.num_registered_tasks;
+        ctx->write_fsm.faf_req.is_host = false;
+        ctx->write_fsm.faf_step = (uint32_t)cur_step;
+        initiate_write_fsm(ctx, &ctx->write_fsm.faf_req);
         pthread_mutex_unlock(&ctx->io_lock);
+        /* I/O runs asynchronously in write_fsm_poller_fn.
+         * probe flag is signalled on completion. */
     }
 
     return 0;
@@ -991,10 +1186,13 @@ int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
         new_tasks[i].size = sizes[i];
     }
 
-    /* Swap: free old, install new (under io_lock — listener is blocked). */
-    if (ctx->listener.registered_tasks) {
-        free(ctx->listener.registered_tasks);
+    /* Swap: defer-free the old array so the async FSM can safely finish
+     * any in-flight write using the old pointer.  The old array is freed
+     * on the next register_tasks call or when the FSM goes idle. */
+    if (ctx->listener.old_tasks) {
+        free(ctx->listener.old_tasks);
     }
+    ctx->listener.old_tasks = ctx->listener.registered_tasks;
     ctx->listener.registered_tasks = new_tasks;
     ctx->listener.num_registered_tasks = num_items;
     pthread_mutex_unlock(&ctx->io_lock);
@@ -1164,7 +1362,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
             spdk_env_get_core_count());
     fflush(stderr);
 
-    /* Re-register DPDK ring mempool ops after EAL init.
+    /* Re-register DPDK ring mempool ops after EAL init (once per process).
      *
      * The RTE_INIT constructors in librte_mempool_ring.a register ops at
      * dlopen time via init_array, but EAL was not yet available.  We
@@ -1172,6 +1370,8 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
      * spdk_env_init has completed and EAL is fully initialised.
      */
     {
+        static int ops_registered = 0;
+        if (!ops_registered) {
         extern int common_ring_alloc(struct rte_mempool *mp);
         extern void common_ring_free(struct rte_mempool *mp);
         extern void common_ring_mp_enqueue(struct rte_mempool *mp,
@@ -1216,6 +1416,8 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                test_mp ? "OK" : "FAIL", rte_errno);
         if (test_mp) rte_mempool_free(test_mp);
         fflush(stderr);
+            ops_registered = 1;
+        }
     }
 
     /* Start reactor pthread via SPDK thread library.
@@ -1390,11 +1592,15 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     if (ctx->qpair) spdk_nvme_ctrlr_free_io_qpair(ctx->qpair);
     if (ctx->ctrlr) spdk_nvme_detach(ctx->ctrlr);
 
-    /* Release registered tasks */
+    /* Release registered tasks (both current and deferred-free). */
     if (ctx->listener.registered_tasks) {
         free(ctx->listener.registered_tasks);
         ctx->listener.registered_tasks = NULL;
         ctx->listener.num_registered_tasks = 0;
+    }
+    if (ctx->listener.old_tasks) {
+        free(ctx->listener.old_tasks);
+        ctx->listener.old_tasks = NULL;
     }
 
     pthread_mutex_destroy(&ctx->io_lock);

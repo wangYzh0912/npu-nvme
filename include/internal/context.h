@@ -51,6 +51,7 @@ typedef struct {
     void *step_poll_buf;       /* host buffer for polling step_counter */
     int ckpt_interval;         /* trigger SPDK write every N steps */
     io_task_t *registered_tasks;
+    io_task_t *old_tasks;          /* deferred-free: previous gen, safe while FSM runs */
     int num_registered_tasks;
 } listener_state_t;
 
@@ -94,12 +95,17 @@ typedef struct NPUNVMEContext {
 
     /* ---- Step-counter poller ---- */
     struct spdk_poller *step_poller;
+    struct spdk_poller *write_fsm_poller;  /* V3: async write FSM */
     int last_step_seen;
 
     /* I/O serialization — the listener thread and the main thread share
      * a single SPDK qpair.  SPDK qpairs (submission + completion queues)
      * are not thread-safe; this mutex serialises all qpair access. */
     pthread_mutex_t io_lock;
+
+    /* ---- Async write FSM (V3) ---- */
+    write_fsm_ctx_t write_fsm;
+    struct spdk_ring *write_ring;    /* Python → reactor request queue */
 } NPUNVMEContext;
 
 #endif
