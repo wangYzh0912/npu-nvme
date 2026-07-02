@@ -1,0 +1,213 @@
+"""Export model and optional NVMe data for analysis.
+
+Usage:
+- python python/export_model.py --step <N> --world_size <W>
+
+Inputs:
+- Model configuration and NVMe parameters in script.
+Outputs:
+- Exported artifacts under output/ or specified paths.
+"""
+import ctypes
+import json
+import struct
+import argparse
+import sys
+import os
+import math
+import numpy as np
+import time
+import pickle
+import gc
+
+from disk_layout import (SUPERBLOCK_OFFSET, META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
+                          META_SLOT_BYTES, HEAP_START_OFFSET, MAGIC_NUMBER, CHUNK_SIZE)
+from c_bindings import lib, NPUNVMEContext
+from chunk_helpers import build_chunks_host, build_ctypes_arrays
+
+os.environ.setdefault("SPDK_SHM_ID", "1")
+
+
+def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
+    print(f"\n{'='*70}")
+    print(f"NPUNVME Global Exporter: Aggregating {world_size}-Rank SHARDs to HEAP")
+    print(f"{'='*70}")
+
+    ctx = ctypes.POINTER(NPUNVMEContext)()
+    ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'),
+                             npu_id, 4, CHUNK_SIZE, False, b".")
+    if ret != 0:
+        print("[Fatal] SPDK init failed.")
+        sys.exit(1)
+
+    try:
+        # -- Collect shard maps from all ranks --
+        print(f"[1/4] Scanning local meta directory: {meta_dir} ...")
+        global_tensor_map = {}
+
+        for r in range(world_size):
+            meta_file = os.path.join(meta_dir, f"checkpoint_meta_rank{r}.pkl")
+            if not os.path.exists(meta_file):
+                raise FileNotFoundError(
+                    f"Missing meta file for Rank {r}: {meta_file}")
+
+            with open(meta_file, "rb") as f:
+                r_meta = pickle.load(f)
+
+            shard_key = f"step_{target_step}"
+            if shard_key not in r_meta.get("checkpoints", {}):
+                raise ValueError(
+                    f"Target step '{shard_key}' not found in Rank {r} ledger!")
+
+            params = r_meta["checkpoints"][shard_key]["params"]
+            for name, info in params.items():
+                if name not in global_tensor_map:
+                    global_tensor_map[name] = []
+                global_tensor_map[name].append({"rank": r, **info})
+
+        print(f"      -> Found {len(global_tensor_map)} unique tensors "
+              f"across {world_size} ranks.")
+
+        # -- Read superblock --
+        sb_buf = ctypes.create_string_buffer(4096)
+        if lib.npu_nvme_sync_meta_io(ctx, SUPERBLOCK_OFFSET, 4096, 1,
+                                     ctypes.c_void_p(ctypes.addressof(sb_buf))) != 0:
+            raise RuntimeError("Failed to read Superblock.")
+
+        header = struct.unpack("<8s I Q Q", sb_buf.raw[:28])
+        if header[0] != MAGIC_NUMBER:
+            raise RuntimeError("Disk not formatted!")
+        active_slot, total_bytes, stack_start_bytes = header[1], header[2], header[3]
+
+        target_meta_offset = (META_SLOT_A_OFFSET if active_slot == 0
+                              else META_SLOT_B_OFFSET)
+        meta_buf = ctypes.create_string_buffer(META_SLOT_BYTES)
+        lib.npu_nvme_sync_meta_io(ctx, target_meta_offset, META_SLOT_BYTES, 1,
+                                  ctypes.c_void_p(ctypes.addressof(meta_buf)))
+        nvme_meta_dict = json.loads(
+            meta_buf.value.decode('utf-8', errors='ignore').rstrip('\x00'))
+
+        # -- Stream tensors from STACK to HEAP --
+        print("\n[2/4] & [3/4] Streaming Tensors from STACK -> HEAP (OOM Safe)...")
+        t_stream_start = time.time()
+
+        complete_layout = {}
+        current_heap_offset = HEAP_START_OFFSET
+        sorted_names = sorted(global_tensor_map.keys())
+
+        for idx, name in enumerate(sorted_names):
+            slices = global_tensor_map[name]
+
+            # Dedup: same offset → DP duplicate, keep first
+            unique_slices = []
+            seen_offsets = set()
+            for s in slices:
+                if s["offset"] not in seen_offsets:
+                    unique_slices.append(s)
+                    seen_offsets.add(s["offset"])
+
+            np_parts = []
+            for s in unique_slices:
+                np_arr = np.empty(s["shape"], dtype=np.dtype(s["dtype"]))
+                chunks, _ = build_chunks_host(
+                    np_arr.ctypes.data, s["offset"], s["size"], CHUNK_SIZE)
+
+                c_ptrs, c_offs, c_sizes = build_ctypes_arrays(chunks)
+                if lib.npu_nvme_read_batch(ctx, c_ptrs, c_offs, c_sizes, len(chunks)) != 0:
+                    raise RuntimeError(
+                        f"Read failed for {name} from Rank {s['rank']}")
+                np_parts.append(np_arr)
+
+            if len(np_parts) == 1:
+                final_arr = np_parts[0]
+            else:
+                final_arr = np.concatenate(np_parts, axis=0)
+
+            final_size = final_arr.nbytes
+            final_shape = list(final_arr.shape)
+
+            if current_heap_offset + final_size >= stack_start_bytes:
+                raise MemoryError(
+                    "CRITICAL: Heap Area is Full! Cannot export model.")
+
+            w_chunks, _ = build_chunks_host(
+                final_arr.ctypes.data, current_heap_offset, final_size, CHUNK_SIZE)
+            w_ptrs, w_offs, w_sizes = build_ctypes_arrays(w_chunks)
+
+            # Use write_batch_host for host-side pointers (fixes bug: was using
+            # write_batch which expects NPU device pointers).
+            if hasattr(lib, "npu_nvme_write_batch_host"):
+                rc = lib.npu_nvme_write_batch_host(
+                    ctx, w_ptrs, w_offs, w_sizes, len(w_chunks))
+            else:
+                rc = lib.npu_nvme_write_batch(
+                    ctx, w_ptrs, w_offs, w_sizes, len(w_chunks))
+            if rc != 0:
+                raise RuntimeError(f"Write failed for {name} to HEAP")
+
+            complete_layout[name] = {
+                "offset": current_heap_offset,
+                "size": final_size,
+                "shape": final_shape,
+                "dtype": str(final_arr.dtype.name),
+            }
+            current_heap_offset += int(math.ceil(final_size / 4096.0)) * 4096
+
+            del np_parts
+            del final_arr
+
+            if idx % 50 == 0:
+                print(f"      ... Processed {idx}/{len(sorted_names)} tensors. "
+                      f"Current Heap: {current_heap_offset/1024**3:.2f}GB")
+
+        gc.collect()
+        print(f"      -> SUCCESS! Exported {len(sorted_names)} tensors in "
+              f"{time.time() - t_stream_start:.2f}s. "
+              f"End offset: {current_heap_offset / 1024**3:.2f} GB.")
+
+        # -- Commit COMPLETE model metadata --
+        print("\n[4/4] Committing COMPLETE model metadata to Ledger...")
+        complete_key = f"complete_step_{target_step}"
+        nvme_meta_dict["checkpoints"][complete_key] = {
+            "type": "COMPLETE", "chunk_size": CHUNK_SIZE,
+            "rank_id": 0, "world_size": 1, "params": complete_layout,
+        }
+
+        next_slot = 1 if active_slot == 0 else 0
+        target_offset = (META_SLOT_B_OFFSET if next_slot == 1
+                         else META_SLOT_A_OFFSET)
+        meta_json = json.dumps(nvme_meta_dict).encode('utf-8')
+        if len(meta_json) > META_SLOT_BYTES:
+            raise RuntimeError("Metadata JSON too large!")
+
+        meta_buf = ctypes.create_string_buffer(meta_json, META_SLOT_BYTES)
+        if lib.npu_nvme_sync_meta_io(ctx, target_offset, META_SLOT_BYTES, 0,
+                                     ctypes.c_void_p(ctypes.addressof(meta_buf))) != 0:
+            raise RuntimeError("Meta write failed!")
+
+        sb_write_buf = ctypes.create_string_buffer(4096)
+        struct.pack_into("<8s I Q Q", sb_write_buf, 0,
+                         MAGIC_NUMBER, next_slot, total_bytes, stack_start_bytes)
+        if lib.npu_nvme_sync_meta_io(ctx, SUPERBLOCK_OFFSET, 4096, 0,
+                                     ctypes.c_void_p(ctypes.addressof(sb_write_buf))) != 0:
+            raise RuntimeError("Superblock update failed!")
+
+        print(f"\n[SUCCESS] Distributed Model '{shard_key}' seamlessly promoted "
+              f"to '{complete_key}' in HEAP!")
+
+    except Exception as e:
+        print(f"\n[Fatal Error] Export failed: {e}")
+    finally:
+        lib.npu_nvme_cleanup(ctx)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pci_addr", type=str, default="0000:83:00.0")
+    parser.add_argument("--step", type=int, required=True)
+    parser.add_argument("--world_size", type=int, default=8)
+    parser.add_argument("--meta_dir", type=str, default="./checkpoint_meta")
+    parser.add_argument("--npu_id", type=int, default=0)
+    args = parser.parse_args()
+    export_to_heap(args.pci_addr, args.step, args.world_size,
+                   args.meta_dir, args.npu_id)
