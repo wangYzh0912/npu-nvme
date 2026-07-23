@@ -76,6 +76,7 @@ typedef struct {
     io_task_t *tasks;           /* array of per-chunk descriptors */
     int num_tasks;              /* number of chunks in this write */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy D2H */
+    struct npu_nvme_request *owner; /* async handle returned to caller */
     int done;                   /* release-store when all chunks complete */
     int result;                 /* 0 on success, -1 on first I/O/copy error */
     uint64_t ts_batch_start;    /* C-layer: first DMA submit time (us) */
@@ -102,6 +103,7 @@ typedef struct {
     io_task_t *tasks;           /* array of per-chunk descriptors */
     int num_tasks;              /* number of chunks in this read */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy H2D */
+    struct npu_nvme_request *owner; /* async handle returned to caller */
     int done;                   /* release-store when all chunks complete */
     int result;                 /* 0 on success, -1 on first I/O/copy error */
     uint64_t ts_batch_start;    /* C-layer: first SPDK submit time (us) */

@@ -1,9 +1,17 @@
 """Checkpoint-independent raw NPU-SSD transfer helpers."""
 
 import ctypes
+import os
+import selectors
+import threading
+import time
+from concurrent.futures import Future
 
 from c_bindings import lib, NPUNVMEContext, NPUNVMERequest
 from disk_layout import HEAP_START_OFFSET, BLOCK_SIZE
+
+
+_EVENTFD_COUNTER_BYTES = 8
 
 
 def _as_ptr_array(ptrs):
@@ -121,9 +129,176 @@ class NPUNVMERequestFuture:
             pass
 
 
-class RawIO:
-    def __init__(self, ctx):
+def _request_address(req):
+    return int(ctypes.cast(req, ctypes.c_void_p).value or 0)
+
+
+class NPUNVMECompletionFuture(Future):
+    """Future completed by C eventfd completion notification."""
+
+    def __init__(self, req, keepalive=(), result_value=None):
+        super().__init__()
+        self._req = req
+        self._keepalive = tuple(keepalive)
+        self._result_value = result_value
+        self._completed_ns = 0
+
+    def request(self):
+        """Return the underlying C request handle while it is still owned."""
+        return self._req
+
+    def completed_ns(self):
+        """Return perf_counter_ns captured when the dispatcher completed it."""
+        return self._completed_ns
+
+    def _complete_from_c(self, req=None):
+        if self.done():
+            return
+        if req is not None:
+            self._req = req
+        if not self._req:
+            self.set_exception(RuntimeError("npu_nvme request handle is missing"))
+            return
+
+        self._completed_ns = time.perf_counter_ns()
+        result = lib.npu_nvme_request_result(self._req)
+        free_rc = lib.npu_nvme_request_free(self._req)
+        self._req = None
+        self._keepalive = ()
+
+        if result != 0:
+            self.set_exception(
+                RuntimeError(f"npu_nvme async request failed: result={result}"))
+        elif free_rc != 0:
+            self.set_exception(
+                RuntimeError(f"npu_nvme_request_free failed: rc={free_rc}"))
+        else:
+            self.set_result(self._result_value)
+
+
+class CompletionDispatcher:
+    """Eventfd-driven dispatcher for C-layer async request completions."""
+
+    def __init__(self, ctx, auto_start=False):
+        if not hasattr(lib, "npu_nvme_get_completion_fd"):
+            raise RuntimeError("completion fd API is unavailable")
+        if not hasattr(lib, "npu_nvme_drain_completions"):
+            raise RuntimeError("completion drain API is unavailable")
+
         self.ctx = ctx
+        self.fd = int(lib.npu_nvme_get_completion_fd(ctx))
+        if self.fd < 0:
+            raise RuntimeError("npu_nvme_get_completion_fd failed")
+
+        self._selector = selectors.DefaultSelector()
+        self._selector.register(self.fd, selectors.EVENT_READ)
+        self._futures = {}
+        self._pending = {}
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._thread = None
+        if auto_start:
+            self.start()
+
+    def register(self, req, keepalive=(), result_value=None):
+        """Register a submitted C request and return a Future."""
+        future = NPUNVMECompletionFuture(req, keepalive, result_value)
+        key = _request_address(req)
+        if key == 0:
+            future.set_exception(RuntimeError("invalid npu_nvme request handle"))
+            return future
+
+        if hasattr(lib, "npu_nvme_request_set_user_data"):
+            rc = lib.npu_nvme_request_set_user_data(
+                req, ctypes.c_uint64(key))
+            if rc != 0:
+                future.set_exception(
+                    RuntimeError("npu_nvme_request_set_user_data failed"))
+                return future
+
+        with self._lock:
+            pending_req = self._pending.pop(key, None)
+            if pending_req is None:
+                self._futures[key] = future
+                return future
+
+        future._complete_from_c(pending_req)
+        return future
+
+    def drain_once(self, max_reqs=64):
+        """Drain currently signalled completions without waiting."""
+        try:
+            os.read(self.fd, _EVENTFD_COUNTER_BYTES)
+        except BlockingIOError:
+            pass
+
+        completed = 0
+        req_array = (ctypes.POINTER(NPUNVMERequest) * int(max_reqs))()
+        while True:
+            count = lib.npu_nvme_drain_completions(
+                self.ctx, req_array, int(max_reqs))
+            if count < 0:
+                raise RuntimeError("npu_nvme_drain_completions failed")
+            if count == 0:
+                break
+            for i in range(count):
+                self._complete_request(req_array[i])
+            completed += count
+            if count < max_reqs:
+                break
+        return completed
+
+    def poll(self, timeout=None):
+        """Wait for a completion event and dispatch callbacks."""
+        events = self._selector.select(timeout)
+        if not events:
+            return 0
+        return self.drain_once()
+
+    def start(self):
+        """Start a daemon thread that dispatches completion callbacks."""
+        if self._thread is not None:
+            return
+        self._thread = threading.Thread(
+            target=self._run, name="npu-nvme-completion", daemon=True)
+        self._thread.start()
+
+    def close(self):
+        """Stop the optional dispatcher thread and release selector resources."""
+        self._stop.set()
+        if self._thread is not None and threading.current_thread() is not self._thread:
+            self._thread.join(timeout=1.0)
+        self._thread = None
+        try:
+            self._selector.unregister(self.fd)
+        except Exception:
+            pass
+        self._selector.close()
+
+    def _run(self):
+        while not self._stop.is_set():
+            self.poll(0.1)
+
+    def _complete_request(self, req):
+        key = 0
+        if hasattr(lib, "npu_nvme_request_user_data"):
+            key = int(lib.npu_nvme_request_user_data(req))
+        if key == 0:
+            key = _request_address(req)
+
+        with self._lock:
+            future = self._futures.pop(key, None)
+            if future is None:
+                self._pending[key] = req
+                return
+
+        future._complete_from_c(req)
+
+
+class RawIO:
+    def __init__(self, ctx, completion_dispatcher=None):
+        self.ctx = ctx
+        self.completion_dispatcher = completion_dispatcher
 
     def write_host(self, ptrs, offsets, sizes):
         _validate_arrays(ptrs, offsets, sizes)
@@ -161,6 +336,9 @@ class RawIO:
             self.ctx, c_ptrs, c_offs, c_sizes, len(npu_ptrs), ctypes.byref(req))
         if rc != 0 or not req:
             raise RuntimeError(f"npu_nvme_raw_write_batch_async failed, rc={rc}")
+        if self.completion_dispatcher is not None:
+            return self.completion_dispatcher.register(
+                req, (c_ptrs, c_offs, c_sizes))
         return NPUNVMERequestFuture(req, (c_ptrs, c_offs, c_sizes))
 
     def read_async(self, npu_ptrs, offsets, sizes):
@@ -179,4 +357,7 @@ class RawIO:
             self.ctx, c_ptrs, c_offs, c_sizes, len(npu_ptrs), ctypes.byref(req))
         if rc != 0 or not req:
             raise RuntimeError(f"npu_nvme_raw_read_batch_async failed, rc={rc}")
+        if self.completion_dispatcher is not None:
+            return self.completion_dispatcher.register(
+                req, (c_ptrs, c_offs, c_sizes))
         return NPUNVMERequestFuture(req, (c_ptrs, c_offs, c_sizes))

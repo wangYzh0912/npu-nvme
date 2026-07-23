@@ -129,6 +129,29 @@ try:
     lib.npu_nvme_request_poll.argtypes = [ctypes.POINTER(NPUNVMERequest)]
     lib.npu_nvme_request_poll.restype = ctypes.c_int
 
+    if hasattr(lib, "npu_nvme_get_completion_fd"):
+        lib.npu_nvme_get_completion_fd.argtypes = [
+            ctypes.POINTER(NPUNVMEContext)]
+        lib.npu_nvme_get_completion_fd.restype = ctypes.c_int
+
+    if hasattr(lib, "npu_nvme_drain_completions"):
+        lib.npu_nvme_drain_completions.argtypes = [
+            ctypes.POINTER(NPUNVMEContext),
+            ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+            ctypes.c_int,
+        ]
+        lib.npu_nvme_drain_completions.restype = ctypes.c_int
+
+    if hasattr(lib, "npu_nvme_request_set_user_data"):
+        lib.npu_nvme_request_set_user_data.argtypes = [
+            ctypes.POINTER(NPUNVMERequest), ctypes.c_uint64]
+        lib.npu_nvme_request_set_user_data.restype = ctypes.c_int
+
+    if hasattr(lib, "npu_nvme_request_user_data"):
+        lib.npu_nvme_request_user_data.argtypes = [
+            ctypes.POINTER(NPUNVMERequest)]
+        lib.npu_nvme_request_user_data.restype = ctypes.c_uint64
+
     lib.npu_nvme_request_wait.argtypes = [
         ctypes.POINTER(NPUNVMERequest), ctypes.c_uint64]
     lib.npu_nvme_request_wait.restype = ctypes.c_int

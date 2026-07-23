@@ -3,11 +3,12 @@
 import argparse
 import ctypes
 import json
+import threading
 import time
 
 from c_bindings import acl_lib, lib, NPUNVMEContext
 from disk_layout import BLOCK_SIZE, HEAP_START_OFFSET
-from raw_io import RawIO
+from raw_io import CompletionDispatcher, RawIO
 
 
 ACL_MEM_MALLOC_HUGE_FIRST = 0
@@ -105,10 +106,23 @@ def main():
         host_dst = ctypes.create_string_buffer(size)
         _copy_to_device(dev_src, host_src, size)
 
-        raw = RawIO(ctx)
+        dispatcher = CompletionDispatcher(ctx, auto_start=True)
+        callback_names = []
+        callback_event = threading.Event()
+
+        def on_complete(name):
+            def callback(future):
+                future.result()
+                callback_names.append(name)
+                if len(callback_names) == 2:
+                    callback_event.set()
+            return callback
+
+        raw = RawIO(ctx, completion_dispatcher=dispatcher)
 
         write_submit_start = time.perf_counter()
         write_future = raw.write_async([dev_src.value], [offset], [size])
+        write_future.add_done_callback(on_complete("write"))
         write_submit_us = (time.perf_counter() - write_submit_start) * 1000000.0
         write_done_after_submit = write_future.done()
 
@@ -118,12 +132,15 @@ def main():
 
         read_submit_start = time.perf_counter()
         read_future = raw.read_async([dev_dst.value], [offset], [size])
+        read_future.add_done_callback(on_complete("read"))
         read_submit_us = (time.perf_counter() - read_submit_start) * 1000000.0
         read_done_after_submit = read_future.done()
 
         read_wait_start = time.perf_counter()
         read_future.result(timeout=30.0)
         read_wait_s = time.perf_counter() - read_wait_start
+        if not callback_event.wait(timeout=1.0):
+            raise RuntimeError("completion callbacks were not dispatched")
         _copy_from_device(host_dst, dev_dst, size)
 
         if host_dst.raw[:size] != payload:
@@ -141,11 +158,15 @@ def main():
             "read_submit_us": read_submit_us,
             "write_done_after_submit": write_done_after_submit,
             "read_done_after_submit": read_done_after_submit,
+            "callback_count": len(callback_names),
+            "callbacks": callback_names,
             "write_wait_s": write_wait_s,
             "read_wait_s": read_wait_s,
             "bandwidth_mb_s": bandwidth_mb_s,
         }, ensure_ascii=True))
     finally:
+        if "dispatcher" in locals():
+            dispatcher.close()
         if dev_src.value:
             acl_lib.aclrtFree(dev_src)
         if dev_dst.value:

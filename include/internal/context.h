@@ -114,6 +114,12 @@ typedef struct NPUNVMEContext {
     read_fsm_ctx_t read_fsm;
     struct spdk_ring *read_ring;     /* Python → reactor read requests */
 
+    /* ---- Async completion notification ---- */
+    struct spdk_ring *completion_ring; /* reactor → Python completed requests */
+    int completion_fd;                /* eventfd signalled by reactor */
+    int completion_enabled;           /* set after caller requests eventfd */
+    int completion_notify_failed;     /* sticky diagnostic flag */
+
     /* ---- Async metadata I/O ---- */
     struct spdk_ring *meta_ring;     /* Python → reactor meta requests */
     struct spdk_nvme_qpair *meta_qpair; /* dedicated qpair for metadata */

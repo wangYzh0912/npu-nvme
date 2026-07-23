@@ -151,6 +151,40 @@ int npu_nvme_read_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
 int npu_nvme_request_poll(npu_nvme_request_t *req);
 
 /**
+ * @brief Return the eventfd signalled when async requests complete.
+ *
+ * The fd is owned by NPUNVMEContext and remains valid until cleanup.  Callers
+ * should read the eventfd counter and then call npu_nvme_drain_completions.
+ *
+ * @param ctx context handle
+ * @return non-negative fd on success, -1 on error
+ */
+int npu_nvme_get_completion_fd(NPUNVMEContext *ctx);
+
+/**
+ * @brief Drain completed async request handles without blocking.
+ *
+ * @param ctx      context handle
+ * @param reqs     output array for completed request handles
+ * @param max_reqs maximum number of handles to return
+ * @return number of handles returned, or -1 on invalid arguments
+ */
+int npu_nvme_drain_completions(NPUNVMEContext *ctx,
+                               npu_nvme_request_t **reqs, int max_reqs);
+
+/**
+ * @brief Store caller metadata on an async request handle.
+ *
+ * @param req       request handle
+ * @param user_data opaque caller value
+ * @return 0 on success, -1 on error
+ */
+int npu_nvme_request_set_user_data(npu_nvme_request_t *req, uint64_t user_data);
+
+/** @brief Return caller metadata stored on an async request handle. */
+uint64_t npu_nvme_request_user_data(npu_nvme_request_t *req);
+
+/**
  * @brief Wait for an asynchronous request.
  *
  * @param req        request handle

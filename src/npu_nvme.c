@@ -40,6 +40,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/time.h>
+#include <sys/eventfd.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
@@ -48,6 +49,7 @@
 #define STEP_POLLER_PERIOD_US  10000   /* step counter poll interval (10 ms) */
 #define HUGEPAGE_2MB_PATH "/sys/kernel/mm/hugepages/hugepages-2048kB/free_hugepages"
 #define REQUEST_WAIT_POLL_US 100
+#define NPU_NVME_COMPLETION_RING_SIZE 1024
 
 typedef enum {
     REQUEST_KIND_WRITE = 0,
@@ -60,6 +62,11 @@ struct npu_nvme_request {
         write_request_t *write;
         read_request_t *read;
     } impl;
+    uint64_t user_data;
+    int notify_on_complete;
+    int completion_enqueued;
+    int completion_drained;
+    int free_requested;
 };
 
 static inline int atomic_load_int(const int *p) {
@@ -72,6 +79,42 @@ static inline void atomic_store_int(int *p, int v) {
 
 static inline void request_fail(int *result) {
     if (result) atomic_store_int(result, -1);
+}
+
+static int signal_completion_fd(NPUNVMEContext *ctx) {
+    if (!ctx || ctx->completion_fd < 0) return -1;
+
+    eventfd_t value = 1;
+    if (eventfd_write(ctx->completion_fd, value) != 0) {
+        atomic_store_int(&ctx->completion_notify_failed, 1);
+        return -1;
+    }
+    return 0;
+}
+
+static int enqueue_completed_request(NPUNVMEContext *ctx,
+                                     npu_nvme_request_t *handle) {
+    if (!ctx || !ctx->completion_ring || !handle) return -1;
+    if (!atomic_load_int(&handle->notify_on_complete) ||
+        atomic_load_int(&handle->completion_enqueued)) {
+        return 0;
+    }
+
+    void *obj = handle;
+    if (spdk_ring_enqueue(ctx->completion_ring, &obj, 1, NULL) != 1) {
+        atomic_store_int(&ctx->completion_notify_failed, 1);
+        return -1;
+    }
+    atomic_store_int(&handle->completion_enqueued, 1);
+    return 0;
+}
+
+static int prepare_completion_notification(NPUNVMEContext *ctx,
+                                           npu_nvme_request_t *handle) {
+    if (handle && atomic_load_int(&handle->notify_on_complete)) {
+        return enqueue_completed_request(ctx, handle) == 0;
+    }
+    return 0;
 }
 
 static int validate_batch_layout(NPUNVMEContext *ctx, uint64_t *nvme_offsets,
@@ -374,6 +417,8 @@ static int submit_write_request(NPUNVMEContext *ctx, void **ptrs,
 
     npu_nvme_request_t *handle = calloc(1, sizeof(npu_nvme_request_t));
     if (!handle) return -1;
+    handle->notify_on_complete =
+        ctx && atomic_load_int(&ctx->completion_enabled) ? 1 : 0;
 
     write_request_t *req = calloc(1, sizeof(write_request_t));
     if (!req) {
@@ -391,6 +436,7 @@ static int submit_write_request(NPUNVMEContext *ctx, void **ptrs,
     req->tasks = tasks;
     req->num_tasks = num_items;
     req->is_host = is_host;
+    req->owner = handle;
     req->done = 0;
     req->result = 0;
 
@@ -425,6 +471,8 @@ static int submit_read_request(NPUNVMEContext *ctx, void **ptrs,
 
     npu_nvme_request_t *handle = calloc(1, sizeof(npu_nvme_request_t));
     if (!handle) return -1;
+    handle->notify_on_complete =
+        ctx && atomic_load_int(&ctx->completion_enabled) ? 1 : 0;
 
     read_request_t *req = calloc(1, sizeof(read_request_t));
     if (!req) {
@@ -442,6 +490,7 @@ static int submit_read_request(NPUNVMEContext *ctx, void **ptrs,
     req->tasks = tasks;
     req->num_tasks = num_items;
     req->is_host = is_host;
+    req->owner = handle;
     req->done = 0;
     req->result = 0;
 
@@ -511,6 +560,45 @@ int npu_nvme_request_poll(npu_nvme_request_t *req) {
     return request_get_result(req) == 0 ? 1 : -1;
 }
 
+int npu_nvme_get_completion_fd(NPUNVMEContext *ctx) {
+    if (!ctx || ctx->completion_fd < 0) return -1;
+    atomic_store_int(&ctx->completion_enabled, 1);
+    return ctx->completion_fd;
+}
+
+int npu_nvme_drain_completions(NPUNVMEContext *ctx,
+                               npu_nvme_request_t **reqs, int max_reqs) {
+    if (!ctx || !ctx->completion_ring || !reqs || max_reqs <= 0) return -1;
+
+    int returned = 0;
+    while (returned < max_reqs) {
+        void *obj = NULL;
+        if (spdk_ring_dequeue(ctx->completion_ring, &obj, 1) != 1) break;
+
+        npu_nvme_request_t *req = (npu_nvme_request_t *)obj;
+        if (!req) continue;
+        atomic_store_int(&req->completion_drained, 1);
+
+        if (atomic_load_int(&req->free_requested)) {
+            free(req);
+            continue;
+        }
+        reqs[returned++] = req;
+    }
+    return returned;
+}
+
+int npu_nvme_request_set_user_data(npu_nvme_request_t *req,
+                                   uint64_t user_data) {
+    if (!req) return -1;
+    req->user_data = user_data;
+    return 0;
+}
+
+uint64_t npu_nvme_request_user_data(npu_nvme_request_t *req) {
+    return req ? req->user_data : 0;
+}
+
 int npu_nvme_request_wait(npu_nvme_request_t *req, uint64_t timeout_us) {
     if (!req) return -1;
 
@@ -535,12 +623,19 @@ int npu_nvme_request_free(npu_nvme_request_t *req) {
     if (req->kind == REQUEST_KIND_WRITE && req->impl.write) {
         free(req->impl.write->tasks);
         free(req->impl.write);
+        req->impl.write = NULL;
     } else if (req->kind == REQUEST_KIND_READ && req->impl.read) {
         free(req->impl.read->tasks);
         free(req->impl.read);
+        req->impl.read = NULL;
     } else {
         free(req);
         return -1;
+    }
+    if (atomic_load_int(&req->completion_enqueued) &&
+        !atomic_load_int(&req->completion_drained)) {
+        atomic_store_int(&req->free_requested, 1);
+        return 0;
     }
     free(req);
     return 0;
@@ -795,6 +890,9 @@ static void *reactor_loop(void *arg) {
                                         SPDK_ENV_SOCKET_ID_ANY);
     ctx->read_ring  = spdk_ring_create(SPDK_RING_TYPE_MP_SC, 16,
                                         SPDK_ENV_SOCKET_ID_ANY);
+    ctx->completion_ring = spdk_ring_create(SPDK_RING_TYPE_MP_MC,
+                                            NPU_NVME_COMPLETION_RING_SIZE,
+                                            SPDK_ENV_SOCKET_ID_ANY);
     ctx->meta_ring  = spdk_ring_create(SPDK_RING_TYPE_MP_SC, 4,
                                         SPDK_ENV_SOCKET_ID_ANY);
 
@@ -833,9 +931,11 @@ static void *reactor_loop(void *arg) {
     spdk_poller_unregister(&ctx->meta_poller);
     spdk_ring_free(ctx->write_ring);
     spdk_ring_free(ctx->read_ring);
+    spdk_ring_free(ctx->completion_ring);
     spdk_ring_free(ctx->meta_ring);
     ctx->write_ring = NULL;
     ctx->read_ring = NULL;
+    ctx->completion_ring = NULL;
     ctx->meta_ring = NULL;
     spdk_thread_exit(ctx->reactor_thread);
     return NULL;
@@ -1187,7 +1287,11 @@ static void write_fsm_tick(NPUNVMEContext *ctx) {
     if (fsm->completed_count >= req->num_tasks) {
         req->ts_batch_end = get_time_us();
         ctx->last_write_io_us = req->ts_batch_end - req->ts_batch_start;
+        int should_signal = prepare_completion_notification(ctx, req->owner);
         atomic_store_int(&req->done, 1);
+        if (should_signal) {
+            (void)signal_completion_fd(ctx);
+        }
         fsm->state = WRITE_FSM_IDLE;
         fsm->req = NULL;
     }
@@ -1390,7 +1494,11 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
     if (fsm->completed_count >= req->num_tasks) {
         req->ts_batch_end = get_time_us();
         ctx->last_read_io_us = req->ts_batch_end - req->ts_batch_start;
+        int should_signal = prepare_completion_notification(ctx, req->owner);
         atomic_store_int(&req->done, 1);
+        if (should_signal) {
+            (void)signal_completion_fd(ctx);
+        }
         fsm->state = READ_FSM_IDLE;
         fsm->req = NULL;
     }
@@ -1582,6 +1690,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     }
     ctx->raw_io_start_offset = NPU_NVME_RAW_IO_START_OFFSET;
     ctx->raw_io_end_offset = 0;
+    ctx->completion_fd = -1;
     /* Listener-state lock — protects registered_tasks, dev_step_ptr,
      * probe_flag_* from concurrent Python <-> reactor access.  I/O is
      * async via rings and does NOT use this lock.  Non-recursive. */
@@ -1824,6 +1933,15 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     ctx->listener.dev_step_ptr = NULL;
     ctx->listener.step_poll_buf = NULL;
 
+    ctx->completion_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    if (ctx->completion_fd < 0) {
+        fprintf(stderr, "[NPU-NVMe] Failed to create completion eventfd: %s\n",
+                strerror(errno));
+        npu_nvme_cleanup(ctx);
+        *out_ctx = NULL;
+        return -1;
+    }
+
     printf("[Init] Initialisation complete.\n");
     return 0;
 }
@@ -1838,6 +1956,11 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     /* Stop reactor thread */
     atomic_store_int(&ctx->app_should_stop, 1);
     pthread_join(ctx->reactor_pthread, NULL);
+
+    if (ctx->completion_fd >= 0) {
+        close(ctx->completion_fd);
+        ctx->completion_fd = -1;
+    }
 
     /* Bind ACL context — needed for aclrtDestroyEvent/FreeHost below. */
     aclrtSetDevice(ctx->acl.npu_id);

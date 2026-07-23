@@ -65,18 +65,22 @@ npu_nvme_cleanup(ctx);
 - `npu_nvme_write_batch_async` / `npu_nvme_read_batch_async`：提交设备侧异步请求并立即返回 request handle。
 - `npu_nvme_raw_write_batch_async` / `npu_nvme_raw_read_batch_async`：带 raw range 校验的设备侧异步 raw 传输。
 - `npu_nvme_request_poll` / `npu_nvme_request_wait` / `npu_nvme_request_free`：异步 request 的轮询、等待和释放。
+- `npu_nvme_get_completion_fd` / `npu_nvme_drain_completions`：eventfd 驱动的异步完成通知。
 
 Python 侧 raw transfer 封装在 `python/raw_io.py`：
 
 ```python
-from raw_io import RawIO
+from raw_io import CompletionDispatcher, RawIO
 
-raw = RawIO(ctx)
+dispatcher = CompletionDispatcher(ctx, auto_start=True)
+raw = RawIO(ctx, completion_dispatcher=dispatcher)
 raw.write_host([host_ptr], [nvme_offset], [size_bytes])
 raw.read_host([host_ptr], [nvme_offset], [size_bytes])
 
 future = raw.write_async([npu_ptr], [nvme_offset], [size_bytes])
+future.add_done_callback(lambda fut: fut.result())
 future.result(timeout=30.0)
+dispatcher.close()
 ```
 
 ## Checkpoint 基本操作
