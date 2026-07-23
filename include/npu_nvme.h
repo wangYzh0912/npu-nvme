@@ -12,6 +12,9 @@ extern "C" {
 /** @brief Opaque context handle.  Python sees this as an opaque pointer. */
 typedef struct NPUNVMEContext NPUNVMEContext;
 
+/** @brief Opaque asynchronous I/O request handle. */
+typedef struct npu_nvme_request npu_nvme_request_t;
+
 /**
  * @brief Initialise the NPU-NVMe SPDK environment.
  *
@@ -68,6 +71,62 @@ int npu_nvme_raw_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 int npu_nvme_raw_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                             uint64_t *nvme_offsets, size_t *sizes,
                             int num_items);
+
+/**
+ * @brief Submit a batch write and return immediately.
+ *
+ * The request continues on the reactor thread.  The caller owns the returned
+ * handle and must call npu_nvme_request_wait or npu_nvme_request_poll before
+ * freeing it with npu_nvme_request_free.
+ *
+ * @param ctx          context handle
+ * @param npu_ptrs     array of NPU device pointers (source)
+ * @param nvme_offsets array of NVMe byte offsets (destination)
+ * @param sizes        array of per-chunk byte sizes
+ * @param num_items    number of chunks
+ * @param out_req      output request handle
+ * @return 0 on successful submission, -1 on error
+ */
+int npu_nvme_write_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
+                               uint64_t *nvme_offsets, size_t *sizes,
+                               int num_items, npu_nvme_request_t **out_req);
+
+/**
+ * @brief Submit a batch read and return immediately.
+ *
+ * @param ctx          context handle
+ * @param npu_ptrs     array of NPU device pointers (destination)
+ * @param nvme_offsets array of NVMe byte offsets (source)
+ * @param sizes        array of per-chunk byte sizes
+ * @param num_items    number of chunks
+ * @param out_req      output request handle
+ * @return 0 on successful submission, -1 on error
+ */
+int npu_nvme_read_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
+                              uint64_t *nvme_offsets, size_t *sizes,
+                              int num_items, npu_nvme_request_t **out_req);
+
+/**
+ * @brief Poll an asynchronous request without blocking.
+ *
+ * @return 1 when completed successfully, 0 while pending, -1 on error
+ */
+int npu_nvme_request_poll(npu_nvme_request_t *req);
+
+/**
+ * @brief Wait for an asynchronous request.
+ *
+ * @param req        request handle
+ * @param timeout_us 0 means wait indefinitely; otherwise timeout in us
+ * @return 0 on success, -1 on request error, -2 on timeout
+ */
+int npu_nvme_request_wait(npu_nvme_request_t *req, uint64_t timeout_us);
+
+/** @brief Return the completed request result code, or -1 for an invalid handle. */
+int npu_nvme_request_result(npu_nvme_request_t *req);
+
+/** @brief Free a completed request handle.  Returns -1 if still pending. */
+int npu_nvme_request_free(npu_nvme_request_t *req);
 
 /**
  * @brief Batch write: NPU HBM -> NVMe (blocking).

@@ -118,6 +118,30 @@ endif()
 
 file(GLOB DPDK_LIBS_FILES ${SPDK_ROOT_DIR}/dpdk/build/lib/librte_*.a)
 
+find_program(OBJCOPY_TOOL objcopy REQUIRED)
+set(DPDK_MEMPOOL_RING_LIB ${SPDK_ROOT_DIR}/dpdk/build/lib/librte_mempool_ring.a)
+set(DPDK_FIXED_DIR ${CMAKE_BINARY_DIR}/dpdk_fix)
+set(DPDK_FIXED_MEMPOOL_RING_LIB ${DPDK_FIXED_DIR}/librte_mempool_ring_fixed.a)
+add_custom_command(
+    OUTPUT ${DPDK_FIXED_MEMPOOL_RING_LIB}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DPDK_FIXED_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${DPDK_MEMPOOL_RING_LIB} ${DPDK_FIXED_MEMPOOL_RING_LIB}
+    COMMAND ${OBJCOPY_TOOL}
+            --globalize-symbol=common_ring_alloc
+            --globalize-symbol=common_ring_free
+            --globalize-symbol=common_ring_mp_enqueue
+            --globalize-symbol=common_ring_mc_dequeue
+            --globalize-symbol=common_ring_get_count
+            ${DPDK_FIXED_MEMPOOL_RING_LIB}
+    DEPENDS ${DPDK_MEMPOOL_RING_LIB}
+    COMMENT "Preparing DPDK ring mempool archive with exported ops symbols"
+    VERBATIM
+)
+add_custom_target(dpdk_mempool_ring_fixed
+    DEPENDS ${DPDK_FIXED_MEMPOOL_RING_LIB}
+)
+
 set(SYSTEM_LIBS
     pthread dl rt numa uuid ssl crypto m stdc++ fuse3
 )
@@ -133,6 +157,7 @@ message(STATUS "==============================================")
 add_library(npu_nvme SHARED
     src/npu_nvme.c
 )
+add_dependencies(npu_nvme dpdk_mempool_ring_fixed)
 
 target_include_directories(npu_nvme PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -162,7 +187,7 @@ target_link_libraries(npu_nvme PRIVATE
     # prevents the linker from stripping them (e.g. ring_mp_mc mempool ops).
     # The fixed mempool_ring archive has globalized symbols for extern refs.
     -Wl,--whole-archive
-    /tmp/mp_ring_fix/librte_mempool_ring_fixed.a
+    ${DPDK_FIXED_MEMPOOL_RING_LIB}
     ${DPDK_LIBS_FILES}
     -Wl,--no-whole-archive
 
@@ -258,6 +283,30 @@ target_link_options(reactor_host_io_roundtrip_test PRIVATE
     "LINKER:-rpath,$ORIGIN/../lib"
     "LINKER:--enable-new-dtags"
 )
+
+# ==================================================
+# Async request hardware test
+# ==================================================
+add_executable(npu_nvme_async_hw_test
+    test/npu_nvme_async_hw_test.c
+)
+target_include_directories(npu_nvme_async_hw_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${ASCEND_ACL_INCLUDE_DIRS}
+)
+target_link_libraries(npu_nvme_async_hw_test PRIVATE
+    npu_nvme
+)
+set_target_properties(npu_nvme_async_hw_test PROPERTIES
+    BUILD_RPATH "$ORIGIN/../lib"
+    INSTALL_RPATH "$ORIGIN/../lib"
+)
+target_link_options(npu_nvme_async_hw_test PRIVATE
+    "LINKER:-rpath,$ORIGIN/../lib"
+    "LINKER:--enable-new-dtags"
+)
+
 add_executable(spdk_reactor_poller_test
     test/spdk_reactor_poller_test.c
 )
@@ -312,6 +361,10 @@ install(FILES include/npu_nvme.h
 )
 
 install(PROGRAMS $<TARGET_FILE:npu_nvme_api_test>
+    DESTINATION bin
+)
+
+install(PROGRAMS $<TARGET_FILE:npu_nvme_async_hw_test>
     DESTINATION bin
 )
 

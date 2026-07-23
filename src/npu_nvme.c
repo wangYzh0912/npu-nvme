@@ -47,6 +47,20 @@
 /* ---- Hugepage pool auto-expansion for DPDK/SPDK ---- */
 #define STEP_POLLER_PERIOD_US  10000   /* step counter poll interval (10 ms) */
 #define HUGEPAGE_2MB_PATH "/sys/kernel/mm/hugepages/hugepages-2048kB/free_hugepages"
+#define REQUEST_WAIT_POLL_US 100
+
+typedef enum {
+    REQUEST_KIND_WRITE = 0,
+    REQUEST_KIND_READ,
+} request_kind_t;
+
+struct npu_nvme_request {
+    request_kind_t kind;
+    union {
+        write_request_t *write;
+        read_request_t *read;
+    } impl;
+};
 
 static inline int atomic_load_int(const int *p) {
     return __atomic_load_n(p, __ATOMIC_ACQUIRE);
@@ -187,8 +201,19 @@ io_task_t *create_io_tasks(int num_tasks, void **npu_ptrs,
  * chunk data from NPU HBM (or host DRAM when is_host is set) into it.
  */
 
+static int query_dma_event(NPUNVMEContext *ctx, int buf_idx) {
+    aclrtEventRecordedStatus status = ACL_EVENT_RECORDED_STATUS_NOT_READY;
+    aclError ret = aclrtQueryEventStatus(ctx->acl.events[buf_idx], &status);
+    if (ret != ACL_SUCCESS) {
+        fprintf(stderr, "[NPU-NVMe] aclrtQueryEventStatus failed for slot %d: ret=%d\n",
+                buf_idx, ret);
+        return -1;
+    }
+    return status == ACL_EVENT_RECORDED_STATUS_COMPLETE ? 1 : 0;
+}
+
 /* Submit one chunk to the DMA buffer pool.  Returns 0 on success,
- * -1 if the ring is full, -2 on ACL memcpy error. */
+ * -1 if the ring is full, -2 on ACL error. */
 int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
     int buf_idx;
     if (ring_pop(&ctx->dma.free_ring, &buf_idx) != 0) return -1;
@@ -201,15 +226,27 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
         if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
         task->state = CHUNK_NPU_DONE;
     } else {
-        aclError ret = aclrtMemcpy(ctx->dma.pool[buf_idx].buf, task->size,
-                                    task->npu_ptr, task->size,
-                                    ACL_MEMCPY_DEVICE_TO_HOST);
+        aclError ret = aclrtMemcpyAsync(ctx->dma.pool[buf_idx].buf, task->size,
+                                        task->npu_ptr, task->size,
+                                        ACL_MEMCPY_DEVICE_TO_HOST,
+                                        ctx->acl.copy_stream);
         if (ret != ACL_SUCCESS) {
+            fprintf(stderr, "[NPU-NVMe] ACL D2H async copy submit failed "
+                    "for task %d: ret=%d\n", task->task_idx, ret);
             ring_push(&ctx->dma.free_ring, buf_idx);
+            task->buf_idx = -1;
             return -2;
         }
-        if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
-        task->state = CHUNK_NPU_DONE;
+        ret = aclrtRecordEvent(ctx->acl.events[buf_idx], ctx->acl.copy_stream);
+        if (ret != ACL_SUCCESS) {
+            fprintf(stderr, "[NPU-NVMe] ACL D2H event record failed "
+                    "for task %d: ret=%d\n", task->task_idx, ret);
+            aclrtSynchronizeStream(ctx->acl.copy_stream);
+            ring_push(&ctx->dma.free_ring, buf_idx);
+            task->buf_idx = -1;
+            return -2;
+        }
+        task->state = CHUNK_NPU_COPYING;
     }
     return 0;
 }
@@ -323,6 +360,192 @@ void write_profiling_csv(NPUNVMEContext *ctx, io_task_t *tasks,
  * read_ring).  No lock is held — the reactor serialises all I/O.
  */
 
+static int submit_write_request(NPUNVMEContext *ctx, void **ptrs,
+                                uint64_t *nvme_offsets, size_t *sizes,
+                                int num_items, bool is_host,
+                                npu_nvme_request_t **out_req) {
+    if (!ctx || !ptrs || !nvme_offsets || !sizes || num_items <= 0 || !out_req) {
+        fprintf(stderr, "[Fatal] Invalid arguments passed to submit_write_request.\n");
+        return -1;
+    }
+    if (ctx->block_size == 0) return -1;
+
+    aclrtSetCurrentContext(ctx->acl.acl_ctx);
+
+    npu_nvme_request_t *handle = calloc(1, sizeof(npu_nvme_request_t));
+    if (!handle) return -1;
+
+    write_request_t *req = calloc(1, sizeof(write_request_t));
+    if (!req) {
+        free(handle);
+        return -1;
+    }
+
+    io_task_t *tasks = create_io_tasks(num_items, ptrs, nvme_offsets, sizes);
+    if (!tasks) {
+        free(req);
+        free(handle);
+        return -1;
+    }
+
+    req->tasks = tasks;
+    req->num_tasks = num_items;
+    req->is_host = is_host;
+    req->done = 0;
+    req->result = 0;
+
+    handle->kind = REQUEST_KIND_WRITE;
+    handle->impl.write = req;
+
+    void *obj = req;
+    if (atomic_load_int(&ctx->app_should_stop) ||
+        spdk_ring_enqueue(ctx->write_ring, &obj, 1, NULL) != 1) {
+        fprintf(stderr, "[Fatal] write_ring full — reactor stalled?\n");
+        free(tasks);
+        free(req);
+        free(handle);
+        return -1;
+    }
+
+    *out_req = handle;
+    return 0;
+}
+
+static int submit_read_request(NPUNVMEContext *ctx, void **ptrs,
+                               uint64_t *nvme_offsets, size_t *sizes,
+                               int num_items, bool is_host,
+                               npu_nvme_request_t **out_req) {
+    if (!ctx || !ptrs || !nvme_offsets || !sizes || num_items <= 0 || !out_req) {
+        fprintf(stderr, "[Fatal] Invalid arguments passed to submit_read_request.\n");
+        return -1;
+    }
+    if (ctx->block_size == 0) return -1;
+
+    aclrtSetCurrentContext(ctx->acl.acl_ctx);
+
+    npu_nvme_request_t *handle = calloc(1, sizeof(npu_nvme_request_t));
+    if (!handle) return -1;
+
+    read_request_t *req = calloc(1, sizeof(read_request_t));
+    if (!req) {
+        free(handle);
+        return -1;
+    }
+
+    io_task_t *tasks = create_io_tasks(num_items, ptrs, nvme_offsets, sizes);
+    if (!tasks) {
+        free(req);
+        free(handle);
+        return -1;
+    }
+
+    req->tasks = tasks;
+    req->num_tasks = num_items;
+    req->is_host = is_host;
+    req->done = 0;
+    req->result = 0;
+
+    handle->kind = REQUEST_KIND_READ;
+    handle->impl.read = req;
+
+    void *obj = req;
+    if (atomic_load_int(&ctx->app_should_stop) ||
+        spdk_ring_enqueue(ctx->read_ring, &obj, 1, NULL) != 1) {
+        fprintf(stderr, "[Fatal] read_ring full — reactor stalled?\n");
+        free(tasks);
+        free(req);
+        free(handle);
+        return -1;
+    }
+
+    *out_req = handle;
+    return 0;
+}
+
+static int request_is_done(npu_nvme_request_t *req) {
+    if (!req) return 0;
+    if (req->kind == REQUEST_KIND_WRITE && req->impl.write) {
+        return atomic_load_int(&req->impl.write->done);
+    }
+    if (req->kind == REQUEST_KIND_READ && req->impl.read) {
+        return atomic_load_int(&req->impl.read->done);
+    }
+    return 0;
+}
+
+static int request_get_result(npu_nvme_request_t *req) {
+    if (!req) return -1;
+    if (req->kind == REQUEST_KIND_WRITE && req->impl.write) {
+        return atomic_load_int(&req->impl.write->result);
+    }
+    if (req->kind == REQUEST_KIND_READ && req->impl.read) {
+        return atomic_load_int(&req->impl.read->result);
+    }
+    return -1;
+}
+
+static io_task_t *request_get_tasks(npu_nvme_request_t *req) {
+    if (!req) return NULL;
+    if (req->kind == REQUEST_KIND_WRITE && req->impl.write) return req->impl.write->tasks;
+    if (req->kind == REQUEST_KIND_READ && req->impl.read) return req->impl.read->tasks;
+    return NULL;
+}
+
+int npu_nvme_write_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
+                               uint64_t *nvme_offsets, size_t *sizes,
+                               int num_items, npu_nvme_request_t **out_req) {
+    return submit_write_request(ctx, npu_ptrs, nvme_offsets, sizes,
+                                num_items, false, out_req);
+}
+
+int npu_nvme_read_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
+                              uint64_t *nvme_offsets, size_t *sizes,
+                              int num_items, npu_nvme_request_t **out_req) {
+    return submit_read_request(ctx, npu_ptrs, nvme_offsets, sizes,
+                               num_items, false, out_req);
+}
+
+int npu_nvme_request_poll(npu_nvme_request_t *req) {
+    if (!req) return -1;
+    if (!request_is_done(req)) return 0;
+    return request_get_result(req) == 0 ? 1 : -1;
+}
+
+int npu_nvme_request_wait(npu_nvme_request_t *req, uint64_t timeout_us) {
+    if (!req) return -1;
+
+    uint64_t start_us = get_time_us();
+    while (!request_is_done(req)) {
+        if (timeout_us != 0 && get_time_us() - start_us >= timeout_us) {
+            return -2;
+        }
+        usleep(REQUEST_WAIT_POLL_US);
+    }
+    return request_get_result(req) == 0 ? 0 : -1;
+}
+
+int npu_nvme_request_result(npu_nvme_request_t *req) {
+    return request_get_result(req);
+}
+
+int npu_nvme_request_free(npu_nvme_request_t *req) {
+    if (!req) return -1;
+    if (!request_is_done(req)) return -1;
+
+    if (req->kind == REQUEST_KIND_WRITE && req->impl.write) {
+        free(req->impl.write->tasks);
+        free(req->impl.write);
+    } else if (req->kind == REQUEST_KIND_READ && req->impl.read) {
+        free(req->impl.read->tasks);
+        free(req->impl.read);
+    } else {
+        free(req);
+        return -1;
+    }
+    free(req);
+    return 0;
+}
+
 /**
  * @brief  Write NPU HBM buffers to NVMe (blocking batch).
  * @param ctx        context handle
@@ -334,45 +557,20 @@ void write_profiling_csv(NPUNVMEContext *ctx, io_task_t *tasks,
  */
 int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                           uint64_t *nvme_offsets, size_t *sizes, int num_items) {
-    if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) {
-        fprintf(stderr, "[Fatal] Invalid arguments passed to npu_nvme_write_batch.\n");
+    npu_nvme_request_t *req = NULL;
+    if (submit_write_request(ctx, npu_ptrs, nvme_offsets, sizes,
+                             num_items, false, &req) != 0) {
         return -1;
     }
-    if (ctx->block_size == 0) return -1;
-
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
-
-    /* Build request on heap (Python owns it until completion). */
-    write_request_t *req = calloc(1, sizeof(write_request_t));
-    if (!req) return -1;
-
-    io_task_t *tasks = create_io_tasks(num_items, npu_ptrs, nvme_offsets, sizes);
-    if (!tasks) { free(req); return -1; }
-
-    req->tasks = tasks;
-    req->num_tasks = num_items;
-    req->is_host = false;
-    req->done = 0;
-    req->result = 0;
-
-    /* Enqueue to reactor.  If the ring is full, the reactor is stuck —
-     * this should never happen with a 16-slot ring and 1 producer. */
-    void *obj = req;
-    if (atomic_load_int(&ctx->app_should_stop) ||
-        spdk_ring_enqueue(ctx->write_ring, &obj, 1, NULL) != 1) {
-        fprintf(stderr, "[Fatal] write_ring full — reactor stalled?\n");
-        free(tasks); free(req); return -1;
+    if (npu_nvme_request_wait(req, 0) != 0) {
+        int rc = npu_nvme_request_result(req);
+        npu_nvme_request_free(req);
+        return rc != 0 ? rc : -1;
     }
-
-    /* Poll for completion (non-busy: usleep yields CPU). */
-    while (!atomic_load_int(&req->done)) {
-        usleep(1000);
-    }
-
+    io_task_t *tasks = request_get_tasks(req);
     write_profiling_csv(ctx, tasks, num_items, PIPELINE_WRITE);
-    int result = req->result;
-    free(tasks);
-    free(req);
+    int result = npu_nvme_request_result(req);
+    npu_nvme_request_free(req);
     return result;
 }
 
@@ -388,36 +586,14 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
                                uint64_t *nvme_offsets, size_t *sizes,
                                int num_items) {
-    if (!ctx || num_items <= 0) return -1;
-    if (ctx->block_size == 0) return -1;
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
-
-    write_request_t *req = calloc(1, sizeof(write_request_t));
-    if (!req) return -1;
-
-    io_task_t *tasks = create_io_tasks(num_items, ptrs, nvme_offsets, sizes);
-    if (!tasks) { free(req); return -1; }
-
-    req->tasks = tasks;
-    req->num_tasks = num_items;
-    req->is_host = true;
-    req->done = 0;
-    req->result = 0;
-
-    void *obj = req;
-    if (atomic_load_int(&ctx->app_should_stop) ||
-        spdk_ring_enqueue(ctx->write_ring, &obj, 1, NULL) != 1) {
-        fprintf(stderr, "[Fatal] write_ring full — reactor stalled?\n");
-        free(tasks); free(req); return -1;
+    npu_nvme_request_t *req = NULL;
+    if (submit_write_request(ctx, ptrs, nvme_offsets, sizes,
+                             num_items, true, &req) != 0) {
+        return -1;
     }
-
-    while (!atomic_load_int(&req->done)) {
-        usleep(1000);
-    }
-    /* Host writes skip profiling (no meaningful NPU timestamps). */
-    int result = req->result;
-    free(tasks);
-    free(req);
+    int wait_rc = npu_nvme_request_wait(req, 0);
+    int result = wait_rc == 0 ? npu_nvme_request_result(req) : -1;
+    npu_nvme_request_free(req);
     return result;
 }
 
@@ -432,36 +608,20 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
  */
 int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                          uint64_t *nvme_offsets, size_t *sizes, int num_items) {
-    if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0)
+    npu_nvme_request_t *req = NULL;
+    if (submit_read_request(ctx, npu_ptrs, nvme_offsets, sizes,
+                            num_items, false, &req) != 0) {
         return -1;
-    if (ctx->block_size == 0) return -1;
-
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
-
-    read_request_t *req = calloc(1, sizeof(read_request_t));
-    if (!req) return -1;
-
-    io_task_t *tasks = create_io_tasks(num_items, npu_ptrs, nvme_offsets, sizes);
-    if (!tasks) { free(req); return -1; }
-
-    req->tasks = tasks;
-    req->num_tasks = num_items;
-    req->is_host = false;
-    req->done = 0;
-    req->result = 0;
-
-    void *obj = req;
-    if (atomic_load_int(&ctx->app_should_stop) ||
-        spdk_ring_enqueue(ctx->read_ring, &obj, 1, NULL) != 1) {
-        free(tasks); free(req); return -1;
     }
-
-    while (!atomic_load_int(&req->done)) { usleep(1000); }
-
+    if (npu_nvme_request_wait(req, 0) != 0) {
+        int rc = npu_nvme_request_result(req);
+        npu_nvme_request_free(req);
+        return rc != 0 ? rc : -1;
+    }
+    io_task_t *tasks = request_get_tasks(req);
     write_profiling_csv(ctx, tasks, num_items, PIPELINE_READ);
-    int result = req->result;
-    free(tasks);
-    free(req);
+    int result = npu_nvme_request_result(req);
+    npu_nvme_request_free(req);
     return result;
 }
 
@@ -477,35 +637,14 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
                              uint64_t *nvme_offsets, size_t *sizes,
                              int num_items) {
-    if (!ctx || !host_ptrs || !nvme_offsets || !sizes || num_items <= 0)
+    npu_nvme_request_t *req = NULL;
+    if (submit_read_request(ctx, host_ptrs, nvme_offsets, sizes,
+                            num_items, true, &req) != 0) {
         return -1;
-    if (ctx->block_size == 0) return -1;
-
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
-
-    read_request_t *req = calloc(1, sizeof(read_request_t));
-    if (!req) return -1;
-
-    io_task_t *tasks = create_io_tasks(num_items, host_ptrs, nvme_offsets, sizes);
-    if (!tasks) { free(req); return -1; }
-
-    req->tasks = tasks;
-    req->num_tasks = num_items;
-    req->is_host = true;
-    req->done = 0;
-    req->result = 0;
-
-    void *obj = req;
-    if (atomic_load_int(&ctx->app_should_stop) ||
-        spdk_ring_enqueue(ctx->read_ring, &obj, 1, NULL) != 1) {
-        free(tasks); free(req); return -1;
     }
-
-    while (!atomic_load_int(&req->done)) { usleep(1000); }
-    /* Host reads skip profiling. */
-    int result = req->result;
-    free(tasks);
-    free(req);
+    int wait_rc = npu_nvme_request_wait(req, 0);
+    int result = wait_rc == 0 ? npu_nvme_request_result(req) : -1;
+    npu_nvme_request_free(req);
     return result;
 }
 
@@ -966,9 +1105,23 @@ static void write_fsm_tick(NPUNVMEContext *ctx) {
      *    state and increment fsm->completed_count). */
     spdk_nvme_qpair_process_completions(ctx->qpair, 0);
 
-    /* 2. Submit NPU_DONE chunks to SPDK. */
+    /* 2. Advance completed D2H copies and submit ready chunks to SPDK. */
     for (int i = 0; i < fsm->next_submit_idx; i++) {
         io_task_t *task = &req->tasks[i];
+        if (task->state == CHUNK_NPU_COPYING) {
+            int query_rc = query_dma_event(ctx, task->buf_idx);
+            if (query_rc == 1) {
+                if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
+                task->state = CHUNK_NPU_DONE;
+            } else if (query_rc < 0) {
+                request_fail(&req->result);
+                task->state = CHUNK_DONE;
+                fsm->completed_count++;
+                ring_push(&ctx->dma.free_ring, task->buf_idx);
+                task->buf_idx = -1;
+                continue;
+            }
+        }
         if (task->state == CHUNK_NPU_DONE) {
             int rc = submit_to_spdk_write(ctx, task, &fsm->completed_count,
                                            &req->result);
@@ -1088,6 +1241,37 @@ static void initiate_read_fsm(NPUNVMEContext *ctx, read_request_t *req) {
     req->ts_batch_start = get_time_us();
 }
 
+static int submit_read_copy(NPUNVMEContext *ctx, read_request_t *req,
+                            io_task_t *task) {
+    if (req->is_host) {
+        memcpy(task->npu_ptr, ctx->dma.pool[task->buf_idx].buf, task->size);
+        task->state = CHUNK_DONE;
+        return 1;
+    }
+
+    aclError ret = aclrtMemcpyAsync(task->npu_ptr, task->size,
+                                    ctx->dma.pool[task->buf_idx].buf,
+                                    task->size,
+                                    ACL_MEMCPY_HOST_TO_DEVICE,
+                                    ctx->acl.copy_stream);
+    if (ret != ACL_SUCCESS) {
+        fprintf(stderr, "[NPU-NVMe] ACL H2D async copy submit failed "
+                "for task %d: ret=%d\n", task->task_idx, ret);
+        return -1;
+    }
+
+    ret = aclrtRecordEvent(ctx->acl.events[task->buf_idx], ctx->acl.copy_stream);
+    if (ret != ACL_SUCCESS) {
+        fprintf(stderr, "[NPU-NVMe] ACL H2D event record failed "
+                "for task %d: ret=%d\n", task->task_idx, ret);
+        aclrtSynchronizeStream(ctx->acl.copy_stream);
+        return -1;
+    }
+
+    task->state = CHUNK_NPU_COPYING;
+    return 0;
+}
+
 static void read_fsm_tick(NPUNVMEContext *ctx) {
     read_fsm_ctx_t *fsm = &ctx->read_fsm;
     read_request_t *req = fsm->req;
@@ -1100,33 +1284,35 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
     /* 1. Process SPDK completions (triggers callbacks). */
     spdk_nvme_qpair_process_completions(ctx->qpair, 0);
 
-    /* 2. Copy completed DMA buffers to NPU/Host. */
+    /* 2. Start or complete H2D copies for SPDK-completed chunks. */
     for (int i = 0; i < fsm->next_submit_idx; i++) {
         io_task_t *task = &req->tasks[i];
         if (task->state == CHUNK_SPDK_DONE) {
-            if (req->is_host) {
-                memcpy(task->npu_ptr, ctx->dma.pool[task->buf_idx].buf,
-                       task->size);
+            int copy_rc = submit_read_copy(ctx, req, task);
+            if (copy_rc == 1) {
                 task->state = CHUNK_DONE;
                 fsm->completed_count++;
                 ring_push(&ctx->dma.free_ring, task->buf_idx);
-            } else {
-                aclError ret = aclrtMemcpy(task->npu_ptr, task->size,
-                                            ctx->dma.pool[task->buf_idx].buf,
-                                            task->size,
-                                            ACL_MEMCPY_HOST_TO_DEVICE);
-                if (ret == ACL_SUCCESS) {
-                    task->state = CHUNK_DONE;
-                    fsm->completed_count++;
-                    ring_push(&ctx->dma.free_ring, task->buf_idx);
-                } else {
-                    fprintf(stderr, "[NPU-NVMe] ACL H2D read copy failed "
-                            "for task %d: ret=%d\n", task->task_idx, ret);
-                    request_fail(&req->result);
-                    task->state = CHUNK_DONE;
-                    fsm->completed_count++;
-                    ring_push(&ctx->dma.free_ring, task->buf_idx);
-                }
+            } else if (copy_rc < 0) {
+                request_fail(&req->result);
+                task->state = CHUNK_DONE;
+                fsm->completed_count++;
+                ring_push(&ctx->dma.free_ring, task->buf_idx);
+                task->buf_idx = -1;
+            }
+        } else if (task->state == CHUNK_NPU_COPYING) {
+            int query_rc = query_dma_event(ctx, task->buf_idx);
+            if (query_rc == 1) {
+                if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
+                task->state = CHUNK_DONE;
+                fsm->completed_count++;
+                ring_push(&ctx->dma.free_ring, task->buf_idx);
+            } else if (query_rc < 0) {
+                request_fail(&req->result);
+                task->state = CHUNK_DONE;
+                fsm->completed_count++;
+                ring_push(&ctx->dma.free_ring, task->buf_idx);
+                task->buf_idx = -1;
             }
         }
     }
