@@ -37,6 +37,11 @@ class NPUNVMEContext(ctypes.Structure):
     pass
 
 
+class NPUNVMERequest(ctypes.Structure):
+    """Opaque asynchronous request handle."""
+    pass
+
+
 try:
     lib = ctypes.CDLL(_LIB_PATH)
 
@@ -107,6 +112,33 @@ try:
     ]
     lib.npu_nvme_read_batch.restype = ctypes.c_int
 
+    lib.npu_nvme_write_batch_async.argtypes = [
+        ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t),
+        ctypes.c_int, ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+    ]
+    lib.npu_nvme_write_batch_async.restype = ctypes.c_int
+
+    lib.npu_nvme_read_batch_async.argtypes = [
+        ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t),
+        ctypes.c_int, ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+    ]
+    lib.npu_nvme_read_batch_async.restype = ctypes.c_int
+
+    lib.npu_nvme_request_poll.argtypes = [ctypes.POINTER(NPUNVMERequest)]
+    lib.npu_nvme_request_poll.restype = ctypes.c_int
+
+    lib.npu_nvme_request_wait.argtypes = [
+        ctypes.POINTER(NPUNVMERequest), ctypes.c_uint64]
+    lib.npu_nvme_request_wait.restype = ctypes.c_int
+
+    lib.npu_nvme_request_result.argtypes = [ctypes.POINTER(NPUNVMERequest)]
+    lib.npu_nvme_request_result.restype = ctypes.c_int
+
+    lib.npu_nvme_request_free.argtypes = [ctypes.POINTER(NPUNVMERequest)]
+    lib.npu_nvme_request_free.restype = ctypes.c_int
+
     if hasattr(lib, "npu_nvme_raw_write_batch_host"):
         lib.npu_nvme_raw_write_batch_host.argtypes = [
             ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
@@ -135,6 +167,20 @@ try:
             ctypes.c_int,
         ]
         lib.npu_nvme_raw_read_batch.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_raw_write_batch_async"):
+        lib.npu_nvme_raw_write_batch_async.argtypes = [
+            ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t),
+            ctypes.c_int, ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+        ]
+        lib.npu_nvme_raw_write_batch_async.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_raw_read_batch_async"):
+        lib.npu_nvme_raw_read_batch_async.argtypes = [
+            ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_size_t),
+            ctypes.c_int, ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+        ]
+        lib.npu_nvme_raw_read_batch_async.restype = ctypes.c_int
 
     if hasattr(lib, "npu_nvme_read_batch_host"):
         lib.npu_nvme_read_batch_host.argtypes = [

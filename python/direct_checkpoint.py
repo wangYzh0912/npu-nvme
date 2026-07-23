@@ -34,7 +34,6 @@ import pickle
 import json
 import struct
 import time
-import threading
 from typing import List, Dict
 
 import mindspore as ms
@@ -45,7 +44,7 @@ import atexit
 
 # -- Re-exports from sub-modules (backward-compatible surface) ---------------
 import c_bindings  # keep module reference for _LIB_PATH
-from c_bindings import lib, acl_lib, NPUNVMEContext
+from c_bindings import lib, acl_lib, NPUNVMEContext, NPUNVMERequest
 from disk_layout import (SUPERBLOCK_OFFSET, SUPERBLOCK_HEADER_BYTES,
                           META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
                           META_SLOT_BYTES, MAGIC_NUMBER, UINT32_BYTES,
@@ -54,6 +53,7 @@ from chunk_helpers import (build_chunks, build_chunks_host,
                             build_ctypes_arrays, rebuild_chunks_from_meta)
 from delta_protocol import (pack_delta_frame, unpack_delta_frame,
                              apply_delta_patches, FileDeltaWriter)
+from raw_io import NPUNVMERequestFuture
 from noop_init import NoOpInitializer, replace_with_noop_initializer
 from training_cell import ProbeTrainOneStepCell
 
@@ -172,7 +172,7 @@ class DirectCheckpoint:
 
         self._spdk_initialized = True
         self._closed = False
-        self._io_thread_error = None
+        self._pending_io = None
         atexit.register(self.close)
 
         # Set up ctypes signature for C-layer profiling
@@ -180,8 +180,6 @@ class DirectCheckpoint:
         lib.npu_nvme_get_last_io_us.restype = ctypes.c_uint64
 
         self._mount_filesystem()
-
-        self.io_thread = None
 
     # -- Filesystem mount ----------------------------------------------------
 
@@ -497,21 +495,54 @@ class DirectCheckpoint:
     # -- I/O synchronisation -------------------------------------------------
 
     def wait_for_io_completion(self):
-        if getattr(self, 'io_thread', None) is not None and self.io_thread.is_alive():
-            t_wait_start = time.perf_counter()
-            print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for "
-                  f"background SPDK flush to finish...", flush=True)
-            self.io_thread.join()
-            t_wait_end = time.perf_counter()
+        pending = getattr(self, "_pending_io", None)
+        if pending is None:
+            return
+
+        t_wait_start = time.perf_counter()
+        print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for "
+              f"C async request to finish...", flush=True)
+        try:
+            future = pending.get("future")
+            if future is not None:
+                future.result()
+            t_io_end = time.perf_counter()
+            T_SPDK = t_io_end - pending["t_spdk_start"]
+
+            t_meta_start = time.perf_counter()
+            self.last_layout = pending["layout"]
+            if pending["commit_meta"]:
+                self._commit_metadata(pending["step"], pending["layout"])
+
+            meta_path = pending["meta_path"]
+            meta_dir = os.path.dirname(os.path.abspath(meta_path))
+            os.makedirs(meta_dir, exist_ok=True)
+            with open(meta_path, "wb") as f:
+                pickle.dump(self.meta_dict, f)
+
+            t_meta_end = time.perf_counter()
+            T_Meta = t_meta_end - t_meta_start
+            real_time = time.perf_counter() - pending["t_start"]
+            total_written = pending["total_written"]
+            bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
+
             print(f"[Timeline][Rank {self.rank_id}] I/O Barrier Cleared! "
-                  f"Wait time: {(t_wait_end - t_wait_start):.3f}s", flush=True)
-            self.io_thread = None
-        elif getattr(self, 'io_thread', None) is not None:
-            self.io_thread = None
-        if self._io_thread_error is not None:
-            err = self._io_thread_error
-            self._io_thread_error = None
-            raise err
+                  f"Wait time: {(time.perf_counter() - t_wait_start):.3f}s",
+                  flush=True)
+            print(f"\n{'='*54}")
+            print(f"[Timeline][Rank {self.rank_id}] Step {pending['step']} | "
+                  f"C async SPDK flush completed at {time.perf_counter():.3f}s")
+            print(f"[Breakdown][Rank {self.rank_id}] "
+                  f"Prep: {pending['T_Prep']*1000:.2f}ms | "
+                  f"Layout: {pending['T_Layout']*1000:.2f}ms | "
+                  f"HostIO: {pending['host_write_time']*1000:.2f}ms | "
+                  f"SPDK(H/W): {T_SPDK*1000:.2f}ms | "
+                  f"Meta: {T_Meta*1000:.2f}ms")
+            print(f"[DirectCkpt][Rank {self.rank_id}] Async Safe Write: "
+                  f"{total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s")
+            print(f"{'='*54}\n", flush=True)
+        finally:
+            self._pending_io = None
 
     # DEPRECATED: kept as no-op for backward compatibility.
     def wait_async_io(self):
@@ -814,59 +845,6 @@ class DirectCheckpoint:
             if acl_lib is not None:
                 acl_lib.aclrtSynchronizeStream(None)
 
-        def background_io_worker(c_ptrs_d, c_offs_d, c_sizes_d, n_dev, d_sz,
-                                 c_ptrs_h, c_offs_h, c_sizes_h, n_host, h_sz):
-            try:
-                t_spdk_start = time.perf_counter()
-                total_written = 0
-
-                if n_dev > 0:
-                    rc = lib.npu_nvme_write_batch(
-                        self.ctx, c_ptrs_d, c_offs_d, c_sizes_d, n_dev)
-                    if rc != 0:
-                        raise RuntimeError(f"write_batch failed (rc={rc})")
-                    total_written += d_sz
-
-                if n_host > 0:
-                    if not hasattr(lib, "npu_nvme_write_batch_host"):
-                        raise RuntimeError("npu_nvme_write_batch_host is unavailable")
-                    rc = lib.npu_nvme_write_batch_host(
-                        self.ctx, c_ptrs_h, c_offs_h, c_sizes_h, n_host)
-                    if rc != 0:
-                        raise RuntimeError(f"write_batch_host failed (rc={rc})")
-                    total_written += h_sz
-
-                t_spdk_end = time.perf_counter()
-                T_SPDK = t_spdk_end - t_spdk_start
-
-                t_meta_start = time.perf_counter()
-                self.last_layout = layout
-                if commit_meta:
-                    self._commit_metadata(step, layout)
-
-                meta_dir = os.path.dirname(os.path.abspath(meta_path))
-                os.makedirs(meta_dir, exist_ok=True)
-                with open(meta_path, "wb") as f:
-                    pickle.dump(self.meta_dict, f)
-
-                t_meta_end = time.perf_counter()
-                T_Meta = t_meta_end - t_meta_start
-
-                real_time = time.perf_counter() - t_start
-                bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
-
-                print(f"\n{'='*54}")
-                print(f"[Timeline][Rank {self.rank_id}] Step {step} | "
-                      f"Background SPDK Flush ENDED at {time.perf_counter():.3f}s")
-                print(f"[Breakdown][Rank {self.rank_id}] "
-                      f"Prep: {T_Prep*1000:.2f}ms | Layout: {T_Layout*1000:.2f}ms | "
-                      f"SPDK(H/W): {T_SPDK*1000:.2f}ms | Meta: {T_Meta*1000:.2f}ms")
-                print(f"[DirectCkpt][Rank {self.rank_id}] Background Safe Write: "
-                      f"{total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s")
-                print(f"{'='*54}\n", flush=True)
-            except Exception as exc:
-                self._io_thread_error = exc
-
         num_dev_val = len(dev_chunks) if dev_chunks else 0
         dev_sz_val = dev_sz if dev_chunks else 0
         num_host_val = len(host_chunks) if host_chunks else 0
@@ -874,15 +852,72 @@ class DirectCheckpoint:
 
         self.wait_for_io_completion()
 
-        self.io_thread = threading.Thread(
-            target=background_io_worker,
-            args=(c_ptrs_dev, c_offs_dev, c_sizes_dev, num_dev_val, dev_sz_val,
-                  c_ptrs_host, c_offs_host, c_sizes_host, num_host_val, host_sz_val))
-        self.io_thread.start()
+        t_spdk_start = time.perf_counter()
+        total_written = 0
+        host_write_time = 0.0
+        future = None
+
+        if num_dev_val > 0:
+            req = ctypes.POINTER(NPUNVMERequest)()
+            rc = lib.npu_nvme_write_batch_async(
+                self.ctx, c_ptrs_dev, c_offs_dev, c_sizes_dev,
+                num_dev_val, ctypes.byref(req))
+            if rc != 0 or not req:
+                raise RuntimeError(f"write_batch_async failed (rc={rc})")
+            future = NPUNVMERequestFuture(
+                req, (c_ptrs_dev, c_offs_dev, c_sizes_dev))
+            total_written += dev_sz_val
+
+        if num_host_val > 0:
+            if not hasattr(lib, "npu_nvme_write_batch_host"):
+                raise RuntimeError("npu_nvme_write_batch_host is unavailable")
+            t_host_start = time.perf_counter()
+            rc = lib.npu_nvme_write_batch_host(
+                self.ctx, c_ptrs_host, c_offs_host, c_sizes_host, num_host_val)
+            host_write_time = time.perf_counter() - t_host_start
+            if rc != 0:
+                if future is not None:
+                    future.result()
+                raise RuntimeError(f"write_batch_host failed (rc={rc})")
+            total_written += host_sz_val
+
+        if future is not None:
+            self._pending_io = {
+                "future": future,
+                "layout": layout,
+                "commit_meta": commit_meta,
+                "meta_path": meta_path,
+                "step": step,
+                "total_written": total_written,
+                "t_start": t_start,
+                "t_spdk_start": t_spdk_start,
+                "T_Prep": T_Prep,
+                "T_Layout": T_Layout,
+                "host_write_time": host_write_time,
+            }
+        else:
+            t_meta_start = time.perf_counter()
+            self.last_layout = layout
+            if commit_meta:
+                self._commit_metadata(step, layout)
+
+            meta_dir = os.path.dirname(os.path.abspath(meta_path))
+            os.makedirs(meta_dir, exist_ok=True)
+            with open(meta_path, "wb") as f:
+                pickle.dump(self.meta_dict, f)
+            T_Meta = time.perf_counter() - t_meta_start
+            total_time = time.perf_counter() - t_start
+            bw = total_written / 1024 / 1024 / total_time if total_time > 0 else 0
+            print(f"[DirectCkpt][Rank {self.rank_id}] Host Safe Write: "
+                  f"{total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s | "
+                  f"Meta: {T_Meta*1000:.2f}ms", flush=True)
 
         t_return = time.perf_counter()
+        dispatch_target = ("C async request" if future is not None
+                           else "host write path")
         print(f"[Timeline][Rank {self.rank_id}] Step {step} | Python save() "
-              f"dispatched to background thread. "
+              f"dispatched {dispatch_target}. "
+              f"Submit cost: {(t_return - t_spdk_start)*1000:.2f}ms | "
               f"Layout cost: {T_Layout*1000:.2f}ms", flush=True)
 
         return (0, len(dev_chunks) + len(host_chunks), 0.0, 0.0,
@@ -890,6 +925,7 @@ class DirectCheckpoint:
 
     def load(self, model: ms.nn.Cell, step: int = None,
              meta_path: str = "checkpoint_meta.pkl"):
+        self.wait_for_io_completion()
         t_start = time.time()
 
         if step is not None:

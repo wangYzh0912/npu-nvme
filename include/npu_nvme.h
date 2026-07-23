@@ -71,6 +71,43 @@ int npu_nvme_raw_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 int npu_nvme_raw_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                             uint64_t *nvme_offsets, size_t *sizes,
                             int num_items);
+/**
+ * @brief Submit raw NPU-SSD writes and return immediately.
+ *
+ * Applies the same public raw range validation as npu_nvme_raw_write_batch.
+ * The caller owns the returned request handle.
+ *
+ * @param ctx          context handle
+ * @param npu_ptrs     array of NPU device pointers (source)
+ * @param nvme_offsets array of NVMe byte offsets (destination)
+ * @param sizes        array of per-chunk byte sizes
+ * @param num_items    number of chunks
+ * @param out_req      output request handle
+ * @return 0 on successful submission, -1 on error
+ */
+int npu_nvme_raw_write_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
+                                   uint64_t *nvme_offsets, size_t *sizes,
+                                   int num_items,
+                                   npu_nvme_request_t **out_req);
+
+/**
+ * @brief Submit raw NPU-SSD reads and return immediately.
+ *
+ * Applies the same public raw range validation as npu_nvme_raw_read_batch.
+ * The caller owns the returned request handle.
+ *
+ * @param ctx          context handle
+ * @param npu_ptrs     array of NPU device pointers (destination)
+ * @param nvme_offsets array of NVMe byte offsets (source)
+ * @param sizes        array of per-chunk byte sizes
+ * @param num_items    number of chunks
+ * @param out_req      output request handle
+ * @return 0 on successful submission, -1 on error
+ */
+int npu_nvme_raw_read_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
+                                  uint64_t *nvme_offsets, size_t *sizes,
+                                  int num_items,
+                                  npu_nvme_request_t **out_req);
 
 /**
  * @brief Submit a batch write and return immediately.

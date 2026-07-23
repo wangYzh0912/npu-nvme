@@ -62,6 +62,9 @@ npu_nvme_cleanup(ctx);
 - `npu_nvme_write_batch_host` / `npu_nvme_read_batch_host`：Host DRAM 与 NVMe 之间的批量传输。
 - `npu_nvme_raw_write_batch` / `npu_nvme_raw_read_batch`：checkpoint-independent 的 raw NPU-SSD 传输，调用方显式指定 NVMe 绝对偏移。
 - `npu_nvme_raw_write_batch_host` / `npu_nvme_raw_read_batch_host`：Host 侧 raw 传输。
+- `npu_nvme_write_batch_async` / `npu_nvme_read_batch_async`：提交设备侧异步请求并立即返回 request handle。
+- `npu_nvme_raw_write_batch_async` / `npu_nvme_raw_read_batch_async`：带 raw range 校验的设备侧异步 raw 传输。
+- `npu_nvme_request_poll` / `npu_nvme_request_wait` / `npu_nvme_request_free`：异步 request 的轮询、等待和释放。
 
 Python 侧 raw transfer 封装在 `python/raw_io.py`：
 
@@ -71,6 +74,9 @@ from raw_io import RawIO
 raw = RawIO(ctx)
 raw.write_host([host_ptr], [nvme_offset], [size_bytes])
 raw.read_host([host_ptr], [nvme_offset], [size_bytes])
+
+future = raw.write_async([npu_ptr], [nvme_offset], [size_bytes])
+future.result(timeout=30.0)
 ```
 
 ## Checkpoint 基本操作
@@ -96,10 +102,10 @@ ckpt.cleanup()
 
 说明：
 
-- `save(model, step)` 将模型参数写入 NVMe，并提交 checkpoint metadata。
-- `wait_for_io_completion()` 等待后台 SPDK 写入完成；需要确认保存完成时应显式调用。
-- `load(model, step)` 按 metadata 从 NVMe 恢复对应 step 的模型参数。
-- `cleanup()` 释放 SPDK、ACL 和后台线程资源。
+- `save(model, step)` 将设备侧参数作为 C async request 提交到 reactor，提交后返回；Host fallback 参数仍走同步 Host I/O。
+- `wait_for_io_completion()` 等待未完成的 C async request，并在 I/O 完成后提交 checkpoint metadata。
+- `load(model, step)` 会先等待当前进程内未完成的 save，再按 metadata 从 NVMe 恢复对应 step 的模型参数。
+- `cleanup()` 会等待未完成 I/O，并释放 SPDK、ACL 资源。
 
 ## Bench 示例
 

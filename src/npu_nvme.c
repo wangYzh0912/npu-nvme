@@ -702,6 +702,28 @@ int npu_nvme_raw_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     return npu_nvme_read_batch(ctx, npu_ptrs, nvme_offsets, sizes, num_items);
 }
 
+int npu_nvme_raw_write_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
+                                   uint64_t *nvme_offsets, size_t *sizes,
+                                   int num_items,
+                                   npu_nvme_request_t **out_req) {
+    if (validate_batch_layout(ctx, nvme_offsets, sizes, num_items) != 0) {
+        return -1;
+    }
+    return npu_nvme_write_batch_async(ctx, npu_ptrs, nvme_offsets, sizes,
+                                      num_items, out_req);
+}
+
+int npu_nvme_raw_read_batch_async(NPUNVMEContext *ctx, void **npu_ptrs,
+                                  uint64_t *nvme_offsets, size_t *sizes,
+                                  int num_items,
+                                  npu_nvme_request_t **out_req) {
+    if (validate_batch_layout(ctx, nvme_offsets, sizes, num_items) != 0) {
+        return -1;
+    }
+    return npu_nvme_read_batch_async(ctx, npu_ptrs, nvme_offsets, sizes,
+                                     num_items, out_req);
+}
+
 uint64_t npu_nvme_get_last_io_us(NPUNVMEContext *ctx, int is_read) {
     if (!ctx) return 0;
     return is_read ? ctx->last_read_io_us : ctx->last_write_io_us;
