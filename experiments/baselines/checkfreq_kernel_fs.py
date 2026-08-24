@@ -32,7 +32,9 @@ import mindspore as ms
 from experiments.common import make_gpt2xl_training, init_env, warmup_model
 from experiments.baselines import two_phase_common as tpc
 
-NVME2_DIR = "/models/nvme_baseline"
+NVME2_DIR = os.environ.get(
+    "NPU_NVME_BASELINE_DIR",
+    os.path.join(REPO, "experiments", "output", "baselines", "payload"))
 OUTPUT_DIR = os.path.join(REPO, "experiments", "output")
 
 
@@ -48,6 +50,7 @@ class CheckFreqTwoPhaseKernelFS:
         self._lock = threading.Lock()
         self.in_flight = False
         self._persist_thread = None
+        self._persist_error = None
         self._pinned_ptr = 0
         self._use_pinned = False
         self.snapshot_ms_list = []
@@ -115,21 +118,29 @@ class CheckFreqTwoPhaseKernelFS:
         return ev
 
     def _persist_worker(self, host_buf, filepath, step):
-        persist_ms = tpc.persist_to_file(host_buf, filepath)
-        self.persist_ms_list.append(persist_ms)
-        with self._lock:
-            for ev in reversed(self.ckpt_events):
-                if ev["step"] == step: ev["persist_ms"] = round(persist_ms, 3); break
-        self.in_flight = False
+        try:
+            persist_ms = tpc.persist_to_file(host_buf, filepath)
+            self.persist_ms_list.append(persist_ms)
+            with self._lock:
+                for ev in reversed(self.ckpt_events):
+                    if ev["step"] == step: ev["persist_ms"] = round(persist_ms, 3); break
+        except BaseException as exc:
+            self._persist_error = exc
+        finally:
+            self.in_flight = False
 
     def _persist_worker_pinned(self, filepath, step):
-        persist_ms = tpc.persist_to_file_pinned(
-            self._pinned_ptr, self._total_bytes, filepath)
-        self.persist_ms_list.append(persist_ms)
-        with self._lock:
-            for ev in reversed(self.ckpt_events):
-                if ev["step"] == step: ev["persist_ms"] = round(persist_ms, 3); break
-        self.in_flight = False
+        try:
+            persist_ms = tpc.persist_to_file_pinned(
+                self._pinned_ptr, self._total_bytes, filepath)
+            self.persist_ms_list.append(persist_ms)
+            with self._lock:
+                for ev in reversed(self.ckpt_events):
+                    if ev["step"] == step: ev["persist_ms"] = round(persist_ms, 3); break
+        except BaseException as exc:
+            self._persist_error = exc
+        finally:
+            self.in_flight = False
 
     def wait_all(self):
         thread = None
@@ -138,6 +149,14 @@ class CheckFreqTwoPhaseKernelFS:
             self.in_flight = False
         if thread is not None and thread.is_alive():
             thread.join()
+        if self._persist_error is not None:
+            raise RuntimeError("background checkpoint persist failed") from self._persist_error
+
+    def cleanup(self):
+        self.wait_all()
+        if self._pinned_ptr:
+            tpc.free_pinned_host_buffer(self._pinned_ptr)
+            self._pinned_ptr = 0
 
     def get_stats(self):
         def _s(lst):
@@ -151,7 +170,8 @@ class CheckFreqTwoPhaseKernelFS:
                 "blocking_ms": _s(self.blocking_ms_list)}
 
 
-def run_checkfreq_bench(device_id=1, steps=20, ckpt_every=10):
+def run_checkfreq_bench(device_id=1, steps=20, ckpt_every=10,
+                        output_dir=NVME2_DIR):
     print("=" * 60)
     print("[B1] CheckFreq Two-Phase — Kernel FS Path")
     print(f"  Steps: {steps}, ckpt every: {ckpt_every}")
@@ -163,7 +183,7 @@ def run_checkfreq_bench(device_id=1, steps=20, ckpt_every=10):
     total_bytes = tpc.get_total_param_bytes(model)
     print(f"\n  Total params: {total_bytes / 1e9:.2f} GB")
 
-    engine = CheckFreqTwoPhaseKernelFS(output_dir=NVME2_DIR, device_id=device_id)
+    engine = CheckFreqTwoPhaseKernelFS(output_dir=output_dir, device_id=device_id)
     # MUST allocate pinned BEFORE init_params — get_dev_ptr() changes ACL
     # state in a way that makes subsequent aclrtMallocHost fail.
     engine._total_bytes = total_bytes
@@ -207,6 +227,7 @@ def run_checkfreq_bench(device_id=1, steps=20, ckpt_every=10):
         "experiment": "checkfreq_kernel_fs",
         "method": "CheckFreq Two-Phase (aclrtMemcpy D2H + kernel FS)",
         "total_bytes": total_bytes, "steps": steps, "ckpt_every": ckpt_every,
+        "payload_output": os.path.abspath(output_dir),
         "concurrency": 1,
         "step_mean_ms": round(float(np.mean(step_times)), 1),
         "step_std_ms": round(float(np.std(step_times, ddof=1)) if len(step_times) > 1 else 0.0, 1),
@@ -232,9 +253,10 @@ def run_checkfreq_bench(device_id=1, steps=20, ckpt_every=10):
     print(f"{'=' * 60}")
 
     for s in range(ckpt_every, steps + 1, ckpt_every):
-        p = os.path.join(NVME2_DIR, f"checkfreq_step{s}.ckpt")
+        p = os.path.join(output_dir, f"checkfreq_step{s}.ckpt")
         if os.path.exists(p): os.remove(p)
 
+    engine.cleanup()
     del engine, cell, model, opt, ds, it
     gc.collect()
     return results
@@ -245,8 +267,11 @@ def main():
     p.add_argument("--device-id", type=int, default=1)
     p.add_argument("--steps", type=int, default=20)
     p.add_argument("--ckpt-every", type=int, default=10)
+    p.add_argument("--output", default=NVME2_DIR,
+                   help="filesystem path on the baseline NVMe device")
     args = p.parse_args()
-    run_checkfreq_bench(device_id=args.device_id, steps=args.steps, ckpt_every=args.ckpt_every)
+    run_checkfreq_bench(device_id=args.device_id, steps=args.steps,
+                        ckpt_every=args.ckpt_every, output_dir=args.output)
 
 
 if __name__ == "__main__":

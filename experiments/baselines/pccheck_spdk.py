@@ -61,6 +61,7 @@ class PCCheckConcurrent:
         self.persist_times_ms = []
         self.blocking_times_ms = []
         self.ckpt_events = []
+        self._persist_errors = []
 
     def checkpoint(self, model, step):
         """Non-blocking checkpoint: acquire a slot, snapshot, launch persist.
@@ -100,32 +101,36 @@ class PCCheckConcurrent:
             target=self._on_persist_done, args=(slot, slot_id, step))
         t.daemon = True
         t.start()
-
         return snapshot_ms, blocking_ms
 
     def _on_persist_done(self, slot, slot_id, step):
         """Wait for SPDK persist, then return slot to free pool."""
-        t0 = time.perf_counter()
-        slot["ckpt"].wait_for_io_completion()
-        persist_ms = (time.perf_counter() - t0) * 1000.0
-        self.persist_times_ms.append(persist_ms)
+        try:
+            t0 = time.perf_counter()
+            slot["ckpt"].wait_for_io_completion()
+            persist_ms = (time.perf_counter() - t0) * 1000.0
+            self.persist_times_ms.append(persist_ms)
 
-        # Retroactively fill persist_ms
-        with self._lock:
-            for ev in reversed(self.ckpt_events):
-                if ev["step"] == step and ev.get("slot_id") == slot_id:
-                    ev["persist_ms"] = round(persist_ms, 3)
-                    break
-
-        slot["state"] = "IDLE"
-        self.free_slots.put(slot_id)
+            # Retroactively fill persist_ms.
+            with self._lock:
+                for ev in reversed(self.ckpt_events):
+                    if ev["step"] == step and ev.get("slot_id") == slot_id:
+                        ev["persist_ms"] = round(persist_ms, 3)
+                        break
+        except BaseException as exc:
+            with self._lock:
+                self._persist_errors.append(exc)
+        finally:
+            slot["state"] = "IDLE"
+            self.free_slots.put(slot_id)
 
     def wait_all(self):
         """Wait for ALL in-flight checkpoints to complete."""
-        for slot in self.slots:
-            if slot["state"] == "PERSISTING":
-                slot["ckpt"].wait_for_io_completion()
-                slot["state"] = "IDLE"
+        acquired = [self.free_slots.get() for _ in range(self.concurrency)]
+        for slot_id in acquired:
+            self.free_slots.put(slot_id)
+        if self._persist_errors:
+            raise RuntimeError("background SPDK persist failed") from self._persist_errors[0]
 
     def cleanup(self):
         self.wait_all()

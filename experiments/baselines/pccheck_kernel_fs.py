@@ -25,7 +25,9 @@ import mindspore as ms
 from experiments.common import make_gpt2xl_training, init_env, warmup_model
 from experiments.baselines import two_phase_common as tpc
 
-NVME2_DIR = "/models/nvme_baseline"
+NVME2_DIR = os.environ.get(
+    "NPU_NVME_BASELINE_DIR",
+    os.path.join(REPO, "experiments", "output", "baselines", "payload"))
 OUTPUT_DIR = os.path.join(REPO, "experiments", "output")
 
 
@@ -59,6 +61,7 @@ class PCCheckKernelFS:
         self.persist_ms_list = []
         self.blocking_ms_list = []
         self.ckpt_events = []
+        self._persist_errors = []
         os.makedirs(self.output_dir, exist_ok=True)
 
     def init_params(self, model):
@@ -67,13 +70,18 @@ class PCCheckKernelFS:
         self._total_bytes = tpc.get_total_param_bytes(model)
 
         use_pinned = False
+        pinned_ptrs = []
         try:
             for i in range(self.concurrency):
                 pinned_ptr = tpc.allocate_pinned_host_buffer(self._total_bytes)
+                pinned_ptrs.append(pinned_ptr)
                 self.slots.append(PCCheckSlot(id=i, pinned_ptr=pinned_ptr, host_buf=None))
             use_pinned = True
         except RuntimeError as e:
             print(f"[PCCheck] pinned alloc failed ({e}), using numpy fallback")
+            for pinned_ptr in pinned_ptrs:
+                tpc.free_pinned_host_buffer(pinned_ptr)
+            self.slots.clear()
             for i in range(self.concurrency):
                 host_buf = tpc.allocate_host_buffer(self._total_bytes)
                 self.slots.append(PCCheckSlot(id=i, pinned_ptr=0, host_buf=host_buf))
@@ -112,36 +120,49 @@ class PCCheckKernelFS:
                                f"pccheck_n{self.concurrency}_step{step}_slot{slot_id}.ckpt")
         t = threading.Thread(target=self._persist_worker,
                              args=(slot_id, filepath, step), daemon=True)
-        t.start()
-
         ev = {"step": step, "slot_id": slot_id,
               "snapshot_ms": round(snapshot_ms, 3),
               "sync_ms": snap["sync_ms"], "memcpy_ms": snap["memcpy_ms"],
               "blocking_ms": round(blocking_ms, 3), "persist_ms": 0.0}
         self.ckpt_events.append(ev)
+        t.start()
         return ev
 
     def _persist_worker(self, slot_id, filepath, step):
         slot = self.slots[slot_id]
-        if self._use_pinned:
-            persist_ms = tpc.persist_to_file_pinned(
-                slot.pinned_ptr, self._total_bytes, filepath)
-        else:
-            persist_ms = tpc.persist_to_file(slot.host_buf, filepath)
-        slot.persist_ms = persist_ms
-        self.persist_ms_list.append(persist_ms)
-        with self._lock:
-            for ev in reversed(self.ckpt_events):
-                if ev["step"] == step and ev.get("slot_id") == slot_id:
-                    ev["persist_ms"] = round(persist_ms, 3); break
-        slot.in_use = False
-        self.free_slots.put(slot_id)
+        try:
+            if self._use_pinned:
+                persist_ms = tpc.persist_to_file_pinned(
+                    slot.pinned_ptr, self._total_bytes, filepath)
+            else:
+                persist_ms = tpc.persist_to_file(slot.host_buf, filepath)
+            slot.persist_ms = persist_ms
+            self.persist_ms_list.append(persist_ms)
+            with self._lock:
+                for ev in reversed(self.ckpt_events):
+                    if ev["step"] == step and ev.get("slot_id") == slot_id:
+                        ev["persist_ms"] = round(persist_ms, 3); break
+        except BaseException as exc:
+            with self._lock:
+                self._persist_errors.append(exc)
+        finally:
+            slot.in_use = False
+            self.free_slots.put(slot_id)
 
     def wait_all(self):
         for _ in range(self.concurrency):
             self.free_slots.get()
         for i in range(self.concurrency):
             self.free_slots.put(i)
+        if self._persist_errors:
+            raise RuntimeError("background checkpoint persist failed") from self._persist_errors[0]
+
+    def cleanup(self):
+        self.wait_all()
+        for slot in self.slots:
+            if slot.pinned_ptr:
+                tpc.free_pinned_host_buffer(slot.pinned_ptr)
+                slot.pinned_ptr = 0
 
     def get_stats(self):
         def _s(lst):
@@ -156,7 +177,8 @@ class PCCheckKernelFS:
                 "blocking_ms": _s(self.blocking_ms_list)}
 
 
-def run_pccheck_kernel_fs(device_id=1, steps=20, ckpt_every=5, concurrency=3):
+def run_pccheck_kernel_fs(device_id=1, steps=20, ckpt_every=5, concurrency=3,
+                          output_dir=NVME2_DIR):
     print("=" * 60)
     print(f"[B3] PCcheck Concurrent — Kernel FS Path (N={concurrency})")
     print(f"  Steps: {steps}, ckpt every: {ckpt_every}")
@@ -168,7 +190,7 @@ def run_pccheck_kernel_fs(device_id=1, steps=20, ckpt_every=5, concurrency=3):
     total_bytes = tpc.get_total_param_bytes(model)
     print(f"\n  Total params: {total_bytes / 1e9:.2f} GB")
 
-    engine = PCCheckKernelFS(output_dir=NVME2_DIR, device_id=device_id,
+    engine = PCCheckKernelFS(output_dir=output_dir, device_id=device_id,
                              concurrency=concurrency)
     engine.init_params(model)
 
@@ -209,6 +231,7 @@ def run_pccheck_kernel_fs(device_id=1, steps=20, ckpt_every=5, concurrency=3):
         "experiment": "pccheck_kernel_fs",
         "method": f"PCcheck Concurrent (aclrtMemcpy D2H + kernel FS, N={concurrency})",
         "total_bytes": total_bytes, "steps": steps, "ckpt_every": ckpt_every,
+        "payload_output": os.path.abspath(output_dir),
         "concurrency": concurrency,
         "step_mean_ms": round(float(np.mean(step_times)), 1),
         "step_std_ms": round(float(np.std(step_times, ddof=1)) if len(step_times) > 1 else 0.0, 1),
@@ -235,9 +258,11 @@ def run_pccheck_kernel_fs(device_id=1, steps=20, ckpt_every=5, concurrency=3):
 
     for s in range(ckpt_every, steps + 1, ckpt_every):
         for slot in range(concurrency):
-            p = os.path.join(NVME2_DIR, f"pccheck_n{concurrency}_step{s}_slot{slot}.ckpt")
+            p = os.path.join(output_dir,
+                             f"pccheck_n{concurrency}_step{s}_slot{slot}.ckpt")
             if os.path.exists(p): os.remove(p)
 
+    engine.cleanup()
     del engine, cell, model, opt, ds, it
     gc.collect()
     return results
@@ -249,9 +274,12 @@ def main():
     p.add_argument("--steps", type=int, default=20)
     p.add_argument("--ckpt-every", type=int, default=5)
     p.add_argument("--concurrency", "-n", type=int, default=3)
+    p.add_argument("--output", default=NVME2_DIR,
+                   help="filesystem path on the baseline NVMe device")
     args = p.parse_args()
     run_pccheck_kernel_fs(device_id=args.device_id, steps=args.steps,
-                          ckpt_every=args.ckpt_every, concurrency=args.concurrency)
+                          ckpt_every=args.ckpt_every, concurrency=args.concurrency,
+                          output_dir=args.output)
 
 
 if __name__ == "__main__":

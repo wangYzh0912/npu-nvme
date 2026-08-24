@@ -15,7 +15,9 @@ sys.path.insert(0, REPO)
 import mindspore as ms
 from experiments.common import make_gpt2xl_training, init_env, warmup_model
 
-NVME2_DIR = "/models/nvme_baseline"
+NVME2_DIR = os.environ.get(
+    "NPU_NVME_BASELINE_DIR",
+    os.path.join(REPO, "experiments", "output", "baselines", "payload"))
 OUTPUT_DIR = os.path.join(REPO, "experiments", "output")
 
 
@@ -30,6 +32,7 @@ class MSSaveBaseline:
         self._lock = threading.Lock()
         self.in_flight = False
         self._thread = None
+        self._persist_error = None
         self.persist_ms_list = []
         self.blocking_ms_list = []
         self.ckpt_events = []
@@ -58,14 +61,18 @@ class MSSaveBaseline:
         return ev
 
     def _worker(self, model, path, step):
-        t0 = time.perf_counter()
-        ms.save_checkpoint(model, path)
-        persist_ms = (time.perf_counter() - t0) * 1000.0
-        self.persist_ms_list.append(persist_ms)
-        with self._lock:
-            for ev in reversed(self.ckpt_events):
-                if ev["step"] == step: ev["persist_ms"] = round(persist_ms, 3); break
-        self.in_flight = False
+        try:
+            t0 = time.perf_counter()
+            ms.save_checkpoint(model, path)
+            persist_ms = (time.perf_counter() - t0) * 1000.0
+            self.persist_ms_list.append(persist_ms)
+            with self._lock:
+                for ev in reversed(self.ckpt_events):
+                    if ev["step"] == step: ev["persist_ms"] = round(persist_ms, 3); break
+        except BaseException as exc:
+            self._persist_error = exc
+        finally:
+            self.in_flight = False
 
     def wait_all(self):
         t = None
@@ -74,6 +81,8 @@ class MSSaveBaseline:
             self.in_flight = False
         if t is not None and t.is_alive():
             t.join()
+        if self._persist_error is not None:
+            raise RuntimeError("background ms.save_checkpoint failed") from self._persist_error
 
     def get_stats(self):
         def _s(lst):
@@ -86,7 +95,8 @@ class MSSaveBaseline:
                 "blocking_ms": _s(self.blocking_ms_list)}
 
 
-def run_ms_save_bench(device_id=1, steps=30, ckpt_every=5):
+def run_ms_save_bench(device_id=1, steps=30, ckpt_every=5,
+                      output_dir=NVME2_DIR):
     print("=" * 60)
     print(f"[ms.save] ms.save_checkpoint() Baseline")
     print(f"  Steps: {steps}, ckpt every: {ckpt_every}")
@@ -99,7 +109,7 @@ def run_ms_save_bench(device_id=1, steps=30, ckpt_every=5):
                       for p in model.trainable_params())
     print(f"\n  Total params: {total_bytes / 1e9:.2f} GB")
 
-    engine = MSSaveBaseline(output_dir=NVME2_DIR)
+    engine = MSSaveBaseline(output_dir=output_dir)
 
     from direct_checkpoint import ProbeTrainOneStepCell
     cell = ProbeTrainOneStepCell(model, opt, enable_probe=False, ckpt_interval=9999)
@@ -134,6 +144,7 @@ def run_ms_save_bench(device_id=1, steps=30, ckpt_every=5):
         "experiment": "ms_save_checkpoint",
         "method": "ms.save_checkpoint() (snapshot N/A — internal black box)",
         "total_bytes": total_bytes, "steps": steps, "ckpt_every": ckpt_every,
+        "payload_output": os.path.abspath(output_dir),
         "step_mean_ms": round(float(np.mean(step_times)), 1),
         "total_time_ms": total_time_ms,
         "timing": stats, "ckpt_events": engine.ckpt_events,
@@ -152,7 +163,7 @@ def run_ms_save_bench(device_id=1, steps=30, ckpt_every=5):
     print(f"  Saved: {out_path}")
 
     for s in range(ckpt_every, steps + 1, ckpt_every):
-        p = os.path.join(NVME2_DIR, f"ms_save_step{s}.ckpt")
+        p = os.path.join(output_dir, f"ms_save_step{s}.ckpt")
         if os.path.exists(p): os.remove(p)
 
     del engine, cell, model, opt, ds, it
@@ -165,8 +176,11 @@ def main():
     p.add_argument("--device-id", type=int, default=1)
     p.add_argument("--steps", type=int, default=30)
     p.add_argument("--ckpt-every", type=int, default=5)
+    p.add_argument("--output", default=NVME2_DIR,
+                   help="filesystem path on the baseline NVMe device")
     args = p.parse_args()
-    run_ms_save_bench(device_id=args.device_id, steps=args.steps, ckpt_every=args.ckpt_every)
+    run_ms_save_bench(device_id=args.device_id, steps=args.steps,
+                      ckpt_every=args.ckpt_every, output_dir=args.output)
 
 
 if __name__ == "__main__":
