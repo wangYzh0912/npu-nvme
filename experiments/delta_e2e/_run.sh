@@ -19,6 +19,7 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd "${SCRIPT_DIR}/../.." && pwd)
 PYTHON="${NPU_NVME_PYTHON:-python}"
 ASCEND_SETUP="${ASCEND_SETUP:-/usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash}"
+PCI_ADDR="${NPU_NVME_PCI_ADDR:-0000:83:00.0}"
 
 OUTPUT_DIR="$REPO/experiments/output/delta_e2e"
 SCRIPT="$REPO/experiments/delta_e2e/delta_e2e.py"
@@ -26,6 +27,7 @@ SCRIPT="$REPO/experiments/delta_e2e/delta_e2e.py"
 echo "============================================================"
 echo "Delta-Checkpoint E2E (T4–T6)"
 echo "  Device: $DEVICE_ID  |  Args: ${EXTRA_ARGS[*]:-none}"
+echo "  NVMe PCI: $PCI_ADDR"
 echo "============================================================"
 
 mkdir -p "$OUTPUT_DIR"
@@ -36,7 +38,8 @@ set -u
 export PYTHONPATH="$REPO/python:${PYTHONPATH:-}"
 
 sudo -n --preserve-env=PATH,LD_LIBRARY_PATH,PYTHONPATH,ASCEND_HOME_PATH \
-    "$PYTHON" "$SCRIPT" --device-id "$DEVICE_ID" "${EXTRA_ARGS[@]}"
+    "$PYTHON" "$SCRIPT" --device-id "$DEVICE_ID" --pci-addr "$PCI_ADDR" \
+    "${EXTRA_ARGS[@]}"
 RC=$?
 
 echo ""

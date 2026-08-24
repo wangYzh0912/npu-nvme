@@ -44,12 +44,12 @@ flowchart LR
 | `scripts/` | 阶段验证脚本 | 依赖目标机器环境 |
 | `tools/` | 历史代码清理脚本 | 非运行主线 |
 | `third_party/spdk` | SPDK Git 子模块 | 当前工作区未展开 |
-| `fig/`、`experiments/output/` | 已有实验结果与图表 | 可作为报告素材，但需复核版本 |
+| `results/preliminary/` | 有复核价值的早期原始数据 | 仅供设计后续实验，不作为正式结论 |
 
 WaitProbe/TriggerProbe 旧工程已经审阅并从开发主线移除，完整历史保存在远端
 `codex/archive-wait-trigger-probe` 分支；审阅结论见
-`docs/archive/WAIT_TRIGGER_PROBE_REVIEW.md`。其余实验目录仍需先建立入口和结果清单，
-再进行可回归的目录重构。
+`docs/archive/WAIT_TRIGGER_PROBE_REVIEW.md`。实验入口现已按 baseline、delta_e2e、
+microbench 和 training 分层，使用边界见 `experiments/README.md`。
 
 DeltaDetect AscendC 原型也已完成审阅并从开发主线移除，原始文件保存在远端
 `codex/pre-cleanup-archive` 分支，结论见
@@ -69,7 +69,6 @@ DeltaDetect AscendC 原型也已完成审阅并从开发主线移除，原始文
 | `delta_cell.py` | Top-K 块选择、INT8 量化、上一版本缓冲更新 |
 | `delta_protocol.py` | Delta 帧序列化、反序列化和 CPU 恢复 |
 | `noop_init.py` | 恢复前跳过随机初始化 |
-| `bench.py` | GPT-2 XL 的 Baseline、Delta、FULL 三阶段基准 |
 | `format_npu_disk.py` | 初始化裸盘超级块与元数据槽 |
 | `inspect_npu_disk.py` | 查看裸盘布局与检查点元数据 |
 | `export_model.py` | 将多 rank 分片汇总到裸盘 Heap 区 |
@@ -196,15 +195,15 @@ FULL 区域由 Python 按
 1. 没有 Python 依赖清单、测试配置或 CI。
 2. DPDK mempool-ring 修补归档已经改为显式配置，但其生成方法和对应 DPDK commit
    仍需在目标机补充为可复现脚本。
-3. `experiments/` 混合当前实验、诊断脚本和已废弃方案，容易误用。
-4. 已跟踪结果文件来自不同版本；例如当前 `bench_full.json` 中
-   `p_old_nonzero=false`、`quant_nonzero=false`，不能作为 Delta 正确性的证据。
+3. 实验目录虽已完成第一轮分层，仍缺少自动采集环境清单和跨机器运行封装。
+4. 无效或来源不清的旧结果已转入归档；`results/preliminary/` 中保留的三份早期
+   JSON 仍缺少源码提交号，只能作为量级参考。
 
 ## 7. 已完成的静态验证
 
-- Git 工作树在审计开始时干净，当前分支为 `master`。
-- `python/` 全部文件通过 Python 3.14 parser 的语法编译检查。
-- `experiments/clean_room_tests.py` 在第 38 行附近存在语法错误。
+- 审计从原始 `master` 提交建立了独立清理与远端归档分支。
+- `python/`、`experiments/`、`dataset_prepare/` 和 `tests/python/` 已通过语法编译检查。
+- 有语法错误的一次性 `clean_room_tests.py` 已归档并从开发主线移除。
 - SPDK 子模块记录为 gitlink，但当前工作区未展开；本机也没有项目运行依赖。
 - 未执行 CMake、C 编译、MindSpore 图编译、SPDK I/O 或 NPU 实验。
 

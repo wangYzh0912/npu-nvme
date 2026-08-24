@@ -3,7 +3,7 @@
 
 Validates the full incremental-checkpoint pipeline:
 
-  T4 — multi-step FaF: listener triggers SPDK writes via direct iteration.
+  T4 — multi-step FaF: Reactor step poller triggers SPDK writes.
   T5 — step-time overhead vs baseline (ProbeTrainOneStepCell without delta ops).
   T6 — recovery: FULL ckpt + delta chain restore, NRMSE vs oracle.
 
@@ -15,7 +15,7 @@ Output: experiments/output/delta_e2e/delta_e2e.json
 
 import os, sys, time, json, ctypes, argparse
 
-REPO = "/home/user7/npu-nvme"
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO, "python"))
 sys.path.insert(0, REPO)
 
@@ -84,7 +84,7 @@ def direct_train(cell, ds, steps, label="train"):
 # -- T4: Multi-step FaF trigger --
 
 def test_faf_trigger(device_id, steps=10):
-    """T4: Multi-step training with FaF listener — direct iteration.
+    """T4: Multi-step training with FaF Reactor polling — direct iteration.
 
     Uses direct iteration (cell(*data)) instead of ms.Model.train to
     avoid the attention-mask shape broadcasting issue in the framework
@@ -101,14 +101,15 @@ def test_faf_trigger(device_id, steps=10):
     ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend",
                    device_id=device_id)
 
-    ckpt = make_ckpt(device_id=device_id, pipeline_depth=8)
+    ckpt = make_ckpt(nvme_addr=PCI_ADDR, device_id=device_id,
+                     pipeline_depth=8)
 
     # Compile with one dummy step
     it = ds.create_tuple_iterator()
     data = next(it)
     _ = cell(*data)
 
-    # Wire FaF listener
+    # Wire the Reactor step poller.
     dev_flag, dev_step = ckpt.register_delta_tasks(cell, ckpt_interval=1)
     ckpt.delta_init(256, 128)
 
@@ -283,12 +284,16 @@ def test_recovery(device_id, steps=5):
 # -- Main --
 
 def main():
+    global PCI_ADDR
     parser = argparse.ArgumentParser(description="Delta-checkpoint E2E (T4-T6)")
     parser.add_argument("--device-id", type=int, default=1)
+    parser.add_argument("--pci-addr", default=PCI_ADDR,
+                        help="SPDK NVMe PCI address")
     parser.add_argument("--steps", type=int, default=10)
     parser.add_argument("--tests", type=str, default="all",
                         help="comma-separated: T4,T5,T6 or 'all'")
     args = parser.parse_args()
+    PCI_ADDR = args.pci_addr
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -306,6 +311,7 @@ def main():
         "date": time.strftime("%Y-%m-%d %H:%M:%S"),
         "config": {
             "device_id": args.device_id,
+            "pci_addr": PCI_ADDR,
             "steps": args.steps,
             "block_size": BLOCK_SIZE,
             "top_k_frac": TOP_K_FRAC,
@@ -353,7 +359,8 @@ def main():
     with open(out, "w") as f:
         json.dump(results, f, indent=2, default=str)
     print(f"\nSaved: {out}")
+    return 0 if total > 0 and passed == total else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

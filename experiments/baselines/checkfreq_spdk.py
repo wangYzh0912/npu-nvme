@@ -31,10 +31,10 @@ class CheckFreqTwoPhaseSPDK:
     Uses DirectCheckpoint for the SPDK I/O layer.
     """
 
-    def __init__(self, device_id=1):
+    def __init__(self, device_id=1, nvme_addr="0000:83:00.0"):
         from direct_checkpoint import DirectCheckpoint
         self.ckpt = DirectCheckpoint(
-            nvme_addr="0000:83:00.0", npu_device_id=device_id,
+            nvme_addr=nvme_addr, npu_device_id=device_id,
             pipeline_depth=8, requested_chunk_size=CHUNK_SIZE,
             keep_last_n=3, slot_size_gb=50)
         self._lock = threading.Lock()
@@ -100,11 +100,12 @@ class CheckFreqTwoPhaseSPDK:
         }
 
 
-def run_checkfreq_spdk(device_id=1, steps=30, ckpt_every=10):
+def run_checkfreq_spdk(device_id=1, steps=30, ckpt_every=10,
+                       nvme_addr="0000:83:00.0"):
     print("=" * 60)
     print("[B1/B2] CheckFreq Two-Phase — SPDK Path (NVMe #1)")
     print(f"  Snapshot: D2D copy → HBM snapshot buffer")
-    print(f"  Persist:  SPDK DMA → NVMe #1 (0000:83:00.0)")
+    print(f"  Persist:  SPDK DMA → NVMe ({nvme_addr})")
     print("=" * 60)
 
     init_env(device_id=device_id)
@@ -118,7 +119,7 @@ def run_checkfreq_spdk(device_id=1, steps=30, ckpt_every=10):
     from direct_checkpoint import ProbeTrainOneStepCell
     cell = ProbeTrainOneStepCell(model, opt, enable_probe=False, ckpt_interval=9999)
 
-    engine = CheckFreqTwoPhaseSPDK(device_id=device_id)
+    engine = CheckFreqTwoPhaseSPDK(device_id=device_id, nvme_addr=nvme_addr)
 
     it = ds.create_tuple_iterator()
     _ = cell(*next(it))
@@ -157,6 +158,7 @@ def run_checkfreq_spdk(device_id=1, steps=30, ckpt_every=10):
         "total_bytes": total_bytes,
         "steps": steps,
         "ckpt_every": ckpt_every,
+        "nvme_addr": nvme_addr,
         "concurrency": None,
         "step_mean_ms": float(np.mean(step_times)),
         "step_std_ms": float(np.std(step_times)),
@@ -182,9 +184,10 @@ def main():
     parser.add_argument("--device-id", type=int, default=1)
     parser.add_argument("--steps", type=int, default=30)
     parser.add_argument("--ckpt-every", type=int, default=10)
+    parser.add_argument("--pci-addr", default="0000:83:00.0")
     args = parser.parse_args()
     run_checkfreq_spdk(device_id=args.device_id, steps=args.steps,
-                       ckpt_every=args.ckpt_every)
+                       ckpt_every=args.ckpt_every, nvme_addr=args.pci_addr)
 
 
 if __name__ == "__main__":

@@ -2,20 +2,21 @@
 """
 Vector Engine Quantization Throughput Benchmark — Q1 (pure Cast), Q2 (full pipeline), Q3 (GPT scale).
 
-Output: experiments/output/vector_quant_bench.json
+Output: experiments/output/microbench/vector_quant_bench.json
 
 Usage:
-  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/vector_quant_throughput.py'
+  python experiments/microbench/vector_quant_throughput.py
 """
 import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(REPO, "python"))
 
 import time, json, gc, argparse
 import numpy as np
 import mindspore as ms
 from mindspore import nn, context, ops, Tensor
 
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
+OUTPUT_DIR = os.path.join(REPO, "experiments", "output", "microbench")
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "vector_quant_bench.json")
 
 

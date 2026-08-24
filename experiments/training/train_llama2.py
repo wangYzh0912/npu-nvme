@@ -1,8 +1,11 @@
-import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
+import os, sys
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(REPO, "python"))
+os.chdir(REPO)
 """MindSpore LLaMA2 training script using MindRecord datasets.
 
 Usage:
-- python python/train_llama2.py
+- python experiments/training/train_llama2.py
 
 Inputs:
 - MindRecord dataset under dataset_prepare/.

@@ -33,7 +33,8 @@ class PCCheckConcurrent:
     When a slot's persist completes, it returns to free_slots.
     """
 
-    def __init__(self, device_id=1, concurrency=3):
+    def __init__(self, device_id=1, concurrency=3,
+                 nvme_addr="0000:83:00.0"):
         self.concurrency = concurrency
         self.device_id = device_id
         self.free_slots = queue.Queue(maxsize=concurrency)
@@ -46,7 +47,7 @@ class PCCheckConcurrent:
         self.slots = []
         for i in range(concurrency):
             ckpt = DirectCheckpoint(
-                nvme_addr="0000:83:00.0", npu_device_id=device_id,
+                nvme_addr=nvme_addr, npu_device_id=device_id,
                 pipeline_depth=8, requested_chunk_size=CHUNK_SIZE,
                 keep_last_n=concurrency + 2, slot_size_gb=10)
             self.slots.append({
@@ -150,7 +151,8 @@ class PCCheckConcurrent:
         }
 
 
-def run_pccheck(device_id=1, steps=30, ckpt_every=5, concurrency=3):
+def run_pccheck(device_id=1, steps=30, ckpt_every=5, concurrency=3,
+                nvme_addr="0000:83:00.0"):
     print("=" * 60)
     print(f"[B3] PCcheck Concurrent — SPDK Path (NVMe #1)")
     print(f"  Concurrency: {concurrency}")
@@ -168,7 +170,8 @@ def run_pccheck(device_id=1, steps=30, ckpt_every=5, concurrency=3):
     from direct_checkpoint import ProbeTrainOneStepCell
     cell = ProbeTrainOneStepCell(model, opt, enable_probe=False, ckpt_interval=9999)
 
-    engine = PCCheckConcurrent(device_id=device_id, concurrency=concurrency)
+    engine = PCCheckConcurrent(device_id=device_id, concurrency=concurrency,
+                               nvme_addr=nvme_addr)
 
     it = ds.create_tuple_iterator()
     _ = cell(*next(it))  # compile
@@ -208,6 +211,7 @@ def run_pccheck(device_id=1, steps=30, ckpt_every=5, concurrency=3):
         "steps": steps,
         "ckpt_every": ckpt_every,
         "concurrency": concurrency,
+        "nvme_addr": nvme_addr,
         "step_mean_ms": float(np.mean(step_times)),
         "step_std_ms": float(np.std(step_times)),
         "total_time_ms": total_time,
@@ -234,9 +238,11 @@ def main():
     parser.add_argument("--steps", type=int, default=30)
     parser.add_argument("--ckpt-every", type=int, default=5)
     parser.add_argument("--concurrency", "-n", type=int, default=3)
+    parser.add_argument("--pci-addr", default="0000:83:00.0")
     args = parser.parse_args()
     run_pccheck(device_id=args.device_id, steps=args.steps,
-                ckpt_every=args.ckpt_every, concurrency=args.concurrency)
+                ckpt_every=args.ckpt_every, concurrency=args.concurrency,
+                nvme_addr=args.pci_addr)
 
 
 if __name__ == "__main__":

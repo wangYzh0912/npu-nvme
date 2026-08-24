@@ -200,13 +200,14 @@
 
 1. `step1c_spdk_bw.json` 中约 56 GB/s 的 `pipeline_dma_mbs`。该数值高于单块
    PCIe Gen4 ×4 NVMe 的物理上限，计时口径明显不适合作为存储带宽。
-2. 当前 `bench_full.json` 的 Delta overhead 46.6%。该次结果同时记录
-   `p_old_nonzero=false` 和 `quant_nonzero=false`，不能证明有效 Delta 工作负载。
+2. 历史 `bench_full.json` 的 Delta overhead 46.6%。该次结果同时记录
+   `p_old_nonzero=false` 和 `quant_nonzero=false`，已从开发分支移除，不能证明
+   有效 Delta 工作负载。
 3. 早期 189.3% 的单步 Delta overhead。该数据包含 CPU workaround 且样本过少，
    只能说明原型开销很高。
 4. 100 步 NRMSE 曲线不能作为“恢复成功”证据。它反而说明固定 Top-10% 方案存在
    误差累积；而且当前 JSON 只保留单步结果，与 PNG 图的数据版本不一致。
-5. 当前 `plot_figures.py` 依赖的 `baseline_results.json`、
+5. 历史 `plot_figures.py` 依赖的 `baseline_results.json`、
    `operator_experiments_v2.json`、`vector_engine_profile.json`、
    `vector_quant_bench.json` 和 `spdk_results.json` 均不在工作区，无法重新生成图表。
 6. CheckFreq、PCcheck 和 MindSpore save 的现行对比脚本已经重写，但没有保存当前
@@ -285,12 +286,12 @@
 
 | 内容 | 当前来源 |
 |---|---|
-| FULL 保存延迟、训练 step 时间 | `experiments/output/bench_full.json` |
-| GPT-2 XL 基线与模型规模 | `experiments/output/benchmark/step1_benchmark.json` |
-| Cube/Vector PMU 数据 | `experiments/output/benchmark/step1b_pmu.json` |
-| 旧版 FULL 带宽分解 | `experiments/output/benchmark/step1c_spdk_bw.json` |
-| 图内 Delta、量化、HBM 地址、Delta 写出 | `experiments/output/step2_demo/step2_validation.json` |
-| 单步恢复 NRMSE | `experiments/output/step2b_recovery/step2b_nrmse.json` |
+| FULL 保存延迟、训练 step 时间 | 历史无效结果，见远端 `codex/pre-cleanup-archive` |
+| GPT-2 XL 基线与模型规模 | `results/preliminary/step1/step1_benchmark.json` |
+| Cube/Vector PMU 数据 | `results/preliminary/step1/step1b_pmu.json` |
+| 旧版 FULL 带宽分解 | `results/preliminary/step1/step1c_spdk_bw.json` |
+| 图内 Delta、量化、HBM 地址、Delta 写出 | 历史未通过结果，见远端归档分支 |
+| 单步恢复 NRMSE | 历史单步样本，见远端归档分支，需复测 |
 | Reactor 架构、V0–V6 和阶段性能 | `docs/REACTOR_CONTROL_PLANE.md` |
 | V2 smoke 与 3.707 GB/s | Git commit `af539d4` |
 | V3 FSM 与 4 MiB 最佳块 | Git commit `82462ec` |

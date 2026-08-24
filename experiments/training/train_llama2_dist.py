@@ -1,8 +1,11 @@
-import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
+import os, sys
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(REPO, "python"))
+os.chdir(REPO)
 """Distributed LLaMA2 training script with NVMe checkpointing support.
 
 Usage:
-- python python/train_llama2_dist.py (distributed launcher as needed)
+- python experiments/training/train_llama2_dist.py (distributed launcher as needed)
 
 Inputs:
 - MindRecord dataset under dataset_prepare/.

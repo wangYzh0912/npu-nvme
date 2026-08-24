@@ -2,13 +2,14 @@
 """
 Baseline Checkpoint Bandwidth Benchmark — 5 methods (A–E) + raw NVMe (F).
 
-Output: experiments/output/baseline_results.json
+Output: experiments/output/baselines/checkpoint_methods.json
 
 Usage:
-  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/baseline_benchmark.py'
+  python experiments/baselines/checkpoint_methods.py --output /path/to/nvme
 """
 import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(REPO, "python"))
 
 import time, json, pickle, shutil, argparse, warnings
 from typing import List
@@ -23,14 +24,15 @@ MODEL_NAME    = "gpt2_xl"
 SEQ_LEN       = 1024
 BATCH_SIZE    = 1
 DEVICE_ID     = 1
-TRAIN_MR      = "/home/user7/npu-nvme/dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025.mindrecord"
-NVME_DIR      = "/models/baseline_test"
+TRAIN_MR      = os.path.join(REPO, "dataset_prepare", "gpt2", "wikitext2_data",
+                             "gpt2_train_1025.mindrecord")
+NVME_DIR      = os.path.join(REPO, "experiments", "output", "baselines", "payload")
 CKPT_INTERVAL = 10
 WARMUP_STEPS  = 3
 TOTAL_STEPS   = 35
 RAW_FILE_GB   = 4.0
-OUTPUT_DIR    = os.path.join(os.path.dirname(__file__), "output")
-OUTPUT_JSON   = os.path.join(OUTPUT_DIR, "baseline_results.json")
+OUTPUT_DIR    = os.path.join(REPO, "experiments", "output", "baselines")
+OUTPUT_JSON   = os.path.join(OUTPUT_DIR, "checkpoint_methods.json")
 
 # — data structures —
 @dataclass
@@ -242,8 +244,8 @@ def build_training():
     print(f"[Setup] Model params: {total_bytes/1024/1024:.1f} MB", flush=True)
     return base_model, train_cell, total_bytes
 
-def make_dataset():
-    ds = ms.dataset.MindDataset(TRAIN_MR, shuffle=True)
+def make_dataset(train_mr):
+    ds = ms.dataset.MindDataset(train_mr, shuffle=True)
     ds = ds.batch(BATCH_SIZE, drop_remainder=True)
     ds = ds.take(TOTAL_STEPS)
     return ds
@@ -253,6 +255,7 @@ def main():
     parser.add_argument("--methods", nargs="+", default=["A","B","C","D","E","F"])
     parser.add_argument("--device-id", type=int, default=DEVICE_ID)
     parser.add_argument("--output", type=str, default=NVME_DIR)
+    parser.add_argument("--train-data", type=str, default=TRAIN_MR)
     args = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
@@ -281,7 +284,7 @@ def main():
             raw_results = bench_raw_nvme_write(output_dir, RAW_FILE_GB)
             continue
         name, Cls = callbacks_map[m]
-        train_ds = make_dataset()
+        train_ds = make_dataset(args.train_data)
         result = run_single_method(name, Cls, model, train_cell, train_ds, total_bytes, output_dir)
         all_results.append(result)
         time.sleep(1)
@@ -302,20 +305,17 @@ def main():
         print("-"*45)
         for r in raw_results:
             print(f"{r['block_mb']:>9} MB  {r['size_gb']:>8.2f}GB  {r['elapsed_s']:>8.2f}s  {r['bw_mbs']:>10.1f} MB/s")
-    print(f"\n{'='*85}\n  SPDK NPU→NVMe direct (reference):  ~4200 MB/s\n{'='*85}\n")
-
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     report = {
         "config": {
             "model": MODEL_NAME, "seq_len": SEQ_LEN, "batch_size": BATCH_SIZE,
             "device_id": args.device_id,
-            "nvme_84": "/dev/nvme1n1 (0000:84:00.0)", "mount": "/models", "fs": "xfs",
-            "nvme_83_spdk": "0000:83:00.0 (SPDK exclusive)",
+            "train_data": os.path.abspath(args.train_data),
+            "payload_output": os.path.abspath(output_dir),
             "ckpt_interval": CKPT_INTERVAL, "warmup_steps": WARMUP_STEPS, "total_steps": TOTAL_STEPS,
         },
         "methods": [asdict(r) for r in all_results],
         "raw_nvme_bench": raw_results,
-        "spdk_reference_bw_mbs": 4200,
     }
     with open(OUTPUT_JSON, "w") as f:
         json.dump(report, f, indent=2)

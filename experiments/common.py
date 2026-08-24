@@ -2,7 +2,7 @@
 
 Reduces boilerplate across ~70 experiment files by centralising:
   - GPT-2 XL model construction + training setup
-  - DirectCheckpoint factory + FaF listener wiring
+  - DirectCheckpoint factory + FaF Reactor step-poller wiring
   - StepTimer / EpochTimer callback classes
 
 Usage:
@@ -68,7 +68,7 @@ def make_ckpt(nvme_addr="0000:83:00.0", device_id=1, pipeline_depth=8,
               keep_last_n=3, slot_size_gb=10, warmup_fn=None, **kwargs):
     """Create a DirectCheckpoint with standard defaults.
 
-    Also sets SPDK_SHM_ID and (optionally) NPU_NVME_LISTENER_MODE env vars.
+    Also sets SPDK_SHM_ID when a shared-memory ID is supplied.
     """
     if shm_id is not None:
         os.environ.setdefault("SPDK_SHM_ID", str(shm_id))
@@ -87,7 +87,7 @@ def make_ckpt(nvme_addr="0000:83:00.0", device_id=1, pipeline_depth=8,
     )
 
 
-# -- FaF listener setup -----------------------------------------------------
+# -- FaF Reactor step-poller setup -----------------------------------------
 
 def setup_faf_checkpointing(ckpt, model, cell, ckpt_interval=10):
     """Register tasks and wire probe flag + step_counter pointers to C layer.
@@ -132,7 +132,7 @@ def setup_faf_checkpointing(ckpt, model, cell, ckpt_interval=10):
 # -- Delta-checkpoint helpers -----------------------------------------------
 
 def setup_delta_faf(ckpt, delta_cell, ckpt_interval=5):
-    """Wire a DeltaTrainCell to the FaF listener and initialise the delta area.
+    """Wire a DeltaTrainCell to the Reactor poller and initialise its delta area.
 
     Calls build_layout_for_delta + register_delta_tasks + delta_init.
     Must be called AFTER graph compilation (one dummy forward pass).
@@ -148,7 +148,7 @@ def setup_delta_faf(ckpt, delta_cell, ckpt_interval=5):
     # Build layout for delta output buffers
     ckpt.build_layout_for_delta(delta_cell)
 
-    # Register with C-layer FaF listener
+    # Register with the C-layer Reactor step poller.
     dev_flag, dev_step = ckpt.register_delta_tasks(delta_cell, ckpt_interval)
 
     # Initialise delta ring area on NVMe

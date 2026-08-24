@@ -2,13 +2,14 @@
 """
 Vector Engine PMU Profiling — V1 (Dense micro-net), V2 (GPT-2 6L), V3 (GPT-2 XL 48L).
 
-Output: experiments/output/vector_engine_profile.json
+Output: experiments/output/microbench/vector_engine_profile.json
 
 Usage:
-  sudo su - root -c 'source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash && /home/user7/miniconda3/envs/ms_2.5/bin/python /home/user7/npu-nvme/experiments/vector_engine_profile.py --exp V1,V2,V3 --device-id 1'
+  python experiments/microbench/vector_engine_profile.py --exp V1,V2,V3 --device-id 1
 """
 import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(REPO, "python"))
 
 import time, json, csv, glob, argparse, warnings, gc, re
 from collections import defaultdict
@@ -18,7 +19,7 @@ from mindspore import nn, context, ops, Tensor
 
 warnings.filterwarnings("ignore")
 
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
+OUTPUT_DIR = os.path.join(REPO, "experiments", "output", "microbench")
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "vector_engine_profile.json")
 
 # — PMU parser —
