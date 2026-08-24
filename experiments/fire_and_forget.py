@@ -154,8 +154,8 @@ def main():
 
     cb.ckpt.register_tasks(base_model, step=0)
 
-    # Extract the ACTUAL device addresses of the graph's Parameter buffers
-    # These are the memory that TrigProbe/WaitProbe AICPU kernels operate on.
+    # Extract the ACTUAL device addresses of the graph's step-counter buffers.
+    # The C reactor polls these buffers directly; no custom AICPU probe is used.
     dev_flag_addr = probe_wrapper.flag._data_ptr()
     dev_step_addr = probe_wrapper.step_counter._data_ptr()
 

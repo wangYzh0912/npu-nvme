@@ -39,8 +39,6 @@ flowchart LR
 | `include/` | 公共 C API 与内部状态结构，约 525 行 | 核心接口 |
 | `experiments/` | 基线、FaF、Delta、分布式及诊断实验 | 混合了当前入口和历史原型 |
 | `docs/` | Reactor 论文式说明和项目总览 | 后续报告素材主目录 |
-| `kernels/trigger_probe/` | 旧 TriggerProbe 自定义算子 | 兼容/历史路径 |
-| `wait_probe/` | 旧 WaitProbe 工程 | 已被 step-counter poller 替代 |
 | `experiments/ascendc/` | Delta 自定义算子探索 | 研究原型，未接入当前 Python 主线 |
 | `dataset_prepare/` | GPT-2/LLaMA 数据准备 | 辅助工具 |
 | `scripts/` | 阶段验证脚本 | 依赖目标机器环境 |
@@ -48,8 +46,10 @@ flowchart LR
 | `third_party/spdk` | SPDK Git 子模块 | 当前工作区未展开 |
 | `fig/`、`experiments/output/` | 已有实验结果与图表 | 可作为报告素材，但需复核版本 |
 
-建议暂不直接移动 `experiments/`、`kernels/` 和 `wait_probe/`：大量脚本使用基于仓库
-根目录的导入和路径。应先建立测试与入口清单，再进行一次可回归的目录重构。
+WaitProbe/TriggerProbe 旧工程已经审阅并从开发主线移除，完整历史保存在远端
+`codex/archive-wait-trigger-probe` 分支；审阅结论见
+`docs/archive/WAIT_TRIGGER_PROBE_REVIEW.md`。其余实验目录仍需先建立入口和结果清单，
+再进行可回归的目录重构。
 
 ## 3. Python 主线
 
@@ -65,7 +65,6 @@ flowchart LR
 | `delta_cell.py` | Top-K 块选择、INT8 量化、上一版本缓冲更新 |
 | `delta_protocol.py` | Delta 帧序列化、反序列化和 CPU 恢复 |
 | `noop_init.py` | 恢复前跳过随机初始化 |
-| `_legacy_compat.py` | WaitProbe/TriggerProbe 旧接口兼容 |
 | `bench.py` | GPT-2 XL 的 Baseline、Delta、FULL 三阶段基准 |
 | `format_npu_disk.py` | 初始化裸盘超级块与元数据槽 |
 | `inspect_npu_disk.py` | 查看裸盘布局与检查点元数据 |

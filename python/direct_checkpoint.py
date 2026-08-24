@@ -24,7 +24,6 @@ Sub-modules (importable independently):
   delta_protocol  — pack/unpack/apply delta frames + FileDeltaWriter
   noop_init       — NoOpInitializer for fast NVMe checkpoint restore
   training_cell   — ProbeTrainOneStepCell with FaF step_counter injection
-  _legacy_compat  — DEPRECATED WaitProbe-era symbols (do NOT use in new code)
 """
 
 import ctypes
@@ -56,9 +55,6 @@ from delta_protocol import (pack_delta_frame, unpack_delta_frame,
                              apply_delta_patches, FileDeltaWriter)
 from noop_init import NoOpInitializer, replace_with_noop_initializer
 from training_cell import ProbeTrainOneStepCell
-
-# DEPRECATED — only for backward compatibility with legacy scripts
-from _legacy_compat import bind_depend_op, wait_op_info, trigger_op_info
 
 
 # -- Device pointer helper (single entry point for all MS pointer access) ----
