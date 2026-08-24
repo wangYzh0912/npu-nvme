@@ -1,7 +1,8 @@
 #!/bin/bash
 # ============================================================
 # Phase A: NPU 服务器重构验证脚本
-# 用法: bash scripts/verify_phaseA.sh
+# 用法: NPU_NVME_PCI_ADDR=0000:83:00.0 NPU_NVME_DEVICE_ID=1 \
+#       bash scripts/verify_phaseA.sh
 # ============================================================
 set -e
 
@@ -13,8 +14,10 @@ pass() { echo -e "${GREEN}[PASS]${NC} $1"; }
 fail() { echo -e "${RED}[FAIL]${NC} $1"; exit 1; }
 check() { echo -e "\n${GREEN}=== $1 ===${NC}"; }
 
-REPO=/home/user7/npu-nvme
-SUDO_PW="CGCL_2025_#$"
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+REPO=$(cd "${SCRIPT_DIR}/.." && pwd)
+PCI_ADDR=${NPU_NVME_PCI_ADDR:-0000:83:00.0}
+DEVICE_ID=${NPU_NVME_DEVICE_ID:-1}
 export PYTHONPATH=$REPO/python:$PYTHONPATH
 cd $REPO
 
@@ -23,9 +26,11 @@ echo "  Phase A: NPU-NVMe Refactoring Verification"
 echo "  $(date)"
 echo "============================================================"
 
-# --- A.1: Git pull latest ---
-check "A.1: Git pull latest code"
-git pull origin master && pass "Git pull" || fail "Git pull"
+# --- A.1: Record the exact revision under test ---
+check "A.1: Record working-tree revision"
+git status --short
+git rev-parse HEAD
+pass "Using current working tree without modifying it"
 
 # --- A.2: C compilation ---
 check "A.2: C compilation"
@@ -40,7 +45,7 @@ cd $REPO
 
 # --- A.3: Pure-logic tests (no hardware needed) ---
 check "A.3: Pure-logic unit tests"
-OUTPUT=$(echo "$SUDO_PW" | sudo -S $REPO/build_out/bin/run_test.sh 2>&1) || true
+OUTPUT=$(sudo -n "$REPO/build_out/bin/run_test.sh" 2>&1) || true
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -q "FAIL"; then
     fail "Pure-logic tests had failures"
@@ -52,7 +57,7 @@ fi
 
 # --- A.4: Hardware integration tests ---
 check "A.4: Hardware integration tests (NVMe + NPU)"
-OUTPUT=$(echo "$SUDO_PW" | sudo -S $REPO/build_out/bin/run_test.sh 0000:83:00.0 1 2>&1) || true
+OUTPUT=$(sudo -n "$REPO/build_out/bin/run_test.sh" "$PCI_ADDR" "$DEVICE_ID" 2>&1) || true
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -q "FAIL"; then
     fail "Hardware tests had failures"
@@ -87,7 +92,7 @@ from mindspore import Tensor
 from direct_checkpoint import DirectCheckpoint
 
 msg = ms.Tensor(np.random.randn(1000, 1000).astype(np.float16))
-ckpt = DirectCheckpoint(nvme_addr='0000:83:00.0', npu_device_id=1,
+ckpt = DirectCheckpoint(nvme_addr='$PCI_ADDR', npu_device_id=$DEVICE_ID,
                          pipeline_depth=8, chunk_size=4*1024*1024)
 t0 = time.perf_counter()
 rc, n_chunks, _, _, stats = ckpt.save([msg], step=0)
@@ -110,7 +115,7 @@ import sys, numpy as np
 sys.path.insert(0, 'python')
 from direct_checkpoint import DirectCheckpoint
 
-ckpt = DirectCheckpoint(nvme_addr='0000:83:00.0', npu_device_id=1)
+ckpt = DirectCheckpoint(nvme_addr='$PCI_ADDR', npu_device_id=$DEVICE_ID)
 ckpt.delta_init(256, 128)
 
 # Simulate ~160MB delta frame (exceeds old 64MB sync_meta_io limit)
