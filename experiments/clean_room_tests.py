@@ -5,11 +5,10 @@ P0-U7 Clean-Room Test Suite — 10 configs, ~40min total.
 Each test runs as an independent Python process to avoid SPDK state pollution.
 Output: unified_clean_results.json in experiments/output/
 """
-import os, sys, time, json, subprocess
+import os, sys, time, json, shlex, subprocess
 
 REPO = "/home/user7/npu-nvme"
 PY = "/home/user7/miniconda3/envs/ms_2.5/bin/python3"
-SUDO = ["echo", "CGCL_2025_#$", "|", "sudo", "-S"]
 ENV_PREFIX = (
     "export ASCEND_TOOLKIT_HOME=/usr/local/Ascend/ascend-toolkit/latest && "
     "source /usr/local/Ascend/ascend-toolkit/set_env.sh && "
@@ -35,11 +34,16 @@ from mindspore import nn, Tensor
     print(f"  {label}")
     print(f"{'='*60}")
 
-    cmd = f"""sudo -S bash -c '{env} {PY} -c """{script}"""' <<< "CGCL_2025_#$" """
-    # Use subprocess for clean isolation
+    # Run non-interactively.  The target machine must either execute this
+    # suite as root or provide a narrowly scoped passwordless sudo rule.
+    # Credentials must never be embedded in source code or piped via stdin.
+    command = (
+        f"{env} && exec {shlex.quote(PY)} "
+        f"-c {shlex.quote(script)}"
+    )
     proc = subprocess.run(
-        ["sudo", "-S", "bash", "-c", f'{env} {PY} -c "{script}"'],
-        input="CGCL_2025_#$\n", capture_output=True, text=True, timeout=600,
+        ["sudo", "-n", "bash", "-lc", command],
+        capture_output=True, text=True, timeout=600,
         cwd=REPO
     )
 
