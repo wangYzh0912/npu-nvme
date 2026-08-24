@@ -1,37 +1,59 @@
-# ── SPDK submodule (tracked as gitlink only, not expanded) ──
-# Already configured in .gitmodules; nothing extra needed.
-# The line below is safe but redundant — git submodule never commits
-# third_party/spdk's contents, only the commit hash pointer.
+# Local build configuration
+.build_config
+.env
+.env.*
+!.env.example
 
-# ── Documentation & planning (local only, not in remote repo) ──
-*.md
-!README.md
-to_do/
-doc/
-
-# ── Build artifacts ──
+# Build products
 build/
 build_out/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
 *.o
 *.so
 *.a
-compile_commands.json
 
-# ── Python cache & env ──
+# Python caches and environments
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
 *.egg-info/
-dist/
 .eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+node_modules/
 
-# ── Experiment outputs (generated at runtime) ──
-experiments/output/*.json
-experiments/figures/*.svg
+# Runtime and profiling output
 output/
+experiments/output/**
+experiments/figures/**
+rank_*/
+python/rank_*/
+kernel_meta/
+aclinit.json
+fusion_result.json
+ge_check_op.json
+checkpoint_meta.pkl
+task_mapping_rank_*.txt
+*.pkl
+*.log
+wandb/
+/debug/
+/offload/
 
-# ── Dataset & model weights (large, downloaded) ──
-dataset_prepare/
+# Generated custom-operator packages
+experiments/ascendc/opp_install/
+custom_opp_*.run
+custom_opp_*.run.json
+
+# Downloaded datasets and model weights
+dataset_prepare/**/wikitext2_data/
+dataset_prepare/**/tokenizer*/
 checkpoint_download/
 models/
 *.ckpt
@@ -40,38 +62,27 @@ models/
 *.safetensors
 *.mindrecord
 
-# ── IDE & editor ──
+# Local reports, presentation binaries, and rendering intermediates
+.tmp/
+docs/.midterm_docx_work/
+*.inspect.ndjson
+*.docx
+*.pptx
+~$*
+
+# IDE, editor, and operating-system files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# ── OS crumbs ──
 .DS_Store
 Thumbs.db
-
-# ── Runtime artifacts ──
-wandb/
-*.log
 __MACOSX/
-*.tar.gz
 
-# ── Profiling permission-denied dirs ──
-rank_0/
-python/rank_0/
-
-# Runtime NPU artifacts
-kernel_meta/
-aclinit.json
-fusion_result.json
-ge_check_op.json
-
-# ── Local secrets (DO NOT COMMIT) ──
+# Local credentials
 .sudo_pw
 
-# ── Local runtime artifacts ──
-checkpoint_meta.pkl
-*.pkl
-/debug/
-/offload/
+# Local planning directories retained outside version control
+to_do/
+doc/
