@@ -160,8 +160,9 @@ FULL 区域由 Python 按
    Host 参数加载及 `export_model.py` 不再把 Host 指针传给设备读接口。
 3. **整理分支已修复：** reactor 释放 `meta_qpair` 后立即清空所有权指针，cleanup
    不再重复释放。
-4. `npu_nvme_init()` 启动 reactor 后的多个失败分支直接 `free(ctx)`，没有停止并
-   join reactor，也没有按已分配资源逆序回收，存在 use-after-free 与资源泄漏风险。
+4. **整理分支已修复：** `npu_nvme_init()` 在所有已启动 Reactor 的失败分支统一停止
+   并 join 线程，再按资源所有权逆序回收；ring/poller 创建失败会通过 barrier 返回
+   主线程，不再继续运行或直接释放仍被线程引用的 `ctx`。
 5. FULL 尾部槽与 Delta ring 默认重叠，Delta 写入可能破坏全量检查点。
 6. **整理分支已修复：** `build_layout_for_delta()` 现在按 `chunk_size` 拆分大缓冲，
    C API 同时拒绝零长度、超大、未对齐或越界任务。

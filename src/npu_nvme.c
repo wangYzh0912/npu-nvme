@@ -587,6 +587,13 @@ static void *reactor_loop(void *arg) {
     ctx->meta_ring  = spdk_ring_create(SPDK_RING_TYPE_MP_SC, 4,
                                         SPDK_ENV_SOCKET_ID_ANY);
 
+    if (!ctx->write_ring || !ctx->read_ring || !ctx->meta_ring) {
+        fprintf(stderr, "[Fatal] Reactor request-ring allocation failed.\n");
+        ctx->reactor_init_result = -1;
+        pthread_barrier_wait(&ctx->init_barrier);
+        goto reactor_cleanup;
+    }
+
     /* Init FSMs as idle. */
     ctx->write_fsm.state = WRITE_FSM_IDLE;
     ctx->write_fsm.req = NULL;
@@ -604,28 +611,41 @@ static void *reactor_loop(void *arg) {
             (void *)ctx->step_poller, (void *)ctx->write_fsm_poller,
             (void *)ctx->read_fsm_poller, (void *)ctx->meta_poller);
 
+    if (!ctx->step_poller || !ctx->write_fsm_poller ||
+        !ctx->read_fsm_poller || !ctx->meta_poller) {
+        fprintf(stderr, "[Fatal] Reactor poller registration failed.\n");
+        ctx->reactor_init_result = -1;
+        pthread_barrier_wait(&ctx->init_barrier);
+        goto reactor_cleanup;
+    }
+
     pthread_barrier_wait(&ctx->init_barrier);
 
-    while (!ctx->app_should_stop) {
+    /* Once shutdown is requested, stop accepting new step triggers but keep
+     * polling until any in-flight data request has returned its DMA slots. */
+    while (!ctx->app_should_stop ||
+           ctx->write_fsm.state != WRITE_FSM_IDLE ||
+           ctx->read_fsm.state != READ_FSM_IDLE) {
         spdk_thread_poll(ctx->reactor_thread, 0, 0);
         usleep(100);
     }
 
-    spdk_poller_unregister(&ctx->step_poller);
-    spdk_poller_unregister(&ctx->write_fsm_poller);
-    spdk_poller_unregister(&ctx->read_fsm_poller);
-    spdk_poller_unregister(&ctx->meta_poller);
+reactor_cleanup:
+    if (ctx->step_poller) spdk_poller_unregister(&ctx->step_poller);
+    if (ctx->write_fsm_poller) spdk_poller_unregister(&ctx->write_fsm_poller);
+    if (ctx->read_fsm_poller) spdk_poller_unregister(&ctx->read_fsm_poller);
+    if (ctx->meta_poller) spdk_poller_unregister(&ctx->meta_poller);
     if (ctx->meta_qpair) {
         spdk_nvme_ctrlr_free_io_qpair(ctx->meta_qpair);
         ctx->meta_qpair = NULL;
     }
-    spdk_ring_free(ctx->write_ring);
-    spdk_ring_free(ctx->read_ring);
-    spdk_ring_free(ctx->meta_ring);
+    if (ctx->write_ring) spdk_ring_free(ctx->write_ring);
+    if (ctx->read_ring) spdk_ring_free(ctx->read_ring);
+    if (ctx->meta_ring) spdk_ring_free(ctx->meta_ring);
     ctx->write_ring = NULL;
     ctx->read_ring = NULL;
     ctx->meta_ring = NULL;
-    spdk_thread_exit(ctx->reactor_thread);
+    if (ctx->reactor_thread) spdk_thread_exit(ctx->reactor_thread);
     return NULL;
 }
 
@@ -643,9 +663,21 @@ static void reactor_new_thread_fn(struct spdk_thread *thread, void *arg) {
     ctx->reactor_thread = thread;
 
     pthread_attr_t attr;
-    pthread_attr_init(&attr);
+    int rc = pthread_attr_init(&attr);
+    if (rc != 0) {
+        ctx->reactor_init_result = -1;
+        fprintf(stderr, "[Fatal] Failed to initialize pthread attributes (rc=%d).\n",
+                rc);
+        return;
+    }
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_create(&ctx->reactor_pthread, &attr, reactor_loop, ctx);
+    rc = pthread_create(&ctx->reactor_pthread, &attr, reactor_loop, ctx);
+    if (rc == 0) {
+        ctx->reactor_pthread_started = true;
+    } else {
+        ctx->reactor_init_result = -1;
+        fprintf(stderr, "[Fatal] Failed to create Reactor pthread (rc=%d).\n", rc);
+    }
     pthread_attr_destroy(&attr);
 }
 
@@ -666,8 +698,22 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
 
     pthread_mutex_lock(&ctx->state_lock);
 
+    if (!ctx->listener.probe_flag_host &&
+        aclrtMallocHost(&ctx->listener.probe_flag_host, 4) != ACL_SUCCESS) {
+        pthread_mutex_unlock(&ctx->state_lock);
+        return -1;
+    }
+
+    if (ctx->listener.owns_probe_flag &&
+        ctx->listener.probe_flag_dev_ptr) {
+        aclrtFree(ctx->listener.probe_flag_dev_ptr);
+        ctx->listener.probe_flag_dev_ptr = NULL;
+        ctx->listener.owns_probe_flag = false;
+    }
+
     if (dev_ptr) {
         ctx->listener.probe_flag_dev_ptr = dev_ptr;
+        ctx->listener.owns_probe_flag = false;
     } else {
         /* Self-allocate a 4-byte HBM buffer for the listener to poll */
         aclError ret = aclrtMalloc(&ctx->listener.probe_flag_dev_ptr, 4,
@@ -677,14 +723,16 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr) {
             pthread_mutex_unlock(&ctx->state_lock);
             return -1;
         }
+        ctx->listener.owns_probe_flag = true;
         uint32_t zero = 0;
-        aclrtMemcpy(ctx->listener.probe_flag_dev_ptr, 4, &zero, 4,
-                     ACL_MEMCPY_HOST_TO_DEVICE);
-    }
-
-    /* Allocate a 4-byte host buffer for polling the flag */
-    if (!ctx->listener.probe_flag_host) {
-        aclrtMallocHost(&ctx->listener.probe_flag_host, 4);
+        if (aclrtMemcpy(ctx->listener.probe_flag_dev_ptr, 4, &zero, 4,
+                        ACL_MEMCPY_HOST_TO_DEVICE) != ACL_SUCCESS) {
+            aclrtFree(ctx->listener.probe_flag_dev_ptr);
+            ctx->listener.probe_flag_dev_ptr = NULL;
+            ctx->listener.owns_probe_flag = false;
+            pthread_mutex_unlock(&ctx->state_lock);
+            return -1;
+        }
     }
 
     pthread_mutex_unlock(&ctx->state_lock);
@@ -749,13 +797,16 @@ static void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value) {
 int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval) {
     if (!ctx || !dev_ptr || ckpt_interval <= 0) return -1;
     pthread_mutex_lock(&ctx->state_lock);
+
+    if (!ctx->listener.step_poll_buf) {
+        if (aclrtMallocHost(&ctx->listener.step_poll_buf, 4) != ACL_SUCCESS) {
+            pthread_mutex_unlock(&ctx->state_lock);
+            return -1;
+        }
+    }
     ctx->listener.dev_step_ptr = dev_ptr;
     ctx->listener.ckpt_interval = ckpt_interval;
     ctx->last_step_seen = -1;
-
-    if (!ctx->listener.step_poll_buf) {
-        aclrtMallocHost(&ctx->listener.step_poll_buf, 4);
-    }
     pthread_mutex_unlock(&ctx->state_lock);
     return 0;
 }
@@ -1299,6 +1350,13 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
 int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                   int pipe_depth, uint32_t chunk_size, bool enable_profiling,
                   const char *prof_dir) {
+    if (!out_ctx || !pci_addr || pci_addr[0] == '\0' || chunk_size == 0 ||
+        chunk_size % 4096 != 0) {
+        fprintf(stderr, "[Fatal] Invalid npu_nvme_init arguments.\n");
+        return -1;
+    }
+    *out_ctx = NULL;
+
     NPUNVMEContext *ctx = calloc(1, sizeof(NPUNVMEContext));
     if (!ctx) return -1;
 
@@ -1317,16 +1375,12 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     /* Listener-state lock — protects registered_tasks, dev_step_ptr,
      * probe_flag_* from concurrent Python <-> reactor access.  I/O is
      * async via rings and does NOT use this lock.  Non-recursive. */
-    {
-        pthread_mutexattr_t attr;
-        pthread_mutexattr_init(&attr);
-        if (pthread_mutex_init(&ctx->state_lock, &attr) != 0) {
-            fprintf(stderr, "[Fatal] Failed to init state_lock.\n");
-            pthread_mutexattr_destroy(&attr);
-            free(ctx); return -1;
-        }
-        pthread_mutexattr_destroy(&attr);
+    if (pthread_mutex_init(&ctx->state_lock, NULL) != 0) {
+        fprintf(stderr, "[Fatal] Failed to init state_lock.\n");
+        free(ctx);
+        return -1;
     }
+    ctx->state_lock_initialized = true;
 
     /* Initialise SPDK environment (once per process via SPDK_SHM_ID).
      * MUST be called BEFORE spdk_thread_lib_init — the thread library
@@ -1351,7 +1405,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                         "[Fatal] Quick fix: echo %d > %s\n",
                         read_int_from_file(NR_HUGEPAGES_PATH) + HUGEPAGE_PADDING,
                         NR_HUGEPAGES_PATH);
-                free(ctx);
+                npu_nvme_cleanup(ctx);
                 return -1;
             }
             spdk_inited = 1;
@@ -1402,7 +1456,12 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
      * — EAL must be initialised first (done above).
      * Like spdk_env_init, spdk_thread_lib_init is once-per-process. */
     ctx->app_should_stop = 0;
-    pthread_barrier_init(&ctx->init_barrier, NULL, 2);
+    ctx->reactor_init_result = 0;
+    if (pthread_barrier_init(&ctx->init_barrier, NULL, 2) != 0) {
+        fprintf(stderr, "[Fatal] Failed to initialize Reactor barrier.\n");
+        npu_nvme_cleanup(ctx);
+        return -1;
+    }
 
     {
         static int thread_lib_inited = 0;
@@ -1410,7 +1469,8 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
             if (spdk_thread_lib_init((spdk_new_thread_fn)reactor_new_thread_fn, 0) != 0) {
                 fprintf(stderr, "[Fatal] spdk_thread_lib_init failed.\n");
                 pthread_barrier_destroy(&ctx->init_barrier);
-                free(ctx); return -1;
+                npu_nvme_cleanup(ctx);
+                return -1;
             }
             thread_lib_inited = 1;
         }
@@ -1425,12 +1485,23 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     if (!th) {
         fprintf(stderr, "[Fatal] spdk_thread_create failed.\n");
         pthread_barrier_destroy(&ctx->init_barrier);
-        free(ctx); return -1;
+        npu_nvme_cleanup(ctx);
+        return -1;
+    }
+    if (!ctx->reactor_pthread_started) {
+        fprintf(stderr, "[Fatal] Reactor pthread did not start.\n");
+        pthread_barrier_destroy(&ctx->init_barrier);
+        npu_nvme_cleanup(ctx);
+        return -1;
     }
 
     /* Wait for reactor pthread to reach its main loop. */
     pthread_barrier_wait(&ctx->init_barrier);
     pthread_barrier_destroy(&ctx->init_barrier);
+    if (ctx->reactor_init_result != 0) {
+        npu_nvme_cleanup(ctx);
+        return -1;
+    }
 
     /* Probe and attach NVMe device */
     struct spdk_nvme_transport_id trid = {};
@@ -1439,11 +1510,11 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
 
     if (spdk_nvme_probe(&trid, ctx, probe_cb, attach_cb, NULL) != 0) {
         fprintf(stderr, "[Fatal] spdk_nvme_probe failed.\n");
-        free(ctx); return -1;
+        goto init_fail;
     }
     if (!ctx->ctrlr) {
         fprintf(stderr, "[Fatal] Controller not found at %s.\n", pci_addr);
-        free(ctx); return -1;
+        goto init_fail;
     }
 
     /* Allocate SPDK I/O queue pair */
@@ -1453,7 +1524,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     ctx->qpair = spdk_nvme_ctrlr_alloc_io_qpair(ctx->ctrlr, &qopts, sizeof(qopts));
     if (!ctx->qpair) {
         fprintf(stderr, "[Fatal] Cannot allocate NVMe I/O qpair.\n");
-        free(ctx); return -1;
+        goto init_fail;
     }
 
     /* Allocate dedicated metadata qpair (small, no contention with data path). */
@@ -1466,30 +1537,35 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                                                           sizeof(meta_opts));
         if (!ctx->meta_qpair) {
             fprintf(stderr, "[Fatal] Cannot allocate metadata qpair.\n");
-            npu_nvme_cleanup(ctx);
-            *out_ctx = NULL;
-            return -1;
+            goto init_fail;
         }
     }
 
     /* Initialise NPU environment */
     aclError ret = aclrtSetDevice(ctx->acl.npu_id);
-    if (ret != ACL_SUCCESS) { free(ctx); return -1; }
+    if (ret != ACL_SUCCESS) goto init_fail;
     if (aclrtGetCurrentContext(&ctx->acl.acl_ctx) != ACL_SUCCESS) {
         fprintf(stderr, "[Fatal] Failed to get ACL context.\n");
-        free(ctx); return -1;
+        goto init_fail;
     }
     ret = aclrtCreateStream(&ctx->acl.copy_stream);
     if (ret != ACL_SUCCESS) {
         fprintf(stderr, "[Fatal] Failed to create NPU Stream.\n");
-        free(ctx); return -1;
+        goto init_fail;
     }
 
     /* Allocate DMA buffer pool + NPU events */
     ctx->dma.pool = calloc(ctx->dma.max_pipe_depth, sizeof(dma_buf_t));
     ctx->acl.events = calloc(ctx->dma.max_pipe_depth, sizeof(aclrtEvent));
+    if (!ctx->dma.pool || !ctx->acl.events) {
+        fprintf(stderr, "[Fatal] Failed to allocate DMA/event descriptor arrays.\n");
+        goto init_fail;
+    }
     /* ring capacity = pipe_depth + 1 (one overflow slot for full-vs-empty). */
-    ring_init(&ctx->dma.free_ring, ctx->dma.max_pipe_depth + 1);
+    if (ring_init(&ctx->dma.free_ring, ctx->dma.max_pipe_depth + 1) != 0) {
+        fprintf(stderr, "[Fatal] Failed to allocate DMA free ring.\n");
+        goto init_fail;
+    }
 
     for (int i = 0; i < ctx->dma.max_pipe_depth; i++) {
         ctx->dma.pool[i].buf = spdk_zmalloc(ctx->dma.chunk_size,
@@ -1498,30 +1574,26 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                                              SPDK_MALLOC_DMA);
         if (!ctx->dma.pool[i].buf) {
             fprintf(stderr, "[Fatal] spdk_zmalloc failed at slot %d.\n", i);
-            free(ctx); return -1;
+            goto init_fail;
         }
         ctx->dma.pool[i].phys_addr = spdk_vtophys(ctx->dma.pool[i].buf, NULL);
 
         ret = aclrtCreateEvent(&ctx->acl.events[i]);
         if (ret != ACL_SUCCESS) {
             fprintf(stderr, "[Fatal] Failed to create NPU Event at slot %d.\n", i);
-            free(ctx); return -1;
+            goto init_fail;
         }
         ring_push(&ctx->dma.free_ring, i);
     }
 
     printf("[Init] NPUNVME Fully Initialized! Stream/Events ready. "
            "Max Pipe Depth: %d\n", ctx->dma.max_pipe_depth);
-    *out_ctx = ctx;
-
     /* Allocate dedicated buffer for metadata I/O */
     ctx->meta_dma_buf = spdk_zmalloc(META_DMA_BUF_SIZE, 2 * 1024 * 1024, NULL,
                                       SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
     if (!ctx->meta_dma_buf) {
         fprintf(stderr, "[NPU-NVMe] Failed to allocate meta DMA buffer.\n");
-        npu_nvme_cleanup(ctx);  /* releases all resources including ctx */
-        *out_ctx = NULL;
-        return -1;
+        goto init_fail;
     }
 
     /* Listener poller runs on the reactor thread (registered in reactor_loop).
@@ -1532,8 +1604,13 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
     ctx->listener.dev_step_ptr = NULL;
     ctx->listener.step_poll_buf = NULL;
 
+    *out_ctx = ctx;
     printf("[Init] Initialisation complete.\n");
     return 0;
+
+init_fail:
+    npu_nvme_cleanup(ctx);
+    return -1;
 }
 
 /**
@@ -1544,12 +1621,17 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     if (!ctx) return;
 
     /* Stop reactor thread */
-    ctx->app_should_stop = 1;
-    pthread_join(ctx->reactor_pthread, NULL);
+    if (ctx->reactor_pthread_started) {
+        ctx->app_should_stop = 1;
+        pthread_join(ctx->reactor_pthread, NULL);
+        ctx->reactor_pthread_started = false;
+    }
 
     /* Bind ACL context — needed for aclrtDestroyEvent/FreeHost below. */
-    aclrtSetDevice(ctx->acl.npu_id);
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
+    if (ctx->acl.acl_ctx) {
+        aclrtSetDevice(ctx->acl.npu_id);
+        aclrtSetCurrentContext(ctx->acl.acl_ctx);
+    }
 
     /* Release ACL resources */
     if (ctx->acl.events) {
@@ -1565,6 +1647,8 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
         aclrtFreeHost(ctx->listener.probe_flag_host);
     if (ctx->listener.step_poll_buf)
         aclrtFreeHost(ctx->listener.step_poll_buf);
+    if (ctx->listener.owns_probe_flag && ctx->listener.probe_flag_dev_ptr)
+        aclrtFree(ctx->listener.probe_flag_dev_ptr);
 
     /* Release DMA pool */
     if (ctx->dma.pool) {
@@ -1594,7 +1678,10 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
         ctx->listener.old_tasks = NULL;
     }
 
-    pthread_mutex_destroy(&ctx->state_lock);
+    if (ctx->state_lock_initialized) {
+        pthread_mutex_destroy(&ctx->state_lock);
+        ctx->state_lock_initialized = false;
+    }
     free(ctx);
 }
 

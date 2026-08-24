@@ -46,6 +46,7 @@ typedef struct {
 /* ---- FaF listener / probe-flag state ---- */
 typedef struct {
     void *probe_flag_dev_ptr;  /* device (HBM) address of probe flag */
+    bool owns_probe_flag;      /* true only for buffers allocated by C */
     void *probe_flag_host;     /* host-side mirror for polling */
     void *dev_step_ptr;        /* device (HBM) address of step_counter */
     void *step_poll_buf;       /* host buffer for polling step_counter */
@@ -92,6 +93,9 @@ typedef struct NPUNVMEContext {
     pthread_t reactor_pthread;
     pthread_barrier_t init_barrier;
     atomic_int app_should_stop;
+    bool reactor_pthread_started;
+    bool state_lock_initialized;
+    int reactor_init_result;
 
     /* ---- Step-counter poller ---- */
     struct spdk_poller *step_poller;
