@@ -73,35 +73,77 @@ def unpack_delta_frame(frame_bytes):
         raise ValueError(
             f"Invalid delta magic: 0x{magic:08x} (expected 0x{DELTA_MAGIC:08x})")
 
+    if total_sz < FRAME_HEADER_SIZE or total_sz > len(frame_bytes):
+        raise ValueError(
+            f"Invalid delta frame size: header={total_sz}, buffer={len(frame_bytes)}")
+
+    payload = frame_bytes[FRAME_HEADER_SIZE:total_sz]
+    actual_checksum = sum(payload) & 0xFFFFFFFF
+    if actual_checksum != checksum:
+        raise ValueError(
+            f"Delta checksum mismatch: stored={checksum}, actual={actual_checksum}")
+
+    # Even an empty-name record has a fixed-size prefix.  Reject impossible
+    # counts before entering record loops over untrusted metadata.
+    max_records = len(payload) // 12
+    if n_blocks + n_small > max_records:
+        raise ValueError(
+            f"Delta record count exceeds payload capacity: "
+            f"{n_blocks + n_small} > {max_records}")
+
     pos = FRAME_HEADER_SIZE
 
     def _read_block(pos):
+        _require_at(pos, 4, "block header")
         lid, name_len = struct.unpack_from("<hH", frame_bytes, pos)
         pos += 4
-        name = frame_bytes[pos:pos + name_len].decode('utf-8')
+        _require_at(pos, name_len, "block name")
+        try:
+            name = frame_bytes[pos:pos + name_len].decode('utf-8')
+        except UnicodeDecodeError as error:
+            raise ValueError("Invalid UTF-8 in delta block name") from error
         pos += name_len
+        _require_at(pos, 12, "block metadata")
         bidx, scale = struct.unpack_from("<i f", frame_bytes, pos)
         pos += 8
         data_len = struct.unpack_from("<i", frame_bytes, pos)[0]
         pos += 4
+        if data_len < 0:
+            raise ValueError(f"Negative delta block data length: {data_len}")
+        _require_at(pos, data_len, "block data")
         i8_data = np.frombuffer(frame_bytes[pos:pos + data_len], dtype=np.int8)
         pos += data_len
         return pos, {"layer_id": lid, "name": name, "block_idx": bidx,
                      "int8_data": i8_data, "scale": scale}
 
     def _read_small(pos):
+        _require_at(pos, 4, "small-patch header")
         lid, name_len = struct.unpack_from("<hH", frame_bytes, pos)
         pos += 4
-        name = frame_bytes[pos:pos + name_len].decode('utf-8')
+        _require_at(pos, name_len, "small-patch name")
+        try:
+            name = frame_bytes[pos:pos + name_len].decode('utf-8')
+        except UnicodeDecodeError as error:
+            raise ValueError("Invalid UTF-8 in delta small-patch name") from error
         pos += name_len
+        _require_at(pos, 8, "small-patch metadata")
         scale = struct.unpack_from("<f", frame_bytes, pos)[0]
         pos += 4
         data_len = struct.unpack_from("<i", frame_bytes, pos)[0]
         pos += 4
+        if data_len < 0:
+            raise ValueError(f"Negative delta small-patch data length: {data_len}")
+        _require_at(pos, data_len, "small-patch data")
         i8_data = np.frombuffer(frame_bytes[pos:pos + data_len], dtype=np.int8)
         pos += data_len
         return pos, {"layer_id": lid, "name": name,
                      "int8_data": i8_data, "scale": scale}
+
+    def _require_at(offset, count, label):
+        if count < 0 or offset + count > total_sz:
+            raise ValueError(
+                f"Truncated delta {label} at byte {offset}: need {count}, "
+                f"frame size {total_sz}")
 
     block_patches, small_patches = [], []
     for _ in range(n_blocks):
@@ -110,6 +152,10 @@ def unpack_delta_frame(frame_bytes):
     for _ in range(n_small):
         pos, sp = _read_small(pos)
         small_patches.append(sp)
+
+    if pos != total_sz:
+        raise ValueError(
+            f"Delta frame contains {total_sz - pos} unparsed payload bytes")
 
     return step_id, block_patches, small_patches
 
