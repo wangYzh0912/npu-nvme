@@ -40,7 +40,6 @@ flowchart LR
 | `tests/c/` | 纯逻辑、硬件回环与 Reactor 诊断测试 | C 验证入口 |
 | `experiments/` | 基线、FaF、Delta、分布式及诊断实验 | 混合了当前入口和历史原型 |
 | `docs/` | Reactor 论文式说明和项目总览 | 后续报告素材主目录 |
-| `experiments/ascendc/` | Delta 自定义算子探索 | 研究原型，未接入当前 Python 主线 |
 | `dataset_prepare/` | GPT-2/LLaMA 数据准备 | 辅助工具 |
 | `scripts/` | 阶段验证脚本 | 依赖目标机器环境 |
 | `tools/` | 历史代码清理脚本 | 非运行主线 |
@@ -51,6 +50,10 @@ WaitProbe/TriggerProbe 旧工程已经审阅并从开发主线移除，完整历
 `codex/archive-wait-trigger-probe` 分支；审阅结论见
 `docs/archive/WAIT_TRIGGER_PROBE_REVIEW.md`。其余实验目录仍需先建立入口和结果清单，
 再进行可回归的目录重构。
+
+DeltaDetect AscendC 原型也已完成审阅并从开发主线移除，原始文件保存在远端
+`codex/pre-cleanup-archive` 分支，结论见
+`docs/archive/DELTA_DETECT_PROTOTYPE_REVIEW.md`。
 
 ## 3. Python 主线
 
