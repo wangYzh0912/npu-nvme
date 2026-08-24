@@ -1,5 +1,5 @@
 /* =======================================================================
- * npu_nvme.c — NPU-to-NVMe Zero-Copy I/O Engine
+ * npu_nvme.c — NPU-to-NVMe User-Space Pipelined I/O Engine
  *
  * Implements three subsystems:
  *   - SPDK user-space NVMe driver — HBM <-> NVMe DMA transfers
@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <errno.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -153,6 +154,14 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
     task->buf_idx = buf_idx;
     if (ctx->enable_profiling) task->ts_submit = get_time_us();
 
+    /* NVMe writes are block-aligned.  Zero reused-buffer padding so the
+     * final partial block never exposes bytes from an earlier request. */
+    size_t aligned_sz = ALIGN_4K(task->size);
+    if (aligned_sz > task->size) {
+        memset((char *)ctx->dma.pool[buf_idx].buf + task->size, 0,
+               aligned_sz - task->size);
+    }
+
     if (is_host) {
         memcpy(ctx->dma.pool[buf_idx].buf, task->npu_ptr, task->size);
         if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
@@ -191,6 +200,7 @@ void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
                 "status=%d type=%d\n",
                 cb_arg->task->task_idx,
                 completion->status.sc, completion->status.sct);
+        *cb_arg->result = -1;
     }
     if (cb_arg->ctx->enable_profiling) cb_arg->task->ts_spdk_done = get_time_us();
     cb_arg->task->state = CHUNK_DONE;
@@ -201,7 +211,7 @@ void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
 
 /* Submit a single SPDK write command for an NPU_DONE chunk. */
 int submit_to_spdk_write(NPUNVMEContext *ctx, io_task_t *task,
-                          int *completed_counter) {
+                          int *completed_counter, int *result) {
     size_t aligned_sz = ALIGN_4K(task->size);
     uint64_t lba = task->nvme_offset / ctx->block_size;
     uint32_t lba_count = aligned_sz / ctx->block_size;
@@ -210,6 +220,7 @@ int submit_to_spdk_write(NPUNVMEContext *ctx, io_task_t *task,
     if (!cb_arg) return -1;
     cb_arg->ctx = ctx; cb_arg->task = task;
     cb_arg->completed_counter = completed_counter;
+    cb_arg->result = result;
 
     int rc = spdk_nvme_ns_cmd_write(ctx->ns, ctx->qpair,
                                      ctx->dma.pool[task->buf_idx].buf,
@@ -278,6 +289,38 @@ void write_profiling_csv(NPUNVMEContext *ctx, io_task_t *tasks,
  * read_ring).  No lock is held — the reactor serialises all I/O.
  */
 
+static int validate_io_batch(NPUNVMEContext *ctx, void **ptrs,
+                             uint64_t *nvme_offsets, size_t *sizes,
+                             int num_items) {
+    if (!ctx || !ptrs || !nvme_offsets || !sizes || num_items <= 0 ||
+        ctx->block_size == 0 || ctx->dma.chunk_size == 0) {
+        return -1;
+    }
+
+    uint64_t capacity = ctx->total_blocks * (uint64_t)ctx->block_size;
+    for (int i = 0; i < num_items; i++) {
+        if (!ptrs[i] || sizes[i] == 0 || sizes[i] > ctx->dma.chunk_size) {
+            fprintf(stderr,
+                    "[NPU-NVMe] Invalid I/O item %d: ptr=%p size=%zu\n",
+                    i, ptrs[i], sizes[i]);
+            return -1;
+        }
+        size_t aligned_sz = ALIGN_4K(sizes[i]);
+        if (aligned_sz > ctx->dma.chunk_size ||
+            nvme_offsets[i] % ctx->block_size != 0 ||
+            aligned_sz % ctx->block_size != 0 ||
+            nvme_offsets[i] > capacity ||
+            aligned_sz > capacity - nvme_offsets[i]) {
+            fprintf(stderr,
+                    "[NPU-NVMe] Invalid I/O item %d: ptr=%p offset=%lu "
+                    "size=%zu aligned=%zu\n",
+                    i, ptrs[i], nvme_offsets[i], sizes[i], aligned_sz);
+            return -1;
+        }
+    }
+    return 0;
+}
+
 /**
  * @brief  Write NPU HBM buffers to NVMe (blocking batch).
  * @param ctx        context handle
@@ -289,13 +332,11 @@ void write_profiling_csv(NPUNVMEContext *ctx, io_task_t *tasks,
  */
 int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                           uint64_t *nvme_offsets, size_t *sizes, int num_items) {
-    if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) {
+    if (validate_io_batch(ctx, npu_ptrs, nvme_offsets, sizes, num_items) != 0) {
         fprintf(stderr, "[Fatal] Invalid arguments passed to npu_nvme_write_batch.\n");
         return -1;
     }
-    if (ctx->block_size == 0) return -1;
-
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
+    if (aclrtSetCurrentContext(ctx->acl.acl_ctx) != ACL_SUCCESS) return -1;
 
     /* Build request on heap (Python owns it until completion). */
     write_request_t *req = calloc(1, sizeof(write_request_t));
@@ -308,6 +349,7 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     req->num_tasks = num_items;
     req->is_host = false;
     req->done = 0;
+    req->result = 0;
 
     /* Enqueue to reactor.  If the ring is full, the reactor is stuck —
      * this should never happen with a 16-slot ring and 1 producer. */
@@ -323,9 +365,10 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     }
 
     write_profiling_csv(ctx, tasks, num_items, PIPELINE_WRITE);
+    int result = req->result;
     free(tasks);
     free(req);
-    return 0;
+    return result;
 }
 
 /**
@@ -340,9 +383,8 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
                                uint64_t *nvme_offsets, size_t *sizes,
                                int num_items) {
-    if (!ctx || num_items <= 0) return -1;
-    if (ctx->block_size == 0) return -1;
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
+    if (validate_io_batch(ctx, ptrs, nvme_offsets, sizes, num_items) != 0)
+        return -1;
 
     write_request_t *req = calloc(1, sizeof(write_request_t));
     if (!req) return -1;
@@ -354,6 +396,7 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
     req->num_tasks = num_items;
     req->is_host = true;
     req->done = 0;
+    req->result = 0;
 
     void *obj = req;
     if (spdk_ring_enqueue(ctx->write_ring, &obj, 1, NULL) != 1) {
@@ -365,9 +408,10 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
         usleep(1000);
     }
     /* Host writes skip profiling (no meaningful NPU timestamps). */
+    int result = req->result;
     free(tasks);
     free(req);
-    return 0;
+    return result;
 }
 
 /**
@@ -381,11 +425,9 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
  */
 int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                          uint64_t *nvme_offsets, size_t *sizes, int num_items) {
-    if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0)
+    if (validate_io_batch(ctx, npu_ptrs, nvme_offsets, sizes, num_items) != 0)
         return -1;
-    if (ctx->block_size == 0) return -1;
-
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
+    if (aclrtSetCurrentContext(ctx->acl.acl_ctx) != ACL_SUCCESS) return -1;
 
     read_request_t *req = calloc(1, sizeof(read_request_t));
     if (!req) return -1;
@@ -395,7 +437,9 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 
     req->tasks = tasks;
     req->num_tasks = num_items;
+    req->is_host = false;
     req->done = 0;
+    req->result = 0;
 
     void *obj = req;
     if (spdk_ring_enqueue(ctx->read_ring, &obj, 1, NULL) != 1) {
@@ -405,9 +449,10 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     while (!req->done) { usleep(1000); }
 
     write_profiling_csv(ctx, tasks, num_items, PIPELINE_READ);
+    int result = req->result;
     free(tasks);
     free(req);
-    return 0;
+    return result;
 }
 
 /**
@@ -422,11 +467,8 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
 int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
                              uint64_t *nvme_offsets, size_t *sizes,
                              int num_items) {
-    if (!ctx || !host_ptrs || !nvme_offsets || !sizes || num_items <= 0)
+    if (validate_io_batch(ctx, host_ptrs, nvme_offsets, sizes, num_items) != 0)
         return -1;
-    if (ctx->block_size == 0) return -1;
-
-    aclrtSetCurrentContext(ctx->acl.acl_ctx);
 
     read_request_t *req = calloc(1, sizeof(read_request_t));
     if (!req) return -1;
@@ -436,7 +478,9 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
 
     req->tasks = tasks;
     req->num_tasks = num_items;
+    req->is_host = true;
     req->done = 0;
+    req->result = 0;
 
     void *obj = req;
     if (spdk_ring_enqueue(ctx->read_ring, &obj, 1, NULL) != 1) {
@@ -445,9 +489,10 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
 
     while (!req->done) { usleep(1000); }
     /* Host reads skip profiling. */
+    int result = req->result;
     free(tasks);
     free(req);
-    return 0;
+    return result;
 }
 
 /**
@@ -476,7 +521,7 @@ uint64_t npu_nvme_get_last_io_us(NPUNVMEContext *ctx, int is_read) {
 /* ---- ACL context helper ----
  *
  * ensure_acl_context binds the calling thread to the NPU device and
- * ACL context stored in ctx.  Called from the listener thread and
+ * ACL context stored in ctx.  Called from the reactor thread and
  * from the main thread under state_lock.
  */
 
@@ -570,7 +615,10 @@ static void *reactor_loop(void *arg) {
     spdk_poller_unregister(&ctx->write_fsm_poller);
     spdk_poller_unregister(&ctx->read_fsm_poller);
     spdk_poller_unregister(&ctx->meta_poller);
-    if (ctx->meta_qpair) spdk_nvme_ctrlr_free_io_qpair(ctx->meta_qpair);
+    if (ctx->meta_qpair) {
+        spdk_nvme_ctrlr_free_io_qpair(ctx->meta_qpair);
+        ctx->meta_qpair = NULL;
+    }
     spdk_ring_free(ctx->write_ring);
     spdk_ring_free(ctx->read_ring);
     spdk_ring_free(ctx->meta_ring);
@@ -783,8 +831,8 @@ static int step_poller_fn(void *arg) {
 /* ---- Task registration ----
  *
  * register_tasks copies the caller's parameter-pointers/offsets/sizes
- * into a heap-allocated io_task array.  The listener thread uses this
- * array directly inside run_write_pipeline.  The function allocates a
+ * into a heap-allocated io_task array.  The reactor write FSM uses this
+ * array directly.  The function allocates a
  * new array before freeing the old one so that a failed allocation
  * leaves the listener with a valid (stale) task list.
  */
@@ -800,7 +848,8 @@ static int step_poller_fn(void *arg) {
  */
 int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
                              uint64_t *nvme_offsets, size_t *sizes, int num_items) {
-    if (!ctx || !npu_ptrs || !nvme_offsets || !sizes || num_items <= 0) return -1;
+    if (validate_io_batch(ctx, npu_ptrs, nvme_offsets, sizes, num_items) != 0)
+        return -1;
 
     pthread_mutex_lock(&ctx->state_lock);
 
@@ -849,6 +898,7 @@ static void initiate_write_fsm(NPUNVMEContext *ctx, write_request_t *req) {
     fsm->next_submit_idx = 0;
     fsm->completed_count = 0;
     req->done = 0;
+    req->result = 0;
     req->ts_batch_start = get_time_us();
 }
 
@@ -870,9 +920,16 @@ static void write_fsm_tick(NPUNVMEContext *ctx) {
     for (int i = 0; i < fsm->next_submit_idx; i++) {
         io_task_t *task = &req->tasks[i];
         if (task->state == CHUNK_NPU_DONE) {
-            submit_to_spdk_write(ctx, task, &fsm->completed_count);
+            int rc = submit_to_spdk_write(ctx, task, &fsm->completed_count,
+                                          &req->result);
             /* On success: state becomes CHUNK_SPDK_WRITING.
              * On queue-full (-ENOMEM / -12): retry next tick. */
+            if (rc != 0 && rc != -ENOMEM && rc != -EAGAIN) {
+                req->result = -1;
+                task->state = CHUNK_DONE;
+                fsm->completed_count++;
+                ring_push(&ctx->dma.free_ring, task->buf_idx);
+            }
         }
     }
 
@@ -882,13 +939,19 @@ static void write_fsm_tick(NPUNVMEContext *ctx) {
         size_t aligned_sz = ALIGN_4K(task->size);
 
         if (task->size == 0 || aligned_sz > ctx->dma.chunk_size) {
-            /* Skip zero-size or oversize chunks immediately. */
+            /* Defensive fallback: public entry points reject these chunks. */
+            req->result = -1;
             task->state = CHUNK_DONE;
             fsm->completed_count++;
             fsm->next_submit_idx++;
         } else if (!ring_is_empty(&ctx->dma.free_ring)) {
             int rc = try_submit_async(ctx, task, req->is_host);
             if (rc == 0) {
+                fsm->next_submit_idx++;
+            } else if (rc == -2) {
+                req->result = -1;
+                task->state = CHUNK_DONE;
+                fsm->completed_count++;
                 fsm->next_submit_idx++;
             }
             /* On ring-full: retry next tick. */
@@ -939,9 +1002,13 @@ static int write_fsm_poller_fn(void *arg) {
 
         /* If just completed: signal probe flag for FaF, free deferred tasks. */
         if (fsm->state == WRITE_FSM_IDLE) {
-            if (was_faf) {
+            if (was_faf && fsm->faf_req.result == 0) {
                 ensure_acl_context(ctx);
                 signal_probe_flag(ctx, faf_step);
+            } else if (was_faf) {
+                fprintf(stderr,
+                        "[NPU-NVMe] FaF checkpoint step %u failed; "
+                        "probe flag was not advanced.\n", faf_step);
             }
             pthread_mutex_lock(&ctx->state_lock);
             if (ctx->listener.old_tasks) {
@@ -969,6 +1036,7 @@ static void initiate_read_fsm(NPUNVMEContext *ctx, read_request_t *req) {
     fsm->next_submit_idx = 0;
     fsm->completed_count = 0;
     req->done = 0;
+    req->result = 0;
     req->ts_batch_start = get_time_us();
 }
 
@@ -976,6 +1044,8 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
     read_fsm_ctx_t *fsm = &ctx->read_fsm;
     read_request_t *req = fsm->req;
     if (!req) return;
+
+    if (!req->is_host) ensure_acl_context(ctx);
 
     /* 1. Process SPDK completions (triggers callbacks). */
     spdk_nvme_qpair_process_completions(ctx->qpair, 0);
@@ -986,16 +1056,26 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
         if (task->state == CHUNK_SPDK_DONE) {
             /* For host reads: memcpy.  For NPU reads: use aclrtMemcpy
              * (synchronous - one chunk per tick keeps latency bounded). */
-            aclError ret = aclrtMemcpy(task->npu_ptr, task->size,
-                                        ctx->dma.pool[task->buf_idx].buf,
-                                        task->size,
-                                        ACL_MEMCPY_HOST_TO_DEVICE);
+            aclError ret = ACL_SUCCESS;
+            if (req->is_host) {
+                memcpy(task->npu_ptr, ctx->dma.pool[task->buf_idx].buf,
+                       task->size);
+            } else {
+                ret = aclrtMemcpy(task->npu_ptr, task->size,
+                                  ctx->dma.pool[task->buf_idx].buf,
+                                  task->size, ACL_MEMCPY_HOST_TO_DEVICE);
+            }
             if (ret == ACL_SUCCESS) {
                 task->state = CHUNK_DONE;
                 fsm->completed_count++;
                 ring_push(&ctx->dma.free_ring, task->buf_idx);
             }
-            /* On failure: retry next tick. */
+            else {
+                req->result = -1;
+                task->state = CHUNK_DONE;
+                fsm->completed_count++;
+                ring_push(&ctx->dma.free_ring, task->buf_idx);
+            }
         }
     }
 
@@ -1005,6 +1085,7 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
         size_t aligned_sz = ALIGN_4K(task->size);
 
         if (task->size == 0 || aligned_sz > ctx->dma.chunk_size) {
+            req->result = -1;
             task->state = CHUNK_DONE;
             fsm->completed_count++;
             fsm->next_submit_idx++;
@@ -1017,6 +1098,7 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
             if (cb_arg) {
                 cb_arg->ctx = ctx; cb_arg->task = task;
                 cb_arg->completed_counter = &fsm->completed_count;
+                cb_arg->result = &req->result;
 
                 uint64_t lba = task->nvme_offset / ctx->block_size;
                 uint32_t lba_count = aligned_sz / ctx->block_size;
@@ -1028,12 +1110,19 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
                     task->state = CHUNK_SPDK_READING;
                     fsm->next_submit_idx++;
                 } else {
+                    req->result = -1;
                     ring_push(&ctx->dma.free_ring, buf_idx);
                     free(cb_arg);
                     task->state = CHUNK_DONE;
                     fsm->completed_count++;
                     fsm->next_submit_idx++;
                 }
+            } else {
+                req->result = -1;
+                ring_push(&ctx->dma.free_ring, buf_idx);
+                task->state = CHUNK_DONE;
+                fsm->completed_count++;
+                fsm->next_submit_idx++;
             }
         }
     }
@@ -1122,9 +1211,8 @@ static int meta_poller_fn(void *arg) {
     return 0;
 }
 
-/* SPDK read-completion callback - logs errors and marks the task
- * CHUNK_SPDK_DONE so the read pipeline can continue.  The caller is
- * responsible for checking the I/O result via the task state. */
+/* SPDK read-completion callback.  Successful reads advance to the copy
+ * stage; failed reads return the DMA slot and fail the enclosing request. */
 void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
     spdk_cb_arg_t *cb_arg = (spdk_cb_arg_t *)arg;
     io_task_t *task = cb_arg->task;
@@ -1134,8 +1222,13 @@ void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
         fprintf(stderr, "[NPU-NVMe] NVMe read error for task %d: "
                 "status=%d type=%d\n",
                 task->task_idx, completion->status.sc, completion->status.sct);
+        *cb_arg->result = -1;
+        task->state = CHUNK_DONE;
+        (*cb_arg->completed_counter)++;
+        ring_push(&ctx->dma.free_ring, task->buf_idx);
+    } else {
+        task->state = CHUNK_SPDK_DONE;
     }
-    task->state = CHUNK_SPDK_DONE;
     if (ctx->enable_profiling) task->ts_spdk_done = get_time_us();
     free(cb_arg);
 }
@@ -1186,9 +1279,9 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
  * npu_nvme_init is the sole entry point for creating a context.  It
  * initialises SPDK (once per process), probes the NVMe device, sets
  * up the DMA pool + NPU events, allocates the metadata buffer, and
- * launches the background FaF listener thread.
+ * launches the background Reactor thread.
  *
- * npu_nvme_cleanup stops the listener, frees all ACL and SPDK
+ * npu_nvme_cleanup stops the Reactor, frees all ACL and SPDK
  * resources in reverse allocation order, and destroys the state_lock.
  */
 
@@ -1444,7 +1537,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
 }
 
 /**
- * @brief  Release all resources (SPDK, ACL, DMA pool, listener thread).
+ * @brief  Release all resources (SPDK, ACL, DMA pool, Reactor thread).
  * @param ctx  context handle (NULL is safe)
  */
 void npu_nvme_cleanup(NPUNVMEContext *ctx) {

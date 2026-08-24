@@ -33,10 +33,10 @@ static int tests_fail = 0;
 static void test_align_4k(void)
 {
     TEST("ALIGN_4K basic values");
-    if ((4095 + 4095ULL & ~4095ULL) != 4096)  { FAIL("4095 not aligned"); return; }
-    if ((0 + 4095ULL & ~4095ULL) != 0)        { FAIL("0 not aligned"); return; }
-    if ((4096 + 4095ULL & ~4095ULL) != 4096)  { FAIL("4096 changed"); return; }
-    if ((1 + 4095ULL & ~4095ULL) != 4096)     { FAIL("1 not aligned"); return; }
+    if (((4095 + 4095ULL) & ~4095ULL) != 4096)  { FAIL("4095 not aligned"); return; }
+    if (((0 + 4095ULL) & ~4095ULL) != 0)        { FAIL("0 not aligned"); return; }
+    if (((4096 + 4095ULL) & ~4095ULL) != 4096)  { FAIL("4096 changed"); return; }
+    if (((1 + 4095ULL) & ~4095ULL) != 4096)     { FAIL("1 not aligned"); return; }
     PASS();
 }
 

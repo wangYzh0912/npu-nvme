@@ -1,6 +1,7 @@
 # NPU-NVMe Transfer
 
-Ascend NPU 与 NVMe SSD 之间的零拷贝数据传输引擎。C 层提供 HBM ↔ NVMe 批量读写；
+Ascend NPU 与 NVMe SSD 之间的文件系统旁路分块流水化传输引擎。C 层通过
+ACL 在 HBM 与 Host DMA buffer 之间搬运数据，并由 SPDK 访问裸 NVMe；
 Python 层 (`DirectCheckpoint`) 封装裸盘布局与检查点语义。
 
 ## 依赖

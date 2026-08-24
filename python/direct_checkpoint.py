@@ -168,6 +168,8 @@ class DirectCheckpoint:
 
         self._spdk_initialized = True
         self._closed = False
+        self.io_thread = None
+        self._io_error = None
         atexit.register(self.close)
 
         # Set up ctypes signature for C-layer profiling
@@ -175,8 +177,6 @@ class DirectCheckpoint:
         lib.npu_nvme_get_last_io_us.restype = ctypes.c_uint64
 
         self._mount_filesystem()
-
-        self.io_thread = None
 
     # -- Filesystem mount ----------------------------------------------------
 
@@ -403,11 +403,18 @@ class DirectCheckpoint:
     # -- Cleanup / lifecycle -------------------------------------------------
 
     def cleanup(self):
-        self.wait_for_io_completion()
-        if getattr(self, '_spdk_initialized', False) and self.ctx:
-            lib.npu_nvme_cleanup(self.ctx)
-            self.ctx = None
-            self._spdk_initialized = False
+        io_error = None
+        try:
+            self.wait_for_io_completion()
+        except RuntimeError as error:
+            io_error = error
+        finally:
+            if getattr(self, '_spdk_initialized', False) and self.ctx:
+                lib.npu_nvme_cleanup(self.ctx)
+                self.ctx = None
+                self._spdk_initialized = False
+        if io_error is not None:
+            raise io_error
 
     def get_last_io_us(self, is_read: bool = False) -> int:
         """C-layer I/O latency in microseconds (DMA + SPDK only, no Python overhead).
@@ -420,11 +427,16 @@ class DirectCheckpoint:
         if not getattr(self, '_closed', False) and hasattr(self, 'ctx') and self.ctx:
             print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down "
                   f"NPUNVME context...", flush=True)
-            self.cleanup()
-            self._closed = True
+            try:
+                self.cleanup()
+            finally:
+                self._closed = True
 
     def __del__(self):
-        self.close()
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def _build_local_param_registry(self, models):
         if not isinstance(models, (list, tuple)):
@@ -488,15 +500,22 @@ class DirectCheckpoint:
     # -- I/O synchronisation -------------------------------------------------
 
     def wait_for_io_completion(self):
-        if getattr(self, 'io_thread', None) is not None and self.io_thread.is_alive():
+        thread = getattr(self, 'io_thread', None)
+        if thread is not None:
             t_wait_start = time.perf_counter()
-            print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for "
-                  f"background SPDK flush to finish...", flush=True)
-            self.io_thread.join()
+            if thread.is_alive():
+                print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for "
+                      f"background SPDK flush to finish...", flush=True)
+            thread.join()
+            self.io_thread = None
             t_wait_end = time.perf_counter()
             print(f"[Timeline][Rank {self.rank_id}] I/O Barrier Cleared! "
                   f"Wait time: {(t_wait_end - t_wait_start):.3f}s", flush=True)
-            self.io_thread = None
+
+        if self._io_error is not None:
+            error = self._io_error
+            self._io_error = None
+            raise RuntimeError("Background checkpoint persistence failed") from error
 
     # DEPRECATED: kept as no-op for backward compatibility.
     def wait_async_io(self):
@@ -646,7 +665,7 @@ class DirectCheckpoint:
         scale_bytes = int(k * np.dtype(np.float32).itemsize)
         idx_bytes = int(k * np.dtype(np.int32).itemsize)
 
-        chunks = [
+        buffers = [
             {'name': 'delta_quant_buf', 'npu_ptr': quant_ptr,
              'nvme_offset': slot_offset,
              'size': quant_bytes, 'param_ref': delta_cell.delta_quant_buf},
@@ -659,6 +678,32 @@ class DirectCheckpoint:
                               + int(math.ceil(scale_bytes / 4096.0)) * 4096),
              'size': idx_bytes, 'param_ref': delta_cell.delta_idx_buf},
         ]
+
+        chunks = []
+        for buf in buffers:
+            remaining = buf['size']
+            inner_off = 0
+            nvme_offset = buf['nvme_offset']
+            while remaining > 0:
+                take = min(remaining, self.chunk_size)
+                chunks.append({
+                    **buf,
+                    'name': f"{buf['name']}@{inner_off}",
+                    'npu_ptr': buf['npu_ptr'] + inner_off,
+                    'nvme_offset': nvme_offset,
+                    'size': take,
+                })
+                remaining -= take
+                inner_off += take
+                nvme_offset += int(math.ceil(take / 4096.0)) * 4096
+
+        slot_end = max(
+            ch['nvme_offset'] + int(math.ceil(ch['size'] / 4096.0)) * 4096
+            for ch in chunks)
+        if slot_end > slot_offset + self._delta_slot_size:
+            raise MemoryError(
+                f"Delta buffers require {slot_end - slot_offset} bytes, "
+                f"exceeding slot size {self._delta_slot_size}")
 
         self.chunks = chunks
         return chunks
@@ -801,50 +846,59 @@ class DirectCheckpoint:
 
         def background_io_worker(c_ptrs_d, c_offs_d, c_sizes_d, n_dev, d_sz,
                                  c_ptrs_h, c_offs_h, c_sizes_h, n_host, h_sz):
-            t_spdk_start = time.perf_counter()
-            total_written = 0
+            try:
+                t_spdk_start = time.perf_counter()
+                total_written = 0
 
-            if n_dev > 0:
-                rc = lib.npu_nvme_write_batch(
-                    self.ctx, c_ptrs_d, c_offs_d, c_sizes_d, n_dev)
-                if rc != 0:
-                    print(f"[Fatal] write_batch failed (rc={rc})")
-                total_written += d_sz
+                if n_dev > 0:
+                    rc = lib.npu_nvme_write_batch(
+                        self.ctx, c_ptrs_d, c_offs_d, c_sizes_d, n_dev)
+                    if rc != 0:
+                        raise RuntimeError(f"write_batch failed (rc={rc})")
+                    total_written += d_sz
 
-            if n_host > 0:
-                if hasattr(lib, "npu_nvme_write_batch_host"):
+                if n_host > 0:
+                    if not hasattr(lib, "npu_nvme_write_batch_host"):
+                        raise RuntimeError(
+                            "C library missing npu_nvme_write_batch_host")
                     rc = lib.npu_nvme_write_batch_host(
                         self.ctx, c_ptrs_h, c_offs_h, c_sizes_h, n_host)
                     if rc != 0:
-                        print(f"[Fatal] write_batch_host failed (rc={rc})")
+                        raise RuntimeError(
+                            f"write_batch_host failed (rc={rc})")
                     total_written += h_sz
 
-            t_spdk_end = time.perf_counter()
-            T_SPDK = t_spdk_end - t_spdk_start
+                t_spdk_end = time.perf_counter()
+                T_SPDK = t_spdk_end - t_spdk_start
 
-            t_meta_start = time.perf_counter()
-            self.last_layout = layout
-            if commit_meta:
-                self._commit_metadata(step, layout)
+                t_meta_start = time.perf_counter()
+                self.last_layout = layout
+                if commit_meta:
+                    self._commit_metadata(step, layout)
 
-            with open(meta_path, "wb") as f:
-                pickle.dump(self.meta_dict, f)
+                with open(meta_path, "wb") as f:
+                    pickle.dump(self.meta_dict, f)
 
-            t_meta_end = time.perf_counter()
-            T_Meta = t_meta_end - t_meta_start
+                t_meta_end = time.perf_counter()
+                T_Meta = t_meta_end - t_meta_start
 
-            real_time = time.perf_counter() - t_start
-            bw = total_written / 1024 / 1024 / real_time if real_time > 0 else 0
+                real_time = time.perf_counter() - t_start
+                bw = (total_written / 1024 / 1024 / real_time
+                      if real_time > 0 else 0)
 
-            print(f"\n{'='*54}")
-            print(f"[Timeline][Rank {self.rank_id}] Step {step} | "
-                  f"Background SPDK Flush ENDED at {time.perf_counter():.3f}s")
-            print(f"[Breakdown][Rank {self.rank_id}] "
-                  f"Prep: {T_Prep*1000:.2f}ms | Layout: {T_Layout*1000:.2f}ms | "
-                  f"SPDK(H/W): {T_SPDK*1000:.2f}ms | Meta: {T_Meta*1000:.2f}ms")
-            print(f"[DirectCkpt][Rank {self.rank_id}] Background Safe Write: "
-                  f"{total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s")
-            print(f"{'='*54}\n", flush=True)
+                print(f"\n{'='*54}")
+                print(f"[Timeline][Rank {self.rank_id}] Step {step} | "
+                      f"Background SPDK Flush ENDED at {time.perf_counter():.3f}s")
+                print(f"[Breakdown][Rank {self.rank_id}] "
+                      f"Prep: {T_Prep*1000:.2f}ms | Layout: {T_Layout*1000:.2f}ms | "
+                      f"SPDK(H/W): {T_SPDK*1000:.2f}ms | Meta: {T_Meta*1000:.2f}ms")
+                print(f"[DirectCkpt][Rank {self.rank_id}] Background Safe Write: "
+                      f"{total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s")
+                print(f"{'='*54}\n", flush=True)
+            except BaseException as error:
+                self._io_error = error
+                print(f"[Fatal][Rank {self.rank_id}] Background checkpoint "
+                      f"failed: {error}", flush=True)
 
         num_dev_val = len(dev_chunks) if dev_chunks else 0
         dev_sz_val = dev_sz if dev_chunks else 0
@@ -852,6 +906,7 @@ class DirectCheckpoint:
         host_sz_val = host_sz if host_chunks else 0
 
         self.wait_for_io_completion()
+        self._io_error = None
 
         self.io_thread = threading.Thread(
             target=background_io_worker,
@@ -910,12 +965,17 @@ class DirectCheckpoint:
                 raise RuntimeError("read_batch failed")
             total_read += sum(c[2].value for c in dev_chunks)
 
-        # NOTE: host_chunks (parameters without NPU device memory, e.g.
-        # very small CPU-resident tensors) are NOT read from NVMe here
-        # because there is no npu_nvme_read_batch_host C API.  Their
-        # np_arr buffers remain zero-filled.  In normal operation (NPU
-        # training), all model parameters have device pointers and this
-        # path is never exercised.
+        # Read CPU-resident parameters through the explicit Host path.
+        if host_chunks:
+            if not hasattr(lib, "npu_nvme_read_batch_host"):
+                raise RuntimeError(
+                    "C library missing npu_nvme_read_batch_host")
+            c_ptrs, c_offs, c_sizes = build_ctypes_arrays(host_chunks)
+            rc = lib.npu_nvme_read_batch_host(
+                self.ctx, c_ptrs, c_offs, c_sizes, len(host_chunks))
+            if rc != 0:
+                raise RuntimeError("read_batch_host failed")
+            total_read += sum(c[2].value for c in host_chunks)
 
         t1 = time.time()
         t_update = time.time()
@@ -997,12 +1057,10 @@ class DirectCheckpoint:
             ctypes.addressof(frame_buf), slot_offset, total_bytes, self.chunk_size)
         c_ptrs, c_offs, c_sizes = build_ctypes_arrays(chunks)
 
-        if hasattr(lib, "npu_nvme_write_batch_host"):
-            rc = lib.npu_nvme_write_batch_host(
-                self.ctx, c_ptrs, c_offs, c_sizes, len(chunks))
-        else:
-            rc = lib.npu_nvme_write_batch(
-                self.ctx, c_ptrs, c_offs, c_sizes, len(chunks))
+        if not hasattr(lib, "npu_nvme_write_batch_host"):
+            raise RuntimeError("C library missing npu_nvme_write_batch_host")
+        rc = lib.npu_nvme_write_batch_host(
+            self.ctx, c_ptrs, c_offs, c_sizes, len(chunks))
         if rc != 0:
             raise RuntimeError(f"Delta write failed at slot {slot_idx} (rc={rc})")
 
@@ -1036,12 +1094,10 @@ class DirectCheckpoint:
             ctypes.addressof(header_buf), slot_offset,
             FRAME_HEADER_SIZE, self.chunk_size)
         h_ptrs, h_offs, h_sizes = build_ctypes_arrays(h_chunks)
-        if hasattr(lib, "npu_nvme_read_batch_host"):
-            rc = lib.npu_nvme_read_batch_host(
-                self.ctx, h_ptrs, h_offs, h_sizes, len(h_chunks))
-        else:
-            rc = lib.npu_nvme_read_batch(
-                self.ctx, h_ptrs, h_offs, h_sizes, len(h_chunks))
+        if not hasattr(lib, "npu_nvme_read_batch_host"):
+            raise RuntimeError("C library missing npu_nvme_read_batch_host")
+        rc = lib.npu_nvme_read_batch_host(
+            self.ctx, h_ptrs, h_offs, h_sizes, len(h_chunks))
         if rc != 0:
             raise RuntimeError(
                 f"Delta header read failed at slot {slot_idx} (rc={rc})")
@@ -1061,12 +1117,8 @@ class DirectCheckpoint:
             ctypes.addressof(data_buf), slot_offset,
             total_sz, self.chunk_size)
         d_ptrs, d_offs, d_sizes = build_ctypes_arrays(d_chunks)
-        if hasattr(lib, "npu_nvme_read_batch_host"):
-            rc = lib.npu_nvme_read_batch_host(
-                self.ctx, d_ptrs, d_offs, d_sizes, len(d_chunks))
-        else:
-            rc = lib.npu_nvme_read_batch(
-                self.ctx, d_ptrs, d_offs, d_sizes, len(d_chunks))
+        rc = lib.npu_nvme_read_batch_host(
+            self.ctx, d_ptrs, d_offs, d_sizes, len(d_chunks))
         if rc != 0:
             raise RuntimeError(
                 f"Delta data read failed at slot {slot_idx} (rc={rc})")

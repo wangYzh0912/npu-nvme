@@ -113,7 +113,11 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
                     np_arr.ctypes.data, s["offset"], s["size"], CHUNK_SIZE)
 
                 c_ptrs, c_offs, c_sizes = build_ctypes_arrays(chunks)
-                if lib.npu_nvme_read_batch(ctx, c_ptrs, c_offs, c_sizes, len(chunks)) != 0:
+                if not hasattr(lib, "npu_nvme_read_batch_host"):
+                    raise RuntimeError(
+                        "C library missing npu_nvme_read_batch_host")
+                if lib.npu_nvme_read_batch_host(
+                        ctx, c_ptrs, c_offs, c_sizes, len(chunks)) != 0:
                     raise RuntimeError(
                         f"Read failed for {name} from Rank {s['rank']}")
                 np_parts.append(np_arr)
@@ -136,12 +140,11 @@ def export_to_heap(pci_addr, target_step, world_size, meta_dir, npu_id=0):
 
             # Use write_batch_host for host-side pointers (fixes bug: was using
             # write_batch which expects NPU device pointers).
-            if hasattr(lib, "npu_nvme_write_batch_host"):
-                rc = lib.npu_nvme_write_batch_host(
-                    ctx, w_ptrs, w_offs, w_sizes, len(w_chunks))
-            else:
-                rc = lib.npu_nvme_write_batch(
-                    ctx, w_ptrs, w_offs, w_sizes, len(w_chunks))
+            if not hasattr(lib, "npu_nvme_write_batch_host"):
+                raise RuntimeError(
+                    "C library missing npu_nvme_write_batch_host")
+            rc = lib.npu_nvme_write_batch_host(
+                ctx, w_ptrs, w_offs, w_sizes, len(w_chunks))
             if rc != 0:
                 raise RuntimeError(f"Write failed for {name} to HEAP")
 

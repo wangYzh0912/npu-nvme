@@ -28,7 +28,7 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                   int pipe_depth, uint32_t chunk_size, bool enable_profiling,
                   const char *prof_dir);
 
-/** @brief Release all resources (SPDK, ACL, DMA pool, listener thread). */
+/** @brief Release all resources (SPDK, ACL, DMA pool, Reactor thread). */
 void npu_nvme_cleanup(NPUNVMEContext *ctx);
 
 /** @brief Return total NVMe capacity in bytes. */
@@ -90,7 +90,7 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
 
 /**
  * @brief Register parameter pointers for background persistence by the
- *        FaF listener thread.
+ *        Reactor step poller.
  */
 int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
                             uint64_t *nvme_offsets, size_t *sizes, int num_items);
@@ -103,7 +103,7 @@ int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
 int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
 
 /**
- * @brief Register the step_counter device pointer for the listener thread.
+ * @brief Register the step_counter device pointer for the Reactor poller.
  *
  * @param ctx           context handle
  * @param dev_ptr       step_counter device (HBM) pointer

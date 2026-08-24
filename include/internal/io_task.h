@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
+#include <stdatomic.h>
 
 /* --- DMA buffer descriptor --- */
 typedef struct {
@@ -43,6 +45,7 @@ typedef struct {
     struct NPUNVMEContext *ctx;
     io_task_t *task;
     int *completed_counter;
+    int *result;
 } spdk_cb_arg_t;
 
 /* --- Pipeline direction --- */
@@ -75,7 +78,8 @@ typedef struct {
     io_task_t *tasks;           /* array of per-chunk descriptors */
     int num_tasks;              /* number of chunks in this write */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy D2H */
-    volatile int done;          /* set to 1 when all chunks complete */
+    atomic_int done;            /* set to 1 when all chunks complete */
+    int result;                 /* 0 = success, -1 = any chunk failed */
     uint64_t ts_batch_start;    /* C-layer: first DMA submit time (us) */
     uint64_t ts_batch_end;      /* C-layer: last SPDK completion time (us) */
 } write_request_t;
@@ -99,7 +103,9 @@ typedef enum {
 typedef struct {
     io_task_t *tasks;           /* array of per-chunk descriptors */
     int num_tasks;              /* number of chunks in this read */
-    volatile int done;          /* set to 1 when all chunks complete */
+    bool is_host;               /* true → memcpy, false → aclrtMemcpy H2D */
+    atomic_int done;            /* set to 1 when all chunks complete */
+    int result;                 /* 0 = success, -1 = any chunk failed */
     uint64_t ts_batch_start;    /* C-layer: first SPDK submit time (us) */
     uint64_t ts_batch_end;      /* C-layer: last DMA completion time (us) */
 } read_request_t;
@@ -118,7 +124,7 @@ typedef struct {
     uint32_t total_bytes;       /* number of bytes to read/write */
     int is_read;                /* 1 = read, 0 = write */
     void *meta_buffer;          /* caller's host buffer */
-    volatile int done;          /* set to 1 when I/O completes */
+    atomic_int done;            /* set to 1 when I/O completes */
     int result;                 /* 0 = success, -1 = I/O error */
 } meta_request_t;
 

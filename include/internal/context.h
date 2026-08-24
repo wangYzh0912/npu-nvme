@@ -91,7 +91,7 @@ typedef struct NPUNVMEContext {
     struct spdk_thread *reactor_thread;
     pthread_t reactor_pthread;
     pthread_barrier_t init_barrier;
-    volatile int app_should_stop;
+    atomic_int app_should_stop;
 
     /* ---- Step-counter poller ---- */
     struct spdk_poller *step_poller;

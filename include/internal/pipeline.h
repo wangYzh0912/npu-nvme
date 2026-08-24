@@ -1,7 +1,6 @@
 /* Internal: unified dual-polling I/O pipeline.
  *
- * Provides the core async I/O engine used by write_batch, read_batch,
- * and the FaF listener thread.
+ * Provides shared helpers for the Reactor-driven read/write FSMs.
  */
 #ifndef NPU_NVME_PIPELINE_H
 #define NPU_NVME_PIPELINE_H
@@ -15,19 +14,6 @@ struct spdk_nvme_cpl;
 
 struct NPUNVMEContext;
 
-/* --- Pipeline entry points --- */
-
-/* Run the write pipeline (NPU DMA -> SPDK NVMe).  Blocks until all
- * tasks complete.  Pass is_host=true when the source pointers are host
- * DRAM addresses rather than NPU HBM addresses. */
-void run_write_pipeline(struct NPUNVMEContext *ctx, io_task_t *tasks,
-                         int num_tasks, bool is_host);
-
-/* Run the read pipeline (SPDK NVMe -> NPU DMA).  Blocks until all
- * tasks complete. */
-void run_read_pipeline(struct NPUNVMEContext *ctx, io_task_t *tasks,
-                        int num_tasks);
-
 /* --- Profiling CSV export --- */
 
 /* Write per-chunk micro-benchmark data to a CSV file.
@@ -38,7 +24,7 @@ void write_profiling_csv(struct NPUNVMEContext *ctx, io_task_t *tasks,
 /* --- SPDK submission helpers --- */
 
 int submit_to_spdk_write(struct NPUNVMEContext *ctx, io_task_t *task,
-                          int *completed_counter);
+                          int *completed_counter, int *result);
 void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion);
 void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion);
 

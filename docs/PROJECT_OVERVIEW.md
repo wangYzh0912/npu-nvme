@@ -156,37 +156,36 @@ FULL 区域由 Python 按
 
 1. `experiments/clean_room_tests.py` 同时存在 Python 语法错误和硬编码 sudo 凭据。
    应删除凭据、轮换密码，并改为只从未跟踪的凭据文件或交互输入读取。
-2. Host 读接口没有把“目标是 Host”传入读 FSM；读完成路径始终调用
-   `ACL_MEMCPY_HOST_TO_DEVICE`。`npu_nvme_read_batch_host()`、Delta 帧读取和
-   `export_model.py` 的 Host 读取因此不可信，并可能无限重试。
-3. `meta_qpair` 在 reactor 退出时释放，`npu_nvme_cleanup()` 中再次释放，存在
-   double-free 风险。
+2. **整理分支已修复：** Host 读请求现在显式进入 `memcpy` 路径，Delta 帧、普通
+   Host 参数加载及 `export_model.py` 不再把 Host 指针传给设备读接口。
+3. **整理分支已修复：** reactor 释放 `meta_qpair` 后立即清空所有权指针，cleanup
+   不再重复释放。
 4. `npu_nvme_init()` 启动 reactor 后的多个失败分支直接 `free(ctx)`，没有停止并
    join reactor，也没有按已分配资源逆序回收，存在 use-after-free 与资源泄漏风险。
 5. FULL 尾部槽与 Delta ring 默认重叠，Delta 写入可能破坏全量检查点。
-6. `build_layout_for_delta()` 把大缓冲作为单个任务注册；写 FSM 对大于
-   `chunk_size` 的任务直接标记完成但不写入。默认量化缓冲远大于 4 MiB。
+6. **整理分支已修复：** `build_layout_for_delta()` 现在按 `chunk_size` 拆分大缓冲，
+   C API 同时拒绝零长度、超大、未对齐或越界任务。
 7. FaF Delta 固定注册一个槽，不推进 ring slot，也不写 Delta frame header；
    `recover()` 无法消费其输出。
 8. `DeltaTrainCell` 的 `P_old` 只保存 INT8 数据，没有保存全量 per-block scale；
    下一步比较时直接将 INT8 cast 为 FP16，不能正确还原上一版本权重。小参数路径也
    尚未接入。
-9. NVMe completion 和部分提交错误只打印日志，批量 API 仍返回 0；调用方可能在
-   数据未落盘时提交元数据。部分 ACL 失败路径会持续重试而没有超时。
+9. **部分修复：** NVMe completion、提交和 ACL 拷贝错误已传播至批量 API；Python
+   后台线程失败时不再提交元数据，并在下一次 I/O barrier 抛出异常。显式超时和
+   取消协议仍待设计。
 
 ### P1：功能不完整或难以验证
 
 1. 多 rank 元数据只由 rank 0 提交，内容只包含 rank 0 当前 layout；其余 rank 的
    加载和导出语义没有闭合。`base_offset_bytes`、`shard_span_bytes` 尚未使用。
-2. `export_model.py` 使用设备读接口读取 Host 数组，并使用全局 shape 承载局部分片
-   size，分布式汇总仍需重新设计和验证。
-3. `direct_checkpoint.load()` 已有 Host 读 C API，却仍按旧注释跳过 host chunks。
-4. Python 后台保存线程只打印 C 层错误，异常不会传回调用线程；`save()` 返回值也
-   不能表示最终持久化成功。
-5. `pipeline.h` 仍声明已移除的 `run_write_pipeline()` 和
-   `run_read_pipeline()`；若干注释仍描述旧 listener 实现。
-6. C 测试中的批量 I/O 主测试仍标记 `TBD`；现有 V2 smoke test 正好依赖当前有问题
-   的 Host 读路径。
+2. `export_model.py` 的 Host 读写接口已修正，但使用全局 shape 承载局部分片 size，
+   分布式汇总仍需重新设计和验证。
+3. `direct_checkpoint.load()` 已恢复 Host 参数读取；仍需在目标机覆盖混合 Host/NPU
+   参数的恢复测试。
+4. Python 后台保存异常会在 `wait_for_io_completion()`、下一次保存或 cleanup 时
+   传播，但 `save()` 本身仍是“已派发”语义，不能表示最终持久化成功。
+5. C 测试中的批量 I/O 主测试仍标记 `TBD`；V2 Host 回环已改为对 I/O 返回值和数据
+   内容失败时返回非零，尚待目标机执行。
 
 ### P2：工程化与可复现性
 
