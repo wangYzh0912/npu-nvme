@@ -35,8 +35,9 @@ flowchart LR
 | 目录 | 定位 | 当前判断 |
 |---|---|---|
 | `python/` | Python 主线，共 15 个文件、约 3275 行 | 核心控制面 |
-| `src/` | C 实现与测试，共 5 个文件、约 2119 行 | 核心数据面 |
+| `src/` | C 数据面实现 | 核心生产源码 |
 | `include/` | 公共 C API 与内部状态结构，约 525 行 | 核心接口 |
+| `tests/c/` | 纯逻辑、硬件回环与 Reactor 诊断测试 | C 验证入口 |
 | `experiments/` | 基线、FaF、Delta、分布式及诊断实验 | 混合了当前入口和历史原型 |
 | `docs/` | Reactor 论文式说明和项目总览 | 后续报告素材主目录 |
 | `experiments/ascendc/` | Delta 自定义算子探索 | 研究原型，未接入当前 Python 主线 |
@@ -190,10 +191,10 @@ FULL 区域由 Python 按
 ### P2：工程化与可复现性
 
 1. 没有 Python 依赖清单、测试配置或 CI。
-2. CMake 硬编码 `/tmp/mp_ring_fix/librte_mempool_ring_fixed.a`，构建不可移植。
-3. `.build_config` 保存了特定机器的绝对 SPDK 路径。
-4. `experiments/` 混合当前实验、诊断脚本和已废弃方案，容易误用。
-5. 已跟踪结果文件来自不同版本；例如当前 `bench_full.json` 中
+2. DPDK mempool-ring 修补归档已经改为显式配置，但其生成方法和对应 DPDK commit
+   仍需在目标机补充为可复现脚本。
+3. `experiments/` 混合当前实验、诊断脚本和已废弃方案，容易误用。
+4. 已跟踪结果文件来自不同版本；例如当前 `bench_full.json` 中
    `p_old_nonzero=false`、`quant_nonzero=false`，不能作为 Delta 正确性的证据。
 
 ## 7. 已完成的静态验证

@@ -33,6 +33,7 @@ load_or_create_config() {
         print_info "Loading saved configuration..."
         source "$CONFIG_FILE"
         echo "  SPDK_ROOT_DIR: $SPDK_ROOT_DIR"
+        echo "  DPDK_MEMPOOL_RING_FIXED_LIB: $DPDK_MEMPOOL_RING_FIXED_LIB"
         echo "  SOC_VERSION: $SOC_VERSION"
 
         if [ -n "$SPDK_ROOT_DIR" ] && [ ! -d "$SPDK_ROOT_DIR" ]; then
@@ -46,6 +47,12 @@ load_or_create_config() {
                 create_new_config
                 return
             fi
+        fi
+
+        if [ -z "$DPDK_MEMPOOL_RING_FIXED_LIB" ] || [ ! -f "$DPDK_MEMPOOL_RING_FIXED_LIB" ]; then
+            print_warning "Saved DPDK mempool-ring archive is unavailable"
+            create_new_config
+            return
         fi
         
         read -p "Use saved configuration? [Y/n]: " use_saved
@@ -65,7 +72,7 @@ create_new_config() {
     echo "=========================================="
     
     # SPDK路径
-    local default_spdk="${CURRENT_DIR}/../third_party/spdk"
+    local default_spdk="${CURRENT_DIR}/third_party/spdk"
     read -p "Enter SPDK root directory [${default_spdk}]: " input_spdk
     SPDK_ROOT_DIR="${input_spdk:-$default_spdk}"
     
@@ -73,6 +80,15 @@ create_new_config() {
     while [ ! -d "$SPDK_ROOT_DIR" ]; do
         print_error "Directory does not exist: $SPDK_ROOT_DIR"
         read -p "Enter SPDK root directory: " SPDK_ROOT_DIR
+    done
+
+    local default_mempool_ring="${CURRENT_DIR}/.local/lib/librte_mempool_ring_fixed.a"
+    read -p "Enter patched DPDK mempool-ring archive [${default_mempool_ring}]: " input_mempool_ring
+    DPDK_MEMPOOL_RING_FIXED_LIB="${input_mempool_ring:-$default_mempool_ring}"
+
+    while [ ! -f "$DPDK_MEMPOOL_RING_FIXED_LIB" ]; do
+        print_error "File does not exist: $DPDK_MEMPOOL_RING_FIXED_LIB"
+        read -p "Enter patched DPDK mempool-ring archive: " DPDK_MEMPOOL_RING_FIXED_LIB
     done
     
     # SOC版本
@@ -91,6 +107,7 @@ create_new_config() {
 # You can edit this file or delete it to reconfigure
 
 export SPDK_ROOT_DIR="$SPDK_ROOT_DIR"
+export DPDK_MEMPOOL_RING_FIXED_LIB="$DPDK_MEMPOOL_RING_FIXED_LIB"
 export SOC_VERSION="$SOC_VERSION"
 EOF
         print_info "Configuration saved to: $CONFIG_FILE"
@@ -102,8 +119,8 @@ EOF
 # ==================================================
 # Parse Arguments
 # ==================================================
-SHORT=v:,s:,c,d,r,h
-LONG=soc-version:,spdk:,clean,debug,reconfigure,help
+SHORT=v:s:m:cdrh
+LONG=soc-version:,spdk:,mempool-ring:,clean,debug,reconfigure,help
 OPTS=$(getopt -a --options $SHORT --longoptions $LONG -- "$@")
 
 if [ $?  != 0 ]; then
@@ -116,15 +133,22 @@ eval set -- "$OPTS"
 CLEAN=false
 BUILD_TYPE="Release"
 RECONFIGURE=false
+CLI_SOC_VERSION=""
+CLI_SPDK_ROOT_DIR=""
+CLI_DPDK_MEMPOOL_RING_FIXED_LIB=""
 
 while :; do
     case "$1" in
     -v | --soc-version)
-        SOC_VERSION="$2"
+        CLI_SOC_VERSION="$2"
         shift 2
         ;;
     -s | --spdk)
-        SPDK_ROOT_DIR="$2"
+        CLI_SPDK_ROOT_DIR="$2"
+        shift 2
+        ;;
+    -m | --mempool-ring)
+        CLI_DPDK_MEMPOOL_RING_FIXED_LIB="$2"
         shift 2
         ;;
     -c | --clean)
@@ -146,6 +170,7 @@ Usage: $0 [OPTIONS]
 Options:
     -v, --soc-version VERSION   SOC version
     -s, --spdk PATH            SPDK root directory
+    -m, --mempool-ring PATH    Patched DPDK mempool-ring archive
     -c, --clean                Clean build before compiling
     -d, --debug                Build in Debug mode
     -r, --reconfigure          Reconfigure build settings
@@ -179,6 +204,9 @@ else
     load_or_create_config
 fi
 
+SPDK_ROOT_DIR="${CLI_SPDK_ROOT_DIR:-$SPDK_ROOT_DIR}"
+DPDK_MEMPOOL_RING_FIXED_LIB="${CLI_DPDK_MEMPOOL_RING_FIXED_LIB:-$DPDK_MEMPOOL_RING_FIXED_LIB}"
+SOC_VERSION="${CLI_SOC_VERSION:-$SOC_VERSION}"
 SOC_VERSION="${SOC_VERSION:-Ascend310P3}"
 
 # ==================================================
@@ -238,9 +266,16 @@ if [ !  -f "$SPDK_ROOT_DIR/build/lib/libspdk_nvme.a" ]; then
     exit 1
 fi
 
+if [ -z "$DPDK_MEMPOOL_RING_FIXED_LIB" ] || [ ! -f "$DPDK_MEMPOOL_RING_FIXED_LIB" ]; then
+    print_error "Patched DPDK mempool-ring archive not found: $DPDK_MEMPOOL_RING_FIXED_LIB"
+    print_info "Pass --mempool-ring PATH or set it in .build_config"
+    exit 1
+fi
+
 print_info "✓ SPDK libraries found"
 
 export SPDK_ROOT_DIR
+export DPDK_MEMPOOL_RING_FIXED_LIB
 
 # ==================================================
 # Print Configuration
@@ -253,6 +288,7 @@ echo "SOC Version:   ${SOC_VERSION}"
 echo "Build Type:    ${BUILD_TYPE}"
 echo "Ascend Path:   ${_ASCEND_INSTALL_PATH}"
 echo "SPDK Path:     ${SPDK_ROOT_DIR}"
+echo "Mempool Ring:  ${DPDK_MEMPOOL_RING_FIXED_LIB}"
 echo "Clean Build:   ${CLEAN}"
 echo "=========================================="
 echo ""

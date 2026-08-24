@@ -38,19 +38,6 @@ set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 
-# Check AscendC CMake
-if(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)
-    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)
-elseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)
-    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)
-elseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)
-    set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/ascendc_devkit/tikcpp/samples/cmake)
-else()
-    message(FATAL_ERROR "ascendc_kernel_cmake does not exist")
-endif()
-
-include(${ASCENDC_CMAKE_DIR}/ascendc.cmake)
-
 # Ascend include and library
 set(ASCEND_ACL_INCLUDE_DIRS
     ${ASCEND_CANN_PACKAGE_PATH}/include
@@ -118,6 +105,17 @@ endif()
 
 file(GLOB DPDK_LIBS_FILES ${SPDK_ROOT_DIR}/dpdk/build/lib/librte_*.a)
 
+# This project currently re-registers DPDK's ring_mp_mc mempool callbacks
+# after EAL initialisation.  The target machine uses an archive whose callback
+# symbols have been made externally visible.  Keep that machine-specific
+# artifact outside the repository and pass its path explicitly.
+set(DPDK_MEMPOOL_RING_FIXED_LIB "$ENV{DPDK_MEMPOOL_RING_FIXED_LIB}"
+    CACHE FILEPATH "Patched DPDK mempool-ring archive with exported common_ring_* symbols")
+if(NOT DPDK_MEMPOOL_RING_FIXED_LIB OR NOT EXISTS "${DPDK_MEMPOOL_RING_FIXED_LIB}")
+    message(FATAL_ERROR
+        "DPDK_MEMPOOL_RING_FIXED_LIB must point to the patched mempool-ring archive")
+endif()
+
 set(SYSTEM_LIBS
     pthread dl rt numa uuid ssl crypto m stdc++ fuse3
 )
@@ -125,6 +123,7 @@ set(SYSTEM_LIBS
 message(STATUS "==============================================")
 message(STATUS "Ascend Path: ${ASCEND_CANN_PACKAGE_PATH}")
 message(STATUS "SPDK Path: ${SPDK_ROOT_DIR}")
+message(STATUS "DPDK mempool ring: ${DPDK_MEMPOOL_RING_FIXED_LIB}")
 message(STATUS "==============================================")
 
 # ==================================================
@@ -162,7 +161,7 @@ target_link_libraries(npu_nvme PRIVATE
     # prevents the linker from stripping them (e.g. ring_mp_mc mempool ops).
     # The fixed mempool_ring archive has globalized symbols for extern refs.
     -Wl,--whole-archive
-    /tmp/mp_ring_fix/librte_mempool_ring_fixed.a
+    ${DPDK_MEMPOOL_RING_FIXED_LIB}
     ${DPDK_LIBS_FILES}
     -Wl,--no-whole-archive
 
@@ -184,7 +183,7 @@ set_target_properties(npu_nvme PROPERTIES
 # Test Executable
 # ==================================================
 add_executable(test_npu_nvme
-    src/test_npu_nvme.c
+    tests/c/test_npu_nvme.c
 )
 
 target_include_directories(test_npu_nvme PRIVATE
@@ -195,7 +194,6 @@ target_include_directories(test_npu_nvme PRIVATE
 
 target_link_libraries(test_npu_nvme PRIVATE
     npu_nvme
-    ${ASCEND_ACL_INCLUDE_DIRS}
 )
 
 set_target_properties(test_npu_nvme PROPERTIES
@@ -212,7 +210,7 @@ target_link_options(test_npu_nvme PRIVATE
 # V0 SPDK Thread Lib Test (minimal reproducer)
 # ==================================================
 add_executable(reactor_v0_spdk_thread_test
-    src/reactor_v0_spdk_thread_test.c
+    tests/c/reactor_v0_spdk_thread_test.c
 )
 target_include_directories(reactor_v0_spdk_thread_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -241,7 +239,7 @@ target_link_options(reactor_v0_spdk_thread_test PRIVATE
 # V2 Smoke Test: init + host write/read + cleanup
 # ==================================================
 add_executable(v2_smoke_test
-    src/v2_smoke_test.c
+    tests/c/v2_smoke_test.c
 )
 target_include_directories(v2_smoke_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -260,7 +258,7 @@ target_link_options(v2_smoke_test PRIVATE
     "LINKER:--enable-new-dtags"
 )
 add_executable(reactor_v0_test
-    src/reactor_v0_test.c
+    tests/c/reactor_v0_test.c
 )
 
 target_include_directories(reactor_v0_test PRIVATE

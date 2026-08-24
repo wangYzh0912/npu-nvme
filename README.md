@@ -22,6 +22,11 @@ cd third_party/spdk && ./configure && make -j$(nproc) && cd ../..
 ./build.sh
 ```
 
+目标机还需提供导出了 `common_ring_*` 符号的 DPDK mempool-ring 归档：可在
+`.build_config` 中设置 `DPDK_MEMPOOL_RING_FIXED_LIB`，或向 `build.sh` 传入
+`--mempool-ring /absolute/path/to/librte_mempool_ring_fixed.a`。示例配置见
+`.build_config.example`。
+
 产物：`build_out/lib/libnpu_nvme.so`、`build_out/include/npu_nvme.h`。
 
 ## 运行
@@ -58,6 +63,8 @@ int npu_nvme_read_batch_host (ctx, void **ptrs, uint64_t *offsets, size_t *sizes
 ```
 
 完整 API 见 `include/npu_nvme.h`。
+
+C 测试与硬件使用边界见 `tests/c/README.md`。
 
 ### Python 层
 

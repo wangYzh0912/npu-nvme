@@ -13,7 +13,7 @@
  *   context.h      — NPUNVMEContext structure + sub-structures
  *
  * Built as libnpu_nvme.so; consumed by Python ctypes bindings
- * (python/direct_checkpoint.py) and the C smoke test (src/test_npu_nvme.c).
+ * (python/direct_checkpoint.py) and the C smoke tests under tests/c/.
  * ======================================================================= */
 #include "npu_nvme.h"
 
