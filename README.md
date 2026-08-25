@@ -67,6 +67,9 @@ int npu_nvme_read_batch_host (ctx, void **ptrs, uint64_t *offsets, size_t *sizes
 
 C 测试与硬件使用边界见 `tests/c/README.md`。
 
+近期的研发、实验与增量检查点路线见
+[`docs/NEAR_TERM_WORK_PLAN.md`](docs/NEAR_TERM_WORK_PLAN.md)。
+
 ### Python 层
 
 ```python
