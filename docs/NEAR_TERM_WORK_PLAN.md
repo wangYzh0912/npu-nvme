@@ -629,3 +629,28 @@ P2 结果直接充当 A1。A3 的 scalar 模式允许逐 chunk 调用同一个�
 首轮执行顺序为 A1/A2/A4/A7，再执行 A3/A5/A6/A8/A9/A10；每完成一个设计点立即生成
 结构化汇总和 hash 清单。最终表格只比较同一模型、同一设备、同一计时边界的控制/实验
 对，另将 13B 的完整矩阵作为规模敏感性复核，不用跨设备结果替代消融。
+
+### 9.11 工作包二首轮执行记录（2026-08-25）
+
+首轮结果写入 `experiments/output/wp2/`，并使用 GPT-2 XL 的真实 MindFormers 网络
+参数完成了关键路径验证。模型实验均为随机初始化参数的 checkpoint-only 测量；除 A7
+外不包含 optimizer 状态，且所有样本均通过逐参数摘要或字节回读校验。
+
+| 消融 | 首轮结果 | 状态与解释 |
+|---|---|---|
+| A1 | 同一块 83.0.0、GPT-2 XL：P2 ext4 persist 4275.3 ms；P4 SPDK write 764.1 ms | PASS；模型版同盘对照完成 |
+| A2 | GPT-2 XL：P3 snapshot/write/read = 574.9/713.6/857.4 ms；P4 write/read = 764.1/641.2 ms | PASS；P3 的 Host 中转和 P4 的 HBM 直达路径已分开记录 |
+| A3 | 合成回环 batch 的有效带宽随 items 1/4/16/64 为 186.8/364.9/431.6/465.8 MiB/s；GPT-2 XL scalar write 2303.3 ms，明显高于既有 batch 约 726.6 ms | PASS；说明逐 chunk Python/C 提交开销不可忽略 |
+| A4 | 合成 depth 1/2/4/8/16 端到端均值约 10.66～11.29 ms | preliminary；模型版 depth 矩阵待补，不能据此宣称模型吞吐无收益 |
+| A5 | 合成 chunk 64 KiB～16 MiB 有效带宽 26.1～485.5 MiB/s | preliminary；模型版 chunk 矩阵待补 |
+| A6 | Reactor depth proxy：depth 1/4 为 374.6/360.3 MiB/s | preliminary；尚未实现独立安全同步 API，不纳入正式消融表 |
+| A7 | GPT-2 XL 真实训练 cell：20 steps、4 个图内计数触发点全部完成；step 均值 427.0 ms，边界等待均值 435.0 ms | PASS；使用图内 counter + Reactor poller，未替换已编译 device Parameter |
+| A8 | metadata 单写 1.104 ms；A/B 写后双读协议 5.490 ms | preliminary；现有脚本尚未完成 active-slot 切换与故障注入门禁 |
+| A9 | 1/2/4 worker proxy 有效带宽 392.3/291.0/235.0 MiB/s | preliminary；当前不是严格的 snapshot-slot 生命周期重叠实验 |
+| A10 | 合成 node2/node4 有效带宽 355.3/315.2 MiB/s | preliminary；模型版 NUMA 对照待补 |
+
+首轮执行还暴露出一个环境要求：root 下运行 MindFormers 模型实验时，`sudo -E`
+不足以保留 CANN 环境，必须在 root shell 中显式执行
+`source /usr/local/Ascend/ascend-toolkit/set_env.sh`。后续所有模型命令沿用这一启动
+方式。A4/A5/A10 的合成结果仅用于先验证开关和测量链路；GPT-2 13B 的完整规模敏感性
+矩阵与尚未正式化的 A6/A8/A9 将继续单独记录，不能与本节 PASS 项混合。
