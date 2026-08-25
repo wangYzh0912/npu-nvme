@@ -27,6 +27,8 @@ Sub-modules (importable independently):
 """
 
 import ctypes
+from dataclasses import replace
+import hashlib
 import math
 import os
 import pickle
@@ -48,10 +50,14 @@ from c_bindings import lib, acl_lib, NPUNVMEContext
 from disk_layout import (SUPERBLOCK_OFFSET, SUPERBLOCK_HEADER_BYTES,
                           META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
                           META_SLOT_BYTES, MAGIC_NUMBER, UINT32_BYTES,
-                          DELTA_MAGIC, FRAME_HEADER_SIZE, BLOCK_SIZE)
+                          DELTA_MAGIC, FRAME_HEADER_SIZE, BLOCK_SIZE,
+                          DiskLayout, make_layout, pack_metadata,
+                          unpack_metadata, pack_superblock,
+                          unpack_superblock)
 from chunk_helpers import (build_chunks, build_chunks_host,
                             build_ctypes_arrays, rebuild_chunks_from_meta)
-from delta_protocol import (pack_delta_frame, unpack_delta_frame,
+from delta_protocol import (pack_delta_frame, pack_lossless_delta_frame,
+                             unpack_delta_frame, unpack_delta_frame_with_meta,
                              apply_delta_patches, FileDeltaWriter)
 from noop_init import NoOpInitializer, replace_with_noop_initializer
 from training_cell import ProbeTrainOneStepCell
@@ -99,6 +105,52 @@ if not _MS_HAS_DATA_PTR:
         "Upgrade MindSpore or use MS 2.4+.")
 
 
+# -- Completion handle -------------------------------------------------------
+
+class CheckpointHandle:
+    """Observable completion state for one frozen checkpoint generation."""
+
+    DISPATCHED = "DISPATCHED"
+    PERSISTED = "PERSISTED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+    def __init__(self, owner, request_id, generation, step):
+        self.owner = owner
+        self.request_id = request_id
+        self.generation = generation
+        self.step = step
+        self.status = self.DISPATCHED
+        self.error = None
+        self._done = threading.Event()
+
+    def _complete(self):
+        self.status = self.PERSISTED
+        self._done.set()
+
+    def _fail(self, error):
+        self.status = self.FAILED
+        self.error = error
+        self._done.set()
+
+    def wait(self, timeout=None):
+        """Wait for durable completion and raise the original failure."""
+        self.owner.wait_for_io_completion(timeout=timeout)
+        if self.status == self.FAILED:
+            raise RuntimeError("checkpoint persistence failed") from self.error
+        if self.status != self.PERSISTED:
+            raise TimeoutError("checkpoint did not reach PERSISTED state")
+        return self
+
+    def __iter__(self):
+        """Legacy tuple compatibility for existing benchmark callers."""
+        yield 0
+        yield getattr(self.owner, "_last_chunk_count", 0)
+        yield 0.0
+        yield 0.0
+        yield getattr(self.owner, "_last_save_stats", {})
+
+
 # -- DirectCheckpoint: NVMe-backed training checkpoint manager ----------------
 
 class DirectCheckpoint:
@@ -110,7 +162,7 @@ class DirectCheckpoint:
         enable_profiling: bool = False, profiling_dir: str = "./output/profiling",
         rank_id: int = 0, world_size: int = 1,
         base_offset_bytes: int = 0, shard_span_bytes: int = None,
-        spdk_shm_id: int = 1, keep_last_n: int = 3, slot_size_gb: int = 50,
+        spdk_shm_id: int = 1, keep_last_n: int = 3, slot_size_gb: int = 10,
         warmup_fn: callable = None,
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
@@ -126,6 +178,8 @@ class DirectCheckpoint:
         self.keep_last_n = keep_last_n
         self.slot_bytes = slot_size_gb * 1024**3
         self.active_meta_slot = 0
+        self.metadata_generation = 0
+        self.layout = None
         self.stack_start_bytes = 0
         self.meta_dict = {"checkpoints": {}}
         self.last_layout = []
@@ -170,6 +224,11 @@ class DirectCheckpoint:
         self._closed = False
         self.io_thread = None
         self._io_error = None
+        self._active_handle = None
+        self._request_counter = 0
+        self._snapshot_generation = 0
+        self._last_chunk_count = 0
+        self._last_save_stats = {}
         atexit.register(self.close)
 
         # Set up ctypes signature for C-layer profiling
@@ -188,52 +247,55 @@ class DirectCheckpoint:
         if rc != 0:
             raise RuntimeError("Failed to read Superblock.")
 
-        header = struct.unpack("<8s I Q Q", sb_buf.raw[:SUPERBLOCK_HEADER_BYTES])
-        magic = header[0]
-
-        if magic != MAGIC_NUMBER:
+        try:
+            self.layout = unpack_superblock(sb_buf.raw)
+        except ValueError as error:
             raise RuntimeError(
-                f"Superblock verification failed: unexpected header "
-                f"0x{magic.hex()} (expected NPUNVME1). "
-                f"Run format_npu_disk.py to initialize the disk.")
+                f"Superblock verification failed: {error}. "
+                "Run format_npu_disk.py with the V2 layout to initialize the disk.") from error
+        if self.layout.total_bytes != self.total_bytes:
+            raise RuntimeError("superblock capacity does not match NVMe capacity")
+        self.active_meta_slot = self.layout.active_meta_slot
+        self.metadata_generation = self.layout.generation
+        self.stack_start_bytes = self.layout.full_base
 
-        self.active_meta_slot = header[1]
-        self.stack_start_bytes = header[3]
-
-        total_stack_bytes = self.world_size * self.keep_last_n * self.slot_bytes
-        if self.stack_start_bytes == 0 or (
-            self.stack_start_bytes + total_stack_bytes > self.total_bytes):
-            print(f"[Warning] Rank {self.rank_id}: Stale Superblock! "
-                  f"Current config needs {total_stack_bytes/1024**3:.2f} GB, "
-                  f"but disk bounds exceeded. Recalculating...", flush=True)
-            self.stack_start_bytes = self.total_bytes - total_stack_bytes
-            print(f"[Info] Stack dynamically re-allocated at disk end. "
-                  f"Start Offset: {self.stack_start_bytes / 1024**3:.2f} GB")
-
-        target_offset = (META_SLOT_A_OFFSET if self.active_meta_slot == 0
-                         else META_SLOT_B_OFFSET)
-        meta_buf = ctypes.create_string_buffer(META_SLOT_BYTES)
-        lib.npu_nvme_sync_meta_io(self.ctx, target_offset, META_SLOT_BYTES,
-                                   1, ctypes.c_void_p(ctypes.addressof(meta_buf)))
-
-        meta_str = meta_buf.value.decode('utf-8', errors='ignore').rstrip('\x00')
-        if meta_str:
+        valid = []
+        for slot, target_offset in enumerate((META_SLOT_A_OFFSET,
+                                               META_SLOT_B_OFFSET)):
+            meta_buf = ctypes.create_string_buffer(META_SLOT_BYTES)
+            rc = lib.npu_nvme_sync_meta_io(
+                self.ctx, target_offset, META_SLOT_BYTES, 1,
+                ctypes.c_void_p(ctypes.addressof(meta_buf)))
+            if rc != 0:
+                continue
             try:
-                self.meta_dict = json.loads(meta_str)
-            except json.JSONDecodeError:
-                self.meta_dict = {"checkpoints": {}}
-                print("[Warning] Parsed metadata JSON was invalid. Starting fresh.")
+                generation, payload = unpack_metadata(meta_buf.raw)
+                valid.append((generation, slot, payload))
+            except (ValueError, json.JSONDecodeError):
+                continue
+        if not valid:
+            raise RuntimeError("both metadata replicas are invalid")
+        generation, slot, payload = max(valid, key=lambda item: item[0])
+        self.metadata_generation = generation
+        self.active_meta_slot = slot
+        self.meta_dict = payload
+        self.layout = replace(self.layout, generation=generation,
+                              active_meta_slot=slot)
 
         print(f"[Rank {self.rank_id}] FileSystem Mounted. "
+              f"V{2} generation={generation} "
               f"Active Slot: {'A' if self.active_meta_slot == 0 else 'B'}")
 
     # -- Slot layout ---------------------------------------------------------
 
     def _get_current_slot_base_offset(self, step: int):
-        slot_idx = step % self.keep_last_n
-        rank_offset = self.rank_id * self.keep_last_n * self.slot_bytes
-        slot_offset = slot_idx * self.slot_bytes
-        return self.stack_start_bytes + rank_offset + slot_offset
+        if self.layout is None:
+            raise RuntimeError("disk layout is not mounted")
+        if self.slot_bytes != self.layout.full_slot_bytes:
+            raise RuntimeError(
+                "configured full slot size differs from formatted disk")
+        return self.layout.full_slot_offset(
+            self.rank_id, step, self.keep_last_n)
 
     # -- Metadata commit -----------------------------------------------------
 
@@ -241,9 +303,13 @@ class DirectCheckpoint:
         if self.rank_id != 0:
             return
 
+        if self.layout is None:
+            raise RuntimeError("cannot commit metadata before mounting layout")
+        next_generation = self.metadata_generation + 1
         ckpt_key = f"step_{step}"
         self.meta_dict["checkpoints"][ckpt_key] = {
             "type": "FULL",
+            "generation": next_generation,
             "chunk_size": self.chunk_size,
             "rank_id": self.rank_id,
             "world_size": self.world_size,
@@ -270,7 +336,7 @@ class DirectCheckpoint:
                 except ValueError:
                     pass
         for ds in delta_keys:
-            if ds < saved_steps[0]:
+            if saved_steps and ds < saved_steps[0]:
                 del self.meta_dict["delta_chain"][f"step_{ds}"]
 
         while len(saved_steps) > self.keep_last_n:
@@ -291,36 +357,39 @@ class DirectCheckpoint:
                 _pickle.dump(self.meta_dict, _f)
         self._dump_meta_pkl = _dump_meta_pkl
 
+        self._persist_metadata(next_generation)
+        print(f"[DirectCkpt] Rank 0 Meta committed safely to "
+              f"Slot {'B' if self.active_meta_slot == 1 else 'A'} "
+              "(Superblock updated).",
+              flush=True)
+
+    def _persist_metadata(self, generation=None):
+        """Persist the current metadata dict using the A/B commit protocol."""
+        if self.layout is None:
+            raise RuntimeError("cannot persist metadata before mounting layout")
+        if generation is None:
+            generation = self.metadata_generation + 1
         next_slot = 1 if self.active_meta_slot == 0 else 0
-        target_offset = META_SLOT_B_OFFSET if next_slot == 1 else META_SLOT_A_OFFSET
-
-        meta_json = json.dumps(self.meta_dict).encode('utf-8')
-        if len(meta_json) > META_SLOT_BYTES:
-            raise RuntimeError(
-                f"Metadata JSON exceeds allocated {META_SLOT_BYTES} bytes!")
-
-        meta_buf = ctypes.create_string_buffer(meta_json, META_SLOT_BYTES)
-        rc1 = lib.npu_nvme_sync_meta_io(
+        target_offset = (META_SLOT_B_OFFSET if next_slot == 1
+                         else META_SLOT_A_OFFSET)
+        meta_buf = ctypes.create_string_buffer(
+            pack_metadata(self.meta_dict, generation), META_SLOT_BYTES)
+        rc = lib.npu_nvme_sync_meta_io(
             self.ctx, target_offset, META_SLOT_BYTES, 0,
             ctypes.c_void_p(ctypes.addressof(meta_buf)))
-        if rc1 != 0:
-            raise RuntimeError(
-                f"Fatal: Meta JSON write failed! C layer returned {rc1}.")
-
-        sb_buf = ctypes.create_string_buffer(4096)
-        struct.pack_into("<8s I Q Q", sb_buf, 0,
-                         MAGIC_NUMBER, next_slot, self.total_bytes,
-                         self.stack_start_bytes)
-        rc2 = lib.npu_nvme_sync_meta_io(
+        if rc != 0:
+            raise RuntimeError(f"metadata replica write failed (rc={rc})")
+        new_layout = replace(self.layout, generation=generation,
+                             active_meta_slot=next_slot)
+        sb_buf = ctypes.create_string_buffer(pack_superblock(new_layout), 4096)
+        rc = lib.npu_nvme_sync_meta_io(
             self.ctx, SUPERBLOCK_OFFSET, 4096, 0,
             ctypes.c_void_p(ctypes.addressof(sb_buf)))
-        if rc2 != 0:
-            raise RuntimeError("Fatal: Superblock write failed!")
-
+        if rc != 0:
+            raise RuntimeError(f"superblock commit failed (rc={rc})")
         self.active_meta_slot = next_slot
-        print(f"[DirectCkpt] Rank 0 Meta committed safely to "
-              f"Slot {'B' if next_slot == 1 else 'A'} (Superblock updated).",
-              flush=True)
+        self.metadata_generation = generation
+        self.layout = new_layout
 
     # -- Probe flag helpers --------------------------------------------------
 
@@ -450,9 +519,6 @@ class DirectCheckpoint:
             if model is None or not hasattr(model, "parameters_and_names"):
                 continue
             for name, p in model.parameters_and_names():
-                ptr = get_dev_ptr(p)
-                if ptr == 0:
-                    continue
                 self.local_valid_param_names.add(name)
 
         print(f"[DirectCkpt] Rank {self.rank_id} registry: "
@@ -473,8 +539,6 @@ class DirectCheckpoint:
                     continue
 
                 ptr = get_dev_ptr(p)
-                if ptr == 0:
-                    continue
 
                 dtype_np = np.dtype(ms.dtype_to_nptype(p.dtype))
                 local_shape = p.shape
@@ -489,24 +553,93 @@ class DirectCheckpoint:
                     continue
                 size = int(np.prod(local_shape)) * dtype_np.itemsize
 
+                host_arr = None
+                if ptr == 0:
+                    if not hasattr(p, "asnumpy"):
+                        raise RuntimeError(
+                            f"Host parameter {name} has no asnumpy() accessor")
+                    host_arr = np.asarray(p.asnumpy(), dtype=dtype_np).copy()
+                    if np.prod(local_shape) != np.prod(host_arr.shape):
+                        host_arr = host_arr.reshape(tuple(local_shape)).copy()
+
                 params.append({
                     "name": name, "ptr": ptr, "size": size,
                     "shape": list(p.shape), "dtype": dtype_np.name,
-                    "np_arr": None,
+                    "np_arr": host_arr,
                     "param_ref": p,
                 })
         return params
 
+    def _snapshot_params(self, params, generation):
+        """Freeze device/host parameters before starting background I/O."""
+        if acl_lib is None:
+            raise RuntimeError("Ascend ACL library is required for snapshots")
+        if not hasattr(acl_lib, "aclrtMalloc"):
+            acl_lib.aclrtMalloc.argtypes = [
+                ctypes.POINTER(ctypes.c_void_p), ctypes.c_size_t, ctypes.c_int]
+            acl_lib.aclrtMalloc.restype = ctypes.c_int
+            acl_lib.aclrtFree.argtypes = [ctypes.c_void_p]
+            acl_lib.aclrtFree.restype = ctypes.c_int
+        if hasattr(acl_lib, "aclrtSetDevice"):
+            rc = acl_lib.aclrtSetDevice(self.npu_device_id)
+            if rc != 0:
+                raise RuntimeError(f"aclrtSetDevice failed during snapshot: {rc}")
+
+        frozen = []
+        allocated = []
+        try:
+            for item in params:
+                copy_item = dict(item)
+                copy_item["generation"] = generation
+                if item["ptr"]:
+                    device_ptr = ctypes.c_void_p()
+                    rc = acl_lib.aclrtMalloc(
+                        ctypes.byref(device_ptr), item["size"], 0)
+                    if rc != 0 or not device_ptr.value:
+                        raise RuntimeError(
+                            f"aclrtMalloc snapshot failed for {item['name']}: {rc}")
+                    allocated.append(device_ptr)
+                    rc = acl_lib.aclrtMemcpy(
+                        device_ptr, item["size"],
+                        ctypes.c_void_p(item["ptr"]), item["size"], 3)
+                    if rc != 0:
+                        raise RuntimeError(
+                            f"device snapshot copy failed for {item['name']}: {rc}")
+                    copy_item["ptr"] = int(device_ptr.value)
+                    copy_item["snapshot_dev_ptr"] = device_ptr
+                else:
+                    # The array was copied in _prepare_params; copy again so
+                    # callers cannot mutate the source while the I/O thread
+                    # is running.
+                    copy_item["np_arr"] = np.array(item["np_arr"], copy=True)
+                frozen.append(copy_item)
+        except BaseException:
+            for ptr in allocated:
+                acl_lib.aclrtFree(ptr)
+            raise
+        return frozen
+
+    def _release_snapshot(self, params):
+        if acl_lib is None:
+            return
+        for item in params or []:
+            ptr = item.get("snapshot_dev_ptr")
+            if ptr is not None and ptr.value:
+                acl_lib.aclrtFree(ptr)
+                item["snapshot_dev_ptr"] = ctypes.c_void_p()
+
     # -- I/O synchronisation -------------------------------------------------
 
-    def wait_for_io_completion(self):
+    def wait_for_io_completion(self, timeout=None):
         thread = getattr(self, 'io_thread', None)
         if thread is not None:
             t_wait_start = time.perf_counter()
             if thread.is_alive():
                 print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for "
                       f"background SPDK flush to finish...", flush=True)
-            thread.join()
+            thread.join(timeout=timeout)
+            if thread.is_alive():
+                raise TimeoutError("background checkpoint I/O timed out")
             self.io_thread = None
             t_wait_end = time.perf_counter()
             print(f"[Timeline][Rank {self.rank_id}] I/O Barrier Cleared! "
@@ -770,6 +903,9 @@ class DirectCheckpoint:
 
     def save(self, model: ms.nn.Cell, step: int,
              meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True):
+        # A previous generation owns its snapshot buffers until it reaches a
+        # terminal state.  Never overwrite/reuse those buffers implicitly.
+        self.wait_for_io_completion()
         t_start = time.perf_counter()
 
         # -- T_Prep --
@@ -777,6 +913,22 @@ class DirectCheckpoint:
         params = self._prepare_params(model)
         t_prep_end = time.perf_counter()
         T_Prep = t_prep_end - t_prep_start
+
+        self._request_counter += 1
+        self._snapshot_generation += 1
+        request_id = self._request_counter
+        generation = self._snapshot_generation
+        # Freeze the graph before copying any parameter address.  A D2D copy
+        # submitted while the optimizer is still running would otherwise
+        # produce a mixed-step checkpoint.
+        if hasattr(ms.hal, "synchronize"):
+            ms.hal.synchronize()
+        elif hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
+            ms.runtime.synchronize()
+        elif acl_lib is not None and hasattr(acl_lib, "aclrtSynchronizeStream"):
+            acl_lib.aclrtSynchronizeStream(None)
+        params = self._snapshot_params(params, generation)
+        handle = CheckpointHandle(self, request_id, generation, step)
 
         # -- T_Layout --
         base_offset_bytes = self._get_current_slot_base_offset(step)
@@ -831,19 +983,6 @@ class DirectCheckpoint:
         t_layout_end = time.perf_counter()
         T_Layout = t_layout_end - t_prep_end
 
-        # -- T_SPDK: background I/O --
-        # Synchronise device before DMA reads.  Prefer ms.hal.synchronize
-        # (public API, MS 2.3+); fall back to ms.runtime.synchronize
-        # (internal, may move).  ops.functional.depend is NOT a runtime
-        # barrier — if neither exists, use ACL stream synchronisation.
-        if hasattr(ms.hal, "synchronize"):
-            ms.hal.synchronize()
-        elif hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
-            ms.runtime.synchronize()
-        else:
-            if acl_lib is not None:
-                acl_lib.aclrtSynchronizeStream(None)
-
         def background_io_worker(c_ptrs_d, c_offs_d, c_sizes_d, n_dev, d_sz,
                                  c_ptrs_h, c_offs_h, c_sizes_h, n_host, h_sz):
             try:
@@ -895,18 +1034,27 @@ class DirectCheckpoint:
                 print(f"[DirectCkpt][Rank {self.rank_id}] Background Safe Write: "
                       f"{total_written/1024/1024:.2f} MB | BW: {bw:.2f} MB/s")
                 print(f"{'='*54}\n", flush=True)
+                handle._complete()
             except BaseException as error:
                 self._io_error = error
+                handle._fail(error)
                 print(f"[Fatal][Rank {self.rank_id}] Background checkpoint "
                       f"failed: {error}", flush=True)
+            finally:
+                self._release_snapshot(params)
 
         num_dev_val = len(dev_chunks) if dev_chunks else 0
         dev_sz_val = dev_sz if dev_chunks else 0
         num_host_val = len(host_chunks) if host_chunks else 0
         host_sz_val = host_sz if host_chunks else 0
 
-        self.wait_for_io_completion()
         self._io_error = None
+        self._active_handle = handle
+        self._last_chunk_count = num_dev_val + num_host_val
+        self._last_save_stats = {"prep_time": T_Prep,
+                                 "layout_time": T_Layout,
+                                 "request_id": request_id,
+                                 "generation": generation}
 
         self.io_thread = threading.Thread(
             target=background_io_worker,
@@ -919,19 +1067,20 @@ class DirectCheckpoint:
               f"dispatched to background thread. "
               f"Layout cost: {T_Layout*1000:.2f}ms", flush=True)
 
-        return (0, len(dev_chunks) + len(host_chunks), 0.0, 0.0,
-                {"prep_time": T_Prep, "layout_time": T_Layout})
+        return handle
 
     def load(self, model: ms.nn.Cell, step: int = None,
              meta_path: str = "checkpoint_meta.pkl"):
         t_start = time.time()
 
+        # NVMe metadata is the source of truth.  The pickle is retained only
+        # as a diagnostic sidecar and must never make a restarted process
+        # appear to have a checkpoint that was not persisted to the device.
+        self._mount_filesystem()
+
         if step is not None:
             ckpt_key = f"step_{step}"
         else:
-            if os.path.exists(meta_path):
-                with open(meta_path, "rb") as f:
-                    self.meta_dict = pickle.load(f)
             valid_keys = [k for k in self.meta_dict.get("checkpoints", {}).keys()
                           if "complete" not in k]
             if not valid_keys:
@@ -1008,16 +1157,25 @@ class DirectCheckpoint:
 
     def delta_init(self, slot_size_mb: int = 256, slot_count: int = 128):
         slot_bytes = slot_size_mb * 1024 * 1024
+        if self.layout is None:
+            raise RuntimeError("disk layout is not mounted")
+        if (slot_bytes != self.layout.delta_slot_bytes or
+                slot_count != self.layout.delta_slot_count):
+            raise RuntimeError(
+                "requested Delta geometry differs from formatted disk: "
+                f"requested {slot_count}x{slot_bytes}, formatted "
+                f"{self.layout.delta_slot_count}x{self.layout.delta_slot_bytes}")
         if not hasattr(lib, "npu_nvme_delta_init"):
             raise RuntimeError(
                 "C library missing npu_nvme_delta_init — rebuild required.")
         rc = lib.npu_nvme_delta_init(
-            self.ctx, ctypes.c_uint64(slot_bytes), ctypes.c_uint32(slot_count))
+            self.ctx, ctypes.c_uint64(self.layout.delta_base),
+            ctypes.c_uint64(slot_bytes), ctypes.c_uint32(slot_count))
         if rc != 0:
             raise RuntimeError(f"Delta init failed (rc={rc})")
         self._delta_slot_size = slot_bytes
         self._delta_slot_count = slot_count
-        self._delta_next_slot = 0
+        self._delta_next_slot = int(self.meta_dict.get("delta_head", 0))
         self._delta_step_map = {}
         self._delta_frame_sizes = []
         if "delta_chain" not in self.meta_dict:
@@ -1032,14 +1190,37 @@ class DirectCheckpoint:
         print(f"[DirectCkpt] Delta area initialized: "
               f"{slot_count} slots x {slot_size_mb}MB", flush=True)
 
-    def delta_save(self, step: int, block_patches: list, small_patches: list):
+    def delta_save(self, step: int, block_patches: list, small_patches: list,
+                   lossless: bool = False, base_generation: int = None):
         if not hasattr(self, '_delta_slot_count'):
             self.delta_init()
 
         self.wait_for_io_completion()
         self.wait_async_io()
 
-        frame = pack_delta_frame(step, block_patches, small_patches)
+        if lossless:
+            if base_generation is None:
+                full_steps = []
+                for key, value in self.meta_dict.get("checkpoints", {}).items():
+                    if key.startswith("step_") and value.get("type", "FULL") == "FULL":
+                        try:
+                            full_step = int(key.split("_")[1])
+                        except (IndexError, ValueError):
+                            continue
+                        if full_step <= step:
+                            full_steps.append((full_step, int(value.get("generation", 0))))
+                if not full_steps:
+                    raise RuntimeError(
+                        "lossless Delta requires a persisted FULL base checkpoint")
+                base_generation = max(full_steps)[1]
+            frame = pack_lossless_delta_frame(
+                step, block_patches, small_patches,
+                base_generation=base_generation,
+                generation=self.metadata_generation + 1)
+            encoding = "fp16"
+        else:
+            frame = pack_delta_frame(step, block_patches, small_patches)
+            encoding = "int8"
         total_bytes = len(frame)
 
         if total_bytes > self._delta_slot_size:
@@ -1047,8 +1228,7 @@ class DirectCheckpoint:
                 f"Delta frame {total_bytes} bytes > slot {self._delta_slot_size}")
 
         slot_idx = self._delta_next_slot % self._delta_slot_count
-        slot_offset = (lib.npu_nvme_delta_get_area_offset(self.ctx)
-                       + slot_idx * self._delta_slot_size)
+        slot_offset = self.layout.delta_slot_offset(slot_idx)
 
         # Use the chunk pipeline (supports >64MB) instead of the deprecated
         # sync_meta_io path via npu_nvme_write_delta.
@@ -1064,29 +1244,50 @@ class DirectCheckpoint:
         if rc != 0:
             raise RuntimeError(f"Delta write failed at slot {slot_idx} (rc={rc})")
 
+        # A ring slot has one authoritative frame.  Remove metadata for the
+        # frame that is about to be overwritten; retaining it would make a
+        # post-restart chain point at a newer frame and fail only much later.
+        for old_key, old_record in list(self.meta_dict["delta_chain"].items()):
+            if old_record.get("slot") == slot_idx:
+                del self.meta_dict["delta_chain"][old_key]
+
         self._delta_step_map[step] = slot_idx
         self._delta_next_slot += 1
         self._delta_frame_sizes.append(total_bytes)
 
         self.meta_dict["delta_chain"][f"step_{step}"] = {
             "type": "DELTA",
+            "generation": self.metadata_generation + 1,
             "slot": slot_idx,
             "frame_size": total_bytes,
             "n_blocks": len(block_patches),
             "n_small": len(small_patches),
+            "encoding": encoding,
         }
+        if lossless:
+            self.meta_dict["delta_chain"][f"step_{step}"]["base_generation"] = int(base_generation)
+        self.meta_dict["delta_head"] = self._delta_next_slot
+        self.meta_dict["delta_tail"] = max(
+            0, self._delta_next_slot - self._delta_slot_count)
+        self._persist_metadata(self.metadata_generation + 1)
         if hasattr(self, '_dump_meta_pkl'):
             self._dump_meta_pkl()
 
         return slot_idx
 
-    def delta_load_slot(self, slot_idx: int):
+    def delta_save_lossless(self, step: int, block_patches: list,
+                            small_patches: list, base_generation: int = None):
+        """Persist one R0 self-described FP16 Delta frame."""
+        return self.delta_save(
+            step, block_patches, small_patches, lossless=True,
+            base_generation=base_generation)
+
+    def delta_load_slot(self, slot_idx: int, return_meta: bool = False):
         if not hasattr(self, '_delta_slot_size'):
             raise RuntimeError(
                 "Delta not initialized. Call delta_init() first.")
 
-        slot_offset = (lib.npu_nvme_delta_get_area_offset(self.ctx)
-                       + slot_idx * self._delta_slot_size)
+        slot_offset = self.layout.delta_slot_offset(slot_idx)
 
         # Read header to determine actual frame size, then full data.
         header_buf = ctypes.create_string_buffer(FRAME_HEADER_SIZE)
@@ -1123,8 +1324,10 @@ class DirectCheckpoint:
             raise RuntimeError(
                 f"Delta data read failed at slot {slot_idx} (rc={rc})")
 
-        step_id, blocks, smalls = unpack_delta_frame(data_buf.raw[:total_sz])
-        return step_id, blocks, smalls
+        decoded = unpack_delta_frame_with_meta(data_buf.raw[:total_sz])
+        if return_meta:
+            return decoded
+        return decoded[:3]
 
     def delta_load_chain(self, from_step: int, to_step: int):
         chain = []
@@ -1133,11 +1336,23 @@ class DirectCheckpoint:
             if key not in self.meta_dict.get("delta_chain", {}):
                 raise FileNotFoundError(
                     f"Delta frame for step {s} not found in metadata")
-            slot = self.meta_dict["delta_chain"][key]["slot"]
-            sid, blocks, smalls = self.delta_load_slot(slot)
+            record = self.meta_dict["delta_chain"][key]
+            slot = record["slot"]
+            sid, blocks, smalls, frame_info = self.delta_load_slot(
+                slot, return_meta=True)
             if sid != s:
-                print(f"[DirectCkpt] WARNING: delta slot {slot} "
-                      f"step_id={sid} != expected {s}")
+                raise RuntimeError(
+                    f"Delta slot {slot} step_id={sid} != expected {s}")
+            expected_encoding = record.get("encoding")
+            if expected_encoding == "fp16" and frame_info.get("version") != 2:
+                raise RuntimeError(
+                    f"Delta step {s} metadata expects FP16 frame, got {frame_info}")
+            if expected_encoding == "fp16":
+                expected_base = int(record.get("base_generation", -1))
+                if frame_info.get("base_generation") != expected_base:
+                    raise RuntimeError(
+                        f"Delta step {s} base generation mismatch: "
+                        f"frame={frame_info.get('base_generation')} metadata={expected_base}")
             chain.append((sid, blocks, smalls))
         return chain
 
