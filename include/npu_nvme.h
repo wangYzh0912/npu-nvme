@@ -125,14 +125,20 @@ void* npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx);
  * @param delta_slot_count number of slots in the ring (128 recommended)
  * @return 0 on success, -1 on error
  */
-int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t delta_slot_size,
-                        uint32_t delta_slot_count);
+int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t area_offset,
+                        uint64_t delta_slot_size, uint32_t delta_slot_count);
 
 /** @brief Return the byte offset of the delta ring on the NVMe device. */
 uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx);
 
 uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx);
 uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
+
+/** @brief Set the bounded timeout used by blocking C API calls. */
+int npu_nvme_set_io_timeout_ms(NPUNVMEContext *ctx, uint32_t timeout_ms);
+
+/** @brief Return the configured blocking I/O timeout in milliseconds. */
+uint32_t npu_nvme_get_io_timeout_ms(NPUNVMEContext *ctx);
 
 /* Delta frame I/O: migrated to Python side via build_chunks_host +
  * write_batch_host / read_batch.  The SPSC ring-buffer pipeline handles

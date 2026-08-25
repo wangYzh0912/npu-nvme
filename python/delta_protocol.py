@@ -9,6 +9,7 @@ Frame layout:
     layer_id(i16) + name_len(u16) + name + scale(f32) + data_len(i32) + data(i8[])
 """
 
+import binascii
 import os
 import struct
 
@@ -54,15 +55,146 @@ def pack_delta_frame(step_id, block_patches, small_patches):
 
     struct.pack_into(f"<I I I I I I", buf, 0, DELTA_MAGIC, step_id,
                      len(block_patches), len(small_patches), total_sz, checksum)
+    struct.pack_into("<HH", buf, 24, 1, 0)  # legacy INT8 encoding
 
     frame = bytes(buf) + bytes(payload)
     return frame
 
 
+def pack_lossless_delta_frame(step_id, block_patches, small_patches,
+                              base_generation=0, generation=0):
+    """Serialize the R0 lossless FP16 Delta baseline.
+
+    Records contain raw FP16 *deltas* and are applied additively.  The frame
+    carries the FULL generation it is based on, so a stale frame cannot be
+    silently applied to another checkpoint lineage.
+    """
+    buf = bytearray(FRAME_HEADER_SIZE)
+    payload = bytearray()
+
+    for patch in block_patches:
+        name = patch["name"].encode("utf-8")
+        data = np.asarray(patch.get("fp16_data", patch.get("data")),
+                          dtype=np.dtype("<f2")).reshape(-1)
+        payload += struct.pack("<hH", int(patch.get("layer_id", 0)), len(name))
+        payload += name
+        payload += struct.pack("<iII", int(patch.get("block_idx", 0)),
+                               int(patch.get("element_offset", 0)), len(data))
+        payload += struct.pack("<I", data.nbytes)
+        payload += data.tobytes()
+
+    for patch in small_patches:
+        name = patch["name"].encode("utf-8")
+        data = np.asarray(patch.get("fp16_data", patch.get("data")),
+                          dtype=np.dtype("<f2")).reshape(-1)
+        payload += struct.pack("<hH", int(patch.get("layer_id", 0)), len(name))
+        payload += name
+        payload += struct.pack("<I", len(data))
+        payload += struct.pack("<I", data.nbytes)
+        payload += data.tobytes()
+
+    total_sz = FRAME_HEADER_SIZE + len(payload)
+    checksum = binascii.crc32(payload) & 0xFFFFFFFF
+    struct.pack_into("<IIIIII", buf, 0, DELTA_MAGIC, step_id,
+                     len(block_patches), len(small_patches), total_sz, checksum)
+    struct.pack_into("<HHQQ", buf, 24, 2, 1, base_generation, generation)
+    return bytes(buf) + bytes(payload)
+
+
 # -- Deserialization -----------------------------------------------------------
+
+def _unpack_lossless_delta_frame(frame_bytes, step_id, n_blocks, n_small,
+                                 total_sz, checksum):
+    payload = frame_bytes[FRAME_HEADER_SIZE:total_sz]
+    if (binascii.crc32(payload) & 0xFFFFFFFF) != checksum:
+        raise ValueError("Delta CRC mismatch")
+    _version, flags, base_generation, generation = struct.unpack_from(
+        "<HHQQ", frame_bytes, 24)
+    pos = FRAME_HEADER_SIZE
+
+    def require(count, label):
+        nonlocal pos
+        if count < 0 or pos + count > total_sz:
+            raise ValueError(f"Truncated lossless delta {label}")
+
+    blocks, smalls = [], []
+    for _ in range(n_blocks):
+        require(4, "block header")
+        lid, name_len = struct.unpack_from("<hH", frame_bytes, pos)
+        pos += 4
+        require(name_len, "block name")
+        name = frame_bytes[pos:pos + name_len].decode("utf-8")
+        pos += name_len
+        require(12, "block metadata")
+        block_idx, element_offset, element_count = struct.unpack_from(
+            "<iII", frame_bytes, pos)
+        pos += 12
+        require(4, "block byte length")
+        data_len = struct.unpack_from("<I", frame_bytes, pos)[0]
+        pos += 4
+        if data_len != element_count * 2:
+            raise ValueError("lossless block byte length mismatch")
+        require(data_len, "block data")
+        data = np.frombuffer(frame_bytes[pos:pos + data_len],
+                             dtype=np.dtype("<f2")).copy()
+        pos += data_len
+        blocks.append({"layer_id": lid, "name": name,
+                       "block_idx": block_idx,
+                       "element_offset": element_offset,
+                       "element_count": element_count,
+                       "fp16_data": data, "encoding": "fp16"})
+
+    for _ in range(n_small):
+        require(4, "small header")
+        lid, name_len = struct.unpack_from("<hH", frame_bytes, pos)
+        pos += 4
+        require(name_len, "small name")
+        name = frame_bytes[pos:pos + name_len].decode("utf-8")
+        pos += name_len
+        require(8, "small metadata")
+        element_count, data_len = struct.unpack_from("<II", frame_bytes, pos)
+        pos += 8
+        if data_len != element_count * 2:
+            raise ValueError("lossless small byte length mismatch")
+        require(data_len, "small data")
+        data = np.frombuffer(frame_bytes[pos:pos + data_len],
+                             dtype=np.dtype("<f2")).copy()
+        pos += data_len
+        smalls.append({"layer_id": lid, "name": name,
+                       "element_count": element_count,
+                       "fp16_data": data, "encoding": "fp16"})
+
+    if pos != total_sz:
+        raise ValueError(f"Delta contains {total_sz - pos} unparsed bytes")
+    info = {"version": _version, "flags": flags,
+            "base_generation": base_generation, "generation": generation}
+    return step_id, blocks, smalls, info
+
+
+def unpack_delta_frame_with_meta(frame_bytes):
+    """Deserialize a frame and return ``(step, blocks, smalls, info)``."""
+    if len(frame_bytes) < FRAME_HEADER_SIZE:
+        raise ValueError(f"Frame too short: {len(frame_bytes)} < {FRAME_HEADER_SIZE}")
+    magic, step_id, n_blocks, n_small, total_sz, checksum = \
+        struct.unpack_from("<I I I I I I", frame_bytes, 0)
+    if magic != DELTA_MAGIC:
+        raise ValueError(f"Invalid delta magic: 0x{magic:08x}")
+    if total_sz < FRAME_HEADER_SIZE or total_sz > len(frame_bytes):
+        raise ValueError(f"Invalid delta frame size: {total_sz}")
+    version, flags = struct.unpack_from("<HH", frame_bytes, 24)
+    if version == 2 and flags & 1:
+        return _unpack_lossless_delta_frame(
+            frame_bytes, step_id, n_blocks, n_small, total_sz, checksum)
+    return _unpack_delta_frame_int8(frame_bytes)
+
 
 def unpack_delta_frame(frame_bytes):
     """Deserialize binary frame back to (step_id, block_patches, small_patches)."""
+    result = unpack_delta_frame_with_meta(frame_bytes)
+    return result[:3]
+
+
+def _unpack_delta_frame_int8(frame_bytes):
     if len(frame_bytes) < FRAME_HEADER_SIZE:
         raise ValueError(f"Frame too short: {len(frame_bytes)} < {FRAME_HEADER_SIZE}")
 
@@ -157,7 +289,9 @@ def unpack_delta_frame(frame_bytes):
         raise ValueError(
             f"Delta frame contains {total_sz - pos} unparsed payload bytes")
 
-    return step_id, block_patches, small_patches
+    return step_id, block_patches, small_patches, {
+        "version": 1, "flags": 0, "base_generation": 0, "generation": 0,
+    }
 
 
 # -- Patch application ---------------------------------------------------------
@@ -175,6 +309,15 @@ def apply_delta_patches(init_weights, block_patches, small_patches, block_size):
 
     for bp in block_patches:
         name = bp["name"]
+        if bp.get("encoding") == "fp16" or "fp16_data" in bp:
+            delta = np.asarray(bp["fp16_data"], dtype=np.float32)
+            start = int(bp.get("element_offset",
+                             bp.get("block_idx", 0) * block_size))
+            end = min(start + len(delta), int(np.prod(w[name].shape)))
+            flat = w[name].astype(np.float32).reshape(-1)
+            flat[start:end] += delta[:end - start]
+            w[name] = flat.reshape(w[name].shape)
+            continue
         bidx = bp["block_idx"]
         i8 = bp["int8_data"]
         s = bp["scale"]
@@ -190,6 +333,12 @@ def apply_delta_patches(init_weights, block_patches, small_patches, block_size):
 
     for sp in small_patches:
         name = sp["name"]
+        if sp.get("encoding") == "fp16" or "fp16_data" in sp:
+            delta = np.asarray(sp["fp16_data"], dtype=np.float32)
+            flat = w[name].astype(np.float32).reshape(-1)
+            flat[:len(delta)] += delta[:len(flat)]
+            w[name] = flat.reshape(w[name].shape)
+            continue
         i8 = sp["int8_data"]
         s = sp["scale"]
         if isinstance(i8, np.ndarray):

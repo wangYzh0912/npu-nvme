@@ -120,10 +120,12 @@ typedef struct NPUNVMEContext {
     /* ---- Async metadata I/O (V4) ---- */
     struct spdk_ring *meta_ring;     /* Python → reactor meta requests */
     struct spdk_nvme_qpair *meta_qpair; /* dedicated qpair for metadata */
+    meta_request_t *meta_req;        /* one in-flight metadata request */
 
     /* ---- C-layer profiling (V6) ---- */
     uint64_t last_write_io_us;   /* C-layer latency of most recent write */
     uint64_t last_read_io_us;    /* C-layer latency of most recent read */
+    uint32_t io_timeout_ms;      /* bounded public API wait */
 } NPUNVMEContext;
 
 #endif

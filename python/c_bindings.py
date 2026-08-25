@@ -126,7 +126,8 @@ try:
     # -- Delta frame ring-buffer layout (bookkeeping only, no I/O) --
     if hasattr(lib, "npu_nvme_delta_init"):
         lib.npu_nvme_delta_init.argtypes = [
-            ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint32]
+            ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint64,
+            ctypes.c_uint32]
         lib.npu_nvme_delta_init.restype = ctypes.c_int
         lib.npu_nvme_delta_get_area_offset.argtypes = [ctypes.c_void_p]
         lib.npu_nvme_delta_get_area_offset.restype = ctypes.c_uint64
@@ -136,6 +137,12 @@ try:
     if hasattr(lib, "npu_nvme_delta_get_slot_count"):
         lib.npu_nvme_delta_get_slot_count.argtypes = [ctypes.c_void_p]
         lib.npu_nvme_delta_get_slot_count.restype = ctypes.c_uint32
+    if hasattr(lib, "npu_nvme_set_io_timeout_ms"):
+        lib.npu_nvme_set_io_timeout_ms.argtypes = [
+            ctypes.c_void_p, ctypes.c_uint32]
+        lib.npu_nvme_set_io_timeout_ms.restype = ctypes.c_int
+        lib.npu_nvme_get_io_timeout_ms.argtypes = [ctypes.c_void_p]
+        lib.npu_nvme_get_io_timeout_ms.restype = ctypes.c_uint32
 
 except OSError as e:
     print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")

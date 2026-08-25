@@ -10,12 +10,12 @@ Outputs:
 """
 import ctypes
 import json
-import struct
 import argparse
 import sys
 
 from disk_layout import (SUPERBLOCK_OFFSET, META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
-                          META_SLOT_BYTES, MAGIC_NUMBER)
+                          META_SLOT_BYTES, CHUNK_SIZE, unpack_metadata,
+                          unpack_superblock)
 from c_bindings import lib, NPUNVMEContext
 
 
@@ -35,16 +35,13 @@ def parse_metadata_slot(ctx, slot_name, offset_bytes):
     if rc != 0:
         return {"status": "I/O Error", "checkpoints": {}}
 
-    meta_str = meta_buf.value.decode('utf-8', errors='ignore').rstrip('\x00')
-    if not meta_str:
-        return {"status": "Empty", "checkpoints": {}}
-
     try:
-        data = json.loads(meta_str)
+        generation, data = unpack_metadata(meta_buf.raw)
+        data["generation"] = generation
         data["status"] = "Valid JSON"
         return data
-    except json.JSONDecodeError:
-        return {"status": "Corrupted JSON / Dirty Data", "checkpoints": {}}
+    except (ValueError, json.JSONDecodeError):
+        return {"status": "Corrupted metadata envelope", "checkpoints": {}}
 
 
 def inspect_disk(pci_addr, npu_id=0):
@@ -55,7 +52,7 @@ def inspect_disk(pci_addr, npu_id=0):
 
     ctx = ctypes.POINTER(NPUNVMEContext)()
     ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'),
-                             npu_id, 1, 1, False, b".")
+                             npu_id, 1, CHUNK_SIZE, False, b".")
     if ret != 0:
         print("[Error] SPDK initialization failed.")
         sys.exit(1)
@@ -69,40 +66,41 @@ def inspect_disk(pci_addr, npu_id=0):
         if rc != 0:
             raise RuntimeError("Failed to read Superblock.")
 
-        header = struct.unpack("<8s I Q Q", sb_buf.raw[:28])
-        magic = header[0]
-        active_slot = header[1]
-        total_bytes = header[2]
-        stack_start_bytes = header[3]
-
-        is_formatted = (magic == MAGIC_NUMBER)
+        try:
+            layout = unpack_superblock(sb_buf.raw)
+            is_formatted = True
+        except ValueError:
+            layout = None
+            is_formatted = False
 
         print("\n[1] SUPERBLOCK (Offset 0)")
         print("-" * 50)
-        print(f"  Magic Number    : {magic} "
+        print(f"  Magic Number    : {sb_buf.raw[:8]} "
               f"{'(OK)' if is_formatted else '(INVALID)'}")
         if not is_formatted:
             return
+
+        active_slot = layout.active_meta_slot
+        total_bytes = layout.total_bytes
 
         print(f"  Active Meta Slot: "
               f"{'Slot A' if active_slot == 0 else 'Slot B'} "
               f"(Pointer: {active_slot})")
         print(f"  Total Capacity  : {format_size(total_bytes)} ({total_bytes} Bytes)")
-        print(f"  Stack Start Off : {format_size(stack_start_bytes)}")
+        print(f"  FULL Base       : {format_size(layout.full_base)}")
+        print(f"  Delta Base      : {format_size(layout.delta_base)}")
 
         # -- Disk layout --
         meta_end_bytes = META_SLOT_B_OFFSET + META_SLOT_BYTES
-        heap_size = stack_start_bytes - meta_end_bytes
-        stack_size = total_bytes - stack_start_bytes
+        heap_size = layout.full_bytes
+        stack_size = layout.delta_bytes
 
         print("\n[2] DISK LAYOUT (Macro View)")
         print("-" * 50)
         print(f"  [ 0        ~ 804 KB   ] Metadata Area "
               f"({format_size(meta_end_bytes)})")
-        print(f"  [ 804 KB   ~ {format_size(stack_start_bytes):<8} ] "
-              f"Heap Area     ({format_size(heap_size)})  <- For complete models")
-        print(f"  [ {format_size(stack_start_bytes):<8} ~ END      ] "
-              f"Stack Area    ({format_size(stack_size)})  <- For blind writes")
+        print(f"  FULL Area      : {format_size(heap_size)}")
+        print(f"  Delta Area     : {format_size(stack_size)}")
 
         # -- Metadata slots --
         print("\n[3] METADATA SLOTS")
