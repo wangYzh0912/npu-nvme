@@ -91,6 +91,7 @@ typedef struct {
     write_request_t faf_req;    /* pre-allocated FaF request (reused each trigger) */
     uint32_t faf_step;          /* step number that triggered current FaF write */
     int next_submit_idx;        /* next chunk index to DMA-copy */
+    int next_spdk_submit_idx;   /* next NPU_DONE chunk to submit to SPDK */
     int completed_count;        /* number of fully completed chunks */
 } write_fsm_ctx_t;
 
@@ -116,6 +117,7 @@ typedef struct {
     read_fsm_state_t state;
     read_request_t *req;        /* current active request, NULL when idle */
     int next_submit_idx;        /* next chunk index to submit */
+    int next_copy_idx;          /* next completed chunk to copy to NPU/Host */
     int completed_count;        /* number of fully completed chunks */
 } read_fsm_ctx_t;
 
