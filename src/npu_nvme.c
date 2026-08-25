@@ -1241,6 +1241,14 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
                 if (rc == 0) {
                     task->state = CHUNK_SPDK_READING;
                     fsm->next_submit_idx++;
+                } else if (rc == -ENOMEM || rc == -EAGAIN) {
+                    /* A qpair can transiently reject a submission when its
+                     * command ring is full.  Keep the task at CHUNK_IDLE and
+                     * retry on the next reactor tick, matching the write FSM
+                     * behavior; treating this as a permanent I/O error makes
+                     * high pipeline-depth reads fail spuriously. */
+                    ring_push(&ctx->dma.free_ring, buf_idx);
+                    free(cb_arg);
                 } else {
                     req->result = -1;
                     ring_push(&ctx->dma.free_ring, buf_idx);
