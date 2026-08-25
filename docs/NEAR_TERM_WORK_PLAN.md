@@ -498,3 +498,99 @@ O1/O2/O4 → R0 → R1/R2。R3、R4 和完整参数扫描可以后移。
 该安排的首个可展示成果不是带宽峰值，而是“训练继续执行时生成的 FULL 检查点，
 在进程重启后仍精确对应触发 step，并且任一后台故障都可被可靠发现”。它将成为后续
 异步流水、消融实验和减少实际写入量论证的共同可信基线。
+
+### 9.7 本次 G0～G5 实施记录（2026-08-25）
+
+本轮在目标服务器的 `0000:83:00.0`（V2 格式、独占 SPDK）上完成了正确性与证据门禁：
+
+| 门禁 | 结果 | 结构化证据 |
+|---|---|---|
+| G0 | PASS：Host/NPU 读写回环、批量边界、容量检查、超时/恢复 | `experiments/output/gates/g0_*`、`tests/hardware/g0_roundtrip.py` |
+| G1 | PASS：GPT-2 XL 772 参数 FULL、DISPATCHED/PERSISTED、跨进程逐参数摘要校验 | `experiments/output/gates/g1_*/g1_manifest.json` |
+| G2 | PASS：metadata A/B generation/CRC 回退，superblock 损坏硬失败并修复 | `tests/hardware/g2_metadata.py` |
+| G3 | PASS：300 个 FP16 无损 Delta frame、超过两次 slot 回绕、重启恢复和 CRC 注入 | `experiments/output/gates/g3/g3_manifest.json` |
+| G4 | PASS：NPU1/NPU2 两 rank prepare/commit，协调器独占 NPU7/83.0.0，rank1 故障不发布 | `experiments/output/gates/g4/g4_manifest.json` |
+| G5 | PASS：5 次预热、10 次正式回环、统一 run/request ID、分层时间戳和 95% CI | `experiments/output/gates/g5_20260825_host/` |
+
+G5 当前是固定设备上的 Host→SPDK→裸 NVMe 证据样本，不是跨 SSD 横比，也不替代后续
+E1～E5、A1～A10 和完整训练阻塞测量。G4 已验证完整训练状态字段（权重、优化器、RNG、
+data cursor）的两阶段提交与摘要恢复；跨进程继续训练后的 loss/数据顺序仍列为后续
+分布式长程实验，不能仅凭本轮小状态回环宣称已完成。
+
+### 9.8 工作包一实施记录（2026-08-25）
+
+本轮在临时分支 `exp/wp1-io-overhead` 完成了工作包一的工具和可执行证据补充：
+
+| 项目 | 结果 | 证据 |
+|---|---|---|
+| E1 裸 NVMe | PASS：6 个请求大小 × 4 个 pipeline depth，正式样本全部通过回读 | `experiments/output/wp1/e1_root/` |
+| E1 内存层次 | PASS：Host memcpy、ACL H2D/D2H/D2D，4 KiB～16 MiB | `experiments/output/wp1/e1_memory/` |
+| E2 | 既有 1 GiB 合成缓冲、GPT-2 XL P0～P5 结果已生成只读 manifest | `experiments/output/wp1/manifests/e2/manifest.json` |
+| E3 正式路径 | PASS：GPT-2 XL P4，4 MiB chunk、depth=4、3 次，回读校验通过 | `experiments/output/wp1/e3_p4/` |
+| E3 外部剖析 | PASS：`perf stat`、`perf record`、`strace -f -c` 均返回 0 | `experiments/output/wp1/profiles/e3_p4/` |
+| E4/E5 | 既有正式结果已生成只读 manifest | `experiments/output/wp1/manifests/e4/`、`e5/` |
+| 时间线完整性 | PASS：WP1 新结果 53 个，0 个非单调或负时长样本 | `experiments/output/wp1/summary.json` |
+
+外部剖析运行会重新触发 MindSpore 首次图编译，单次耗时约 124～158 秒；因此 profile
+只用于 CPU、系统调用和调用栈归因，不与正式延迟均值混合。`strace` 汇总显示该运行有
+约 265 万次系统调用，说明文件系统/运行时控制面开销需要与设备传输时间分开分析。
+
+更大模型门禁当前未通过：本机 `/models/Qwen3-8B` 是 `model_type=qwen3` 的 HuggingFace
+格式，而 `mindformers==1.3.2` 不支持该架构；`llama2_7b` 配置可以识别，但单卡完整模型
+构建在限定时间内未完成。因此当前不能宣称 E2/E4 已覆盖更大真实模型；后续需先升级或
+适配模型运行时，再补做大模型正式路径实验。
+
+### 9.9 详细 checkpoint I/O 拆解结果（2026-08-25）
+
+本轮完成了 83.0.0 同盘 ext4/SPDK 对照、模型规模矩阵、P1/P2/P4/P5 路径和外部系统调用
+采样。83.0.0 最终已恢复为 `uio_pci_generic` + V2 SPDK，84.0.0 始终保持 XFS `/models`，
+所有样本均通过回读或逐参数 hash 校验。
+
+#### 同盘固定字节流对照
+
+256 MiB、4 MiB chunk、10 次正式样本；write 指标包含 fdatasync 或 SPDK completion，
+read 指标仅表示读回，hash 校验单独计时：
+
+| 后端 | 写持久化均值 | 读均值 | 端到端均值 | 相对 SPDK 写 |
+|---|---:|---:|---:|---:|
+| ext4 buffered + fdatasync | 279.0 ms | 239.8 ms | 944.0 ms | 4.48× |
+| ext4 O_DIRECT | 66.0 ms | 183.6 ms | 701.0 ms | 1.06× |
+| Host buffer → SPDK | 62.3 ms | 176.9 ms | 688.6 ms | 1.00× |
+
+该结果支持一个更精确的结论：**buffered 文件系统路径中的 page-cache/writeback/fsync 以及
+相关内核控制面开销占比很大；O_DIRECT 后文件系统路径已接近 SPDK，不能把全部差异归因于
+“内核代码本身”。** 因此论文中应将“通用框架 buffered FS 路径”与“direct-I/O FS 路径”
+分开描述。
+
+#### MindFormers checkpoint-only 模型矩阵
+
+模型使用真实 MindFormers 网络结构和随机初始化参数，不包含 Adam 状态；编译/预热时间不在
+checkpoint 计时区间内。P4 为 HBM→SPDK→HBM，4 MiB chunk、depth=4、3 次正式样本：
+
+| 模型 | 参数字节 | 参数对象数 | 写均值 | 读均值 | 结果 |
+|---|---:|---:|---:|---:|---|
+| GPT-2 124M | 0.50 GB | 196 | 125.1 ms | 103.5 ms | PASS |
+| GPT-2 XL | 3.27 GB | 772 | 726.6 ms | 636.8 ms | PASS |
+| Llama2 7B | 13.48 GB | 291 | 3104.1 ms | 2098.6 ms | PASS |
+| GLM4 9B | 18.80 GB | 283 | 4358.1 ms | 2891.0 ms | PASS* |
+| GPT-2 13B | 26.20 GB | 644 | 6083.6 ms | 4096.1 ms | PASS |
+
+GLM4 使用 `use_past=False` 绕过当前 CANN 缺少的 `ReshapeAndCache` adapter；原生 KV-cache
+路径的两个失败门禁也已保留，GLM4 结果只代表参数 I/O 和普通前向分配路径，不代表完整
+推理性能。模型结果和原始事件位于
+`experiments/output/wp1/current/checkpoint_matrix_summary.json`。
+
+#### 文件系统、原生框架与异步路径
+
+- GPT-2 XL P1：`ms.save_checkpoint` save 均值 2946.4 ms，restore 均值 5085.7 ms。
+- GPT-2 XL P2：HBM→Host snapshot 568.4 ms，84.0.0 XFS persist 3630.0 ms，restore
+  331.8 ms。
+- GPT-2 13B P2：snapshot 4002.6 ms，84.0.0 XFS persist 25794.5 ms，restore 2087.2 ms。
+- GPT-2 XL P5：4 次异步 checkpoint 的 snapshot 726.4–727.3 ms，后台 persist
+  706.0–816.1 ms，触发线程等待仅 0.02–0.06 ms；训练 step 的统计包含首次图编译异常值，
+  不用于宣称训练吞吐提升。
+
+P2/P4 使用 84.0.0 与 83.0.0 两块不同设备，只用于端到端路径观察；文件系统软件栈的强归因
+使用前述同盘固定字节流实验。外部 `strace -f -c` 控制样本记录 32 次 pwrite、32 次 pread
+和 2 次 fdatasync，共 2218 次系统调用，证据文件位于
+`experiments/output/wp1/current/external_profile/`。

@@ -42,7 +42,8 @@ from experiments.benchmarks.io_matrix import (  # noqa: E402
 )
 from experiments.baselines import two_phase_common as tpc  # noqa: E402
 from experiments.common import (  # noqa: E402
-    init_env, make_causal_lm_training, warmup_model,
+    init_env, make_causal_lm_checkpoint_model, make_causal_lm_training,
+    warmup_checkpoint_model, warmup_model,
 )
 from chunk_helpers import build_chunks, build_ctypes_arrays  # noqa: E402
 
@@ -498,7 +499,9 @@ def p5_async(args, model, ds, opt, param_descs, ckpt, writer):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", choices=("E2", "E3", "E4", "E5"), required=True)
-    parser.add_argument("--model", choices=("gpt2_xl", "llama2_7b"),
+    parser.add_argument("--model", choices=("gpt2", "gpt2_xl", "gpt2_13b",
+                                             "llama2_7b", "glm4_9b",
+                                             "llama2_13b"),
                         default="gpt2_xl")
     parser.add_argument("--path", choices=("p0_train", "p1_fs", "p2_host_fs",
                                              "p3_host_spdk", "p4_spdk",
@@ -514,10 +517,14 @@ def main():
     parser.add_argument("--warmups", type=int, default=1)
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--profiling", action="store_true")
+    parser.add_argument("--checkpoint-only", action="store_true",
+                        help="build the real model without optimizer/training state")
     parser.add_argument("--output-root", default=None)
     args = parser.parse_args()
     if args.chunk_size % ALIGNMENT or args.safe_offset % ALIGNMENT:
         raise ValueError("chunk-size and safe-offset must be 4 KiB aligned")
+    if args.checkpoint_only and args.path in ("p0_train", "p5_async"):
+        raise ValueError("checkpoint-only mode supports P1/P2/P3/P4 only")
     if args.path == "p5_async" and args.repetitions != args.steps // args.ckpt_every:
         args.repetitions = args.steps // args.ckpt_every
     writer = ResultWriter(args.experiment, args)
@@ -532,10 +539,15 @@ def main():
     root = FS_ROOT / writer.run_id
     try:
         init_env(device_id=args.npu)
-        model, ds, opt = make_causal_lm_training(
-            model_name=args.model,
-            total_steps=max(args.steps, args.ckpt_every), device_id=args.npu)
-        warmup_model(model, opt, ds)
+        if args.checkpoint_only:
+            model, cfg = make_causal_lm_checkpoint_model(args.model, seq_len=128)
+            ds = opt = None
+            warmup_checkpoint_model(model, cfg, seq_len=128)
+        else:
+            model, ds, opt = make_causal_lm_training(
+                model_name=args.model,
+                total_steps=max(args.steps, args.ckpt_every), device_id=args.npu)
+            warmup_model(model, opt, ds)
         param_descs = tpc.get_param_descriptors(model)
         if not param_descs:
             raise RuntimeError(f"no warm-allocated {args.model} parameters")

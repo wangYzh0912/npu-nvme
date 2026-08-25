@@ -20,6 +20,7 @@ import os
 import time
 
 import mindspore as ms
+import numpy as np
 from mindspore import nn, context
 
 from direct_checkpoint import (DirectCheckpoint, ProbeTrainOneStepCell, lib,
@@ -67,6 +68,53 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
 
     opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
     return model, ds, opt
+
+
+def make_causal_lm_checkpoint_model(model_name="gpt2_xl", seq_len=128):
+    """Build a MindFormers causal-LM model without optimizer/dataset state.
+
+    This is the model-scale checkpoint lane.  It preserves the real model
+    tensor topology and dtype while avoiding Adam's additional 2--4x memory,
+    which would otherwise prevent a 13B model from fitting on the intended
+    NPU set and would contaminate model-only I/O measurements.
+    """
+    from mindformers import AutoModel, AutoConfig
+
+    print(f"[Common] Building checkpoint-only {model_name} model...", flush=True)
+    cfg = AutoConfig.from_pretrained(model_name)
+    if hasattr(cfg, "seq_length"):
+        cfg.seq_length = seq_len
+    if hasattr(cfg, "max_position_embeddings"):
+        cfg.max_position_embeddings = max(seq_len, 128)
+    # MF 1.3.2 GLM4 inherits the GLM2 paged-attention path when use_past is
+    # enabled.  The installed CANN build lacks its ReshapeAndCache adapter;
+    # disabling KV-cache keeps the real parameter topology while making the
+    # checkpoint-only allocation path executable.
+    if model_name.startswith("glm") and hasattr(cfg, "use_past"):
+        cfg.use_past = False
+    cfg.checkpoint_name_or_path = ""
+    return AutoModel.from_config(cfg), cfg
+
+
+def warmup_checkpoint_model(model, cfg, seq_len=128):
+    """Allocate model parameters and compile one small inference graph."""
+    input_ids = ms.Tensor(np.zeros((1, seq_len), dtype=np.int32))
+    position_ids = ms.Tensor(np.arange(seq_len, dtype=np.int32)[None, :])
+    batch_valid_length = ms.Tensor(np.array([seq_len], dtype=np.int32))
+    slot_mapping = ms.Tensor(np.arange(seq_len, dtype=np.int32))
+    if str(getattr(cfg, "model_type", "")).startswith("glm"):
+        output = model(input_ids, position_ids=position_ids,
+                       batch_valid_length=batch_valid_length,
+                       slot_mapping=slot_mapping)
+    else:
+        try:
+            output = model(input_ids)
+        except TypeError:
+            output = model(input_ids, labels=input_ids)
+    ms.hal.synchronize()
+    print("  [Common] Checkpoint-only warmup complete — device addresses allocated.",
+          flush=True)
+    return output
 
 
 def make_gpt2xl_training(total_steps=20, device_id=1, seq_len=1025,
