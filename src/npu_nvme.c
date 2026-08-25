@@ -1016,6 +1016,7 @@ static void initiate_write_fsm(NPUNVMEContext *ctx, write_request_t *req) {
     fsm->state = WRITE_FSM_RUNNING;
     fsm->req = req;
     fsm->next_submit_idx = 0;
+    fsm->next_spdk_submit_idx = 0;
     fsm->completed_count = 0;
     req->done = 0;
     req->result = 0;
@@ -1036,21 +1037,24 @@ static void write_fsm_tick(NPUNVMEContext *ctx) {
      *    state and increment fsm->completed_count). */
     spdk_nvme_qpair_process_completions(ctx->qpair, 0);
 
-    /* 2. Submit NPU_DONE chunks to SPDK. */
-    for (int i = 0; i < fsm->next_submit_idx; i++) {
-        io_task_t *task = &req->tasks[i];
+    /* 2. Submit NPU_DONE chunks to SPDK.  The cursor makes this O(N) over
+     * the whole request instead of rescanning every prior chunk on each
+     * reactor tick. */
+    while (fsm->next_spdk_submit_idx < fsm->next_submit_idx) {
+        io_task_t *task = &req->tasks[fsm->next_spdk_submit_idx];
         if (task->state == CHUNK_NPU_DONE) {
             int rc = submit_to_spdk_write(ctx, task, &fsm->completed_count,
                                           &req->result);
-            /* On success: state becomes CHUNK_SPDK_WRITING.
-             * On queue-full (-ENOMEM / -12): retry next tick. */
-            if (rc != 0 && rc != -ENOMEM && rc != -EAGAIN) {
+            /* On queue-full (-ENOMEM/-EAGAIN), retry this task next tick. */
+            if (rc == -ENOMEM || rc == -EAGAIN) break;
+            if (rc != 0) {
                 req->result = -1;
                 task->state = CHUNK_DONE;
                 fsm->completed_count++;
                 ring_push(&ctx->dma.free_ring, task->buf_idx);
             }
         }
+        fsm->next_spdk_submit_idx++;
     }
 
     /* 3. DMA one more chunk (bounded work: one aclrtMemcpy per tick). */
@@ -1160,6 +1164,7 @@ static void initiate_read_fsm(NPUNVMEContext *ctx, read_request_t *req) {
     fsm->state = READ_FSM_RUNNING;
     fsm->req = req;
     fsm->next_submit_idx = 0;
+    fsm->next_copy_idx = 0;
     fsm->completed_count = 0;
     req->done = 0;
     req->result = 0;
@@ -1176,33 +1181,32 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
     /* 1. Process SPDK completions (triggers callbacks). */
     spdk_nvme_qpair_process_completions(ctx->qpair, 0);
 
-    /* 2. Copy completed DMA buffers to NPU/Host. */
-    for (int i = 0; i < fsm->next_submit_idx; i++) {
-        io_task_t *task = &req->tasks[i];
-        if (task->state == CHUNK_SPDK_DONE) {
-            /* For host reads: memcpy.  For NPU reads: use aclrtMemcpy
-             * (synchronous - one chunk per tick keeps latency bounded). */
-            aclError ret = ACL_SUCCESS;
-            if (req->is_host) {
-                memcpy(task->npu_ptr, ctx->dma.pool[task->buf_idx].buf,
-                       task->size);
-            } else {
-                ret = aclrtMemcpy(task->npu_ptr, task->size,
-                                  ctx->dma.pool[task->buf_idx].buf,
-                                  task->size, ACL_MEMCPY_HOST_TO_DEVICE);
-            }
-            if (ret == ACL_SUCCESS) {
-                task->state = CHUNK_DONE;
-                fsm->completed_count++;
-                ring_push(&ctx->dma.free_ring, task->buf_idx);
-            }
-            else {
-                req->result = -1;
-                task->state = CHUNK_DONE;
-                fsm->completed_count++;
-                ring_push(&ctx->dma.free_ring, task->buf_idx);
-            }
+    /* 2. Copy completed DMA buffers to NPU/Host.  Consume in task order with
+     * a monotonic cursor, avoiding an O(N^2) scan for small model chunks. */
+    while (fsm->next_copy_idx < fsm->next_submit_idx) {
+        io_task_t *task = &req->tasks[fsm->next_copy_idx];
+        if (task->state == CHUNK_DONE) {
+            fsm->next_copy_idx++;
+            continue;
         }
+        if (task->state != CHUNK_SPDK_DONE) break;
+
+        /* For host reads: memcpy.  For NPU reads: use aclrtMemcpy
+         * (synchronous - one chunk per tick keeps latency bounded). */
+        aclError ret = ACL_SUCCESS;
+        if (req->is_host) {
+            memcpy(task->npu_ptr, ctx->dma.pool[task->buf_idx].buf,
+                   task->size);
+        } else {
+            ret = aclrtMemcpy(task->npu_ptr, task->size,
+                              ctx->dma.pool[task->buf_idx].buf,
+                              task->size, ACL_MEMCPY_HOST_TO_DEVICE);
+        }
+        if (ret != ACL_SUCCESS) req->result = -1;
+        task->state = CHUNK_DONE;
+        fsm->completed_count++;
+        ring_push(&ctx->dma.free_ring, task->buf_idx);
+        fsm->next_copy_idx++;
     }
 
     /* 3. Submit one more read to SPDK. */
