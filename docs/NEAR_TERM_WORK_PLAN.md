@@ -701,3 +701,18 @@ A5 合成实验仍覆盖 64 KiB、256 KiB、1 MiB、4 MiB、16 MiB；13B 的 64/
 进程表误判（`b36ea16`）、高 pipeline 深度读提交重试（`b6ccb8a`）和读写 FSM
 重复扫描导致的 O(N²) 开销（`d2fb8fc`）。修复后的 13B depth=16 结果已通过，
 其首轮失败目录仅作为缺陷复现证据保留。
+
+### 9.14 A6 安全同步 API 对照记录（2026-08-25）
+
+A6 在同一块 83.0.0 的独立安全区使用 400 KiB payload、5 次预热和 10 次正式
+重复，对比已有 `npu_nvme_sync_meta_io` 受控同步调用与 request-ring/FSM 的
+`write_batch_host/read_batch_host`。结果为：
+
+| 路径 | 写均值 | 读均值 | 状态 |
+|---|---:|---:|---|
+| sync control | 1.091 ms | 1.385 ms | PASS |
+| request-ring/FSM | 1.058 ms | 1.676 ms | PASS |
+
+该实验正式关闭了“同步 API 与 Reactor request-ring 的控制面可运行性”门禁，证据位于
+`experiments/output/wp2/a6_formal/`；但由于同步 API 的安全边界是 metadata-size，
+本结果只能解释 API/控制面开销，不能替代 A1/A2/A3 的模型 checkpoint 路径比较。
