@@ -8,7 +8,7 @@
 
 - `model_13b/`：GPT-2 13B 的 A1、A2、A3、A4、A5、A10 正式样本。
 - `model_xl/`：GPT-2 XL 的 A1、A2、A3、A7 关键正式样本，以及 A8 正式协议样本。
-- `synthetic/`：A3/A4/A5/A6/A9 合成门禁样本。
+- `synthetic/`：A3/A4/A5/A6/A9 合成门禁样本；其中 `a6_formal/` 是 sync API 与 request-ring/FSM 对照。
 - `failures/`：A4 depth=16 读提交缺陷复现，以及 npu-smi 解析误判复现。
 
 模型 checkpoint-only 样本均带有 `hashes` 或逐参数摘要校验；A7 使用真实训练 cell
@@ -18,8 +18,9 @@
 ## 重要边界
 
 13B A5 模型版已正式覆盖 1/4/16 MiB；64/256 KiB 仅有合成正式样本，原因是它们
-分别产生约 400k/100k chunks，仍列为待补的极小 chunk 长实验。A6 和 A9 仍是
-preliminary，不能与 PASS 项混成完整消融结论。
+分别产生约 400k/100k chunks，仍列为待补的极小 chunk 长实验。A6 的 API/控制面
+门禁已 PASS，但不等价于模型全路径；A9 仍是 preliminary，不能与 PASS 项混成
+完整消融结论。
 
 修复后的关键提交：`b36ea16`（npu-smi 进程表解析）、`b6ccb8a`（高 pipeline 深度
 读提交重试）、`d2fb8fc`（读写 FSM 单调游标）。
