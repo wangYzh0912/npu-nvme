@@ -7,7 +7,7 @@
 |---|---|
 | `evidence/model_13b/` | GPT-2 13B：A1 P2 FS、A2 P3/P4、A3 scalar、A4 depth=1/2/4/8/16、A5 1/16 MiB、A10 node2/node4 |
 | `evidence/model_xl/` | GPT-2 XL：A1、A2、A3 scalar、A7 FaF；另含 A8 正式协议结果 |
-| `evidence/synthetic/` | A3、A4、A5、A6、A9 的合成结果子集；`a6_formal/` 为 sync API/request-ring 对照 |
+| `evidence/synthetic/` | A3、A4、A5、A6、A9 的结果子集；`a6_formal/` 为 sync API/request-ring 对照，`a9_formal_slots_*` 为 host slot 生命周期 |
 | `evidence/failures/` | A4 depth=16 修复前读失败；A4 depth=2 的 npu-smi 误判 |
 
 证据筛选规则：只复制结构化结果和时间线，不复制模型 payload、SPDK hugepage

@@ -716,3 +716,21 @@ A6 在同一块 83.0.0 的独立安全区使用 400 KiB payload、5 次预热和
 该实验正式关闭了“同步 API 与 Reactor request-ring 的控制面可运行性”门禁，证据位于
 `experiments/output/wp2/a6_formal/`；但由于同步 API 的安全边界是 metadata-size，
 本结果只能解释 API/控制面开销，不能替代 A1/A2/A3 的模型 checkpoint 路径比较。
+
+### 9.15 A9 host snapshot slot 生命周期记录（2026-08-25）
+
+A9 使用单一 DirectCheckpoint/Reactor owner，预分配并复用独立 host slot，显式检查
+`FREE → SNAPSHOT → READY → IO → FREE` 生命周期；pipeline depth 固定为 4，slot
+数量改变为 1/2/4。每组 5 次预热、10 次正式 wave，正式样本数分别为 10/20/40，
+所有 slot 在 wave 结束后回到 FREE。
+
+| slot 数 | 端到端均值 | 有效带宽均值 | 状态 |
+|---:|---:|---:|---|
+| 1 | 6.903 ms | 579.5 MiB/s | PASS |
+| 2 | 9.953 ms | 412.2 MiB/s | PASS |
+| 4 | 13.845 ms | 309.2 MiB/s | PASS |
+
+该结果正式关闭了 host snapshot slot 生命周期与单 Reactor owner 的门禁；由于
+snapshot payload 在 host DRAM 中生成，不能把它等同于真实 MindFormers HBM 快照，
+模型 HBM slot 的内存占用与训练重叠仍是后续增强项。正式证据位于
+`experiments/output/wp2/a9_formal/`。
