@@ -1,6 +1,6 @@
 # Included evidence
 
-The `raw/experiments/output/wp1/current/` subtree contains:
+The `evidence/` subtree contains:
 
 - `checkpoint_matrix_summary.json` and `model_compatibility.json`;
 - 83.0.0 same-device buffered FS, O_DIRECT, and Host-SPDK traces;

@@ -1,0 +1,101 @@
+{
+  "config": {
+    "cpu_affinity": "{0}",
+    "depths": [
+      1,
+      4
+    ],
+    "experiment": "E1",
+    "item_bytes": 4194304,
+    "items": 1,
+    "npu": 7,
+    "offset": 68719476736,
+    "output_root": "experiments/output/wp1/current/e1_raw_4m_root",
+    "path": "host_spdk",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 4,
+    "repetitions": 10,
+    "run_id": "E1_20260825_174546_1668228a",
+    "shm_id": 83,
+    "warmups": 2
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "E1_20260825_174546_1668228a",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 10,
+  "status": "pass",
+  "summary": {
+    "c_read_us": {
+      "ci95": [
+        2102.4837115337164,
+        2365.7162884662835
+      ],
+      "max": 2581.0,
+      "mean": 2234.1,
+      "min": 1971.0,
+      "n": 10,
+      "stdev": 183.9996678740964
+    },
+    "c_write_us": {
+      "ci95": [
+        1543.5485600727354,
+        1624.8514399272647
+      ],
+      "max": 1678.0,
+      "mean": 1584.2,
+      "min": 1524.0,
+      "n": 10,
+      "stdev": 56.830742853963585
+    },
+    "effective_mib_per_s": {
+      "ci95": [
+        360.8341113866771,
+        370.20936225911527
+      ],
+      "max": 372.8438092967299,
+      "mean": 365.5217368228962,
+      "min": 351.40627520241884,
+      "n": 10,
+      "stdev": 6.553303800262054
+    },
+    "end_to_end_us": {
+      "ci95": [
+        10803.764796369776,
+        11089.196003630224
+      ],
+      "max": 11382.836,
+      "mean": 10946.4804,
+      "min": 10728.353,
+      "n": 10,
+      "stdev": 199.5165186194978
+    },
+    "read_api_us": {
+      "ci95": [
+        2201.3292784184073,
+        2470.221721581593
+      ],
+      "max": 2768.491,
+      "mean": 2335.7755,
+      "min": 2130.409,
+      "n": 10,
+      "stdev": 187.95591644629508
+    },
+    "write_api_us": {
+      "ci95": [
+        2100.62248884656,
+        2127.84051115344
+      ],
+      "max": 2140.579,
+      "mean": 2114.2315,
+      "min": 2087.698,
+      "n": 10,
+      "stdev": 19.025407580683094
+    }
+  }
+}

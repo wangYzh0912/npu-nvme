@@ -1,0 +1,503 @@
+{
+  "external_profile": "experiments/output/wp1/current/external_profile",
+  "models": {
+    "model_glm4_9b_p4": {
+      "path": "experiments/output/wp1/current/model_glm4_9b_p4/E4_20260825_180053_ec27f537/result.json",
+      "status": "fail",
+      "summary": {
+        "error": "TypeError('Failed calling ApplyRotaryPosEmb with \"position_ids=None\".\\nThe valid calling should be: \"query=<Tensor>, key=<Tensor>, cos=<Tensor>, sin=<Tensor>, position_ids=<Tensor>\".\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/frontend/operator/composite/do_signature.cc:161 CheckPrimInputType\\n\\n----------------------------------------------------\\n- The Traceback of Net Construct Code:\\n----------------------------------------------------\\n# 0 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:315~325, 24~9\\n        hidden_states = self.transformer(\\n# 1 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:158~175, 8~38\\n        if self.use_past:\\n# 2 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:159~168, 12~72\\n            if self.is_first_iteration:\\n# 3 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:161~166, 16~54\\n                if self.use_flash_attention:\\n# 4 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:162~164, 20~62\\n                    if self.disable_custom_fa:\\n# 5 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:160~166, 16~54\\n                freqs_cis = self.freqs_mgr.prefill(batch_size, seq_len)\\n                ^\\n# 6 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:159~168, 12~72\\n            if self.is_first_iteration:\\n# 7 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:326, 20~36\\n        lm_logits = self.transformer.output_layer(hidden_states)\\n                    ^~~~~~~~~~~~~~~~\\n# 8 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:180~183, 24~38\\n        hidden_states = self.encoder(\\n# 9 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:180, 24~36\\n        hidden_states = self.encoder(\\n                        ^~~~~~~~~~~~\\n# 10 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:509~523, 8~13\\n        for i in range(self.num_layers):\\n        ^\\n# 11 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:180, 24~36\\n        hidden_states = self.encoder(\\n                        ^~~~~~~~~~~~\\n# 12 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:515~523, 28~13\\n            hidden_states = layer(\\n# 13 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:430~433, 8~36\\n        if self.apply_residual_connection_post_layernorm:\\n        ^\\n# 14 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:433, 12~36\\n            residual = hidden_states\\n            ^~~~~~~~~~~~~~~~~~~~~~~~\\n# 15 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:447~450, 8~38\\n        if self.apply_residual_connection_post_layernorm:\\n        ^\\n# 16 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:450, 12~38\\n            residual = layernorm_input\\n            ^~~~~~~~~~~~~~~~~~~~~~~~~~\\n# 17 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:418~426, 27~9\\n        attention_output = self.self_attention(\\n# 18 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:325~349, 8~86\\n        if self.use_past:\\n# 19 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:326~327, 12~80\\n            context_layer = self.infer_attention(query, key, value, batch_valid_length, block_tables, slot_mapping,\\n            ^\\n# 20 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:326~327, 28~80\\n            context_layer = self.infer_attention(query, key, value, batch_valid_length, block_tables, slot_mapping,\\n                            ^\\n# 21 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:410~411, 8~94\\n        if self.use_rope_rotary_emb:\\n# 22 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:411, 12~94\\n            query, key = self._apply_rotary_pos_emb(query, key, freqs_cis, batch_valid_length)\\n            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\n# 23 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:413~417, 8~77\\n        if prefix_keys_values is not None:\\n# 24 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:411, 25~94\\n            query, key = self._apply_rotary_pos_emb(query, key, freqs_cis, batch_valid_length)\\n                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\n# 25 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:345~358, 8~89\\n        if self.use_rope_self_define:\\n# 26 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:358, 12~89\\n            query, key = self.rotary_embedding(query, key, freqs_cis, batch_valid_length)  # dp, mp, 1, 1\\n            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\n# 27 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:358, 25~89\\n            query, key = self.rotary_embedding(query, key, freqs_cis, batch_valid_length)  # dp, mp, 1, 1\\n                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\n# 28 In file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:55, 15~93\\n        return self.rotary_embedding_op(query, key, freqs_cos, freqs_sin, batch_valid_length)\\n               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\n (See file \\'/home/user7/npu-nvme/rank_0/om/analyze_fail.ir\\' for more details. Get instructions about `analyze_fail.ir` at https://www.mindspore.cn/search?inputValue=analyze_fail.ir)')"
+      }
+    },
+    "model_glm4_9b_p4_v2": {
+      "path": "experiments/output/wp1/current/model_glm4_9b_p4_v2/E4_20260825_180346_3bea38e3/result.json",
+      "status": "fail",
+      "summary": {
+        "error": "RuntimeError(\"Ascend operator selection failed info: The current operator needs to be supplemented with an adapter, please check in `transform` directory. node is Default/transformer-ChatGLM2Model/encoder-ChatGLM2Transformer/layers-CellList/0-ChatGLM2Block/self_attention-ChatGLM2SelfAttention/infer_attention-InferAttention/paged_attention_mgr-PagedAttentionMgr/ReshapeAndCache-op0\\n\\n----------------------------------------------------\\n- The Function Call Stack: (For framework developers)\\n----------------------------------------------------\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/paged_attention_mgr.py:57, 15~97/        return self.reshape_and_cache(key, value, self.key_cache, self.value_cache, slot_mapping)/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/paged_attention_mgr.py:55~57, 4~97/    def construct(self, key, value, slot_mapping):/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:419, 18~42/        key_out = self.paged_attention_mgr(key, value, slot_mapping)/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:407~425, 4~112/    def construct(self, query, key, value, batch_valid_length, block_tables, slot_mapping, freqs_cis=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:326, 28~48/            context_layer = self.infer_attention(query, key, value, batch_valid_length, block_tables, slot_mapping,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:305~357, 4~21/    def construct(self, hidden_states, attention_mask, rotary_pos_emb, batch_valid_length=None, prefix_key_value=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:418, 27~46/        attention_output = self.self_attention(/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:405~455, 4~21/    def construct(self, hidden_states, attention_mask, rotary_pos_emb, batch_valid_length=None, prefix_key_value=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:513, 20~31/            layer = self.layers[i]/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:493~530, 4~28/    def construct(self,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:180, 24~36/        hidden_states = self.encoder(/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:150~184, 4~28/    def construct(self, input_ids, input_position=None, position_ids=None, attention_mask=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:326, 20~36/        lm_logits = self.transformer.output_layer(hidden_states)/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:305~365, 4~22/    def construct(self, input_ids=None, labels=None, input_position=None, position_ids=None, attention_mask=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/paged_attention_mgr.py:57, 15~97/        return self.reshape_and_cache(key, value, self.key_cache, self.value_cache, slot_mapping)/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/paged_attention_mgr.py:55~57, 4~97/    def construct(self, key, value, slot_mapping):/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:419, 18~42/        key_out = self.paged_attention_mgr(key, value, slot_mapping)/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/modules/infer_attention.py:407~425, 4~112/    def construct(self, query, key, value, batch_valid_length, block_tables, slot_mapping, freqs_cis=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:326, 28~48/            context_layer = self.infer_attention(query, key, value, batch_valid_length, block_tables, slot_mapping,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:305~357, 4~21/    def construct(self, hidden_states, attention_mask, rotary_pos_emb, batch_valid_length=None, prefix_key_value=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:418, 27~46/        attention_output = self.self_attention(/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:405~455, 4~21/    def construct(self, hidden_states, attention_mask, rotary_pos_emb, batch_valid_length=None, prefix_key_value=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:513, 20~31/            layer = self.layers[i]/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2_transformer.py:493~530, 4~28/    def construct(self,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:180, 24~36/        hidden_states = self.encoder(/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:150~184, 4~28/    def construct(self, input_ids, input_position=None, position_ids=None, attention_mask=None,/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:326, 20~36/        lm_logits = self.transformer.output_layer(hidden_states)/\\nIn file /root/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindformers/models/glm2/glm2.py:305~365, 4~22/    def construct(self, input_ids=None, labels=None, input_position=None, position_ids=None, attention_mask=None,/\\n\\n\\nCPU operator selection failed type: 3. failed info: Unsupported op [ReshapeAndCache] on CPU, Please confirm whether the device target setting is correct, or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_ascend.cc:588 HandleKernelSelectFailure\\n\")"
+      }
+    },
+    "model_glm4_9b_p4_v3": {
+      "bytes": 18800566272,
+      "parameter_count": 283,
+      "path": "experiments/output/wp1/current/model_glm4_9b_p4_v3/E4_20260825_180649_66df57bd/result.json",
+      "status": "pass",
+      "summary": {
+        "first_param_ms": {
+          "ci95": [
+            183.3302132184024,
+            229.87092144826423
+          ],
+          "max": 218.440802,
+          "mean": 206.60056733333332,
+          "min": 186.108031,
+          "n": 3,
+          "stdev": 17.8184949766489
+        },
+        "read_ms": {
+          "ci95": [
+            2883.157919405335,
+            2898.904618594666
+          ],
+          "max": 2897.86267,
+          "mean": 2891.0312690000005,
+          "min": 2886.455894,
+          "n": 3,
+          "stdev": 6.028753989262622
+        },
+        "write_ms": {
+          "ci95": [
+            4335.973445469129,
+            4380.169099197538
+          ],
+          "max": 4377.019562,
+          "mean": 4358.071272333334,
+          "min": 4344.470281,
+          "n": 3,
+          "stdev": 16.92067147023129
+        }
+      }
+    },
+    "model_gpt2_13b_p2": {
+      "bytes": 26204712960,
+      "parameter_count": 644,
+      "path": "experiments/output/wp1/current/model_gpt2_13b_p2/E4_20260825_182154_ce0878cb/result.json",
+      "status": "pass",
+      "summary": {
+        "persist_ms": {
+          "ci95": [
+            24873.543379074054,
+            26715.46536231715
+          ],
+          "max": 26295.125984819606,
+          "mean": 25794.504370695602,
+          "min": 24988.015917129815,
+          "n": 3,
+          "stdev": 705.1950615727403
+        },
+        "restore_ms": {
+          "ci95": [
+            2072.51551746422,
+            2101.9278412024464
+          ],
+          "max": 2094.519162,
+          "mean": 2087.221679333333,
+          "min": 2074.252821,
+          "n": 3,
+          "stdev": 11.260751344666758
+        },
+        "snapshot_ms": {
+          "ci95": [
+            3995.81460260593,
+            4009.3407307274033
+          ],
+          "max": 4008.467,
+          "mean": 4002.5776666666666,
+          "min": 3998.736,
+          "n": 3,
+          "stdev": 5.178589994712265
+        }
+      }
+    },
+    "model_gpt2_13b_p4": {
+      "bytes": 26204712960,
+      "parameter_count": 644,
+      "path": "experiments/output/wp1/current/model_gpt2_13b_p4/E4_20260825_181213_60057a3c/result.json",
+      "status": "pass",
+      "summary": {
+        "first_param_ms": {
+          "ci95": [
+            150.64270989155915,
+            156.98724344177418
+          ],
+          "max": 155.910659,
+          "mean": 153.81497666666667,
+          "min": 151.152699,
+          "n": 3,
+          "stdev": 2.42905713070243
+        },
+        "read_ms": {
+          "ci95": [
+            4079.515259227408,
+            4112.607792772593
+          ],
+          "max": 4110.473837,
+          "mean": 4096.061526,
+          "min": 4086.679012,
+          "n": 3,
+          "stdev": 12.669750099787166
+        },
+        "write_ms": {
+          "ci95": [
+            5964.61138624795,
+            6202.554428418717
+          ],
+          "max": 6176.664776,
+          "mean": 6083.582907333333,
+          "min": 5994.606682,
+          "n": 3,
+          "stdev": 91.09846117313735
+        }
+      }
+    },
+    "model_gpt2_p4": {
+      "bytes": 495006720,
+      "parameter_count": 196,
+      "path": "experiments/output/wp1/current/model_gpt2_p4/E4_20260825_175408_c79b2ff8/result.json",
+      "status": "pass",
+      "summary": {
+        "first_param_ms": {
+          "ci95": [
+            27.40190770016042,
+            29.003034299839584
+          ],
+          "max": 28.663396,
+          "mean": 28.202471000000003,
+          "min": 27.506782,
+          "n": 3,
+          "stdev": 0.6130045579120916
+        },
+        "read_ms": {
+          "ci95": [
+            102.73376472941361,
+            104.32135593725305
+          ],
+          "max": 104.222673,
+          "mean": 103.52756033333333,
+          "min": 103.095969,
+          "n": 3,
+          "stdev": 0.6078224212262459
+        },
+        "write_ms": {
+          "ci95": [
+            124.9037846055624,
+            125.22364406110428
+          ],
+          "max": 125.181988,
+          "mean": 125.06371433333334,
+          "min": 124.937457,
+          "n": 3,
+          "stdev": 0.12246083737397209
+        }
+      }
+    },
+    "model_gpt2_xl_p1": {
+      "bytes": 3274208000,
+      "parameter_count": 772,
+      "path": "experiments/output/wp1/current/model_gpt2_xl_p1/E2_20260825_183706_9019ba24/result.json",
+      "status": "pass",
+      "summary": {
+        "restore_ms": {
+          "ci95": [
+            4524.747606882032,
+            5646.605359117966
+          ],
+          "max": 5455.632498999999,
+          "mean": 5085.676482999999,
+          "min": 4614.638320999999,
+          "n": 3,
+          "stdev": 429.51251674130276
+        },
+        "save_ms": {
+          "ci95": [
+            2857.1556236600222,
+            3035.5911216733107
+          ],
+          "max": 3016.95001,
+          "mean": 2946.3733726666665,
+          "min": 2880.569287,
+          "n": 3,
+          "stdev": 68.31550584280957
+        }
+      }
+    },
+    "model_gpt2_xl_p2": {
+      "bytes": 3274208000,
+      "parameter_count": 772,
+      "path": "experiments/output/wp1/current/model_gpt2_xl_p2/E4_20260825_181956_fb5bcf94/result.json",
+      "status": "pass",
+      "summary": {
+        "persist_ms": {
+          "ci95": [
+            3553.199840891831,
+            3706.8716017258935
+          ],
+          "max": 3697.934364899993,
+          "mean": 3630.0357213088623,
+          "min": 3594.129477161914,
+          "n": 3,
+          "stdev": 58.834504299993
+        },
+        "restore_ms": {
+          "ci95": [
+            330.1243742747037,
+            333.4349537252962
+          ],
+          "max": 332.896202,
+          "mean": 331.77966399999997,
+          "min": 330.401932,
+          "n": 3,
+          "stdev": 1.2674827168257714
+        },
+        "snapshot_ms": {
+          "ci95": [
+            561.769806430021,
+            575.0615269033123
+          ],
+          "max": 574.29,
+          "mean": 568.4156666666667,
+          "min": 565.354,
+          "n": 3,
+          "stdev": 5.08884508836073
+        }
+      }
+    },
+    "model_gpt2_xl_p4": {
+      "bytes": 3274208000,
+      "parameter_count": 772,
+      "path": "experiments/output/wp1/current/model_gpt2_xl_p4/E4_20260825_175456_c40df36b/result.json",
+      "status": "pass",
+      "summary": {
+        "first_param_ms": {
+          "ci95": [
+            50.39146353274099,
+            54.431266467259
+          ],
+          "max": 53.719996,
+          "mean": 52.411364999999996,
+          "min": 50.704525,
+          "n": 3,
+          "stdev": 1.5466719573720238
+        },
+        "read_ms": {
+          "ci95": [
+            630.0465498258549,
+            643.5818588408118
+          ],
+          "max": 641.833261,
+          "mean": 636.8142043333334,
+          "min": 631.483149,
+          "n": 3,
+          "stdev": 5.1821049756963795
+        },
+        "write_ms": {
+          "ci95": [
+            722.9492893569756,
+            730.3082906430246
+          ],
+          "max": 729.844317,
+          "mean": 726.6287900000001,
+          "min": 724.592845,
+          "n": 3,
+          "stdev": 2.8174544916891078
+        }
+      }
+    },
+    "model_gpt2_xl_p5": {
+      "bytes": 3280680832,
+      "parameter_count": null,
+      "path": "experiments/output/wp1/current/model_gpt2_xl_p5/E5_20260825_183107_c22f8327/result.json",
+      "status": "pass",
+      "summary": {
+        "checkpoints": 4,
+        "events": [
+          {
+            "bytes": 3280680832,
+            "persist_end_ns": 1590008197791581,
+            "persist_ms": 816.139659,
+            "snapshot_end_ns": 1590007381134220,
+            "snapshot_ms": 726.818614,
+            "step": 5,
+            "trigger_wait_ms": 0.05969
+          },
+          {
+            "bytes": 3280680832,
+            "persist_end_ns": 1590010745863385,
+            "persist_ms": 711.946104,
+            "snapshot_end_ns": 1590010033752830,
+            "snapshot_ms": 726.425542,
+            "step": 10,
+            "trigger_wait_ms": 0.02304
+          },
+          {
+            "bytes": 3280680832,
+            "persist_end_ns": 1590013436279796,
+            "persist_ms": 707.559767,
+            "snapshot_end_ns": 1590012728494428,
+            "snapshot_ms": 727.348726,
+            "step": 15,
+            "trigger_wait_ms": 0.04969
+          },
+          {
+            "bytes": 3280680832,
+            "persist_end_ns": 1590016170267130,
+            "persist_ms": 706.01436,
+            "snapshot_end_ns": 1590015464079899,
+            "snapshot_ms": 726.577502,
+            "step": 20,
+            "trigger_wait_ms": 0.027961
+          }
+        ],
+        "step_ms": {
+          "ci95": [
+            -4452.347037480238,
+            12910.533360580237
+          ],
+          "max": 77150.087282,
+          "mean": 4229.093161549999,
+          "min": 380.859006,
+          "n": 20,
+          "stdev": 17163.828848480032
+        },
+        "steps": 20
+      }
+    },
+    "model_llama2_7b_p4": {
+      "bytes": 13477363712,
+      "parameter_count": 291,
+      "path": "experiments/output/wp1/current/model_llama2_7b_p4/E4_20260825_175640_2bb9bebc/result.json",
+      "status": "pass",
+      "summary": {
+        "first_param_ms": {
+          "ci95": [
+            37.34885655200789,
+            49.28441944799212
+          ],
+          "max": 48.554656,
+          "mean": 43.316638000000005,
+          "min": 40.146372,
+          "n": 3,
+          "stdev": 4.56962894623754
+        },
+        "read_ms": {
+          "ci95": [
+            2050.8058056835894,
+            2146.4561869830773
+          ],
+          "max": 2121.341915,
+          "mean": 2098.6309963333333,
+          "min": 2056.385012,
+          "n": 3,
+          "stdev": 36.62053938418403
+        },
+        "write_ms": {
+          "ci95": [
+            2888.999247853567,
+            3319.1471234797664
+          ],
+          "max": 3209.571759,
+          "mean": 3104.0731856666666,
+          "min": 2914.305986,
+          "n": 3,
+          "stdev": 164.68567094438464
+        }
+      }
+    }
+  },
+  "same_device": {
+    "filesystem_buffered": {
+      "path": "experiments/output/wp1/current/same_device_fs_256m_v2.jsonl",
+      "summary": {
+        "end_to_end": {
+          "max": 952.66835,
+          "mean": 944.0369280000001,
+          "median": 944.9227,
+          "min": 935.20441,
+          "n": 10
+        },
+        "read": {
+          "max": 244.84168,
+          "mean": 239.81840699999998,
+          "median": 239.16425,
+          "min": 238.28562,
+          "n": 10
+        },
+        "verify": {
+          "max": 427.65494,
+          "mean": 424.74487600000003,
+          "median": 425.37938,
+          "min": 417.1043,
+          "n": 10
+        },
+        "write_persist": {
+          "max": 281.17044,
+          "mean": 279.040385,
+          "median": 279.20455,
+          "min": 276.59288,
+          "n": 10
+        }
+      }
+    },
+    "filesystem_odirect": {
+      "path": "experiments/output/wp1/current/same_device_fs_odirect_256m_v2.jsonl",
+      "summary": {
+        "end_to_end": {
+          "max": 766.90069,
+          "mean": 700.971165,
+          "median": 691.31401,
+          "min": 684.27615,
+          "n": 10
+        },
+        "read": {
+          "max": 193.03495,
+          "mean": 183.602684,
+          "median": 183.71687,
+          "min": 177.93792,
+          "n": 10
+        },
+        "verify": {
+          "max": 507.94189,
+          "mean": 450.92712599999993,
+          "median": 444.02908,
+          "min": 429.58007,
+          "n": 10
+        },
+        "write_persist": {
+          "max": 66.73862,
+          "mean": 65.966955,
+          "median": 66.06265,
+          "min": 65.2939,
+          "n": 10
+        }
+      }
+    },
+    "spdk_host": {
+      "path": "experiments/output/wp1/current/same_device_spdk_256m_v2.jsonl",
+      "summary": {
+        "end_to_end": {
+          "max": 702.90776,
+          "mean": 688.601016,
+          "median": 686.44105,
+          "min": 677.2568,
+          "n": 10
+        },
+        "marshal": {
+          "max": 0.00545,
+          "mean": 0.004826000000000001,
+          "median": 0.00477,
+          "min": 0.00427,
+          "n": 10
+        },
+        "read": {
+          "max": 187.55244,
+          "mean": 176.93838300000002,
+          "median": 172.90169,
+          "min": 171.7883,
+          "n": 10
+        },
+        "verify": {
+          "max": 452.7219,
+          "mean": 448.9326709999999,
+          "median": 449.65349,
+          "min": 446.40095,
+          "n": 10
+        },
+        "write_persist": {
+          "max": 67.38197,
+          "mean": 62.332231,
+          "median": 61.48971,
+          "min": 58.66058,
+          "n": 10
+        }
+      }
+    }
+  }
+}
