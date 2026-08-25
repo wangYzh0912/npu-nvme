@@ -679,3 +679,25 @@ A4 depth=16 的首轮运行曾因读 FSM 将 transient `-ENOMEM/-EAGAIN` 错误�
 约 3.89/3.81 s，但 write 在 depth=2 以后已基本进入 6.0～6.1 s 平台。A5 的 13B
 chunk-size 矩阵和 A10 的 13B NUMA 矩阵仍待执行；A6/A8/A9 仍按 9.11 的 preliminary
 规则处理。
+
+### 9.13 工作包二 A5/A8/A10 补充记录（2026-08-25）
+
+继续执行后，13B 模型版补齐了 A5 的 1/4/16 MiB 三个中间与端点配置，以及 A10
+的两个 NUMA 绑定；A8 已升级为独立安全区中的真实 generation/CRC/active-slot
+协议测试。
+
+| 消融 | 配置 | 正式结果 | 状态 |
+|---|---|---:|---|
+| A5 | P4、chunk=1 MiB | write 6399.7 ms；read 6556.8 ms | PASS |
+| A5 | P4、chunk=4 MiB | write 6051.3 ms；read 4137.6 ms | PASS，复用 A2 控制 |
+| A5 | P4、chunk=16 MiB | write 6101.7 ms；read 4040.4 ms | PASS |
+| A8 | A/B generation/CRC/active，10 次正式 | 单槽 write/read 1.108/1.708 ms；A/B commit 7.040 ms；损坏回退 6.619 ms | PASS；128 GiB 安全区，未改 live metadata |
+| A10 | node2（NPU 本地） | write/read 6088.3/4223.1 ms | PASS |
+| A10 | node4（SSD 本地） | write/read 6035.0/4234.9 ms | PASS |
+
+A5 合成实验仍覆盖 64 KiB、256 KiB、1 MiB、4 MiB、16 MiB；13B 的 64/256 KiB
+模型版因分别产生约 400k/100k chunks，尚未纳入正式模型表，不能用中间尺寸结果
+替代这两个极端。为使极小 chunk 与 depth=16 可执行，本轮还修复了 `npu-smi`
+进程表误判（`b36ea16`）、高 pipeline 深度读提交重试（`b6ccb8a`）和读写 FSM
+重复扫描导致的 O(N²) 开销（`d2fb8fc`）。修复后的 13B depth=16 结果已通过，
+其首轮失败目录仅作为缺陷复现证据保留。
