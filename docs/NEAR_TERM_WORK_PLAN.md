@@ -594,3 +594,38 @@ P2/P4 使用 84.0.0 与 83.0.0 两块不同设备，只用于端到端路径观�
 使用前述同盘固定字节流实验。外部 `strace -f -c` 控制样本记录 32 次 pwrite、32 次 pread
 和 2 次 fdatasync，共 2218 次系统调用，证据文件位于
 `experiments/output/wp1/current/external_profile/`。
+
+### 9.10 工作包二消融设计与执行协议（2026-08-25）
+
+工作包二固定两个模型规模：GPT-2 XL（约 3.27 GB 参数）和 GPT-2 13B（约 26.20 GB
+参数）。A1～A6、A8～A10 使用真实 MindFormers 网络的随机初始化参数，不包含 optimizer
+状态；A7 使用真实训练 cell 和图内 step counter。所有正式 I/O 对照固定在
+`0000:83:00.0`，`0000:84:00.0` 只保留作普通文件系统环境，不参与同盘结论。
+
+正式样本协议为短实验 5 次预热 + 10 次正式重复，模型/训练实验 2 次预热 + 3 次独立
+正式重复；每个样本必须通过逐参数 hash 或字节回读，失败样本不得进入统计。每组结果
+记录控制变量、唯一变化因素、NPU/NUMA/PCIe 拓扑、触发/快照/提交/完成时间、CPU 和
+上下文切换，并写入独立的 A 编号结果目录。
+
+| 消融 | 控制与实验配置 | 固定变量与关键计时 | 执行状态 |
+|---|---|---|---|
+| A1 | 同一块 83.0.0：ext4 Host-FS vs Host-SPDK 裸盘 | 模型、4 MiB、depth=4；FS 切换前后均记录设备身份 | WP1 字节流已通过，模型版待执行 |
+| A2 | P3 HBM→Host→SPDK vs P4 HBM→SPDK | 同一 raw 83、同一模型；D2H、SPDK、H2D/验证和阻塞 | runner 已有 P3/P4，待同盘正式运行 |
+| A3 | P4 batch 数组 vs 每 chunk 一次 API | 同一模型、chunk/depth 固定；Python/C 提交时间和 CPU | 已补 `--submit-mode scalar` |
+| A4 | depth=1 vs 2/4/8/16 | 同一模型和 chunk；ACL/NVMe 重叠、槽等待、P99 | 复用 P4 runner |
+| A5 | chunk=64 KiB/256 KiB/1 MiB/4 MiB/16 MiB | depth=4；尾块、内存和有效/介质带宽 | 复用 P4 runner |
+| A6 | Reactor request-ring/FSM vs 受控同步提交 | 同一 context 和设备；锁/等待/CPU/吞吐 | 需先加入独立 sync API，禁止恢复旧死锁实现 |
+| A7 | Python 同步/线程触发 vs 图内计数 + Reactor poller | 同一训练步和间隔；step time、触发抖动、训练阻塞 | 需使用 `setup_faf_checkpointing` 正式路径 |
+| A8 | 单槽同步元数据 vs A/B generation/CRC/active 切换 | 安全 metadata 区域；提交时间和故障回退 | 现有脚本仅 preliminary，需补 active 切换门禁 |
+| A9 | 1/2/3/4 个并发快照槽 | 单 Reactor owner；槽等待、内存、实际重叠和吞吐 | 需禁止把 pipeline depth 代替 slot count |
+| A10 | CPU/内存 node=2（NPU7 本地）vs node=4（SSD 本地） | 同一模型、设备和参数；CPU、P99、带宽 | 通过 `numactl` 外部固定绑定 |
+
+A1 的模型版必须在 83.0.0 文件系统挂载阶段使用 `model_paths.py --fs-root`
+写入该挂载点，然后卸载、恢复 `uio_pci_generic` 并重新执行 P4；不得拿当前 84.0.0
+P2 结果直接充当 A1。A3 的 scalar 模式允许逐 chunk 调用同一个安全 C API，不能调用
+已归档的旧线程实现。A6、A7、A9 在对应安全实现和正确性门禁完成前，只能报告为设计
+准备或 preliminary，不能填入正式 FULL 消融表。
+
+首轮执行顺序为 A1/A2/A4/A7，再执行 A3/A5/A6/A8/A9/A10；每完成一个设计点立即生成
+结构化汇总和 hash 清单。最终表格只比较同一模型、同一设备、同一计时边界的控制/实验
+对，另将 13B 的完整矩阵作为规模敏感性复核，不用跨设备结果替代消融。

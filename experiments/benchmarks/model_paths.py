@@ -153,20 +153,37 @@ def build_batch_arrays(param_descs, chunk_size):
     return chunks, total, build_ctypes_arrays(chunks)
 
 
-def direct_batch(ckpt, param_descs, chunk_size, read=False):
+def direct_batch(ckpt, param_descs, chunk_size, read=False,
+                 submit_mode="batch"):
     chunks, total, arrays = build_batch_arrays(param_descs, chunk_size)
-    ptrs, offsets, sizes = arrays
     start = time.perf_counter_ns()
-    if read:
-        ret = ckpt._lib_read_batch(ptrs, offsets, sizes, len(chunks))
+    c_io_us = 0
+    if submit_mode == "batch":
+        ptrs, offsets, sizes = arrays
+        if read:
+            ret = ckpt._lib_read_batch(ptrs, offsets, sizes, len(chunks))
+        else:
+            ret = ckpt._lib_write_batch(ptrs, offsets, sizes, len(chunks))
+        c_io_us = ckpt.get_last_io_us(read)
+    elif submit_mode == "scalar":
+        ret = 0
+        for chunk in chunks:
+            one = build_ctypes_arrays([chunk])
+            if read:
+                ret = ckpt._lib_read_batch(*one, 1)
+            else:
+                ret = ckpt._lib_write_batch(*one, 1)
+            if ret != 0:
+                break
+            c_io_us += ckpt.get_last_io_us(read)
     else:
-        ret = ckpt._lib_write_batch(ptrs, offsets, sizes, len(chunks))
+        raise ValueError(f"unsupported submit mode: {submit_mode}")
     elapsed_ms = (time.perf_counter_ns() - start) / 1e6
     if ret != 0:
         operation = "read" if read else "write"
         raise RuntimeError(f"raw SPDK {operation} returned {ret}")
     return {"chunks": len(chunks), "bytes": total, "elapsed_ms": elapsed_ms,
-            "c_io_us": ckpt.get_last_io_us(read)}
+            "c_io_us": c_io_us}
 
 
 def make_spdk_context(args, writer):
@@ -278,14 +295,17 @@ def p4_spdk_sample(model, param_descs, safe_descs, ckpt, writer, index, warmup):
     expected, hash_stats = hash_device_params(param_descs, writer.config["npu"])
     events = [{"name": "checkpoint_trigger", "monotonic_ns": time.monotonic_ns()}]
     start = time.perf_counter_ns()
-    write = direct_batch(ckpt, safe_descs, writer.config["chunk_size"], read=False)
+    write = direct_batch(ckpt, safe_descs, writer.config["chunk_size"], read=False,
+                         submit_mode=writer.config["submit_mode"])
     events.append({"name": "spdk_write_return", "monotonic_ns": time.monotonic_ns(),
                    "c_io_us": write["c_io_us"]})
 
     first_desc = safe_descs[0:1]
-    first = direct_batch(ckpt, first_desc, writer.config["chunk_size"], read=True)
+    first = direct_batch(ckpt, first_desc, writer.config["chunk_size"], read=True,
+                         submit_mode=writer.config["submit_mode"])
     first_ms = first["elapsed_ms"]
-    read = direct_batch(ckpt, safe_descs, writer.config["chunk_size"], read=True)
+    read = direct_batch(ckpt, safe_descs, writer.config["chunk_size"], read=True,
+                        submit_mode=writer.config["submit_mode"])
     events.append({"name": "spdk_read_return", "monotonic_ns": time.monotonic_ns(),
                    "c_io_us": read["c_io_us"]})
     actual, _ = hash_device_params(param_descs, writer.config["npu"])
@@ -517,6 +537,11 @@ def main():
     parser.add_argument("--warmups", type=int, default=1)
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--profiling", action="store_true")
+    parser.add_argument("--submit-mode", choices=("batch", "scalar"),
+                        default="batch",
+                        help="P4 submission granularity for A3")
+    parser.add_argument("--fs-root", default=str(FS_ROOT),
+                        help="filesystem root for P1/P2; may be a same-device mount")
     parser.add_argument("--checkpoint-only", action="store_true",
                         help="build the real model without optimizer/training state")
     parser.add_argument("--output-root", default=None)
@@ -530,13 +555,15 @@ def main():
     writer = ResultWriter(args.experiment, args)
     writer.config.update({"path": args.path, "model": args.model,
                           "parameter_precision": "model-native",
+                          "submit_mode": args.submit_mode,
+                          "fs_root": args.fs_root,
                           "safe_region": [args.safe_offset, args.safe_offset],
                           "formal_repetitions": args.repetitions})
     writer.write_json("config.json", writer.config)
     npu_info = check_npu_free(args.npu)
     writer.write_json("environment.json", environment_snapshot(args, npu_info))
     model = ds = opt = ckpt = None
-    root = FS_ROOT / writer.run_id
+    root = Path(args.fs_root) / writer.run_id
     try:
         init_env(device_id=args.npu)
         if args.checkpoint_only:
