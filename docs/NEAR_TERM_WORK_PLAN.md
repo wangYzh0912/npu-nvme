@@ -654,3 +654,28 @@ P2 结果直接充当 A1。A3 的 scalar 模式允许逐 chunk 调用同一个�
 `source /usr/local/Ascend/ascend-toolkit/set_env.sh`。后续所有模型命令沿用这一启动
 方式。A4/A5/A10 的合成结果仅用于先验证开关和测量链路；GPT-2 13B 的完整规模敏感性
 矩阵与尚未正式化的 A6/A8/A9 将继续单独记录，不能与本节 PASS 项混合。
+
+### 9.12 工作包二 GPT-2 13B 规模复核记录（2026-08-25）
+
+GPT-2 13B 使用 644 个真实 MindFormers 参数对象、26,204,712,960 bytes，4 MiB
+chunk；每个正式样本均通过 644 项参数摘要校验。除特别说明外，模型路径均为
+checkpoint-only、2 次预热 + 3 次正式重复、同一块 83.0.0。
+
+| 消融 | 配置 | 正式均值（ms） | 结果 |
+|---|---|---:|---|
+| A1 | P2 ext4 Host-FS | snapshot 3922.1；persist 33425.1；restore 2072.0 | PASS |
+| A1/A2 control | P4 HBM→SPDK→HBM，depth=4 | write 6051.3；read 4137.6 | PASS |
+| A2 | P3 HBM→Host→SPDK→Host | snapshot 4158.0；write 6065.5；read 7099.3 | PASS |
+| A3 | P4 scalar，每 chunk 一次 API | write 13758.3；read 13822.9 | PASS；相对 batch 分别为 2.27×、3.34× |
+| A4 | P4 batch，depth=1/2/4/8/16 | write 8851.0/6127.4/6051.3/6081.7/6018.4；read 9607.9/5679.7/4137.6/3889.4/3807.3 | PASS；depth=4 复用 A2 控制样本 |
+
+A4 depth=16 的首轮运行曾因读 FSM 将 transient `-ENOMEM/-EAGAIN` 错误地视为永久
+失败而返回 `raw SPDK read returned -1`；修复读提交重试后重新执行 3 次正式样本全部
+通过。失败目录保留在 `experiments/output/wp2/model_gpt2_13b_a4_d16/`，修复后的正式
+目录为 `model_gpt2_13b_a4_d16_v2/`，该缺陷修复提交为 `b6ccb8a`。
+
+这些结果支持两个规模敏感性结论：13B 的 P2 文件系统持久化均值约为 P4 raw write
+的 5.5 倍；在 P4 内，pipeline depth 从 1 增加到 8/16 后读均值从约 9.61 s 降至
+约 3.89/3.81 s，但 write 在 depth=2 以后已基本进入 6.0～6.1 s 平台。A5 的 13B
+chunk-size 矩阵和 A10 的 13B NUMA 矩阵仍待执行；A6/A8/A9 仍按 9.11 的 preliminary
+规则处理。
