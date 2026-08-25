@@ -42,7 +42,7 @@ from experiments.benchmarks.io_matrix import (  # noqa: E402
 )
 from experiments.baselines import two_phase_common as tpc  # noqa: E402
 from experiments.common import (  # noqa: E402
-    init_env, make_gpt2xl_training, warmup_model,
+    init_env, make_causal_lm_training, warmup_model,
 )
 from chunk_helpers import build_chunks, build_ctypes_arrays  # noqa: E402
 
@@ -498,6 +498,8 @@ def p5_async(args, model, ds, opt, param_descs, ckpt, writer):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", choices=("E2", "E3", "E4", "E5"), required=True)
+    parser.add_argument("--model", choices=("gpt2_xl", "llama2_7b"),
+                        default="gpt2_xl")
     parser.add_argument("--path", choices=("p0_train", "p1_fs", "p2_host_fs",
                                              "p3_host_spdk", "p4_spdk",
                                              "p5_async"), required=True)
@@ -519,7 +521,7 @@ def main():
     if args.path == "p5_async" and args.repetitions != args.steps // args.ckpt_every:
         args.repetitions = args.steps // args.ckpt_every
     writer = ResultWriter(args.experiment, args)
-    writer.config.update({"path": args.path, "model": "gpt2_xl",
+    writer.config.update({"path": args.path, "model": args.model,
                           "parameter_precision": "model-native",
                           "safe_region": [args.safe_offset, args.safe_offset],
                           "formal_repetitions": args.repetitions})
@@ -530,12 +532,13 @@ def main():
     root = FS_ROOT / writer.run_id
     try:
         init_env(device_id=args.npu)
-        model, ds, opt = make_gpt2xl_training(
+        model, ds, opt = make_causal_lm_training(
+            model_name=args.model,
             total_steps=max(args.steps, args.ckpt_every), device_id=args.npu)
         warmup_model(model, opt, ds)
         param_descs = tpc.get_param_descriptors(model)
         if not param_descs:
-            raise RuntimeError("no warm-allocated GPT-2 XL parameters")
+            raise RuntimeError(f"no warm-allocated {args.model} parameters")
         total = total_param_bytes(model)
         safe_descs, safe_end = assign_safe_offsets(param_descs, args.safe_offset)
         writer.config.update({"parameter_count": len(param_descs),

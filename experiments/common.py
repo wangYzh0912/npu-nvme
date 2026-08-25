@@ -36,28 +36,44 @@ _DEFAULT_TRAIN_MR = os.path.join(
 
 # -- Training setup factory -------------------------------------------------
 
-def make_gpt2xl_training(total_steps=20, device_id=1, seq_len=1025,
-                          train_mr=None):
-    """Create a standard GPT-2 XL training setup.
+def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
+                            device_id=1, seq_len=1025, train_mr=None):
+    """Create a causal-LM training setup for a supported MindFormers model.
 
     Returns (model, dataset, optimizer).  The dataset is pre-batched and
     limited to total_steps batches.
     """
     from mindformers import AutoModel, AutoConfig
 
-    print("[Common] Building GPT-2 XL model (3.12 GB FP16)...", flush=True)
-    cfg = AutoConfig.from_pretrained("gpt2_xl")
-    cfg.seq_length = seq_len
-    cfg.max_position_embeddings = seq_len
+    print(f"[Common] Building {model_name} model...", flush=True)
+    cfg = AutoConfig.from_pretrained(model_name)
+    if hasattr(cfg, "seq_length"):
+        cfg.seq_length = seq_len
+    if hasattr(cfg, "max_position_embeddings"):
+        cfg.max_position_embeddings = max(seq_len, 1025)
     cfg.checkpoint_name_or_path = ""  # train from scratch
     model = AutoModel.from_config(cfg)
 
     mr_path = train_mr or _DEFAULT_TRAIN_MR
     ds = ms.dataset.MindDataset(mr_path, shuffle=True)
+    # The GPT-2 corpus can contain token IDs above the LLaMA vocabulary. Keep
+    # the same data source for path timing while making IDs valid for the
+    # selected model; this is not a quality-training experiment.
+    vocab_size = getattr(cfg, "vocab_size", None)
+    if vocab_size and model_name != "gpt2_xl":
+        ds = ds.map(operations=lambda value: value % vocab_size,
+                    input_columns=["input_ids", "labels"])
     ds = ds.batch(1, drop_remainder=True).take(total_steps)
 
     opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
     return model, ds, opt
+
+
+def make_gpt2xl_training(total_steps=20, device_id=1, seq_len=1025,
+                          train_mr=None):
+    """Backward-compatible GPT-2 XL training factory."""
+    return make_causal_lm_training("gpt2_xl", total_steps, device_id,
+                                   seq_len, train_mr)
 
 
 # -- SPDK environment + DirectCheckpoint factory ----------------------------
