@@ -63,11 +63,12 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
     ds = ms.dataset.MindDataset(mr_path, shuffle=True)
     # The GPT-2 corpus can contain token IDs above the LLaMA vocabulary. Keep
     # the same data source for path timing while making IDs valid for the
-    # selected model; this is not a quality-training experiment.
+    # selected model; this is not a quality-training experiment. The source
+    # records are length 1025, so crop both columns for shorter scale runs.
     vocab_size = getattr(cfg, "vocab_size", None)
     if vocab_size and model_name != "gpt2_xl":
         ds = ds.map(operations=lambda *values: tuple(
-            value % vocab_size for value in values),
+            value[:seq_len] % vocab_size for value in values),
                     input_columns=["input_ids", "labels"])
     ds = ds.batch(1, drop_remainder=True).take(total_steps)
 
