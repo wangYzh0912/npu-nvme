@@ -59,6 +59,21 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
     cfg.checkpoint_name_or_path = ""  # train from scratch
     model = AutoModel.from_config(cfg)
 
+    # Some MindFormers 1.3.2 GPT-2 configs reconstruct the model with the
+    # checkpoint's original sequence-length constants even after the config
+    # fields above are changed. Rebuild these non-parameter helpers so the
+    # short scale lane has matching [batch, seq_len] masks and positions.
+    if model_name != "gpt2_xl" and seq_len != 1025:
+        from mindformers.modules.transformer import AttentionMask
+        model.get_attention_mask = AttentionMask(
+            seq_length=seq_len,
+            parallel_config=cfg.parallel_config.dp_mp_config)
+        if hasattr(model, "backbone"):
+            model.backbone.position_ids = ms.Tensor(
+                np.arange(seq_len), ms.int32)
+            if hasattr(model.backbone, "seq_length"):
+                model.backbone.seq_length = seq_len
+
     mr_path = train_mr or _DEFAULT_TRAIN_MR
     ds = ms.dataset.MindDataset(mr_path, shuffle=True)
     # The GPT-2 corpus can contain token IDs above the LLaMA vocabulary. Keep
