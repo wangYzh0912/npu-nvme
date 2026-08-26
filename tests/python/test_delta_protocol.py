@@ -14,7 +14,9 @@ from delta_protocol import (  # noqa: E402
     FileDeltaWriter,
     apply_delta_patches,
     pack_delta_frame,
+    pack_lossless_delta_frame,
     unpack_delta_frame,
+    unpack_delta_frame_with_meta,
 )
 from disk_layout import FRAME_HEADER_SIZE  # noqa: E402
 
@@ -97,6 +99,69 @@ class DeltaProtocolTests(unittest.TestCase):
             step, _, _ = writer.read_frame(0)
             self.assertEqual(step, 3)
             self.assertEqual(writer.stats["total_frames"], 3)
+
+    def test_lossless_fp16_round_trip_carries_lineage(self):
+        blocks = [{
+            "layer_id": 4,
+            "name": "encoder.weight",
+            "block_idx": 3,
+            "element_offset": 6,
+            "fp16_data": np.array([0.5, -1.25, 2.0], dtype=np.float16),
+        }]
+        smalls = [{
+            "layer_id": 5,
+            "name": "layer_norm.bias",
+            "fp16_data": np.array([0.125, -0.25], dtype=np.float16),
+        }]
+        frame = pack_lossless_delta_frame(
+            18, blocks, smalls, base_generation=11, generation=12)
+        step, decoded_blocks, decoded_smalls, info = \
+            unpack_delta_frame_with_meta(frame)
+
+        self.assertEqual(step, 18)
+        self.assertEqual(info["version"], 2)
+        self.assertEqual(info["base_generation"], 11)
+        self.assertEqual(info["generation"], 12)
+        np.testing.assert_allclose(
+            decoded_blocks[0]["fp16_data"], blocks[0]["fp16_data"])
+        np.testing.assert_allclose(
+            decoded_smalls[0]["fp16_data"], smalls[0]["fp16_data"])
+
+    def test_lossless_fp16_apply_is_additive_cpu_oracle(self):
+        initial = {
+            "encoder.weight": np.arange(12, dtype=np.float32).reshape(3, 4),
+            "layer_norm.bias": np.array([1.0, 2.0, 3.0], dtype=np.float32),
+        }
+        blocks = [{
+            "name": "encoder.weight",
+            "block_idx": 0,
+            "element_offset": 5,
+            "fp16_data": np.array([0.5, -1.0, 2.0], dtype=np.float16),
+            "encoding": "fp16",
+        }]
+        smalls = [{
+            "name": "layer_norm.bias",
+            "fp16_data": np.array([-0.25, 0.5], dtype=np.float16),
+            "encoding": "fp16",
+        }]
+        updated = apply_delta_patches(initial, blocks, smalls, block_size=4)
+        expected_weight = initial["encoder.weight"].reshape(-1).copy()
+        expected_weight[5:8] += np.array([0.5, -1.0, 2.0], dtype=np.float32)
+        np.testing.assert_allclose(updated["encoder.weight"].reshape(-1), expected_weight)
+        np.testing.assert_allclose(
+            updated["layer_norm.bias"], np.array([0.75, 2.5, 3.0], dtype=np.float32))
+        np.testing.assert_array_equal(
+            initial["layer_norm.bias"], np.array([1.0, 2.0, 3.0], dtype=np.float32))
+
+    def test_lossless_truncation_and_crc_are_rejected(self):
+        frame = pack_lossless_delta_frame(
+            19, [{"name": "w", "fp16_data": np.array([1], dtype=np.float16)}], [])
+        with self.assertRaisesRegex(ValueError, "frame size|Truncated"):
+            unpack_delta_frame(frame[:-1])
+        corrupted = bytearray(frame)
+        corrupted[-1] ^= 1
+        with self.assertRaisesRegex(ValueError, "CRC"):
+            unpack_delta_frame(corrupted)
 
 
 if __name__ == "__main__":

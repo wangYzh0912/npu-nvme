@@ -179,10 +179,12 @@ static void test_sync_meta_io(const char *pci_addr, int npu_id)
     memset(write_buf, 0xAB, sizeof(write_buf));
     memset(read_buf, 0, sizeof(read_buf));
 
-    if (npu_nvme_sync_meta_io(ctx, 0, 4096, /*write*/0, write_buf) != 0) {
+    /* Never overwrite the formatted V2 superblock during a smoke test. */
+    const uint64_t test_offset = 64ULL * 1024 * 1024 * 1024;
+    if (npu_nvme_sync_meta_io(ctx, test_offset, 4096, /*write*/0, write_buf) != 0) {
         FAIL("meta write failed"); npu_nvme_cleanup(ctx); return;
     }
-    if (npu_nvme_sync_meta_io(ctx, 0, 4096, /*read*/1, read_buf) != 0) {
+    if (npu_nvme_sync_meta_io(ctx, test_offset, 4096, /*read*/1, read_buf) != 0) {
         FAIL("meta read failed"); npu_nvme_cleanup(ctx); return;
     }
     if (memcmp(write_buf, read_buf, 4096) != 0) {
@@ -201,7 +203,9 @@ static void test_delta_init(const char *pci_addr, int npu_id)
         FAIL("init failed"); return;
     }
 
-    if (npu_nvme_delta_init(ctx, 256ULL*1024*1024, 128) != 0) {
+    uint64_t delta_bytes = 256ULL*1024*1024*128;
+    uint64_t area = npu_nvme_get_total_blocks(ctx) - delta_bytes;
+    if (npu_nvme_delta_init(ctx, area, 256ULL*1024*1024, 128) != 0) {
         FAIL("delta_init failed"); npu_nvme_cleanup(ctx); return;
     }
     if (npu_nvme_delta_get_slot_size(ctx) != 256*1024*1024) {

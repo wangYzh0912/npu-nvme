@@ -79,6 +79,7 @@ typedef struct {
     int num_tasks;              /* number of chunks in this write */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy D2H */
     atomic_int done;            /* set to 1 when all chunks complete */
+    atomic_int detached;        /* caller timed out; reactor owns cleanup */
     int result;                 /* 0 = success, -1 = any chunk failed */
     uint64_t ts_batch_start;    /* C-layer: first DMA submit time (us) */
     uint64_t ts_batch_end;      /* C-layer: last SPDK completion time (us) */
@@ -90,6 +91,7 @@ typedef struct {
     write_request_t faf_req;    /* pre-allocated FaF request (reused each trigger) */
     uint32_t faf_step;          /* step number that triggered current FaF write */
     int next_submit_idx;        /* next chunk index to DMA-copy */
+    int next_spdk_submit_idx;   /* next NPU_DONE chunk to submit to SPDK */
     int completed_count;        /* number of fully completed chunks */
 } write_fsm_ctx_t;
 
@@ -105,6 +107,7 @@ typedef struct {
     int num_tasks;              /* number of chunks in this read */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy H2D */
     atomic_int done;            /* set to 1 when all chunks complete */
+    atomic_int detached;        /* caller timed out; reactor owns cleanup */
     int result;                 /* 0 = success, -1 = any chunk failed */
     uint64_t ts_batch_start;    /* C-layer: first SPDK submit time (us) */
     uint64_t ts_batch_end;      /* C-layer: last DMA completion time (us) */
@@ -114,6 +117,7 @@ typedef struct {
     read_fsm_state_t state;
     read_request_t *req;        /* current active request, NULL when idle */
     int next_submit_idx;        /* next chunk index to submit */
+    int next_copy_idx;          /* next completed chunk to copy to NPU/Host */
     int completed_count;        /* number of fully completed chunks */
 } read_fsm_ctx_t;
 
@@ -124,7 +128,11 @@ typedef struct {
     uint32_t total_bytes;       /* number of bytes to read/write */
     int is_read;                /* 1 = read, 0 = write */
     void *meta_buffer;          /* caller's host buffer */
+    void *owned_buffer;         /* reactor-owned DMA staging copy */
+    uint64_t submit_not_before_us; /* test hook; zero in normal operation */
+    int submitted;              /* NVMe command has been submitted */
     atomic_int done;            /* set to 1 when I/O completes */
+    atomic_int detached;        /* caller timed out; reactor owns cleanup */
     int result;                 /* 0 = success, -1 = I/O error */
 } meta_request_t;
 

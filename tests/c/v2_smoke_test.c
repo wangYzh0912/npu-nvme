@@ -34,7 +34,9 @@ int main(int argc, char **argv) {
     memset(host_buf, 0xAB, buf_size);
 
     void *ptrs[1] = { host_buf };
-    uint64_t offsets[1] = { 0 };
+    /* Keep the smoke payload in the unallocated V2 gap, away from metadata,
+     * FULL slots, and the tail Delta ring. */
+    uint64_t offsets[1] = { 64ULL * 1024 * 1024 * 1024 };
     size_t sizes[1] = { buf_size };
 
     printf("[V2-smoke] writing %zu bytes...\n", buf_size); fflush(stdout);
