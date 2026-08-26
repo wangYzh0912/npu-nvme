@@ -19,12 +19,15 @@ native dtype, lineage generations, and CRC32.
   at the 83.0.0 safe offset 64 GiB. The returned bytes matched exactly;
   ACK and independent recovery reached generation 1. C-layer write latency
   was 348 us and the aligned transfer was 8,192 bytes.
+- I5 NPU loopback: `s2_npu_spdk.py` transferred the same 4,159-byte frame
+  through an ACL HBM buffer and 83.0.0 at 64 GiB + 16 MiB. HBM→SPDK→HBM
+  bytes matched exactly, with aligned transfer 8,192 bytes and generation 1.
 
 ## Not yet closed
 
 I1 real MindSpore weight/optimizer trajectories, I2 CPU/NPU graph equivalence,
-I3 HBM buffer lifecycle, I4 cross-process replay on the target, I5 NPU-HBM
-frame loopback, and I6 raw-device restart/chain fault matrix remain open.
+I3 HBM buffer lifecycle, I4 cross-process replay on the target, and I6 raw-device
+restart/chain fault matrix remain open.
 The GPT-2 13B A7 short-sequence attempt is recorded as a MindFormers 1.3.2
 static-shape harness boundary; GPT-2 XL A7 remains the valid real-training
 FaF/Reactor result.
