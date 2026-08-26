@@ -879,6 +879,12 @@ digest、native dtype、base/generation 和 CRC；`observe()` 只读取最后 AC
 Z0～Z9 及协议 dispatch/CRC 测试当前 18 项通过。这是 I0 的第一版 L3 单机 CPU 门禁，
 尚不等同于 I1 真实轨迹、I2 NPU 图、I3 缓冲生命周期或 I4～I6 存储闭环。
 
+新增 `experiments/benchmarks/s2_oracle_trajectory.py`，提供 100-step 确定性早期稀疏、
+中期稠密、后期热块轨迹回放，输出每 step 的 frame bytes、selected block、Jaccard、
+generation 和最终恢复校验；当前 smoke 运行 PASS（总 frame 458,668 bytes）。该工具
+已具备 I1/O1/O2 的指标接口，但默认轨迹是 CPU 合成轨迹，真实 MindSpore 权重/Adam
+轨迹采集仍未完成，不能把该 smoke 作为训练结论。
+
 ### 9.14 A6 安全同步 API 对照记录（2026-08-25）
 
 A6 在同一块 83.0.0 的独立安全区使用 400 KiB payload、5 次预热和 10 次正式
