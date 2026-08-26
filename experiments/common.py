@@ -38,7 +38,8 @@ _DEFAULT_TRAIN_MR = os.path.join(
 # -- Training setup factory -------------------------------------------------
 
 def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
-                            device_id=1, seq_len=1025, train_mr=None):
+                            device_id=1, seq_len=1025, train_mr=None,
+                            dropout_rate=None):
     """Create a causal-LM training setup for a supported MindFormers model.
 
     ``seq_len`` is the input-record length.  MindFormers GPT-2 shifts a
@@ -55,6 +56,13 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
         raise ValueError("training record length must be at least two tokens")
     model_seq_len = seq_len - 1
     cfg = AutoConfig.from_pretrained(model_name)
+    if dropout_rate is not None:
+        if not 0.0 <= float(dropout_rate) < 1.0:
+            raise ValueError("dropout_rate must be in [0, 1)")
+        for field in ("embedding_dropout_prob", "hidden_dropout_rate",
+                      "attention_dropout_rate"):
+            if hasattr(cfg, field):
+                setattr(cfg, field, float(dropout_rate))
     if hasattr(cfg, "seq_length"):
         cfg.seq_length = model_seq_len
     if hasattr(cfg, "max_position_embeddings"):
