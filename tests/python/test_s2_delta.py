@@ -130,6 +130,20 @@ class S2DeltaOracleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "CRC"):
             unpack_s2_replacement_frame(corrupted)
 
+    def test_negative_layer_id_is_preserved_for_large_special_parameter(self):
+        initial = {
+            "backbone.layernorm.weight": np.zeros(8, dtype=np.float32),
+        }
+        oracle = S2DeltaOracle(initial, block_size=4, small_threshold=4)
+        current = {name: value.copy() for name, value in initial.items()}
+        current["backbone.layernorm.weight"][0] = 3.0
+        oracle.set_current(current)
+        frame = oracle.observe(31)
+        _, blocks, _, _ = unpack_s2_replacement_frame(frame)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0]["layer_id"], -1)
+        oracle.ack(frame)
+
     def test_apply_replacements_does_not_mutate_input(self):
         manifest = build_block_manifest(self.initial, 4, 4)
         block = manifest["blocks"][0]

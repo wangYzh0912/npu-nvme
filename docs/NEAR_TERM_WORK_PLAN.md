@@ -1035,7 +1035,15 @@ GPT-2 的非有限值主要出现在首层 attention/output 权重以及对应 A
 语义等价”这一 scope-specific 门禁，不代表真实模型 I1 已通过，也不替代 I3 缓冲
 生命周期测试。
 
-证据目录：`results/wp3-20260826/`；I1 的两个失败运行、I2 的原始 JSON、环境快照和
-时间线均保留。当前下一顺序为：解决/替换 I1 数值输入 → I3 双缓冲与 ACK 生命周期
-门禁 → I4 跨进程恢复 → I6 裸盘回绕与故障注入；在 I0～I6 完成前不进入增量方案性能
-结论。
+#### I3/I4 追加结果
+
+新增 `python/frame_lifecycle.py` 及 3 个单测，验证不可变 payload、generation 单调性、
+慢写背压、错误 ACK 拒绝和失败释放；A9 已提供真实 HBM snapshot slot 的硬件证据，
+但“图输出/真实 HBM frame buffer → writer”整合仍未关闭。另完成 I4 普通文件跨进程
+回放：父进程写入 `FULL + 10` 个 S2 frame，子进程从 16-slot ring 读取并恢复到
+generation 10，最终状态摘要逐字节一致。期间修复了 S2 v3 负 `layer_id` 的打包 bug，
+保持 12 字节 block header 布局不变，并新增 LayerNorm 大参数测试。
+
+证据目录：`results/wp3-20260826/`；I1 的两个失败运行、I2/I4 的原始 JSON、环境快照
+和时间线均保留。当前下一顺序为：解决/替换 I1 数值输入 → I3 图输出到 HBM frame
+buffer 整合 → I6 裸盘回绕与故障注入；在 I0～I6 完成前不进入增量方案性能结论。

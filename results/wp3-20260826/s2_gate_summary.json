@@ -17,6 +17,20 @@
     "npu": 5,
     "checks": ["norms", "top_values", "top_indices", "selected_values", "scales", "quantized"]
   },
+  "i3": {
+    "status": "control_plane_pass_hbm_integration_open",
+    "python_lifecycle_tests": 3,
+    "contract": ["immutable_payload", "generation_order", "backpressure", "ack_checksum", "failure_release"],
+    "hbm_snapshot_reference": "A9 real HBM slot matrix"
+  },
+  "i4_cross_process": {
+    "status": "pass",
+    "run_id": "I4_CROSS_PROCESS_20260826_160713_50f27bf0",
+    "steps": 10,
+    "ring_slots": 16,
+    "child_generation": 10,
+    "byte_exact": true
+  },
   "i1_synthetic": {"status": "pass", "steps": 100, "total_frame_bytes": 458668},
   "i4_file_ring": {"status": "pass", "slot_wrap": true, "crc_rejection": true},
   "i5_host_spdk": {
@@ -41,5 +55,5 @@
     "byte_exact": true,
     "device_safety": "83.0.0 only; 84.0.0 untouched"
   },
-  "open_gates": ["I1-real", "I3", "I4-cross-process", "I6"]
+  "open_gates": ["I1-real", "I3-hbm-frame-integration", "I6"]
 }

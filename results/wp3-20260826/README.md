@@ -19,6 +19,13 @@ native dtype, lineage generations, and CRC32.
 - I2 NPU graph equivalence: norm, Top-K values/indices, selected values,
   per-block scale, and INT8 quantization all match the CPU reference on NPU 5
   (`32 x 257`, variable valid lengths, `k=7`).
+- I3 control-plane contract: 3 Python lifecycle tests pass; immutable frame
+  payloads, generation ordering, backpressure, bad ACK and failure release
+  are enforced. The separate A9 runs cover real HBM snapshot slots; the
+  frame-output-to-HBM integration gate is still open.
+- I4 cross-process replay: a `FULL + 10 S2 frames` chain was written by the
+  parent and replayed in a child process, reaching generation 10 with a
+  byte-exact state digest.
 - I4 base: `FileS2Ring` writes a complete frame with flush+fsync and atomic
   slot replacement; wrap and corruption rejection pass.
 - I5 first loopback: `s2_host_spdk.py` wrote and read a 4,159-byte S2 frame
@@ -32,8 +39,8 @@ native dtype, lineage generations, and CRC32.
 ## Not yet closed
 
 I1 real MindSpore weight/optimizer trajectories remain blocked by the
-post-warmup non-finite model state. I3 HBM buffer lifecycle, I4 cross-process
-replay on the target, and I6 raw-device restart/chain fault matrix remain open.
+post-warmup non-finite model state. I3 frame-output-to-HBM integration and I6
+raw-device restart/chain fault matrix remain open.
 The GPT-2 13B A7 short-sequence attempt is recorded as a MindFormers 1.3.2
 static-shape harness boundary; GPT-2 XL A7 remains the valid real-training
 FaF/Reactor result.

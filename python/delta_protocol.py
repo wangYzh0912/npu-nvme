@@ -135,7 +135,10 @@ def pack_s2_replacement_frame(step_id, block_patches, small_patches,
         if value.size != int(patch["element_count"]):
             raise ValueError("S2 block value length mismatch")
         dtype = dtype_name.encode("ascii")
-        payload += struct.pack("<IIhH", int(patch["block_id"]),
+        # layer_id uses signed 32 bits.  The 12-byte record header is kept
+        # stable while allowing the manifest's special negative IDs for
+        # embeddings/layer norms/unknown layers.
+        payload += struct.pack("<IihH", int(patch["block_id"]),
                                int(patch["layer_id"]), len(name), len(dtype))
         payload += name + dtype
         payload += struct.pack("<III", int(patch["block_idx"]),
@@ -285,7 +288,7 @@ def unpack_s2_replacement_frame(frame_bytes):
     blocks, smalls = [], []
     for _ in range(n_blocks):
         block_id, layer_id, name_len, dtype_len = struct.unpack(
-            "<IIhH", take(12, "block header"))
+            "<IihH", take(12, "block header"))
         name = take(name_len, "block name").decode("utf-8")
         dtype = take(dtype_len, "block dtype").decode("ascii")
         block_idx, element_offset, element_count = struct.unpack(
