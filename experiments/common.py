@@ -62,7 +62,8 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
     # selected model; this is not a quality-training experiment.
     vocab_size = getattr(cfg, "vocab_size", None)
     if vocab_size and model_name != "gpt2_xl":
-        ds = ds.map(operations=lambda value: value % vocab_size,
+        ds = ds.map(operations=lambda *values: tuple(
+            value % vocab_size for value in values),
                     input_columns=["input_ids", "labels"])
     ds = ds.batch(1, drop_remainder=True).take(total_steps)
 
