@@ -51,7 +51,11 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
     if hasattr(cfg, "seq_length"):
         cfg.seq_length = seq_len
     if hasattr(cfg, "max_position_embeddings"):
-        cfg.max_position_embeddings = max(seq_len, 1025)
+        # Keep the attention-mask/lower-triangle shape consistent with the
+        # requested experiment sequence length.  The old lower bound of 1025
+        # made a short 13B scale run fail during graph inference with a
+        # [1,1025,1025] vs [1,seq_len,seq_len] broadcast error.
+        cfg.max_position_embeddings = seq_len
     cfg.checkpoint_name_or_path = ""  # train from scratch
     model = AutoModel.from_config(cfg)
 
