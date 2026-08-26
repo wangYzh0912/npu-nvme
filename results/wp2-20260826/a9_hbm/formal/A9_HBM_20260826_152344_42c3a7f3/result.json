@@ -1,0 +1,87 @@
+{
+  "config": {
+    "chunk_size": 4194304,
+    "ckpt_every": 5,
+    "experiment": "A9_HBM",
+    "io_delay_ms": 0.0,
+    "io_timeout_s": 120.0,
+    "model": "gpt2_xl",
+    "npu": 7,
+    "output_root": "/home/user7/npu-nvme/experiments/output/a9_hbm_formal",
+    "path": "A9_HBM_snapshot_slot_lifecycle",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 4,
+    "run_id": "A9_HBM_20260826_152344_42c3a7f3",
+    "scope": "real MindSpore HBM slots",
+    "shm_id": 1410,
+    "slot_count": 4,
+    "slots": [
+      1,
+      2,
+      4
+    ],
+    "steps": 25,
+    "warmups": 2
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "A9_HBM_20260826_152344_42c3a7f3",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 3,
+  "status": "pass",
+  "summary": {
+    "checkpoints": 5,
+    "end_to_end_ms": {
+      "ci95": [
+        9964.067091518562,
+        11796.56585968144
+      ],
+      "max": 11550.745751,
+      "mean": 10880.3164756,
+      "min": 9691.334368,
+      "n": 5,
+      "stdev": 905.745317041738
+    },
+    "formal_samples": 3,
+    "hbm_bytes_per_slot": 3280687104,
+    "slot_wait_ms": {
+      "ci95": [
+        0.06325938302066048,
+        0.07405301697933953
+      ],
+      "max": 0.07802,
+      "mean": 0.0686562,
+      "min": 0.06463,
+      "n": 5,
+      "stdev": 0.005334946785114169
+    },
+    "snapshot_ms": {
+      "ci95": [
+        3806.0062910921342,
+        5575.587410507865
+      ],
+      "max": 5150.445767,
+      "mean": 4690.796850799999,
+      "min": 3129.369532,
+      "n": 5,
+      "stdev": 874.6471429517566
+    },
+    "step_ms": {
+      "ci95": [
+        -2940.7462122327556,
+        9062.187952632756
+      ],
+      "max": 66736.76257,
+      "mean": 3060.7208702000003,
+      "min": 403.091474,
+      "n": 25,
+      "stdev": 13265.842357278416
+    },
+    "steps": 25
+  }
+}

@@ -893,14 +893,29 @@ attention 配置问题已修复，但 MindFormers 1.3.2 的 GPT-2 实例仍在�
 模型实现，并重新评估 64 GiB HBM/Adam 余量。
 
 I4 基础设施已新增 `FileS2Ring`：完整 frame 经 flush+fsync 后原子替换 slot，读取端
-重新校验 CRC 和版本；文件 ring 回绕/损坏及独立子进程读取测试已纳入 Python 门禁，当前总计 27 项通过。
+重新校验 CRC 和版本；文件 ring 回绕/损坏及独立子进程读取测试已纳入 Python 门禁，当前总计 29 项通过。
 这仍是普通文件跨进程恢复基础，不代表 I4 跨进程 replay、I5 NPU-SPDK 或 I6 裸盘故障门禁已通过。
 
-I5 的 Host-SPDK 与 NPU-HBM-SPDK frame loopback 均已通过：分别在 83.0.0 安全区
+I5 的首轮 Host-SPDK 与 NPU-HBM-SPDK frame loopback 均已通过：分别在 83.0.0 安全区
 64 GiB 和 64 GiB+16 MiB 偏移写入 4,159 B frame，均按 8,192 B 对齐传输，读回逐字节
 一致，ACK 和独立恢复均到 generation 1；Host C-layer write 为 348 us。未修改 live
 metadata，84.0.0 未触碰。结构化摘要位于 `results/wp3-20260826/s2_gate_summary.json`。
-I2/I3 和 I6 仍开放，I4 仍需补真正跨进程 replay 门禁。
+I5 的非对齐、尾块和多 segment 矩阵仍待补齐；I2/I3 和 I6 仍开放，I4 仍需补真正跨进程 replay 门禁。
+
+### 9.19 工作包二 A9 真实 HBM slot 收口记录（2026-08-26）
+
+新增 `experiments/benchmarks/a9_hbm_slots.py` 和 `python/hbm_slots.py`，以 GPT-2 XL
+真实 MindSpore 训练 cell 验证 `FREE → SNAPSHOT → READY → IO → PERSISTED → FREE`。
+每个 slot 使用 3,280,687,104 B 的 D2D HBM shadow buffer，由单一 SPDK owner 后台写入
+83.0.0，再通过 Host 读回并与冻结 HBM slot 做 SHA-256 比对。
+
+正常矩阵为 25 steps、5 次触发、2 次 warmup；1/2/4 slot 均 PASS，各有 3 个正式样本。
+受控慢盘矩阵在每次写入前增加 5,000 ms 延迟，15 steps、5 次触发；1/2/4 slot 也均 PASS。
+慢盘下平均 slot wait 从 1 slot 的 7,038.4 ms 降至 2 slot 的 3,114.4 ms，并在 4 slot
+降至 0.05 ms，说明多 slot 能降低冻结缓冲等待，但不能减少物理写入时间。
+
+完整记录位于 `results/wp2-20260826/a9_hbm/`。该结果关闭了 A9 的真实 HBM slot
+scope-specific 门禁；多 rank HBM、长训练三 seed 和与 A7 统一训练基线仍未完成。
 
 ### 9.14 A6 安全同步 API 对照记录（2026-08-25）
 
