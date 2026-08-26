@@ -12,6 +12,7 @@ from delta_protocol import (pack_s2_replacement_frame,
                             unpack_delta_frame_with_meta,
                             unpack_s2_replacement_frame)
 from s2_delta import S2DeltaOracle, apply_s2_replacements, build_block_manifest
+from s2_delta import FileS2Ring
 
 
 class S2DeltaOracleTests(unittest.TestCase):
@@ -137,6 +138,30 @@ class S2DeltaOracleTests(unittest.TestCase):
             [], manifest)
         self.assertEqual(updated[block["name"]][0], 8)
         self.assertEqual(self.initial[block["name"]][0], 0)
+
+    def test_i4_atomic_file_ring_wrap_and_corruption_rejection(self):
+        with __import__("tempfile").TemporaryDirectory() as directory:
+            oracle = S2DeltaOracle(self.initial, block_size=4, small_threshold=4)
+            ring = FileS2Ring(directory, slot_count=2, slot_size=1024 * 1024)
+            frames = []
+            for step in range(3):
+                current = {k: v.copy() for k, v in self.initial.items()}
+                current["backbone.blocks.0.weight"][step] = step + 10
+                oracle.set_current(current)
+                frame = oracle.observe(step + 40)
+                frames.append(frame)
+                ring.write(frame)
+                oracle.ack(frame)
+            # Two slots means the first frame is replaced by the third.
+            self.assertEqual(unpack_s2_replacement_frame(ring.read(0))[0], 42)
+            recovered = oracle.recover(self.initial, frames)
+            self.assertEqual(recovered["generation"], 3)
+            corrupted = bytearray(ring.read(1))
+            corrupted[-1] ^= 1
+            with open(ring._path(1), "wb") as stream:
+                stream.write(corrupted)
+            with self.assertRaisesRegex(ValueError, "CRC"):
+                ring.read(1)
 
 
 if __name__ == "__main__":

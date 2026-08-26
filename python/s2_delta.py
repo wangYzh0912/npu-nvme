@@ -15,6 +15,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
@@ -266,5 +267,51 @@ class S2DeltaOracle:
         return {"state": state, "generation": generation, "last_step": last_step}
 
 
-__all__ = ["Block", "S2DeltaOracle", "apply_s2_replacements",
-           "build_block_manifest"]
+class FileS2Ring:
+    """Atomic ordinary-file ring used by the I4 cross-process gate.
+
+    The frame itself is the source of truth.  A slot is replaced using
+    ``os.replace`` only after the complete frame has been flushed and fsync'd,
+    so a reader sees either the previous complete frame or the new one.
+    """
+
+    def __init__(self, directory, slot_count=128, slot_size=256 * 1024 * 1024):
+        if slot_count <= 0 or slot_size < 4096:
+            raise ValueError("invalid S2 ring dimensions")
+        self.directory = os.fspath(directory)
+        self.slot_count = int(slot_count)
+        self.slot_size = int(slot_size)
+        os.makedirs(self.directory, exist_ok=True)
+        self.next_slot = 0
+
+    def _path(self, slot):
+        if slot < 0 or slot >= self.slot_count:
+            raise ValueError("S2 ring slot out of range")
+        return os.path.join(self.directory, f"s2_slot_{slot:04d}.bin")
+
+    def write(self, frame):
+        """Atomically write a complete frame and return its slot index."""
+        _step, _blocks, _smalls, _info = unpack_s2_replacement_frame(frame)
+        if len(frame) > self.slot_size:
+            raise ValueError("S2 frame exceeds ring slot")
+        slot = self.next_slot % self.slot_count
+        path = self._path(slot)
+        temporary = f"{path}.tmp.{os.getpid()}"
+        with open(temporary, "wb") as stream:
+            stream.write(frame)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        self.next_slot += 1
+        return slot
+
+    def read(self, slot):
+        """Read and validate one complete frame from a slot."""
+        with open(self._path(int(slot)), "rb") as stream:
+            frame = stream.read()
+        unpack_s2_replacement_frame(frame)
+        return frame
+
+
+__all__ = ["Block", "FileS2Ring", "S2DeltaOracle",
+           "apply_s2_replacements", "build_block_manifest"]

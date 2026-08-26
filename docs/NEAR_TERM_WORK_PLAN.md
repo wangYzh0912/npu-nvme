@@ -885,6 +885,17 @@ generation 和最终恢复校验；当前 smoke 运行 PASS（总 frame 458,668 
 已具备 I1/O1/O2 的指标接口，但默认轨迹是 CPU 合成轨迹，真实 MindSpore 权重/Adam
 轨迹采集仍未完成，不能把该 smoke 作为训练结论。
 
+A7 GPT-2 13B 训练扩展在 2026-08-26 进行了多次隔离重试：数据列映射、短序列裁剪和
+attention 配置问题已修复，但 MindFormers 1.3.2 的 GPT-2 实例仍在静态图中保留
+1025/128 不一致的内部 `position_ids/seq_length` 常量，最终均在训练图 warmup 前失败，
+没有产生训练或 I/O 样本。该结果只定义“本安装版本的 13B 短序列 A7 harness 边界”，
+不否定已完成的 GPT-2 XL A7；若需 13B A7，应改用原生 1025 序列或修订 MindFormers
+模型实现，并重新评估 64 GiB HBM/Adam 余量。
+
+I4 基础设施已新增 `FileS2Ring`：完整 frame 经 flush+fsync 后原子替换 slot，读取端
+重新校验 CRC 和版本；文件 ring 回绕/损坏测试已纳入 Python 门禁，当前总计 26 项通过。
+这仍是普通文件跨进程恢复基础，不代表 I5 Host-SPDK/NPU-SPDK 或 I6 裸盘故障门禁已通过。
+
 ### 9.14 A6 安全同步 API 对照记录（2026-08-25）
 
 A6 在同一块 83.0.0 的独立安全区使用 400 KiB payload、5 次预热和 10 次正式
