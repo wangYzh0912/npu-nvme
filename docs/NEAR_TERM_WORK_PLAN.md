@@ -847,11 +847,37 @@ chunk-size 矩阵和 A10 的 13B NUMA 矩阵仍待执行；A6/A8/A9 仍按 9.11 
 | A10 | node4（SSD 本地） | write/read 6035.0/4234.9 ms | PASS |
 
 A5 合成实验仍覆盖 64 KiB、256 KiB、1 MiB、4 MiB、16 MiB；13B 的 64/256 KiB
-模型版因分别产生约 400k/100k chunks，尚未纳入正式模型表，不能用中间尺寸结果
+模型版因分别产生约 400k/100k chunks，已补入正式模型表，不能用中间尺寸结果
 替代这两个极端。为使极小 chunk 与 depth=16 可执行，本轮还修复了 `npu-smi`
 进程表误判（`b36ea16`）、高 pipeline 深度读提交重试（`b6ccb8a`）和读写 FSM
 重复扫描导致的 O(N²) 开销（`d2fb8fc`）。修复后的 13B depth=16 结果已通过，
 其首轮失败目录仅作为缺陷复现证据保留。
+
+### 9.18 工作包二 A5 极小 chunk 模型版收口与 WP3 I0 基线（2026-08-26）
+
+在临时实验分支 `exp/wp1-wp2-closeout` 上，GPT-2 13B 的 P4 HBM→SPDK→HBM
+checkpoint-only 极小 chunk 测试已完成。模型包含 644 个真实 MindFormers 参数对象，
+每个正式样本均通过逐参数摘要校验；64 KiB 运行使用 `NPU_NVME_IO_TIMEOUT_MS=600000`
+以覆盖约 400k chunk 的长请求，不能与默认 60 s 超时失败混为数据失败。
+
+| chunk | chunks（约） | write mean (ms) | read mean (ms) | first-param mean (ms) | 状态 |
+|---:|---:|---:|---:|---:|---|
+| 256 KiB | 100k | 19227.6 | 19152.4 | 768.2 | PASS |
+| 64 KiB | 400k | 67506.4 | 71447.3 | 2660.6 | PASS |
+
+256 KiB 原始运行目录为 `experiments/output/wp2_closeout/E4_20260826_114234_3d6c63ea`，
+64 KiB 正式目录为 `experiments/output/wp2_closeout/E4_20260826_120003_101a4f3b`；
+64 KiB 首次以默认 60 s 超时运行的失败目录
+`E4_20260826_115342_7a3620dc` 保留为配置边界证据，失败为 `-ETIMEDOUT`，没有进入
+样本校验阶段。测试结束后 NPU 7 HBM 使用率回落至 5%，83.0.0 仍由
+`uio_pci_generic` 接管，84.0.0 未触碰。
+
+同一分支新增 `python/s2_delta.py` 与 `tests/python/test_s2_delta.py`，建立 S2/R0
+CPU oracle 和 v3 replacement frame 基线：块始终在参数内切分，frame 携带稳定 manifest
+digest、native dtype、base/generation 和 CRC；`observe()` 只读取最后 ACK 的
+`persisted_reference`，只有 `ack()` 推进参考状态，旧 v1/v2 additive frame 保持兼容。
+Z0～Z9 及协议 dispatch/CRC 测试当前 18 项通过。这是 I0 的第一版 L3 单机 CPU 门禁，
+尚不等同于 I1 真实轨迹、I2 NPU 图、I3 缓冲生命周期或 I4～I6 存储闭环。
 
 ### 9.14 A6 安全同步 API 对照记录（2026-08-25）
 
@@ -888,7 +914,7 @@ snapshot payload 在 host DRAM 中生成，不能把它等同于真实 MindForme
 
 ### 9.16 工作包二剩余工作与收口计划
 
-1. **A5 极小 chunk 模型版**：在 83.0.0、P4、depth=4 下补齐 GPT-2 13B 的 256 KiB 和
+1. **A5 极小 chunk 模型版**：已在 83.0.0、P4、depth=4 下补齐 GPT-2 13B 的 256 KiB 和
    64 KiB；保留约 100k/400k chunks 的完整原始结果，记录提交开销、尾块、带宽和失败率。
 2. **A7 规模扩展**：在 GPT-2 XL 真实训练 cell 之外，补充 GPT-2 13B 短训练或可行的更大
    MindFormers 模型，比较 Python/线程触发与图内计数 + Reactor poller 的 step、抖动、

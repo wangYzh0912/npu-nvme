@@ -6,6 +6,7 @@
 | 目录 | 内容 |
 |---|---|
 | `evidence/model_13b/` | GPT-2 13B：A1 P2 FS、A2 P3/P4、A3 scalar、A4 depth=1/2/4/8/16、A5 1/16 MiB、A10 node2/node4 |
+| `model_13b/a5_extreme_summary.json` | 2026-08-26 A5 GPT-2 13B 256/64 KiB 补充均值与默认超时负对照 |
 | `evidence/model_xl/` | GPT-2 XL：A1、A2、A3 scalar、A7 FaF；另含 A8 正式协议结果 |
 | `evidence/synthetic/` | A3、A4、A5、A6、A9 的结果子集；`a6_formal/` 为 sync API/request-ring 对照，`a9_formal_slots_*` 为 host slot 生命周期 |
 | `evidence/failures/` | A4 depth=16 修复前读失败；A4 depth=2 的 npu-smi 误判 |
