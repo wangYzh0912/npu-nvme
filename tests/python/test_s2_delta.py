@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import unittest
 
@@ -162,6 +163,26 @@ class S2DeltaOracleTests(unittest.TestCase):
                 stream.write(corrupted)
             with self.assertRaisesRegex(ValueError, "CRC"):
                 ring.read(1)
+
+    def test_i4_independent_process_reads_complete_slot(self):
+        with __import__("tempfile").TemporaryDirectory() as directory:
+            oracle = S2DeltaOracle(self.initial, block_size=4, small_threshold=4)
+            current = {k: v.copy() for k, v in self.initial.items()}
+            current["backbone.blocks.1.weight"][4] = 123
+            oracle.set_current(current)
+            frame = oracle.observe(77)
+            FileS2Ring(directory, slot_count=2, slot_size=1024 * 1024).write(frame)
+            child = (
+                "import sys; sys.path.insert(0, sys.argv[2]); "
+                "from s2_delta import FileS2Ring; "
+                "from delta_protocol import unpack_s2_replacement_frame; "
+                "f=FileS2Ring(sys.argv[1], 2, 1048576).read(0); "
+                "print(unpack_s2_replacement_frame(f)[0])"
+            )
+            output = subprocess.check_output(
+                [sys.executable, "-c", child, directory,
+                 os.path.join(REPO_ROOT, "python")], text=True)
+            self.assertEqual(output.strip(), "77")
 
 
 if __name__ == "__main__":

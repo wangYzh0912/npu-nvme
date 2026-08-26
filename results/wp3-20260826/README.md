@@ -9,7 +9,7 @@ native dtype, lineage generations, and CRC32.
 
 - I0/Z0-Z9: CPU oracle, parameter-local blocks, ACK-only reference advance,
   generation ordering, native replacement, non-finite rejection, and CRC;
-  26 Python tests pass in the combined Python suite.
+  27 Python tests pass in the combined Python suite.
 - I1 smoke: deterministic 100-step sparse/dense/hot-block trajectory replay,
   with per-step frame bytes, selected IDs, Jaccard, generation, and exact
   final recovery. This is a CPU synthetic trajectory, not a training result.

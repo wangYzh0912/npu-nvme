@@ -893,7 +893,7 @@ attention 配置问题已修复，但 MindFormers 1.3.2 的 GPT-2 实例仍在�
 模型实现，并重新评估 64 GiB HBM/Adam 余量。
 
 I4 基础设施已新增 `FileS2Ring`：完整 frame 经 flush+fsync 后原子替换 slot，读取端
-重新校验 CRC 和版本；文件 ring 回绕/损坏测试已纳入 Python 门禁，当前总计 26 项通过。
+重新校验 CRC 和版本；文件 ring 回绕/损坏及独立子进程读取测试已纳入 Python 门禁，当前总计 27 项通过。
 这仍是普通文件跨进程恢复基础，不代表 I4 跨进程 replay、I5 NPU-SPDK 或 I6 裸盘故障门禁已通过。
 
 I5 的 Host-SPDK 与 NPU-HBM-SPDK frame loopback 均已通过：分别在 83.0.0 安全区
