@@ -12,6 +12,7 @@ filesystem device was not modified. The source branch is `exp/wp2-wp3-remaining`
 | `r1_r2_cpu/` | 36 deterministic R1/R2 policy combinations | PASS as CPU candidate scan only |
 | `gpt2_13b_a7_retry2/` | Native GPT-2 13B, HCCL 4-card, seq_length 2048, one train step | PASS; training smoke only |
 | `i7_xl_100_s10/` | GPT-2 XL 100-step numeric long chain, full state sampled every 10 steps | PASS; every-step loss finite |
+| `i7_a9_slow/` | GPT-2 XL real HBM slot + background SPDK I/O, 5 s injected delay, 15 steps | PASS; 15/15 checkpoints, finite state and hash match |
 
 The earlier `i7_xl_100/` directory is an intentionally retained interrupted
 run: sampling the complete XL model+Adam state every step made it impractical.

@@ -1079,6 +1079,11 @@ buffer 整合 → I6 100-step/回绕/故障矩阵；在 I0～I6 完成前不进�
 `msrun` worker PATH 未指向 `ms_2.5` 而失败，修正 PATH 后通过；该失败日志保留用于
 环境复现。A9 的早期单槽 descriptor-padding 失败也保留，修复后正式运行通过。
 
+随后补充 I7 慢盘背压：GPT-2 XL 在 NPU7 使用 1 个真实 HBM slot，15 steps（5 warmup+
+10 formal），每次后台 I/O 注入 5 s 延迟；15 个 checkpoint 全部完成、failed=0、冻结
+HBM 与回读 hash 一致、2317 个状态数组均 finite。slot wait 均值约 8.93 s，证明慢 I/O
+背压会传递到训练侧；该结果仍是单卡/短链，不代表多 rank 长训练。
+
 统计实现现在对每组报告 mean/median/stdev/Student-t 95% CI/P95；样本数小于 30 时
 明确不报告 p99，避免将插值尾延迟伪装成稳定分位数。当前回归测试为 40 passed。
 
