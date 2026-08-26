@@ -77,16 +77,20 @@ def check_npu_free(npu_id):
     if info["returncode"] != 0:
         raise RuntimeError(f"npu-smi failed: {info['stderr']}")
     lines = info["stdout"].splitlines()
-    # Process rows have the form: | <id> 0 <pid> <name> |.
-    marker = f"| {npu_id}"
+    # Only inspect the process table.  A chip summary row can contain the
+    # same text in an unrelated field (for example NPU0's AICore utilization
+    # can be ``7``), so matching the whole npu-smi output by ``| <id>`` gives
+    # false positives when another NPU is busy.
+    process_header = next(
+        (index for index, line in enumerate(lines)
+         if "Process id" in line and "Process name" in line),
+        None)
+    process_lines = lines[process_header + 1:] if process_header is not None else []
     own_pid = str(os.getpid())
-    occupied = [line for line in lines
-                if marker in line and "910B3" not in line
-                and "No running processes" not in line
-                and own_pid not in line
-                and line.strip().startswith("|")]
-    # The process section is authoritative; chip rows are excluded above.
-    if any(line for line in occupied if "Process id" not in line):
+    process_row = re.compile(rf"^\|\s*{npu_id}\s+0\s+\d+\s+\|")
+    occupied = [line for line in process_lines
+                if process_row.search(line) and own_pid not in line]
+    if occupied:
         raise RuntimeError(f"NPU {npu_id} appears occupied: {occupied}")
     return info
 

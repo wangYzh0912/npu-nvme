@@ -11,6 +11,18 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 SOURCES = {
+    "E2": {
+        "question": "P0-P5 path comparison for synthetic and GPT-2 XL checkpoints",
+        "paths": [
+            "experiments/output/e2_synth_1g_v3/*/result.json",
+            "experiments/output/e2_p0/E2_20260825_155113_e283134c/result.json",
+            "experiments/output/e2_p1/E2_20260825_153935_d3ea7199/result.json",
+            "experiments/output/e2_p2/E2_20260825_152851_4c30e23c/result.json",
+            "experiments/output/e2_p3/E2_20260825_153145_aefbee7c/result.json",
+            "experiments/output/e2_p4/E2_20260825_153412_f079efbd/result.json",
+            "experiments/output/e2_p5_v2/E2_20260825_154703_5ee03404/result.json",
+        ],
+    },
     "A2": {
         "question": "HBM->Host->NVMe versus HBM->DMA->NVMe",
         "paths": [

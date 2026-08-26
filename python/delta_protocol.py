@@ -18,6 +18,12 @@ import numpy as np
 from disk_layout import DELTA_MAGIC, FRAME_HEADER_SIZE
 
 
+# Version 3 is the S2/R0 replacement protocol.  Versions 1 and 2 below are
+# retained for compatibility with the already validated additive frame tests.
+S2_FRAME_VERSION = 3
+S2_FRAME_FLAGS = 0x3  # replacement records + manifest digest present
+
+
 # -- Serialization -------------------------------------------------------------
 
 def pack_delta_frame(step_id, block_patches, small_patches):
@@ -98,6 +104,66 @@ def pack_lossless_delta_frame(step_id, block_patches, small_patches,
     struct.pack_into("<IIIIII", buf, 0, DELTA_MAGIC, step_id,
                      len(block_patches), len(small_patches), total_sz, checksum)
     struct.pack_into("<HHQQ", buf, 24, 2, 1, base_generation, generation)
+    return bytes(buf) + bytes(payload)
+
+
+def pack_s2_replacement_frame(step_id, block_patches, small_patches,
+                              base_generation=0, generation=0,
+                              manifest_digest=""):
+    """Pack an S2 frame containing native replacement values.
+
+    Every block record carries its stable manifest block ID and its
+    parameter-local element offset. Values are encoded in their native
+    little-endian NumPy dtype; no scale or additive interpretation is used.
+    """
+    if step_id < 0 or base_generation < 0 or generation <= base_generation:
+        raise ValueError("invalid S2 step or generation")
+    digest = bytes.fromhex(manifest_digest) if manifest_digest else bytes(32)
+    if len(digest) != 32:
+        raise ValueError("manifest_digest must be a SHA-256 hex digest")
+    payload = bytearray()
+
+    def encode_value(value, dtype_name):
+        dtype = np.dtype(dtype_name).newbyteorder("<")
+        array = np.asarray(value, dtype=dtype).reshape(-1)
+        return array, array.tobytes()
+
+    for patch in block_patches:
+        name = patch["name"].encode("utf-8")
+        dtype_name = str(patch["dtype"])
+        value, raw = encode_value(patch["value"], dtype_name)
+        if value.size != int(patch["element_count"]):
+            raise ValueError("S2 block value length mismatch")
+        dtype = dtype_name.encode("ascii")
+        payload += struct.pack("<IIhH", int(patch["block_id"]),
+                               int(patch["layer_id"]), len(name), len(dtype))
+        payload += name + dtype
+        payload += struct.pack("<III", int(patch["block_idx"]),
+                               int(patch["element_offset"]), int(value.size))
+        payload += struct.pack("<I", len(raw)) + raw
+
+    for patch in small_patches:
+        name = patch["name"].encode("utf-8")
+        dtype_name = str(patch["dtype"])
+        value, raw = encode_value(patch["value"], dtype_name)
+        if value.size != int(patch["element_count"]):
+            raise ValueError("S2 small value length mismatch")
+        dtype = dtype_name.encode("ascii")
+        payload += struct.pack("<hH", int(patch["layer_id"]), len(name))
+        payload += name
+        payload += struct.pack("<H", len(dtype)) + dtype
+        payload += struct.pack("<II", int(value.size), len(raw)) + raw
+
+    total_sz = FRAME_HEADER_SIZE + len(payload)
+    checksum = binascii.crc32(payload) & 0xFFFFFFFF
+    if total_sz > 0xFFFFFFFF:
+        raise ValueError("S2 frame too large")
+    buf = bytearray(FRAME_HEADER_SIZE)
+    struct.pack_into("<IIIIII", buf, 0, DELTA_MAGIC, int(step_id),
+                     len(block_patches), len(small_patches), total_sz, checksum)
+    struct.pack_into("<HHQQ", buf, 24, S2_FRAME_VERSION, S2_FRAME_FLAGS,
+                     int(base_generation), int(generation))
+    buf[48:80] = digest
     return bytes(buf) + bytes(payload)
 
 
@@ -182,10 +248,78 @@ def unpack_delta_frame_with_meta(frame_bytes):
     if total_sz < FRAME_HEADER_SIZE or total_sz > len(frame_bytes):
         raise ValueError(f"Invalid delta frame size: {total_sz}")
     version, flags = struct.unpack_from("<HH", frame_bytes, 24)
+    if version == S2_FRAME_VERSION and flags & S2_FRAME_FLAGS == S2_FRAME_FLAGS:
+        return unpack_s2_replacement_frame(frame_bytes)
     if version == 2 and flags & 1:
         return _unpack_lossless_delta_frame(
             frame_bytes, step_id, n_blocks, n_small, total_sz, checksum)
     return _unpack_delta_frame_int8(frame_bytes)
+
+
+def unpack_s2_replacement_frame(frame_bytes):
+    """Unpack and validate an S2 replacement frame."""
+    if len(frame_bytes) < FRAME_HEADER_SIZE:
+        raise ValueError("Frame too short")
+    magic, step_id, n_blocks, n_small, total_sz, checksum = struct.unpack_from(
+        "<IIIIII", frame_bytes, 0)
+    if magic != DELTA_MAGIC or total_sz < FRAME_HEADER_SIZE or total_sz > len(frame_bytes):
+        raise ValueError("invalid S2 frame header")
+    version, flags, base_generation, generation = struct.unpack_from(
+        "<HHQQ", frame_bytes, 24)
+    if version != S2_FRAME_VERSION or flags & S2_FRAME_FLAGS != S2_FRAME_FLAGS:
+        raise ValueError("not an S2 replacement frame")
+    payload = frame_bytes[FRAME_HEADER_SIZE:total_sz]
+    if (binascii.crc32(payload) & 0xFFFFFFFF) != checksum:
+        raise ValueError("S2 CRC mismatch")
+    manifest_digest = frame_bytes[48:80].hex()
+    pos = FRAME_HEADER_SIZE
+
+    def take(count, label):
+        nonlocal pos
+        if count < 0 or pos + count > total_sz:
+            raise ValueError(f"truncated S2 {label}")
+        value = frame_bytes[pos:pos + count]
+        pos += count
+        return value
+
+    blocks, smalls = [], []
+    for _ in range(n_blocks):
+        block_id, layer_id, name_len, dtype_len = struct.unpack(
+            "<IIhH", take(12, "block header"))
+        name = take(name_len, "block name").decode("utf-8")
+        dtype = take(dtype_len, "block dtype").decode("ascii")
+        block_idx, element_offset, element_count = struct.unpack(
+            "<III", take(12, "block location"))
+        data_len = struct.unpack("<I", take(4, "block length"))[0]
+        raw = take(data_len, "block data")
+        np_dtype = np.dtype(dtype).newbyteorder("<")
+        if data_len != element_count * np_dtype.itemsize:
+            raise ValueError("S2 block byte length mismatch")
+        blocks.append({"block_id": block_id, "layer_id": layer_id, "name": name,
+                       "block_idx": block_idx, "element_offset": element_offset,
+                       "element_count": element_count, "dtype": dtype,
+                       "value": np.frombuffer(raw, dtype=np_dtype).copy()})
+
+    for _ in range(n_small):
+        layer_id, name_len = struct.unpack("<hH", take(4, "small header"))
+        name = take(name_len, "small name").decode("utf-8")
+        dtype_len = struct.unpack("<H", take(2, "small dtype length"))[0]
+        dtype = take(dtype_len, "small dtype").decode("ascii")
+        element_count, data_len = struct.unpack("<II", take(8, "small length"))
+        raw = take(data_len, "small data")
+        np_dtype = np.dtype(dtype).newbyteorder("<")
+        if data_len != element_count * np_dtype.itemsize:
+            raise ValueError("S2 small byte length mismatch")
+        smalls.append({"layer_id": layer_id, "name": name,
+                       "element_count": element_count, "dtype": dtype,
+                       "value": np.frombuffer(raw, dtype=np_dtype).copy()})
+    if pos != total_sz:
+        raise ValueError("S2 frame contains unparsed bytes")
+    return step_id, blocks, smalls, {
+        "version": version, "flags": flags,
+        "base_generation": base_generation, "generation": generation,
+        "manifest_digest": manifest_digest,
+    }
 
 
 def unpack_delta_frame(frame_bytes):

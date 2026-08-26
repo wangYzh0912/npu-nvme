@@ -1,0 +1,74 @@
+{
+  "config": {
+    "experiment": "A6",
+    "npu": 7,
+    "output_root": "experiments/output/wp2/a6_formal",
+    "path": "sync_meta_control_vs_request_ring_fsm",
+    "payload_bytes": 409600,
+    "pci": "0000:83:00.0",
+    "repetitions": 10,
+    "ring_offset": 274878726144,
+    "run_id": "A6_20260825_234958_c3230434",
+    "scope": "API/control-plane microbenchmark, not full model checkpoint",
+    "shm_id": 210,
+    "sync_offset": 274877906944,
+    "warmups": 5
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "A6_20260825_234958_c3230434",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 10,
+  "status": "pass",
+  "summary": {
+    "ring_read_ms": {
+      "ci95": [
+        1.0307181379758465,
+        2.3202898620241537
+      ],
+      "max": 3.172913,
+      "mean": 1.675504,
+      "min": 1.014214,
+      "n": 10,
+      "stdev": 0.9014111083427904
+    },
+    "ring_write_ms": {
+      "ci95": [
+        1.048240478698902,
+        1.066860321301098
+      ],
+      "max": 1.068504,
+      "mean": 1.0575504,
+      "min": 1.029095,
+      "n": 10,
+      "stdev": 0.01301527681184263
+    },
+    "sync_read_ms": {
+      "ci95": [
+        1.0142476801814446,
+        1.7547837198185556
+      ],
+      "max": 2.180939,
+      "mean": 1.3845157000000001,
+      "min": 1.032944,
+      "n": 10,
+      "stdev": 0.5176349634602125
+    },
+    "sync_write_ms": {
+      "ci95": [
+        1.0738791518623751,
+        1.1091196481376249
+      ],
+      "max": 1.123514,
+      "mean": 1.0914994,
+      "min": 1.057535,
+      "n": 10,
+      "stdev": 0.024633119828574055
+    }
+  }
+}

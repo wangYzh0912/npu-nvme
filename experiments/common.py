@@ -20,6 +20,7 @@ import os
 import time
 
 import mindspore as ms
+import numpy as np
 from mindspore import nn, context
 
 from direct_checkpoint import (DirectCheckpoint, ProbeTrainOneStepCell, lib,
@@ -36,28 +37,112 @@ _DEFAULT_TRAIN_MR = os.path.join(
 
 # -- Training setup factory -------------------------------------------------
 
-def make_gpt2xl_training(total_steps=20, device_id=1, seq_len=1025,
-                          train_mr=None):
-    """Create a standard GPT-2 XL training setup.
+def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
+                            device_id=1, seq_len=1025, train_mr=None):
+    """Create a causal-LM training setup for a supported MindFormers model.
 
     Returns (model, dataset, optimizer).  The dataset is pre-batched and
     limited to total_steps batches.
     """
     from mindformers import AutoModel, AutoConfig
 
-    print("[Common] Building GPT-2 XL model (3.12 GB FP16)...", flush=True)
-    cfg = AutoConfig.from_pretrained("gpt2_xl")
-    cfg.seq_length = seq_len
-    cfg.max_position_embeddings = seq_len
+    print(f"[Common] Building {model_name} model...", flush=True)
+    cfg = AutoConfig.from_pretrained(model_name)
+    if hasattr(cfg, "seq_length"):
+        cfg.seq_length = seq_len
+    if hasattr(cfg, "max_position_embeddings"):
+        # Keep the attention-mask/lower-triangle shape consistent with the
+        # requested experiment sequence length.  The old lower bound of 1025
+        # made a short 13B scale run fail during graph inference with a
+        # [1,1025,1025] vs [1,seq_len,seq_len] broadcast error.
+        cfg.max_position_embeddings = seq_len
     cfg.checkpoint_name_or_path = ""  # train from scratch
     model = AutoModel.from_config(cfg)
 
+    # Some MindFormers 1.3.2 GPT-2 configs reconstruct the model with the
+    # checkpoint's original sequence-length constants even after the config
+    # fields above are changed. Rebuild these non-parameter helpers so the
+    # short scale lane has matching [batch, seq_len] masks and positions.
+    if model_name != "gpt2_xl" and seq_len != 1025:
+        from mindformers.modules.transformer import AttentionMask
+        model.get_attention_mask = AttentionMask(
+            seq_length=seq_len,
+            parallel_config=cfg.parallel_config.dp_mp_config)
+        if hasattr(model, "backbone"):
+            model.backbone.position_ids = ms.Tensor(
+                np.arange(seq_len), ms.int32)
+            if hasattr(model.backbone, "seq_length"):
+                model.backbone.seq_length = seq_len
+
     mr_path = train_mr or _DEFAULT_TRAIN_MR
     ds = ms.dataset.MindDataset(mr_path, shuffle=True)
+    # The GPT-2 corpus can contain token IDs above the LLaMA vocabulary. Keep
+    # the same data source for path timing while making IDs valid for the
+    # selected model; this is not a quality-training experiment. The source
+    # records are length 1025, so crop both columns for shorter scale runs.
+    vocab_size = getattr(cfg, "vocab_size", None)
+    if vocab_size and model_name != "gpt2_xl":
+        ds = ds.map(operations=lambda *values: tuple(
+            value[:seq_len] % vocab_size for value in values),
+                    input_columns=["input_ids", "labels"])
     ds = ds.batch(1, drop_remainder=True).take(total_steps)
 
     opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
     return model, ds, opt
+
+
+def make_causal_lm_checkpoint_model(model_name="gpt2_xl", seq_len=128):
+    """Build a MindFormers causal-LM model without optimizer/dataset state.
+
+    This is the model-scale checkpoint lane.  It preserves the real model
+    tensor topology and dtype while avoiding Adam's additional 2--4x memory,
+    which would otherwise prevent a 13B model from fitting on the intended
+    NPU set and would contaminate model-only I/O measurements.
+    """
+    from mindformers import AutoModel, AutoConfig
+
+    print(f"[Common] Building checkpoint-only {model_name} model...", flush=True)
+    cfg = AutoConfig.from_pretrained(model_name)
+    if hasattr(cfg, "seq_length"):
+        cfg.seq_length = seq_len
+    if hasattr(cfg, "max_position_embeddings"):
+        cfg.max_position_embeddings = max(seq_len, 128)
+    # MF 1.3.2 GLM4 inherits the GLM2 paged-attention path when use_past is
+    # enabled.  The installed CANN build lacks its ReshapeAndCache adapter;
+    # disabling KV-cache keeps the real parameter topology while making the
+    # checkpoint-only allocation path executable.
+    if model_name.startswith("glm") and hasattr(cfg, "use_past"):
+        cfg.use_past = False
+    cfg.checkpoint_name_or_path = ""
+    return AutoModel.from_config(cfg), cfg
+
+
+def warmup_checkpoint_model(model, cfg, seq_len=128):
+    """Allocate model parameters and compile one small inference graph."""
+    input_ids = ms.Tensor(np.zeros((1, seq_len), dtype=np.int32))
+    position_ids = ms.Tensor(np.arange(seq_len, dtype=np.int32)[None, :])
+    batch_valid_length = ms.Tensor(np.array([seq_len], dtype=np.int32))
+    slot_mapping = ms.Tensor(np.arange(seq_len, dtype=np.int32))
+    if str(getattr(cfg, "model_type", "")).startswith("glm"):
+        output = model(input_ids, position_ids=position_ids,
+                       batch_valid_length=batch_valid_length,
+                       slot_mapping=slot_mapping)
+    else:
+        try:
+            output = model(input_ids)
+        except TypeError:
+            output = model(input_ids, labels=input_ids)
+    ms.hal.synchronize()
+    print("  [Common] Checkpoint-only warmup complete — device addresses allocated.",
+          flush=True)
+    return output
+
+
+def make_gpt2xl_training(total_steps=20, device_id=1, seq_len=1025,
+                          train_mr=None):
+    """Backward-compatible GPT-2 XL training factory."""
+    return make_causal_lm_training("gpt2_xl", total_steps, device_id,
+                                   seq_len, train_mr)
 
 
 # -- SPDK environment + DirectCheckpoint factory ----------------------------

@@ -42,7 +42,8 @@ from experiments.benchmarks.io_matrix import (  # noqa: E402
 )
 from experiments.baselines import two_phase_common as tpc  # noqa: E402
 from experiments.common import (  # noqa: E402
-    init_env, make_gpt2xl_training, warmup_model,
+    init_env, make_causal_lm_checkpoint_model, make_causal_lm_training,
+    setup_faf_checkpointing, warmup_checkpoint_model, warmup_model,
 )
 from chunk_helpers import build_chunks, build_ctypes_arrays  # noqa: E402
 
@@ -152,20 +153,37 @@ def build_batch_arrays(param_descs, chunk_size):
     return chunks, total, build_ctypes_arrays(chunks)
 
 
-def direct_batch(ckpt, param_descs, chunk_size, read=False):
+def direct_batch(ckpt, param_descs, chunk_size, read=False,
+                 submit_mode="batch"):
     chunks, total, arrays = build_batch_arrays(param_descs, chunk_size)
-    ptrs, offsets, sizes = arrays
     start = time.perf_counter_ns()
-    if read:
-        ret = ckpt._lib_read_batch(ptrs, offsets, sizes, len(chunks))
+    c_io_us = 0
+    if submit_mode == "batch":
+        ptrs, offsets, sizes = arrays
+        if read:
+            ret = ckpt._lib_read_batch(ptrs, offsets, sizes, len(chunks))
+        else:
+            ret = ckpt._lib_write_batch(ptrs, offsets, sizes, len(chunks))
+        c_io_us = ckpt.get_last_io_us(read)
+    elif submit_mode == "scalar":
+        ret = 0
+        for chunk in chunks:
+            one = build_ctypes_arrays([chunk])
+            if read:
+                ret = ckpt._lib_read_batch(*one, 1)
+            else:
+                ret = ckpt._lib_write_batch(*one, 1)
+            if ret != 0:
+                break
+            c_io_us += ckpt.get_last_io_us(read)
     else:
-        ret = ckpt._lib_write_batch(ptrs, offsets, sizes, len(chunks))
+        raise ValueError(f"unsupported submit mode: {submit_mode}")
     elapsed_ms = (time.perf_counter_ns() - start) / 1e6
     if ret != 0:
         operation = "read" if read else "write"
         raise RuntimeError(f"raw SPDK {operation} returned {ret}")
     return {"chunks": len(chunks), "bytes": total, "elapsed_ms": elapsed_ms,
-            "c_io_us": ckpt.get_last_io_us(read)}
+            "c_io_us": c_io_us}
 
 
 def make_spdk_context(args, writer):
@@ -277,14 +295,17 @@ def p4_spdk_sample(model, param_descs, safe_descs, ckpt, writer, index, warmup):
     expected, hash_stats = hash_device_params(param_descs, writer.config["npu"])
     events = [{"name": "checkpoint_trigger", "monotonic_ns": time.monotonic_ns()}]
     start = time.perf_counter_ns()
-    write = direct_batch(ckpt, safe_descs, writer.config["chunk_size"], read=False)
+    write = direct_batch(ckpt, safe_descs, writer.config["chunk_size"], read=False,
+                         submit_mode=writer.config["submit_mode"])
     events.append({"name": "spdk_write_return", "monotonic_ns": time.monotonic_ns(),
                    "c_io_us": write["c_io_us"]})
 
     first_desc = safe_descs[0:1]
-    first = direct_batch(ckpt, first_desc, writer.config["chunk_size"], read=True)
+    first = direct_batch(ckpt, first_desc, writer.config["chunk_size"], read=True,
+                         submit_mode=writer.config["submit_mode"])
     first_ms = first["elapsed_ms"]
-    read = direct_batch(ckpt, safe_descs, writer.config["chunk_size"], read=True)
+    read = direct_batch(ckpt, safe_descs, writer.config["chunk_size"], read=True,
+                        submit_mode=writer.config["submit_mode"])
     events.append({"name": "spdk_read_return", "monotonic_ns": time.monotonic_ns(),
                    "c_io_us": read["c_io_us"]})
     actual, _ = hash_device_params(param_descs, writer.config["npu"])
@@ -495,12 +516,97 @@ def p5_async(args, model, ds, opt, param_descs, ckpt, writer):
             "checkpoints": checkpoint_count, "events": engine.events}
 
 
+def p5_faf(args, model, ds, opt, ckpt, writer):
+    """True graph-counter + Reactor-poller trigger path for A7.
+
+    The first probe-cell invocation is a compile/warmup only.  The counter is
+    reset before registration, so formal checkpoints are associated with the
+    actual training steps below.  We wait for the device completion flag at
+    each checkpoint boundary to make skipped/failed FaF writes observable.
+    """
+    import mindspore as ms
+    from direct_checkpoint import ProbeTrainOneStepCell
+
+    cell = ProbeTrainOneStepCell(model, opt, enable_probe=True,
+                                 ckpt_interval=args.ckpt_every)
+    iterator = ds.create_tuple_iterator()
+    first_batch = next(iterator)
+    _ = cell(*first_batch)
+    ms.hal.synchronize()
+    # Keep the compiled device Parameters in place. Replacing them with a
+    # fresh host Tensor makes get_dev_ptr() return NULL and invalidates the
+    # C poller's step registration. The one warmup increment is included in
+    # the counter base below.
+    counter_base = int(cell.step_counter.asnumpy().reshape(-1)[0])
+    setup_faf_checkpointing(ckpt, model, cell, args.ckpt_every)
+
+    step_times = []
+    checkpoint_count = 0
+    try:
+        for step in range(1, args.steps + 1):
+            try:
+                batch = next(iterator)
+            except StopIteration:
+                iterator = ds.create_tuple_iterator()
+                batch = next(iterator)
+            start = time.perf_counter_ns()
+            _ = cell(*batch)
+            ms.hal.synchronize()
+            step_ms = (time.perf_counter_ns() - start) / 1e6
+            step_times.append(step_ms)
+            observed_counter = counter_base + step
+            if observed_counter % args.ckpt_every != 0:
+                continue
+
+            checkpoint_count += 1
+            wait_start = time.perf_counter_ns()
+            deadline = time.monotonic() + max(30.0, args.io_timeout_s)
+            observed = 0
+            while time.monotonic() < deadline:
+                observed = ckpt.read_probe_flag_dev()
+                if observed >= observed_counter:
+                    break
+                time.sleep(0.001)
+            if observed < observed_counter:
+                raise TimeoutError(
+                    f"FaF completion flag did not reach step {observed_counter}: "
+                    f"{observed}")
+            wait_ms = (time.perf_counter_ns() - wait_start) / 1e6
+            writer.add_sample({
+                "run_id": writer.run_id,
+                "request_id": f"{writer.run_id}/step_{step}",
+                "checkpoint_id": f"checkpoint_{observed_counter:04d}",
+                "warmup": checkpoint_count <= args.warmups,
+                "path": "P5_faf_graph_counter_reactor",
+                "bytes": writer.config["parameter_bytes"],
+                "status": "pass",
+                "events": [{"name": "graph_counter_trigger", "step": observed_counter,
+                             "monotonic_ns": time.monotonic_ns()},
+                            {"name": "reactor_persisted", "step": observed,
+                             "monotonic_ns": time.monotonic_ns()}],
+                "timeline_us": {"end_to_end": wait_ms * 1000},
+                "blocking_ms": wait_ms,
+                "step_ms": step_ms,
+            })
+    finally:
+        # The C layer owns the registered task list until DirectCheckpoint
+        # cleanup; no Python-side task array is reused here.
+        pass
+    return {"step_ms": stats(step_times), "steps": args.steps,
+            "checkpoints": checkpoint_count,
+            "blocking_ms": stats([s["blocking_ms"] for s in writer.samples])}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", choices=("E2", "E3", "E4", "E5"), required=True)
+    parser.add_argument("--model", choices=("gpt2", "gpt2_xl", "gpt2_13b",
+                                             "llama2_7b", "glm4_9b",
+                                             "llama2_13b"),
+                        default="gpt2_xl")
     parser.add_argument("--path", choices=("p0_train", "p1_fs", "p2_host_fs",
                                              "p3_host_spdk", "p4_spdk",
-                                             "p5_async"), required=True)
+                                             "p5_async", "p5_faf"), required=True)
     parser.add_argument("--pci", default="0000:83:00.0")
     parser.add_argument("--npu", type=int, default=7)
     parser.add_argument("--shm-id", type=int, default=83)
@@ -508,34 +614,56 @@ def main():
     parser.add_argument("--pipeline-depth", type=int, default=4)
     parser.add_argument("--safe-offset", type=int, default=SAFE_OFFSET)
     parser.add_argument("--steps", type=int, default=10)
+    parser.add_argument("--seq-len", type=int, default=1025,
+                        help="training sequence length (use 128 for the 13B scale lane)")
     parser.add_argument("--ckpt-every", type=int, default=5)
     parser.add_argument("--warmups", type=int, default=1)
     parser.add_argument("--repetitions", type=int, default=3)
+    parser.add_argument("--io-timeout-s", type=float, default=120.0)
     parser.add_argument("--profiling", action="store_true")
+    parser.add_argument("--submit-mode", choices=("batch", "scalar"),
+                        default="batch",
+                        help="P4 submission granularity for A3")
+    parser.add_argument("--fs-root", default=str(FS_ROOT),
+                        help="filesystem root for P1/P2; may be a same-device mount")
+    parser.add_argument("--checkpoint-only", action="store_true",
+                        help="build the real model without optimizer/training state")
     parser.add_argument("--output-root", default=None)
     args = parser.parse_args()
     if args.chunk_size % ALIGNMENT or args.safe_offset % ALIGNMENT:
         raise ValueError("chunk-size and safe-offset must be 4 KiB aligned")
-    if args.path == "p5_async" and args.repetitions != args.steps // args.ckpt_every:
+    if args.checkpoint_only and args.path in ("p0_train", "p5_async", "p5_faf"):
+        raise ValueError("checkpoint-only mode supports P1/P2/P3/P4 only")
+    if args.path in ("p5_async", "p5_faf") and args.repetitions != args.steps // args.ckpt_every:
         args.repetitions = args.steps // args.ckpt_every
     writer = ResultWriter(args.experiment, args)
-    writer.config.update({"path": args.path, "model": "gpt2_xl",
+    writer.config.update({"path": args.path, "model": args.model,
                           "parameter_precision": "model-native",
+                          "submit_mode": args.submit_mode,
+                          "seq_len": args.seq_len,
+                          "fs_root": args.fs_root,
                           "safe_region": [args.safe_offset, args.safe_offset],
                           "formal_repetitions": args.repetitions})
     writer.write_json("config.json", writer.config)
     npu_info = check_npu_free(args.npu)
     writer.write_json("environment.json", environment_snapshot(args, npu_info))
     model = ds = opt = ckpt = None
-    root = FS_ROOT / writer.run_id
+    root = Path(args.fs_root) / writer.run_id
     try:
         init_env(device_id=args.npu)
-        model, ds, opt = make_gpt2xl_training(
-            total_steps=max(args.steps, args.ckpt_every), device_id=args.npu)
-        warmup_model(model, opt, ds)
+        if args.checkpoint_only:
+            model, cfg = make_causal_lm_checkpoint_model(args.model, seq_len=128)
+            ds = opt = None
+            warmup_checkpoint_model(model, cfg, seq_len=128)
+        else:
+            model, ds, opt = make_causal_lm_training(
+                model_name=args.model,
+                total_steps=max(args.steps, args.ckpt_every), device_id=args.npu,
+                seq_len=args.seq_len)
+            warmup_model(model, opt, ds)
         param_descs = tpc.get_param_descriptors(model)
         if not param_descs:
-            raise RuntimeError("no warm-allocated GPT-2 XL parameters")
+            raise RuntimeError(f"no warm-allocated {args.model} parameters")
         total = total_param_bytes(model)
         safe_descs, safe_end = assign_safe_offsets(param_descs, args.safe_offset)
         writer.config.update({"parameter_count": len(param_descs),
@@ -597,8 +725,10 @@ def main():
                                                  for s in writer.samples]),
                                "first_param_ms": stats([s["first_param_ms"]
                                                         for s in writer.samples])}
-                else:
+                elif args.path == "p5_async":
                     summary = p5_async(args, model, ds, opt, param_descs, ckpt, writer)
+                else:
+                    summary = p5_faf(args, model, ds, opt, ckpt, writer)
         expected_samples = args.repetitions if args.path != "p0_train" else 1
         status = "pass" if not writer.failed and len(writer.samples) == expected_samples else "fail"
     except BaseException as error:
