@@ -1,0 +1,60 @@
+{
+  "config": {
+    "experiment": "I6_RAW_RING",
+    "full_every": 8,
+    "manifest": null,
+    "npu": 4,
+    "offset": 69256347648,
+    "output_root": "/home/user7/npu-nvme/results/wp3-closeout-20260826/i6_ring",
+    "pci": "0000:83:00.0",
+    "phase": "orchestrate",
+    "ring_slots": 16,
+    "run_id": "I6_RAW_RING_20260826_173634_47ca1918",
+    "shm_id": 1903,
+    "slot_size": 2097152,
+    "steps": 100
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "I6_RAW_RING_20260826_173634_47ca1918",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 1,
+  "status": "pass",
+  "summary": {
+    "byte_exact": true,
+    "chain_steps": [
+      96,
+      97,
+      98,
+      99,
+      100
+    ],
+    "fault_count": 11,
+    "faults": {
+      "base_generation": "S2 base generation mismatch",
+      "duplicate_generation": "duplicate committed ring generation",
+      "envelope_crc": "ring envelope CRC mismatch",
+      "inner_frame_crc": "S2 CRC mismatch",
+      "manifest": "S2 manifest digest mismatch",
+      "metadata_b_torn_fallback": "selected A",
+      "metadata_both_torn": "no valid ring metadata copy",
+      "missing_generation": "missing generation after latest FULL",
+      "outer_payload_crc": "ring whole-frame CRC mismatch",
+      "reordered_step": "non-contiguous step sequence after latest FULL",
+      "torn_payload": "torn ring payload"
+    },
+    "metadata": {
+      "generation": 100,
+      "head": 100,
+      "latest_full": 96,
+      "tail": 84
+    },
+    "metadata_copy": "B",
+    "wraps": 6.25
+  }
+}

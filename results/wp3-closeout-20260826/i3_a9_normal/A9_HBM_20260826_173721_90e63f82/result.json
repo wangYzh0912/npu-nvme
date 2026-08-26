@@ -1,0 +1,119 @@
+{
+  "config": {
+    "chunk_size": 4194304,
+    "ckpt_every": 1,
+    "experiment": "A9_HBM",
+    "io_delay_ms": 0.0,
+    "io_timeout_s": 120.0,
+    "model": "gpt2_xl",
+    "npu": 7,
+    "output_root": "/home/user7/npu-nvme/results/wp3-closeout-20260826/i3_a9_normal",
+    "path": "A9_HBM_snapshot_slot_lifecycle",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 4,
+    "run_id": "A9_HBM_20260826_173721_90e63f82",
+    "scope": "real MindSpore HBM slots",
+    "shm_id": 1812,
+    "slot_count": 2,
+    "slots": [
+      2,
+      4
+    ],
+    "steps": 15,
+    "warmups": 5
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "A9_HBM_20260826_173721_90e63f82",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 10,
+  "status": "pass",
+  "summary": {
+    "captured_segment_bytes_per_slot": 3280672640,
+    "checkpoints": 15,
+    "end_to_end_ms": {
+      "ci95": [
+        11951.916244595825,
+        12879.953661137508
+      ],
+      "ci95_method": "student-t(df=14)",
+      "max": 12793.425231000001,
+      "mean": 12415.934952866666,
+      "median": 12698.169908,
+      "min": 9724.117343,
+      "n": 15,
+      "p95": 12792.2188174,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 837.9093079914028
+    },
+    "formal_samples": 10,
+    "hbm_bytes_per_slot": 3280678912,
+    "numeric_health": {
+      "final": {
+        "arrays": 2317,
+        "nonfinite": [],
+        "nonfinite_arrays": 0
+      },
+      "initial": {
+        "arrays": 2317,
+        "nonfinite": [],
+        "nonfinite_arrays": 0
+      }
+    },
+    "slot_wait_ms": {
+      "ci95": [
+        84.09958801985749,
+        186.75178771347584
+      ],
+      "ci95_method": "student-t(df=14)",
+      "max": 277.080623,
+      "mean": 135.42568786666666,
+      "median": 141.136256,
+      "min": 0.03832,
+      "n": 15,
+      "p95": 261.48939,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 92.68293721346073
+    },
+    "snapshot_ms": {
+      "ci95": [
+        5242.766746646475,
+        6006.396169220192
+      ],
+      "ci95_method": "student-t(df=14)",
+      "max": 5826.44447,
+      "mean": 5624.581457933334,
+      "median": 5815.422155,
+      "min": 3134.183848,
+      "n": 15,
+      "p95": 5826.0323856,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 689.4681072397029
+    },
+    "step_ms": {
+      "ci95": [
+        -6192.290183863995,
+        18463.182685597327
+      ],
+      "ci95_method": "student-t(df=14)",
+      "max": 86604.148724,
+      "mean": 6135.446250866667,
+      "median": 378.686091,
+      "min": 372.722277,
+      "n": 15,
+      "p95": 26309.25051290006,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 22261.0100002614
+    },
+    "steps": 15
+  }
+}

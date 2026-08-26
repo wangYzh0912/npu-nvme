@@ -373,3 +373,28 @@ def warmup_model(model, opt, ds):
     print("  [Common] Excluded training warmup complete — finite scalar loss "
           f"{float(loss_array):.8g}; device addresses allocated.", flush=True)
     return loss
+
+
+def training_numeric_health(model, optimizer, include_optimizer=True):
+    """Summarize finite-value health without retaining host state copies."""
+    groups = [("model", model.get_parameters())]
+    if include_optimizer:
+        groups.extend((("optimizer/m", optimizer.moments1),
+                       ("optimizer/v", optimizer.moments2),
+                       ("optimizer/global_step", (optimizer.global_step,))))
+    arrays = 0
+    bad = []
+    for prefix, parameters in groups:
+        for parameter in parameters:
+            value = np.asarray(parameter.asnumpy())
+            arrays += 1
+            if not np.issubdtype(value.dtype, np.inexact):
+                continue
+            nonfinite = int(value.size - np.count_nonzero(np.isfinite(value)))
+            if nonfinite:
+                bad.append({"name": f"{prefix}/{parameter.name}",
+                            "nonfinite": nonfinite,
+                            "elements": int(value.size),
+                            "dtype": value.dtype.name})
+    return {"arrays": arrays, "nonfinite_arrays": len(bad),
+            "nonfinite": bad}

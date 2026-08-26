@@ -28,9 +28,9 @@ from experiments.benchmarks.io_matrix import (  # noqa: E402
     stats,
 )
 from experiments.common import (  # noqa: E402
-    init_env, make_causal_lm_training, warmup_model,
+    init_env, make_causal_lm_training, training_numeric_health, warmup_model,
 )
-from hbm_slots import SlotLedger, SlotState  # noqa: E402
+from frame_lifecycle import FrameBufferPool  # noqa: E402
 from chunk_helpers import build_chunks, build_chunks_host, build_ctypes_arrays  # noqa: E402
 
 
@@ -94,8 +94,7 @@ class HbmSlotRunner:
         self.writer = writer
         self.slot_count = slot_count
         self.offset_map, self.total = parameter_offsets(param_descs)
-        self.ledger = SlotLedger(slot_count)
-        self.condition = threading.Condition()
+        self.pool = FrameBufferPool(slot_count)
         self.pending = queue.Queue()
         self.results = []
         self.errors = []
@@ -113,6 +112,8 @@ class HbmSlotRunner:
             chunks, _ = build_chunks(write_chunks, CHUNK_SIZE)
             self.slots.append({"slot_id": slot_id, "flat": flat,
                                "write_chunks": chunks})
+        self.capture_bytes = sum(
+            end - start for _ptr, start, end in self.slots[0]["flat"])
         end = BASE_OFFSET + slot_count * round_up(self.total)
         if end > ckpt.total_bytes:
             raise RuntimeError(f"A9 safe range exceeds 83.0.0: {end}")
@@ -128,8 +129,12 @@ class HbmSlotRunner:
                 return
             slot_id, sample = item
             try:
-                with self.condition:
-                    self.ledger.transition(slot_id, SlotState.IO)
+                descriptor = self.pool.begin_hbm_write(slot_id)
+                if (descriptor.generation != sample["generation"] or
+                        descriptor.step_id != sample["step"] or
+                        descriptor.checksum != sample["frozen_sha256"] or
+                        descriptor.valid_bytes != self.capture_bytes):
+                    raise AssertionError("HBM frame descriptor ownership mismatch")
                 start = time.monotonic_ns()
                 if self.args.io_delay_ms > 0:
                     time.sleep(self.args.io_delay_ms / 1000.0)
@@ -145,10 +150,7 @@ class HbmSlotRunner:
                     raise AssertionError(
                         f"slot {slot_id} frozen/readback hash mismatch")
                 end = time.monotonic_ns()
-                with self.condition:
-                    self.ledger.transition(slot_id, SlotState.PERSISTED)
-                    self.ledger.transition(slot_id, SlotState.FREE)
-                    self.condition.notify_all()
+                self.pool.ack(slot_id, actual)
                 sample.update({
                     "status": "pass", "persisted_ns": end,
                     "c_write_us": c_write,
@@ -166,31 +168,22 @@ class HbmSlotRunner:
                 })
                 self.results.append(sample)
             except BaseException as error:
-                with self.condition:
-                    try:
-                        self.ledger.transition(slot_id, SlotState.FAILED,
-                                               error=repr(error))
-                        self.ledger.transition(slot_id, SlotState.FREE)
-                    except RuntimeError:
-                        pass
-                    self.condition.notify_all()
+                try:
+                    self.pool.fail(slot_id, error)
+                except RuntimeError:
+                    pass
                 self.errors.append({"slot_id": slot_id, "error": repr(error)})
             finally:
                 self.pending.task_done()
 
     def capture(self, step, checkpoint_index):
         wait_start = time.monotonic_ns()
-        with self.condition:
-            while not self.ledger.free_ids():
-                self.condition.wait(timeout=1.0)
-                if self.errors:
-                    raise RuntimeError(self.errors[-1]["error"])
-            slot_id = self.ledger.free_ids()[0]
-            generation = checkpoint_index + 1
-            request_id = f"{self.writer.run_id}/step_{step}/slot_{slot_id}"
-            self.ledger.transition(slot_id, SlotState.SNAPSHOT,
-                                   generation=generation, step_id=step,
-                                   request_id=request_id)
+        if self.errors:
+            raise RuntimeError(self.errors[-1]["error"])
+        generation = checkpoint_index + 1
+        slot_id = self.pool.acquire(
+            generation, step, timeout=self.args.io_timeout_s)
+        request_id = f"{self.writer.run_id}/step_{step}/slot_{slot_id}"
         wait_ms = (time.monotonic_ns() - wait_start) / 1e6
         slot = self.slots[slot_id]
         capture_start = time.monotonic_ns()
@@ -210,7 +203,9 @@ class HbmSlotRunner:
             "path": "A9_HBM_snapshot_slot_lifecycle",
             "slot_id": slot_id, "slot_count": self.slot_count,
             "step": step, "generation": generation,
-            "bytes": self.total, "frozen_sha256": frozen_sha256,
+            "bytes": self.capture_bytes,
+            "logical_layout_bytes": self.total,
+            "frozen_sha256": frozen_sha256,
             "snapshot_ms": snapshot_ms, "capture_ns": capture_start,
             "slot_wait_ms": wait_ms,
             "events": [
@@ -218,8 +213,10 @@ class HbmSlotRunner:
                 {"name": "snapshot_ready", "monotonic_ns": capture_end},
             ],
         }
-        with self.condition:
-            self.ledger.transition(slot_id, SlotState.READY)
+        self.pool.publish_hbm(
+            slot_id,
+            [(ptr, end - start) for ptr, start, end in slot["flat"]],
+            self.capture_bytes, frozen_sha256, event_token=str(capture_end))
         self.pending.put((slot_id, sample))
 
     def finish(self):
@@ -253,6 +250,11 @@ def run_slot_count(args, slot_count):
             "gpt2_xl", total_steps=args.steps + 2, device_id=args.npu,
             seq_len=1025)
         warmup_model(model, optimizer, dataset)
+        initial_health = training_numeric_health(model, optimizer)
+        if initial_health["nonfinite_arrays"]:
+            raise FloatingPointError(
+                f"A9 post-warmup state is non-finite: "
+                f"{initial_health['nonfinite'][:3]}")
         param_descs = tpc.get_param_descriptors(model)
         ckpt = __import__("direct_checkpoint").DirectCheckpoint(
             nvme_addr=args.pci, npu_device_id=args.npu,
@@ -273,13 +275,22 @@ def run_slot_count(args, slot_count):
                 iterator = dataset.create_tuple_iterator()
                 batch = next(iterator)
             start = time.perf_counter_ns()
-            cell(*batch)
+            loss = cell(*batch)
             tpc.ms.hal.synchronize()
+            loss_value = float(np.asarray(loss.asnumpy()).reshape(()))
+            if not np.isfinite(loss_value):
+                raise FloatingPointError(
+                    f"A9 non-finite loss at step {step}: {loss_value}")
             step_times.append((time.perf_counter_ns() - start) / 1e6)
             if step % args.ckpt_every == 0:
                 runner.capture(step, checkpoint_index)
                 checkpoint_index += 1
         runner.finish()
+        final_health = training_numeric_health(model, optimizer)
+        if final_health["nonfinite_arrays"]:
+            raise FloatingPointError(
+                f"A9 final state is non-finite: "
+                f"{final_health['nonfinite'][:3]}")
         for sample in sorted(runner.results, key=lambda item: item["step"]):
             if not sample["warmup"]:
                 writer.add_sample(sample)
@@ -294,6 +305,9 @@ def run_slot_count(args, slot_count):
                 s["timeline_us"]["end_to_end"] / 1000
                 for s in runner.results]),
             "hbm_bytes_per_slot": runner.total,
+            "captured_segment_bytes_per_slot": runner.capture_bytes,
+            "numeric_health": {"initial": initial_health,
+                               "final": final_health},
         }
         result = writer.finalize(summary, status="pass")
         print({"slot_count": slot_count, "status": result["status"],

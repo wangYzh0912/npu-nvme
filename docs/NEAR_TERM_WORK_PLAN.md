@@ -1053,3 +1053,50 @@ scope-specific 门禁，ring 回绕、header/manifest/step/base-generation 组�
 证据目录：`results/wp3-20260826/`；I1 的两个失败运行、I2/I4/I6 的原始 JSON、环境
 快照和时间线均保留。当前下一顺序为：解决/替换 I1 数值输入 → I3 图输出到 HBM frame
 buffer 整合 → I6 100-step/回绕/故障矩阵；在 I0～I6 完成前不进入增量方案性能结论。
+
+### 9.21 WP2/WP3 收口执行记录（2026-08-26）
+
+本轮执行以提交 `b07518a` 为起点，目标设备固定为 83:00.0；84:00.0（`/models`）未
+修改。先修复真实训练基线的三个问题：训练 cell 显式 `set_train(True)`、MindRecord
+物理列顺序固定为 `input_ids/attention_mask`、记录长度 1025 与 GPT-2 模型长度 1024
+明确区分。随后增加有限性检查，训练 loss、模型参数、Adam m/v 和 global step 均作为
+数值门禁对象。
+
+已完成的正式证据如下：
+
+| 项目 | 配置与结果 | 能支持的结论 |
+|---|---|---|
+| I1 | GPT-2 XL，3 个 seed，各 10 steps；GPT-2 亦完成 3×10；全部 loss/state finite | 修复后的真实训练 cell 可稳定执行短链；不是 100-step 长训练结论 |
+| I2 | NPU5，32×257，变化有效长度/零块/尾块；norm、Top-K、索引、值、scale、INT8 全部通过 | CPU/NPU 算子语义在该输入范围等价 |
+| I3/A9 | GPT-2 XL 真实 HBM snapshot，1/2/4 slots 各 15 steps（5 warmup+10 formal），83:00.0 SPDK 写入并回读逐字节一致；failed=0、finite state | 真实 HBM slot 生命周期、冻结数据和回读闭环通过；不是多 rank 长训练结论 |
+| I6 | 83:00.0 裸盘 16-slot ring，100 frames、6.25 次回绕、独立 SPDK context 重启；11 类 CRC/代际/缺失/重复/乱序/元数据故障均按预期拒绝或回退 | 裸盘 frame/recovery 第一阶段故障矩阵通过 |
+| R0 | CPU FULL+100 个 S2 replacement frame，跨进程恢复后继续 10 steps，参数/状态/下一步结果一致 | S2 无损 replacement 的跨进程继续训练 oracle 通过；不等同 NPU/多 rank |
+| A7 | GPT-2 13B，4 卡 HCCL，原生 seq_length=2048，AdamWeightDecay，1 个真实训练 step，4 rank loss finite | 13B 多卡训练入口和数值 smoke 通过；尚未覆盖 checkpoint I/O、多 step 或故障恢复 |
+| R1/R2 | CPU 合成 100-step、36 组合扫描；R1 最低写入比例约 0.60% 但最大年龄 100，R2（residual+age=8）低写量点约 3.86%、最终相对 L2 误差约 1.59%、最大年龄 7 | R2 是后续 NPU 候选；R1 低写量结果存在长期饿死风险，不能直接晋级 |
+
+证据分别位于 `results/wp3-closeout-20260826/i1_numeric/`、`i3_a9_normal/`、
+`i6_ring/`、`r0_cpu/`、`r1_r2_cpu/` 和 `gpt2_13b_a7_retry2/`。首次 13B 启动因
+`msrun` worker PATH 未指向 `ms_2.5` 而失败，修正 PATH 后通过；该失败日志保留用于
+环境复现。A9 的早期单槽 descriptor-padding 失败也保留，修复后正式运行通过。
+
+统计实现现在对每组报告 mean/median/stdev/Student-t 95% CI/P95；样本数小于 30 时
+明确不报告 p99，避免将插值尾延迟伪装成稳定分位数。当前回归测试为 40 passed。
+
+### 9.22 收口后的剩余门禁与执行边界
+
+本轮之后仍不能宣称 WP2/WP3 全部完成。剩余项按优先级为：
+
+1. 完成 I7：真实训练与后台 SPDK I/O 同时运行，覆盖慢盘背压、slot 积压、超时/取消、
+   长链恢复和训练吞吐；GPT-2 XL 100-step 数值长链已通过，但它本身不包含后台 I/O。
+2. 将 I3 的真实图输出接入 HBM frame buffer，并验证训练参数、optimizer、RNG/data
+   cursor 的冻结与 ACK 语义；现有 A9 已证明 HBM slot，不等于图输出已闭环。
+3. 完成 R1/R2 的真实训练轨迹扫描：至少 100 steps、早/中/晚阶段、权重+optimizer
+   state，比较物理写入量、恢复误差、最大年龄和 step overhead；CPU 扫描只作候选筛选。
+4. 完成 R1 多 rank 两阶段 prepare/commit、全 rank manifest/checksum、单 rank 失败和
+   恢复后下一步连续性；13B 1-step smoke 尚未关闭该门禁。
+5. 补齐 I5 非对齐/尾块/multi-segment 正式矩阵、I4 完整跨进程 replay 及 A1～A10 的
+   统一重复统计与图表输入。
+
+在上述门禁完成前，正式结论限定为“真实 HBM snapshot、裸盘 frame recovery、S2 CPU
+oracle、短链真实训练和 13B 多卡入口分别通过”；不得外推为完整异步检查点、完整多
+rank checkpoint 或增量写入收益。

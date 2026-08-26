@@ -22,6 +22,7 @@ import ctypes
 import hashlib
 import importlib.metadata
 import json
+import math
 import os
 import platform
 import resource
@@ -113,10 +114,40 @@ def stats(values):
         return {"n": 0}
     mean = statistics.fmean(values)
     stdev = statistics.stdev(values) if len(values) > 1 else 0.0
-    # t(0.975, 9) is the mandated 10-sample CI used by the gate scripts.
-    margin = 2.262 * stdev / (len(values) ** 0.5) if len(values) > 1 else 0.0
-    return {"n": len(values), "mean": mean, "stdev": stdev,
-            "ci95": [mean - margin, mean + margin],
+    if len(values) > 1:
+        try:
+            from scipy.stats import t as student_t
+            critical = float(student_t.ppf(0.975, len(values) - 1))
+            method = f"student-t(df={len(values) - 1})"
+        except ImportError:
+            # Conservative fallback for lightweight CPU-only environments.
+            critical = 2.262 if len(values) <= 10 else (
+                2.045 if len(values) <= 30 else 1.96)
+            method = "student-t conservative fallback"
+        margin = critical * stdev / math.sqrt(len(values))
+    else:
+        margin = 0.0
+        method = "single-sample descriptive interval"
+
+    ordered = sorted(values)
+
+    def percentile(percent):
+        if len(ordered) == 1:
+            return ordered[0]
+        position = (len(ordered) - 1) * percent / 100.0
+        lower = int(math.floor(position))
+        upper = int(math.ceil(position))
+        if lower == upper:
+            return ordered[lower]
+        weight = position - lower
+        return ordered[lower] * (1.0 - weight) + ordered[upper] * weight
+
+    return {"n": len(values), "mean": mean, "median": statistics.median(values),
+            "stdev": stdev, "ci95": [mean - margin, mean + margin],
+            "ci95_method": method, "p95": percentile(95),
+            "p99": percentile(99) if len(values) >= 30 else None,
+            "p99_status": "reported" if len(values) >= 30 else
+                          "descriptive sample too small (n<30)",
             "min": min(values), "max": max(values)}
 
 

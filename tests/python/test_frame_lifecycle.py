@@ -62,6 +62,33 @@ class FrameLifecycleTests(unittest.TestCase):
         pool.fail(slot, TimeoutError("injected"))
         self.assertEqual(pool.records[slot].state, FrameState.FREE)
 
+    def test_hbm_descriptor_is_frozen_until_persistence_ack(self):
+        pool = FrameBufferPool(1)
+        slot = pool.acquire(3, 30)
+        pool.publish_hbm(slot, [(0x1000, 4096), (0x4000, 2048)], 6000,
+                         "abc123", event_token="stream-event-7")
+        view = pool.begin_hbm_write(slot)
+        self.assertEqual(view.generation, 3)
+        self.assertEqual(view.step_id, 30)
+        self.assertEqual(view.device_segments,
+                         ((0x1000, 4096), (0x4000, 2048)))
+        self.assertEqual(view.valid_bytes, 6000)
+        with self.assertRaises(TimeoutError):
+            pool.acquire(4, 40, timeout=0.01)
+        pool.ack(slot, "abc123")
+        self.assertEqual(pool.records[slot].state, FrameState.FREE)
+
+    def test_hbm_publish_rejects_invalid_capacity_and_wrong_writer(self):
+        pool = FrameBufferPool(1)
+        slot = pool.acquire(1, 1)
+        with self.assertRaises(ValueError):
+            pool.publish_hbm(slot, [(0, 4096)], 4096, "digest")
+        with self.assertRaises(ValueError):
+            pool.publish_hbm(slot, [(0x1000, 4096)], 4097, "digest")
+        pool.publish_hbm(slot, [(0x1000, 4096)], 4096, "digest")
+        with self.assertRaises(RuntimeError):
+            pool.begin_write(slot)
+
 
 if __name__ == "__main__":
     unittest.main()

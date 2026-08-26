@@ -33,6 +33,12 @@ class FrameRecord:
     payload: bytes = b""
     checksum: str = ""
     error: str = ""
+    source_kind: str = ""
+    device_ptr: int = 0
+    device_segments: tuple = ()
+    capacity: int = 0
+    valid_bytes: int = 0
+    event_token: str = ""
 
 
 class FrameBufferPool:
@@ -66,6 +72,12 @@ class FrameBufferPool:
                     record.payload = b""
                     record.checksum = ""
                     record.error = ""
+                    record.source_kind = ""
+                    record.device_ptr = 0
+                    record.device_segments = ()
+                    record.capacity = 0
+                    record.valid_bytes = 0
+                    record.event_token = ""
                     self._last_generation = generation
                     return record.slot_id
                 if timeout is not None:
@@ -84,6 +96,36 @@ class FrameBufferPool:
             # source was a mutable bytearray or a recycled NPU staging buffer.
             record.payload = bytes(payload)
             record.checksum = hashlib.sha256(record.payload).hexdigest()
+            record.source_kind = "HOST_BYTES"
+            record.capacity = len(record.payload)
+            record.valid_bytes = len(record.payload)
+            record.state = FrameState.READY
+            self._condition.notify_all()
+
+    def publish_hbm(self, slot_id, segments, valid_bytes, checksum,
+                    event_token=""):
+        """Publish an immutable, generation-owned HBM segment descriptor."""
+        normalized = tuple((int(pointer), int(size))
+                           for pointer, size in segments)
+        if not normalized or any(pointer <= 0 or size <= 0
+                                 for pointer, size in normalized):
+            raise ValueError("HBM publication requires positive segments")
+        capacity = sum(size for _pointer, size in normalized)
+        if valid_bytes <= 0 or valid_bytes > capacity:
+            raise ValueError("invalid HBM valid-byte count")
+        if not checksum:
+            raise ValueError("HBM publication requires a checksum")
+        with self._condition:
+            record = self._record(slot_id)
+            self._require(record, FrameState.FILLING)
+            record.payload = b""
+            record.checksum = str(checksum)
+            record.source_kind = "HBM_SEGMENTS"
+            record.device_ptr = normalized[0][0]
+            record.device_segments = normalized
+            record.capacity = capacity
+            record.valid_bytes = int(valid_bytes)
+            record.event_token = str(event_token)
             record.state = FrameState.READY
             self._condition.notify_all()
 
@@ -91,8 +133,19 @@ class FrameBufferPool:
         with self._condition:
             record = self._record(slot_id)
             self._require(record, FrameState.READY)
+            if record.source_kind != "HOST_BYTES":
+                raise RuntimeError("HBM descriptor requires begin_hbm_write")
             record.state = FrameState.WRITING
             return record.payload, record.checksum
+
+    def begin_hbm_write(self, slot_id):
+        with self._condition:
+            record = self._record(slot_id)
+            self._require(record, FrameState.READY)
+            if record.source_kind != "HBM_SEGMENTS":
+                raise RuntimeError("host payload requires begin_write")
+            record.state = FrameState.WRITING
+            return FrameRecord(**record.__dict__)
 
     def ack(self, slot_id, checksum):
         with self._condition:
