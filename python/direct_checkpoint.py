@@ -62,6 +62,9 @@ from delta_protocol import (pack_delta_frame, pack_lossless_delta_frame,
                              apply_delta_patches, FileDeltaWriter)
 from noop_init import NoOpInitializer, replace_with_noop_initializer
 from training_cell import ProbeTrainOneStepCell
+from training_state import (TRAINING_STATE_SCHEMA_VERSION,
+                            decode_control_value, encode_control_value,
+                            validate_state_names)
 
 
 # -- Device pointer helper (single entry point for all MS pointer access) ----
@@ -300,7 +303,8 @@ class DirectCheckpoint:
 
     # -- Metadata commit -----------------------------------------------------
 
-    def _commit_metadata(self, step: int, layout: List[Dict]):
+    def _commit_metadata(self, step: int, layout: List[Dict],
+                         checkpoint_meta: Dict = None):
         if self.rank_id != 0:
             return
 
@@ -308,17 +312,29 @@ class DirectCheckpoint:
             raise RuntimeError("cannot commit metadata before mounting layout")
         next_generation = self.metadata_generation + 1
         ckpt_key = f"step_{step}"
-        self.meta_dict["checkpoints"][ckpt_key] = {
+        param_records = {}
+        for p in layout:
+            record = {
+                "offset": p["offset"], "size": p["size"],
+                "shape": p["shape"], "dtype": p["dtype"],
+            }
+            for field in ("category", "component", "source_name", "codec",
+                          "sha256", "placement"):
+                if field in p:
+                    record[field] = p[field]
+            param_records[p["name"]] = record
+
+        checkpoint_record = {
             "type": "FULL",
             "generation": next_generation,
             "chunk_size": self.chunk_size,
             "rank_id": self.rank_id,
             "world_size": self.world_size,
-            "params": {p["name"]: {
-                "offset": p["offset"], "size": p["size"],
-                "shape": p["shape"], "dtype": p["dtype"],
-            } for p in layout},
+            "params": param_records,
         }
+        if checkpoint_meta:
+            checkpoint_record.update(checkpoint_meta)
+        self.meta_dict["checkpoints"][ckpt_key] = checkpoint_record
 
         saved_steps = []
         for k in self.meta_dict["checkpoints"].keys():
@@ -612,7 +628,9 @@ class DirectCheckpoint:
                     # The array was copied in _prepare_params; copy again so
                     # callers cannot mutate the source while the I/O thread
                     # is running.
-                    copy_item["np_arr"] = np.array(item["np_arr"], copy=True)
+                    copy_item["np_arr"] = np.ascontiguousarray(
+                        item["np_arr"]).copy()
+                    copy_item["ptr"] = int(copy_item["np_arr"].ctypes.data)
                 frozen.append(copy_item)
         except BaseException:
             for ptr in allocated:
@@ -903,7 +921,8 @@ class DirectCheckpoint:
     # -- Save / Load ---------------------------------------------------------
 
     def save(self, model: ms.nn.Cell, step: int,
-             meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True):
+             meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True,
+             _prepared_params=None, _checkpoint_meta=None):
         # A previous generation owns its snapshot buffers until it reaches a
         # terminal state.  Never overwrite/reuse those buffers implicitly.
         self.wait_for_io_completion()
@@ -911,7 +930,8 @@ class DirectCheckpoint:
 
         # -- T_Prep --
         t_prep_start = time.perf_counter()
-        params = self._prepare_params(model)
+        params = (_prepared_params if _prepared_params is not None
+                  else self._prepare_params(model))
         t_prep_end = time.perf_counter()
         T_Prep = t_prep_end - t_prep_start
 
@@ -1014,7 +1034,8 @@ class DirectCheckpoint:
                 t_meta_start = time.perf_counter()
                 self.last_layout = layout
                 if commit_meta:
-                    self._commit_metadata(step, layout)
+                    self._commit_metadata(
+                        step, layout, checkpoint_meta=_checkpoint_meta)
 
                 with open(meta_path, "wb") as f:
                     pickle.dump(self.meta_dict, f)
@@ -1069,6 +1090,248 @@ class DirectCheckpoint:
               f"Layout cost: {T_Layout*1000:.2f}ms", flush=True)
 
         return handle
+
+    def _ordered_components(self, components):
+        preferred = [name for name in ("model", "optimizer")
+                     if name in components]
+        preferred.extend(sorted(name for name in components
+                                if name not in {"model", "optimizer"}))
+        return preferred
+
+    def _prepare_state_components(self, components, with_checksums=True):
+        """Build namespaced descriptors, excluding aliased model weights.
+
+        MindSpore optimizers commonly expose the model weights alongside
+        moment slots.  Object-identity de-duplication keeps those weights in
+        ``model/`` and stores only optimizer-owned state in ``optimizer/``.
+        """
+        params = []
+        seen_objects = set()
+        seen_names = set()
+        for component in self._ordered_components(components):
+            obj = components[component]
+            if obj is None or not hasattr(obj, "parameters_and_names"):
+                raise TypeError(
+                    f"component {component!r} has no parameters_and_names()")
+            for source_name, parameter in obj.parameters_and_names():
+                identity = id(parameter)
+                if identity in seen_objects:
+                    continue
+                seen_objects.add(identity)
+                name = f"{component}/{source_name}"
+                if name in seen_names:
+                    raise ValueError(f"duplicate training-state field: {name}")
+                seen_names.add(name)
+
+                dtype_np = np.dtype(ms.dtype_to_nptype(parameter.dtype))
+                local_shape = tuple(parameter.shape)
+                if hasattr(parameter, "sliced_shape") and parameter.sliced_shape:
+                    local_shape = tuple(parameter.sliced_shape)
+                elif hasattr(parameter, "data") and hasattr(parameter.data, "shape"):
+                    data_shape = tuple(parameter.data.shape)
+                    if np.prod(data_shape) < np.prod(local_shape):
+                        local_shape = data_shape
+                if int(np.prod(local_shape)) == 0:
+                    continue
+
+                ptr = get_dev_ptr(parameter)
+                host_arr = None
+                if ptr == 0:
+                    host_arr = np.ascontiguousarray(
+                        parameter.asnumpy(), dtype=dtype_np).reshape(local_shape)
+                checksum = None
+                if with_checksums:
+                    checksum_arr = (host_arr if host_arr is not None else
+                                    np.ascontiguousarray(parameter.value().asnumpy(),
+                                                         dtype=dtype_np))
+                    checksum = hashlib.sha256(
+                        np.ascontiguousarray(checksum_arr).tobytes()).hexdigest()
+                params.append({
+                    "name": name,
+                    "source_name": source_name,
+                    "component": component,
+                    "category": "parameter",
+                    "placement": "device" if ptr else "host",
+                    "ptr": ptr,
+                    "size": int(np.prod(local_shape)) * dtype_np.itemsize,
+                    "shape": list(local_shape),
+                    "dtype": dtype_np.name,
+                    "np_arr": host_arr,
+                    "param_ref": parameter,
+                    "sha256": checksum,
+                })
+        if not params:
+            raise ValueError("components contain no persistable parameters")
+        return params
+
+    def save_state(self, components, control_state, step: int,
+                   meta_path: str = "checkpoint_meta.pkl",
+                   commit_meta: bool = True, verify_checksums: bool = True):
+        """Freeze and persist a versioned complete training state.
+
+        ``components`` maps namespaces such as ``model`` and ``optimizer`` to
+        MindSpore objects exposing ``parameters_and_names``.  ``control_state``
+        contains JSON-tagged Python/NumPy state and is returned by
+        :meth:`load_state` for the caller to re-apply.
+        """
+        validate_state_names(components, control_state)
+        if hasattr(ms.hal, "synchronize"):
+            ms.hal.synchronize()
+        params = self._prepare_state_components(
+            components, with_checksums=verify_checksums)
+        for name in sorted(control_state):
+            payload, control_meta = encode_control_value(control_state[name])
+            params.append({
+                "name": f"control/{name}",
+                "source_name": name,
+                "component": "control",
+                "category": "control",
+                "placement": "host",
+                "ptr": 0,
+                "size": int(payload.nbytes),
+                "shape": [int(payload.nbytes)],
+                "dtype": "uint8",
+                "np_arr": payload,
+                "param_ref": None,
+                "codec": control_meta["codec"],
+                "sha256": control_meta["sha256"],
+            })
+        checkpoint_meta = {
+            "type": "TRAINING_STATE_FULL",
+            "schema_version": TRAINING_STATE_SCHEMA_VERSION,
+            "state_step": int(step),
+            "checksum": "sha256" if verify_checksums else "none",
+            "components": self._ordered_components(components),
+            "control_names": sorted(control_state),
+        }
+        return self.save(
+            None, step=step, meta_path=meta_path, commit_meta=commit_meta,
+            _prepared_params=params, _checkpoint_meta=checkpoint_meta)
+
+    def _select_checkpoint_record(self, step):
+        self._mount_filesystem()
+        if step is None:
+            candidates = []
+            for key, record in self.meta_dict.get("checkpoints", {}).items():
+                if not key.startswith("step_"):
+                    continue
+                try:
+                    candidates.append((int(key.split("_", 1)[1]), record))
+                except ValueError:
+                    continue
+            if not candidates:
+                raise FileNotFoundError("No checkpoints found in metadata")
+            return max(candidates, key=lambda item: item[0])
+        key = f"step_{int(step)}"
+        try:
+            return int(step), self.meta_dict["checkpoints"][key]
+        except KeyError as error:
+            raise FileNotFoundError(f"Checkpoint for {key} not found") from error
+
+    def load_state(self, components, step: int = None,
+                   verify_checksums: bool = True):
+        """Restore namespaced parameters and return decoded control state."""
+        validate_state_names(components, {})
+        selected_step, record = self._select_checkpoint_record(step)
+        if record.get("type") != "TRAINING_STATE_FULL":
+            raise ValueError(
+                f"step {selected_step} is not a complete training-state checkpoint")
+        if record.get("schema_version") != TRAINING_STATE_SCHEMA_VERSION:
+            raise ValueError("unsupported training-state schema version")
+        if record.get("state_step") != selected_step:
+            raise ValueError("training-state step does not match metadata key")
+        if record.get("components") != self._ordered_components(components):
+            raise ValueError("training-state component manifest mismatch")
+
+        saved = record.get("params", {})
+        saved_control_names = {
+            info.get("source_name") for info in saved.values()
+            if info.get("category") == "control"
+        }
+        if saved_control_names != set(record.get("control_names", [])):
+            raise ValueError("training-state control manifest mismatch")
+        target_items = self._prepare_state_components(
+            components, with_checksums=False)
+        targets = {item["name"]: item for item in target_items}
+        saved_parameter_names = {
+            name for name, info in saved.items()
+            if info.get("category", "parameter") == "parameter"
+        }
+        if set(targets) != saved_parameter_names:
+            missing = sorted(saved_parameter_names - set(targets))
+            extra = sorted(set(targets) - saved_parameter_names)
+            raise ValueError(
+                f"training-state parameter set mismatch: missing={missing[:3]} "
+                f"extra={extra[:3]}")
+
+        dev_buffers, host_buffers, control_buffers = [], [], {}
+        for name, info in saved.items():
+            if info.get("category", "parameter") == "control":
+                if info.get("dtype") != "uint8" or info.get("size", 0) <= 0:
+                    raise ValueError(f"invalid control-state record: {name}")
+                array = np.empty(int(info["size"]), dtype=np.uint8)
+                item = {"name": name, "ptr": int(array.ctypes.data),
+                        "size": int(info["size"]), "offset": int(info["offset"])}
+                host_buffers.append(item)
+                control_buffers[name] = (array, info)
+                continue
+
+            target = targets[name]
+            if (list(info.get("shape", [])) != list(target["shape"]) or
+                    np.dtype(info.get("dtype")) != np.dtype(target["dtype"]) or
+                    int(info.get("size", -1)) != int(target["size"])):
+                raise ValueError(f"shape/dtype/size mismatch for {name}")
+            item = dict(target)
+            item.update(offset=int(info["offset"]), size=int(info["size"]))
+            if target["ptr"]:
+                dev_buffers.append(item)
+            else:
+                array = np.empty(target["shape"], dtype=np.dtype(target["dtype"]))
+                item["np_arr"] = array
+                item["ptr"] = int(array.ctypes.data)
+                host_buffers.append(item)
+
+        chunk_size = min(int(record.get("chunk_size", self.chunk_size)),
+                         self.chunk_size)
+        dev_chunks, _ = build_chunks(dev_buffers, chunk_size)
+        host_chunks, _ = build_chunks(host_buffers, chunk_size)
+        if dev_chunks:
+            arrays = build_ctypes_arrays(dev_chunks)
+            rc = lib.npu_nvme_read_batch(self.ctx, *arrays, len(dev_chunks))
+            if rc != 0:
+                raise RuntimeError(f"training-state device read failed: {rc}")
+        if host_chunks:
+            arrays = build_ctypes_arrays(host_chunks)
+            rc = lib.npu_nvme_read_batch_host(
+                self.ctx, *arrays, len(host_chunks))
+            if rc != 0:
+                raise RuntimeError(f"training-state host read failed: {rc}")
+
+        for item in host_buffers:
+            if item["name"].startswith("control/"):
+                continue
+            parameter = item["param_ref"]
+            ops.assign(parameter, ms.Tensor(item["np_arr"], dtype=parameter.dtype))
+        if hasattr(ms.hal, "synchronize"):
+            ms.hal.synchronize()
+
+        if verify_checksums and record.get("checksum") == "sha256":
+            for name, target in targets.items():
+                expected = saved[name].get("sha256")
+                if not expected:
+                    raise ValueError(f"missing checksum for {name}")
+                actual = hashlib.sha256(np.ascontiguousarray(
+                    target["param_ref"].value().asnumpy()).tobytes()).hexdigest()
+                if actual != expected:
+                    raise ValueError(f"parameter checksum mismatch for {name}")
+
+        controls = {}
+        for qualified_name, (array, info) in control_buffers.items():
+            source_name = info.get("source_name")
+            if not source_name or qualified_name != f"control/{source_name}":
+                raise ValueError(f"invalid control-state namespace: {qualified_name}")
+            controls[source_name] = decode_control_value(array, info)
+        return controls
 
     def load(self, model: ms.nn.Cell, step: int = None,
              meta_path: str = "checkpoint_meta.pkl"):
