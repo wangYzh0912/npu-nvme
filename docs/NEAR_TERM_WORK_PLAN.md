@@ -1044,10 +1044,10 @@ GPT-2 的非有限值主要出现在首层 attention/output 权重以及对应 A
 generation 10，最终状态摘要逐字节一致。期间修复了 S2 v3 负 `layer_id` 的打包 bug，
 保持 12 字节 block header 布局不变，并新增 LayerNorm 大参数测试。
 
-I6 第一阶段也已完成：在 83.0.0 安全区写入 10 代 frame，父进程释放 SPDK context，
-子进程使用新的 `SPDK_SHM_ID` 重新初始化并恢复到 generation 10，状态逐字节一致；
-payload 翻转样本被 CRC 拒绝。该结果只关闭“短链重启 + 单帧损坏”的 scope-specific
-门禁，100-step、ring 回绕、header/manifest/step/base-generation 组合故障和
+I6 第一阶段也已完成：在 83.0.0 安全区写入 100 代 frame，父进程释放 SPDK context，
+子进程使用新的 `SPDK_SHM_ID` 重新初始化并恢复到 generation 100，状态逐字节一致；
+payload 翻转样本被 CRC 拒绝。该结果关闭“100-step 原始盘重启 + 单帧损坏”的
+scope-specific 门禁，ring 回绕、header/manifest/step/base-generation 组合故障和
 重复/缺失/乱序矩阵仍未完成。
 
 证据目录：`results/wp3-20260826/`；I1 的两个失败运行、I2/I4/I6 的原始 JSON、环境

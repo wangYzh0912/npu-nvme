@@ -26,10 +26,10 @@ native dtype, lineage generations, and CRC32.
 - I4 cross-process replay: a `FULL + 10 S2 frames` chain was written by the
   parent and replayed in a child process, reaching generation 10 with a
   byte-exact state digest.
-- I6 raw restart first gate: 10 frames were written to the 83.0.0 safe
-  region, the SPDK process was torn down and reinitialized, and the child
-  recovered generation 10 byte-exactly; a payload-corrupted frame was
-  rejected by CRC.
+- I6 raw restart: 100 frames were written to the 83.0.0 safe region, the
+  SPDK process was torn down and reinitialized, and the child recovered
+  generation 100 byte-exactly; a payload-corrupted frame was rejected by
+  CRC.
 - I4 base: `FileS2Ring` writes a complete frame with flush+fsync and atomic
   slot replacement; wrap and corruption rejection pass.
 - I5 first loopback: `s2_host_spdk.py` wrote and read a 4,159-byte S2 frame
