@@ -106,6 +106,55 @@ def build_block_manifest(params: Mapping[str, np.ndarray],
     return payload
 
 
+def score_manifest_blocks(current: Mapping[str, np.ndarray],
+                          reference: Mapping[str, np.ndarray],
+                          manifest: Mapping) -> List[dict]:
+    """Score manifest blocks with one FP64 conversion per parameter.
+
+    The original real-trajectory collector converted the same parameter
+    slice twice for every block.  At GPT-2 XL scale that made a two-step
+    correctness smoke spend minutes in Python and grow to ~80 GiB RSS.  This
+    implementation retains FP64 norm accumulation while grouping contiguous
+    parameter-local blocks into vectorized reductions.
+    """
+    grouped: Dict[str, List[dict]] = {}
+    for item in manifest["blocks"]:
+        grouped.setdefault(item["name"], []).append(item)
+    output = []
+    for name, items in grouped.items():
+        if name not in current or name not in reference:
+            raise ValueError(f"manifest parameter missing from state: {name}")
+        a = np.asarray(current[name]).reshape(-1)
+        b = np.asarray(reference[name]).reshape(-1)
+        if a.shape != b.shape:
+            raise ValueError(f"state shape mismatch: {name}")
+        diff = np.subtract(a, b, dtype=np.float64)
+        block_size = int(manifest["block_size"])
+        full_count = diff.size // block_size
+        full_scores = np.empty(0, dtype=np.float64)
+        full_nonzero = np.empty(0, dtype=np.int64)
+        if full_count:
+            full = diff[:full_count * block_size].reshape(full_count,
+                                                          block_size)
+            full_scores = np.sqrt(np.einsum("ij,ij->i", full, full))
+            full_nonzero = np.count_nonzero(full, axis=1)
+        for item in items:
+            block_idx = int(item["block_idx"])
+            count = int(item["element_count"])
+            if count == block_size and block_idx < full_count:
+                score = float(full_scores[block_idx])
+                nonzero = int(full_nonzero[block_idx])
+            else:
+                start = int(item["element_offset"])
+                tail = diff[start:start + count]
+                score = float(np.linalg.norm(tail))
+                nonzero = int(np.count_nonzero(tail))
+            output.append({**item, "score": score, "nonzero": nonzero})
+        del diff
+    output.sort(key=lambda item: (-item["score"], int(item["block_id"])))
+    return output
+
+
 def _copy_state(state: Mapping[str, np.ndarray]) -> Dict[str, np.ndarray]:
     return {name: np.array(value, copy=True) for name, value in state.items()}
 
@@ -187,18 +236,10 @@ class S2DeltaOracle:
         self.current = _copy_state(state)
 
     def _changed_blocks(self) -> List[Tuple[float, dict]]:
-        changed = []
-        for item in self.manifest["blocks"]:
-            name = item["name"]
-            start = int(item["element_offset"])
-            count = int(item["element_count"])
-            cur = self.current[name].reshape(-1)[start:start + count]
-            old = self.persisted_reference[name].reshape(-1)[start:start + count]
-            diff = cur.astype(np.float64) - old.astype(np.float64)
-            score = float(np.linalg.norm(diff))
-            if score > self.change_epsilon:
-                changed.append((score, item))
-        changed.sort(key=lambda pair: (-pair[0], pair[1]["block_id"]))
+        changed = [(item["score"], item)
+                   for item in score_manifest_blocks(
+                       self.current, self.persisted_reference, self.manifest)
+                   if item["score"] > self.change_epsilon]
         if self.top_k is not None:
             if self.top_k < 0:
                 raise ValueError("top_k must be non-negative")
@@ -314,4 +355,5 @@ class FileS2Ring:
 
 
 __all__ = ["Block", "FileS2Ring", "S2DeltaOracle",
-           "apply_s2_replacements", "build_block_manifest"]
+           "apply_s2_replacements", "build_block_manifest",
+           "score_manifest_blocks"]

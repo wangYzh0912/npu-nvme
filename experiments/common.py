@@ -41,50 +41,68 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
                             device_id=1, seq_len=1025, train_mr=None):
     """Create a causal-LM training setup for a supported MindFormers model.
 
+    ``seq_len`` is the input-record length.  MindFormers GPT-2 shifts a
+    record internally, so its compiled model sequence length is
+    ``seq_len - 1`` (1025 corpus tokens -> 1024 training tokens).
+
     Returns (model, dataset, optimizer).  The dataset is pre-batched and
     limited to total_steps batches.
     """
     from mindformers import AutoModel, AutoConfig
 
     print(f"[Common] Building {model_name} model...", flush=True)
+    if seq_len < 2:
+        raise ValueError("training record length must be at least two tokens")
+    model_seq_len = seq_len - 1
     cfg = AutoConfig.from_pretrained(model_name)
     if hasattr(cfg, "seq_length"):
-        cfg.seq_length = seq_len
+        cfg.seq_length = model_seq_len
     if hasattr(cfg, "max_position_embeddings"):
         # Keep the attention-mask/lower-triangle shape consistent with the
         # requested experiment sequence length.  The old lower bound of 1025
         # made a short 13B scale run fail during graph inference with a
         # [1,1025,1025] vs [1,seq_len,seq_len] broadcast error.
-        cfg.max_position_embeddings = seq_len
+        cfg.max_position_embeddings = model_seq_len
     cfg.checkpoint_name_or_path = ""  # train from scratch
     model = AutoModel.from_config(cfg)
+    # MindFormers causal-LM cells return inference tuples unless training mode
+    # is enabled.  Feeding that tuple to value_and_grad used to make the
+    # experiment harness differentiate logits/tokens/masks and corrupt both
+    # parameters and Adam state during the nominal warmup step.
+    model.set_train(True)
 
     # Some MindFormers 1.3.2 GPT-2 configs reconstruct the model with the
     # checkpoint's original sequence-length constants even after the config
     # fields above are changed. Rebuild these non-parameter helpers so the
     # short scale lane has matching [batch, seq_len] masks and positions.
-    if model_name != "gpt2_xl" and seq_len != 1025:
+    if model_seq_len != 1024:
         from mindformers.modules.transformer import AttentionMask
         model.get_attention_mask = AttentionMask(
-            seq_length=seq_len,
+            seq_length=model_seq_len,
             parallel_config=cfg.parallel_config.dp_mp_config)
         if hasattr(model, "backbone"):
             model.backbone.position_ids = ms.Tensor(
-                np.arange(seq_len), ms.int32)
+                np.arange(model_seq_len), ms.int32)
             if hasattr(model.backbone, "seq_length"):
-                model.backbone.seq_length = seq_len
+                model.backbone.seq_length = model_seq_len
 
     mr_path = train_mr or _DEFAULT_TRAIN_MR
-    ds = ms.dataset.MindDataset(mr_path, shuffle=True)
+    # The source MindRecord's physical column order is attention_mask,
+    # input_ids, labels.  Passing that tuple directly to GPT2LMHeadModel made
+    # an all-ones attention mask act as input_ids.  Select and order the two
+    # arguments the model actually consumes.
+    ds = ms.dataset.MindDataset(
+        mr_path, columns_list=["input_ids", "attention_mask"], shuffle=True)
     # The GPT-2 corpus can contain token IDs above the LLaMA vocabulary. Keep
     # the same data source for path timing while making IDs valid for the
     # selected model; this is not a quality-training experiment. The source
     # records are length 1025, so crop both columns for shorter scale runs.
     vocab_size = getattr(cfg, "vocab_size", None)
-    if vocab_size and model_name != "gpt2_xl":
-        ds = ds.map(operations=lambda *values: tuple(
-            value[:seq_len] % vocab_size for value in values),
-                    input_columns=["input_ids", "labels"])
+    if vocab_size:
+        ds = ds.map(operations=lambda value: value[:seq_len] % vocab_size,
+                    input_columns=["input_ids"])
+    ds = ds.map(operations=lambda value: value[:seq_len],
+                input_columns=["attention_mask"])
     ds = ds.batch(1, drop_remainder=True).take(total_steps)
 
     opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
@@ -309,7 +327,7 @@ class EpochTimer(ms.Callback):
 
 # -- Standardised baseline environment --------------------------------------
 
-def init_env(device_id=1, mode=None):
+def init_env(device_id=1, mode=None, seed=42):
     """Initialise MindSpore GRAPH_MODE environment with deterministic seed.
 
     Args:
@@ -319,13 +337,13 @@ def init_env(device_id=1, mode=None):
     if mode is None:
         mode = context.GRAPH_MODE
     context.set_context(mode=mode, device_target="Ascend", device_id=device_id)
-    ms.common.set_seed(42)
+    ms.common.set_seed(int(seed))
     # Required for DeltaTrainCell's loop unrolling (~772 params → deep graph)
     ms.set_recursion_limit(10000)
 
 
 def warmup_model(model, opt, ds):
-    """Run one dummy forward pass to trigger MS lazy memory allocation.
+    """Run one excluded real training step to allocate lazy device memory.
 
     CRITICAL: Must be called before any DirectCheckpoint operations
     (save, register_tasks, register_delta_tasks).  Without this,
@@ -338,7 +356,7 @@ def warmup_model(model, opt, ds):
         ds:    dataset (must have at least 1 batch)
 
     Returns:
-        The loss from the warmup step (can be ignored).
+        The finite scalar loss from the excluded warmup training step.
     """
     from direct_checkpoint import ProbeTrainOneStepCell
 
@@ -347,6 +365,11 @@ def warmup_model(model, opt, ds):
     it = ds.create_tuple_iterator()
     loss = warmup_cell(*next(it))
     ms.hal.synchronize()
-    print("  [Common] Warmup forward pass complete — device addresses allocated.",
-          flush=True)
+    loss_array = np.asarray(loss.asnumpy())
+    if loss_array.ndim != 0 or not np.isfinite(loss_array).all():
+        raise FloatingPointError(
+            f"warmup must return one finite scalar loss, got "
+            f"shape={loss_array.shape} value={loss_array}")
+    print("  [Common] Excluded training warmup complete — finite scalar loss "
+          f"{float(loss_array):.8g}; device addresses allocated.", flush=True)
     return loss

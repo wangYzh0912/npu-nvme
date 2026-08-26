@@ -12,7 +12,8 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "python"))
 from delta_protocol import (pack_s2_replacement_frame,
                             unpack_delta_frame_with_meta,
                             unpack_s2_replacement_frame)
-from s2_delta import S2DeltaOracle, apply_s2_replacements, build_block_manifest
+from s2_delta import (S2DeltaOracle, apply_s2_replacements,
+                      build_block_manifest, score_manifest_blocks)
 from s2_delta import FileS2Ring
 
 
@@ -31,6 +32,25 @@ class S2DeltaOracleTests(unittest.TestCase):
         self.assertEqual((step, len(blocks), len(smalls)), (0, 0, 0))
         self.assertEqual(info["base_generation"], 0)
         oracle.ack(frame)
+
+    def test_vectorized_block_scores_match_parameter_local_reference(self):
+        manifest = build_block_manifest(self.initial, block_size=4,
+                                        small_threshold=0)
+        current = {name: value.copy() for name, value in self.initial.items()}
+        current["backbone.blocks.0.weight"][[0, 4, 8]] += 3
+        current["backbone.blocks.1.weight"][-1] += 2
+        scores = score_manifest_blocks(current, self.initial, manifest)
+        by_id = {item["block_id"]: item for item in scores}
+        for item in manifest["blocks"]:
+            start = item["element_offset"]
+            count = item["element_count"]
+            a = current[item["name"]].reshape(-1)[start:start + count]
+            b = self.initial[item["name"]].reshape(-1)[start:start + count]
+            diff = a.astype(np.float64) - b.astype(np.float64)
+            self.assertAlmostEqual(by_id[item["block_id"]]["score"],
+                                   float(np.linalg.norm(diff)))
+            self.assertEqual(by_id[item["block_id"]]["nonzero"],
+                             int(np.count_nonzero(diff)))
 
     def test_z1_single_block_and_z2_repeated_small_change(self):
         oracle = S2DeltaOracle(self.initial, block_size=4, small_threshold=4)

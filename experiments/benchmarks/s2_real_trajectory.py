@@ -26,7 +26,7 @@ from experiments.common import (  # noqa: E402
     init_env, make_causal_lm_training, warmup_model,
 )
 from direct_checkpoint import ProbeTrainOneStepCell  # noqa: E402
-from s2_delta import S2DeltaOracle  # noqa: E402
+from s2_delta import S2DeltaOracle, score_manifest_blocks  # noqa: E402
 
 
 def snapshot_state(model, optimizer, include_optimizer):
@@ -41,11 +41,6 @@ def snapshot_state(model, optimizer, include_optimizer):
                 state[f"{prefix}/{parameter.name}"] = parameter.asnumpy()
         state["optimizer/global_step"] = optimizer.global_step.asnumpy()
     return state
-
-
-def norm(a, b):
-    diff = a.astype(np.float64) - b.astype(np.float64)
-    return float(np.linalg.norm(diff)), float(np.count_nonzero(diff))
 
 
 def finite_diagnostics(state):
@@ -72,18 +67,7 @@ def finite_diagnostics(state):
 
 
 def block_scores(current, reference, manifest):
-    scores = []
-    for item in manifest["blocks"]:
-        name = item["name"]
-        start = int(item["element_offset"])
-        count = int(item["element_count"])
-        a = current[name].reshape(-1)[start:start + count]
-        b = reference[name].reshape(-1)[start:start + count]
-        score, nonzero = norm(a, b)
-        scores.append({"block_id": int(item["block_id"]), "score": score,
-                       "nonzero": nonzero, "name": name})
-    scores.sort(key=lambda item: (-item["score"], item["block_id"]))
-    return scores
+    return score_manifest_blocks(current, reference, manifest)
 
 
 def coverage(scores, budgets):
@@ -111,8 +95,11 @@ def main():
     parser.add_argument("--top-k-percent", type=float, default=10.0)
     parser.add_argument("--sample-every", type=int, default=1)
     parser.add_argument("--no-optimizer", action="store_true")
+    parser.add_argument("--numeric-only", action="store_true",
+                        help="check loss/state health without S2 scoring/frames")
     parser.add_argument("--pci", default="0000:83:00.0")
     parser.add_argument("--npu", type=int, default=7)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output-root", default=None)
     args = parser.parse_args()
     if args.steps <= 0 or args.sample_every <= 0 or not 0 < args.top_k_percent <= 100:
@@ -128,7 +115,7 @@ def main():
     npu_info = check_npu_free(args.npu)
     writer.write_json("environment.json", environment_snapshot(args, npu_info))
 
-    init_env(device_id=args.npu)
+    init_env(device_id=args.npu, seed=args.seed)
     model, dataset, optimizer = make_causal_lm_training(
         args.model, total_steps=args.steps + 2, device_id=args.npu,
         seq_len=args.seq_len)
@@ -151,6 +138,54 @@ def main():
         }
         writer.add_failure(failure)
         result = writer.finalize({"numeric_gate": initial_health}, status="fail")
+        print(json.dumps({"status": result["status"],
+                          "run_id": writer.run_id,
+                          "summary": result["summary"]}, indent=2), flush=True)
+        return
+    if args.numeric_only:
+        samples = []
+        for step in range(1, args.steps + 1):
+            try:
+                batch = next(iterator)
+            except StopIteration:
+                iterator = dataset.create_tuple_iterator()
+                batch = next(iterator)
+            loss = cell(*batch)
+            import mindspore as ms
+            ms.hal.synchronize()
+            loss_value = float(np.asarray(loss.asnumpy()).reshape(()))
+            if not np.isfinite(loss_value):
+                raise FloatingPointError(
+                    f"non-finite training loss at step {step}: {loss_value}")
+            if step % args.sample_every:
+                continue
+            health = finite_diagnostics(snapshot_state(
+                model, optimizer, not args.no_optimizer))
+            if health["nonfinite_arrays"]:
+                raise FloatingPointError(
+                    f"non-finite training state at step {step}: "
+                    f"{health['nonfinite'][:3]}")
+            sample = {
+                "run_id": writer.run_id,
+                "request_id": f"{writer.run_id}/step_{step:04d}",
+                "checkpoint_id": f"numeric_{step:04d}",
+                "step": step,
+                "status": "pass",
+                "loss": loss_value,
+                "numeric_health": health,
+                "events": [{"name": "numeric_health_pass",
+                            "monotonic_ns": time.monotonic_ns()}],
+                "timeline_us": {"end_to_end": 0},
+            }
+            writer.add_sample(sample)
+            samples.append(sample)
+        result = writer.finalize({
+            "steps": args.steps,
+            "samples": len(samples),
+            "seed": args.seed,
+            "numeric_health": "all sampled weights/optimizer states finite",
+            "losses": [sample["loss"] for sample in samples],
+        }, status="pass")
         print(json.dumps({"status": result["status"],
                           "run_id": writer.run_id,
                           "summary": result["summary"]}, indent=2), flush=True)
@@ -181,9 +216,18 @@ def main():
             loss = cell(*batch)
             import mindspore as ms
             ms.hal.synchronize()
+            loss_value = float(np.asarray(loss.asnumpy()).reshape(()))
+            if not np.isfinite(loss_value):
+                raise FloatingPointError(
+                    f"non-finite training loss at step {step}: {loss_value}")
             if step % args.sample_every:
                 continue
             current = snapshot_state(model, optimizer, not args.no_optimizer)
+            health = finite_diagnostics(current)
+            if health["nonfinite_arrays"]:
+                raise FloatingPointError(
+                    f"non-finite training state at step {step}: "
+                    f"{health['nonfinite'][:3]}")
             oracle.set_current(current)
             policy_oracle.set_current(current)
             adjacent = block_scores(current, previous, manifest)
@@ -202,7 +246,8 @@ def main():
                 "checkpoint_id": f"trajectory_{step:04d}",
                 "step": step,
                 "status": "pass",
-                "loss": str(loss),
+                "loss": loss_value,
+                "numeric_health": health,
                 "state_arrays": len(current),
                 "block_count": len(adjacent),
                 "frame_bytes_top_k": len(frame),
