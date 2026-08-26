@@ -1,0 +1,19 @@
+{
+  "branch": "exp/wp1-wp2-closeout",
+  "date": "2026-08-26",
+  "i0": {"status": "pass", "python_tests": 26},
+  "i1_synthetic": {"status": "pass", "steps": 100, "total_frame_bytes": 458668},
+  "i4_file_ring": {"status": "pass", "slot_wrap": true, "crc_rejection": true},
+  "i5_host_spdk": {
+    "status": "pass",
+    "pci": "0000:83:00.0",
+    "safe_offset": 68719476736,
+    "frame_bytes": 4159,
+    "aligned_transfer_bytes": 8192,
+    "c_write_us": 348,
+    "generation": 1,
+    "byte_exact": true,
+    "device_safety": "83.0.0 only; 84.0.0 untouched"
+  },
+  "open_gates": ["I1-real", "I2", "I3", "I4-cross-process", "I5-npu-hbm", "I6"]
+}

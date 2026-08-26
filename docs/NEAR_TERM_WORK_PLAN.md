@@ -894,7 +894,12 @@ attention 配置问题已修复，但 MindFormers 1.3.2 的 GPT-2 实例仍在�
 
 I4 基础设施已新增 `FileS2Ring`：完整 frame 经 flush+fsync 后原子替换 slot，读取端
 重新校验 CRC 和版本；文件 ring 回绕/损坏测试已纳入 Python 门禁，当前总计 26 项通过。
-这仍是普通文件跨进程恢复基础，不代表 I5 Host-SPDK/NPU-SPDK 或 I6 裸盘故障门禁已通过。
+这仍是普通文件跨进程恢复基础，不代表 I4 跨进程 replay、I5 NPU-SPDK 或 I6 裸盘故障门禁已通过。
+
+I5 的首个 Host-SPDK frame loopback 已通过：在 83.0.0 安全区 64 GiB 偏移写入 4,159 B
+S2 v3 frame，按 8,192 B 对齐传输，读回逐字节一致，C-layer write 为 348 us，ACK 和
+独立恢复均到 generation 1；未修改 live metadata，84.0.0 未触碰。结构化摘要位于
+`results/wp3-20260826/s2_gate_summary.json`。I5 的 NPU-HBM 路径、I2/I3 和 I6 仍开放。
 
 ### 9.14 A6 安全同步 API 对照记录（2026-08-25）
 

@@ -57,6 +57,7 @@ from disk_layout import (SUPERBLOCK_OFFSET, SUPERBLOCK_HEADER_BYTES,
 from chunk_helpers import (build_chunks, build_chunks_host,
                             build_ctypes_arrays, rebuild_chunks_from_meta)
 from delta_protocol import (pack_delta_frame, pack_lossless_delta_frame,
+                             pack_s2_replacement_frame,
                              unpack_delta_frame, unpack_delta_frame_with_meta,
                              apply_delta_patches, FileDeltaWriter)
 from noop_init import NoOpInitializer, replace_with_noop_initializer
@@ -1281,6 +1282,50 @@ class DirectCheckpoint:
         return self.delta_save(
             step, block_patches, small_patches, lossless=True,
             base_generation=base_generation)
+
+    def write_host_frame(self, frame: bytes, byte_offset: int):
+        """Write one self-described frame through the Host-SPDK path.
+
+        This deliberately does not modify the live metadata ledger.  It is
+        the I5 frame-byte loopback primitive; callers commit lineage only
+        after the frame has been read back and validated.
+        """
+        if not isinstance(frame, (bytes, bytearray)) or not frame:
+            raise ValueError("frame must be non-empty bytes")
+        if byte_offset % BLOCK_SIZE:
+            raise ValueError("frame offset must be 4 KiB aligned")
+        if byte_offset < 0 or byte_offset + len(frame) > self.total_bytes:
+            raise ValueError("frame exceeds NVMe capacity")
+        aligned_size = (len(frame) + BLOCK_SIZE - 1) // BLOCK_SIZE * BLOCK_SIZE
+        frame_buf = ctypes.create_string_buffer(aligned_size)
+        ctypes.memmove(frame_buf, bytes(frame), len(frame))
+        chunks, _ = build_chunks_host(ctypes.addressof(frame_buf), byte_offset,
+                                      len(frame), self.chunk_size)
+        c_ptrs, c_offs, c_sizes = build_ctypes_arrays(chunks)
+        rc = lib.npu_nvme_write_batch_host(
+            self.ctx, c_ptrs, c_offs, c_sizes, len(chunks))
+        if rc != 0:
+            raise RuntimeError(f"Host-SPDK frame write failed: {rc}")
+        return {"offset": byte_offset, "bytes": len(frame),
+                "aligned_bytes": aligned_size, "chunks": len(chunks),
+                "c_io_us": int(lib.npu_nvme_get_last_io_us(self.ctx, 0))}
+
+    def read_host_frame(self, byte_offset: int, frame_size: int):
+        """Read exactly one previously written self-described frame."""
+        if frame_size <= 0 or byte_offset % BLOCK_SIZE:
+            raise ValueError("invalid frame offset or size")
+        if byte_offset < 0 or byte_offset + frame_size > self.total_bytes:
+            raise ValueError("frame exceeds NVMe capacity")
+        aligned_size = (frame_size + BLOCK_SIZE - 1) // BLOCK_SIZE * BLOCK_SIZE
+        frame_buf = ctypes.create_string_buffer(aligned_size)
+        chunks, _ = build_chunks_host(ctypes.addressof(frame_buf), byte_offset,
+                                      frame_size, self.chunk_size)
+        c_ptrs, c_offs, c_sizes = build_ctypes_arrays(chunks)
+        rc = lib.npu_nvme_read_batch_host(
+            self.ctx, c_ptrs, c_offs, c_sizes, len(chunks))
+        if rc != 0:
+            raise RuntimeError(f"Host-SPDK frame read failed: {rc}")
+        return bytes(frame_buf.raw[:frame_size])
 
     def delta_load_slot(self, slot_idx: int, return_meta: bool = False):
         if not hasattr(self, '_delta_slot_size'):
