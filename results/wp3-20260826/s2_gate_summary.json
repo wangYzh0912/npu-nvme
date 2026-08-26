@@ -1,7 +1,22 @@
 {
-  "branch": "exp/wp1-wp2-closeout",
+  "branch": "exp/wp2-wp3-remaining",
   "date": "2026-08-26",
-  "i0": {"status": "pass", "python_tests": 27},
+  "i0": {"status": "pass", "python_tests": 29},
+  "i1_real": {
+    "status": "blocked_numeric_gate",
+    "runs": [
+      {"model": "gpt2", "run_id": "I1_REAL_20260826_155843_d6eb4ffe", "state_arrays": 589, "nonfinite_arrays": 21},
+      {"model": "gpt2_xl", "run_id": "I1_REAL_20260826_155942_17f86337", "state_arrays": 772, "nonfinite_arrays": 2}
+    ],
+    "stage": "post_warmup_initial_state",
+    "training_samples": 0
+  },
+  "i2": {
+    "status": "pass",
+    "run_id": "I2_NPU_EQUIV_20260826_155807_7613b64c",
+    "npu": 5,
+    "checks": ["norms", "top_values", "top_indices", "selected_values", "scales", "quantized"]
+  },
   "i1_synthetic": {"status": "pass", "steps": 100, "total_frame_bytes": 458668},
   "i4_file_ring": {"status": "pass", "slot_wrap": true, "crc_rejection": true},
   "i5_host_spdk": {
@@ -26,5 +41,5 @@
     "byte_exact": true,
     "device_safety": "83.0.0 only; 84.0.0 untouched"
   },
-  "open_gates": ["I1-real", "I2", "I3", "I4-cross-process", "I5-npu-hbm", "I6"]
+  "open_gates": ["I1-real", "I3", "I4-cross-process", "I6"]
 }

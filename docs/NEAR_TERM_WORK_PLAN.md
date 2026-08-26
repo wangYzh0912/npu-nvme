@@ -1003,3 +1003,39 @@ snapshot payload 在 host DRAM 中生成，不能把它等同于真实 MindForme
 - 与无 checkpoint、FULL-only baseline 对比训练吞吐、物理写量、恢复误差和 RTO；
 - 按 Go/Pivot/Stop 判据决定继续图上增量、转向量化/Host 处理或收敛到 FULL I/O 优化；
 - 固化原始日志、结构化 JSON、图表输入、失败分析和最终论文结论边界。
+
+### 9.20 工作包三 I1/I2 实施记录（2026-08-26）
+
+本轮在 `exp/wp2-wp3-remaining` 上补齐了真实轨迹采集器的数值门禁和第一版 NPU
+算子等价门禁，仍只使用 83.0.0 作为目标裸盘；I2 本身不做盘 I/O。Python 测试套件为
+29 passed。
+
+#### I1 真实 MindSpore 轨迹门禁
+
+`experiments/benchmarks/s2_real_trajectory.py` 现在在 warmup 后、训练前先对权重和
+Adam `m/v/global_step` 做有限性检查，并写出 `numeric_gate.json`。GPT-2 和 GPT-2 XL
+均在该门禁失败：
+
+| 模型 | 状态数组 | 非有限数组 | 失败阶段 | 结论 |
+|---|---:|---:|---|---|
+| GPT-2 | 589 | 21 | post-warmup initial state | 未开始采样 |
+| GPT-2 XL | 772 | 2 | post-warmup initial state | 未开始采样 |
+
+GPT-2 的非有限值主要出现在首层 attention/output 权重以及对应 Adam 状态；GPT-2 XL
+出现在 word/position embedding。两次运行均由 `npu-smi info` 确认目标 NPU 空闲，且
+结果以 `fail` 固化，未混入任何性能均值。因此，I1 的真实训练轨迹尚不能声称通过，
+需要后续先解决 MindFormers 1.3.2/CANN 组合的 warmup 数值初始化问题，或改用已验证
+可加载且有限的真实 checkpoint，再进行 100-step、三阶段和 optimizer-state 实验。
+
+#### I2 CPU/NPU 图算子等价
+
+在 NPU 5 上运行 `32 × 257` 的确定性块输入，使用不同有效长度、零变化块和非满尾块，
+逐项比较 CPU reference 与 MindSpore Ascend 图输出。norm、Top-K 值、Top-K 索引、选中
+块值、per-block scale 和 INT8 量化六项全部 PASS。此次结果关闭的是“算子/有效长度
+语义等价”这一 scope-specific 门禁，不代表真实模型 I1 已通过，也不替代 I3 缓冲
+生命周期测试。
+
+证据目录：`results/wp3-20260826/`；I1 的两个失败运行、I2 的原始 JSON、环境快照和
+时间线均保留。当前下一顺序为：解决/替换 I1 数值输入 → I3 双缓冲与 ACK 生命周期
+门禁 → I4 跨进程恢复 → I6 裸盘回绕与故障注入；在 I0～I6 完成前不进入增量方案性能
+结论。
