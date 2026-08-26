@@ -614,6 +614,8 @@ def main():
     parser.add_argument("--pipeline-depth", type=int, default=4)
     parser.add_argument("--safe-offset", type=int, default=SAFE_OFFSET)
     parser.add_argument("--steps", type=int, default=10)
+    parser.add_argument("--seq-len", type=int, default=1025,
+                        help="training sequence length (use 128 for the 13B scale lane)")
     parser.add_argument("--ckpt-every", type=int, default=5)
     parser.add_argument("--warmups", type=int, default=1)
     parser.add_argument("--repetitions", type=int, default=3)
@@ -638,6 +640,7 @@ def main():
     writer.config.update({"path": args.path, "model": args.model,
                           "parameter_precision": "model-native",
                           "submit_mode": args.submit_mode,
+                          "seq_len": args.seq_len,
                           "fs_root": args.fs_root,
                           "safe_region": [args.safe_offset, args.safe_offset],
                           "formal_repetitions": args.repetitions})
@@ -655,7 +658,8 @@ def main():
         else:
             model, ds, opt = make_causal_lm_training(
                 model_name=args.model,
-                total_steps=max(args.steps, args.ckpt_every), device_id=args.npu)
+                total_steps=max(args.steps, args.ckpt_every), device_id=args.npu,
+                seq_len=args.seq_len)
             warmup_model(model, opt, ds)
         param_descs = tpc.get_param_descriptors(model)
         if not param_descs:
