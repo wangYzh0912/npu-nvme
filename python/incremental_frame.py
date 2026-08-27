@@ -22,10 +22,25 @@ from disk_layout import DELTA_MAGIC, FRAME_HEADER_SIZE
 
 
 FRAME_VERSION = 4
+FRAME_VERSION_LARGE = 5
 FRAME_FLAGS_REPLACEMENT = 1
 FRAME_FLAGS_CONTROLS = 2
-_HEADER = struct.Struct("<IHHIIIIQQQQ32sIIIIII")
-_HEADER_CRC_OFFSET = _HEADER.size - 4
+_HEADER_V4 = struct.Struct("<IHHIIIIQQQQ32sIIIIII")
+_HEADER_V5 = struct.Struct("<IHHIIIIQQQQ32sIQQIII")
+_HEADER = _HEADER_V4
+
+
+def _header(version, payload_bytes):
+    if int(version) == FRAME_VERSION:
+        return _HEADER_V4
+    if int(version) == FRAME_VERSION_LARGE:
+        return _HEADER_V5
+    raise ValueError(f"unsupported v4/v5 frame version: {version}")
+
+
+def _version_for_payload(payload_bytes):
+    return (FRAME_VERSION_LARGE if int(payload_bytes) > 0xFFFFFFFF
+            else FRAME_VERSION)
 
 
 def _crc32(value: bytes) -> int:
@@ -47,12 +62,13 @@ def _raw_value(value, dtype):
     return array, array.tobytes()
 
 
-def _descriptor_bytes(blocks, controls, pad=True):
+def _descriptor_bytes(blocks, controls, pad=True, minimum_bytes=0):
     raw = json.dumps({"blocks": list(blocks), "controls": list(controls)},
                      sort_keys=True, separators=(",", ":"),
                      ensure_ascii=True).encode("utf-8")
     if pad:
-        raw = raw.ljust(((len(raw) + FRAME_HEADER_SIZE - 1) //
+        target = max(len(raw), int(minimum_bytes))
+        raw = raw.ljust(((target + FRAME_HEADER_SIZE - 1) //
                          FRAME_HEADER_SIZE) * FRAME_HEADER_SIZE, b" ")
     return raw
 
@@ -62,7 +78,7 @@ def pack_r0_frame_prefix(step: int, generation: int,
                          base_delta_generation: int, manifest_digest: str,
                          blocks, controls, payload_bytes: int,
                          payload_crc: int, world_size: int = 1,
-                         rank_id: int = 0) -> bytes:
+                         rank_id: int = 0, descriptor_bytes: int = 0) -> bytes:
     """Pack the fixed header and padded descriptor area for a DMA frame.
 
     The payload is intentionally supplied separately so HBM buffers can be
@@ -77,16 +93,22 @@ def pack_r0_frame_prefix(step: int, generation: int,
         raise ValueError("invalid payload size or CRC")
     if world_size <= 0 or rank_id < 0 or rank_id >= world_size:
         raise ValueError("invalid rank identity")
-    descriptor = _descriptor_bytes(blocks, controls, pad=True)
+    if descriptor_bytes and (descriptor_bytes < FRAME_HEADER_SIZE or
+                             descriptor_bytes % FRAME_HEADER_SIZE):
+        raise ValueError("descriptor_bytes must be a positive 4 KiB multiple")
+    descriptor = _descriptor_bytes(blocks, controls, pad=True,
+                                   minimum_bytes=descriptor_bytes)
     flags = FRAME_FLAGS_REPLACEMENT | (FRAME_FLAGS_CONTROLS if controls else 0)
-    values = [DELTA_MAGIC, FRAME_VERSION, flags, 1, int(world_size), int(rank_id),
+    version = _version_for_payload(payload_bytes)
+    values = [DELTA_MAGIC, version, flags, 1, int(world_size), int(rank_id),
               0, int(base_full_generation), int(base_delta_generation),
               int(generation), int(step), _digest(manifest_digest),
               len(descriptor), int(payload_bytes), int(payload_bytes),
               int(payload_crc), _crc32(descriptor), 0]
-    header = bytearray(_HEADER.pack(*values))
+    header_struct = _header(version, payload_bytes)
+    header = bytearray(header_struct.pack(*values))
     values[-1] = _crc32(bytes(header))
-    header = _HEADER.pack(*values)
+    header = header_struct.pack(*values)
     return header + bytes(FRAME_HEADER_SIZE - len(header)) + descriptor
 
 
@@ -95,12 +117,14 @@ def unpack_r0_frame_prefix(prefix: bytes) -> dict:
     prefix = bytes(prefix)
     if len(prefix) < FRAME_HEADER_SIZE or len(prefix) < _HEADER.size:
         raise ValueError("frame prefix is shorter than the v4 header")
-    values = list(_HEADER.unpack_from(prefix))
+    version = struct.unpack_from("<H", prefix, 4)[0]
+    header_struct = _header(version, 0)
+    values = list(header_struct.unpack_from(prefix))
     (magic, version, flags, schema, world_size, rank_id, strategy,
      base_full, base_delta, generation, step, digest, descriptor_bytes,
      payload_bytes, logical_bytes, payload_crc, descriptor_crc,
      header_crc) = values
-    if magic != DELTA_MAGIC or version != FRAME_VERSION:
+    if magic != DELTA_MAGIC or version not in (FRAME_VERSION, FRAME_VERSION_LARGE):
         raise ValueError("invalid v4 frame magic/version")
     if schema != 1 or strategy != 0 or world_size <= 0 or rank_id >= world_size:
         raise ValueError("unsupported v4 prefix identity")
@@ -112,7 +136,7 @@ def unpack_r0_frame_prefix(prefix: bytes) -> dict:
     if end != len(prefix) or logical_bytes != payload_bytes:
         raise ValueError("v4 prefix length mismatch")
     values[-1] = 0
-    if _crc32(_HEADER.pack(*values)) != header_crc:
+    if _crc32(header_struct.pack(*values)) != header_crc:
         raise ValueError("v4 header CRC mismatch")
     descriptor = prefix[FRAME_HEADER_SIZE:end]
     if _crc32(descriptor) != descriptor_crc:
@@ -187,15 +211,17 @@ def pack_r0_frame(step: int, generation: int, base_full_generation: int,
     descriptor_crc = _crc32(descriptor)
     payload_crc = _crc32(payload)
     flags = FRAME_FLAGS_REPLACEMENT | (FRAME_FLAGS_CONTROLS if controls else 0)
-    values = [DELTA_MAGIC, FRAME_VERSION, flags, 1, int(world_size), int(rank_id),
+    version = _version_for_payload(logical_bytes)
+    values = [DELTA_MAGIC, version, flags, 1, int(world_size), int(rank_id),
               0, int(base_full_generation), int(base_delta_generation),
               int(generation), int(step), _digest(manifest_digest),
               len(descriptor), len(payload), logical_bytes, payload_crc,
               descriptor_crc, 0]
-    header = bytearray(_HEADER.pack(*values))
+    header_struct = _header(version, logical_bytes)
+    header = bytearray(header_struct.pack(*values))
     header_crc = _crc32(bytes(header))
     values[-1] = header_crc
-    header = _HEADER.pack(*values)
+    header = header_struct.pack(*values)
     return header + bytes(FRAME_HEADER_SIZE - len(header)) + descriptor + bytes(payload)
 
 
@@ -204,12 +230,14 @@ def unpack_r0_frame(frame: bytes) -> dict:
     frame = bytes(frame)
     if len(frame) < FRAME_HEADER_SIZE or len(frame) < _HEADER.size:
         raise ValueError("frame is shorter than the v4 header")
-    values = list(_HEADER.unpack_from(frame))
+    version = struct.unpack_from("<H", frame, 4)[0]
+    header_struct = _header(version, 0)
+    values = list(header_struct.unpack_from(frame))
     (magic, version, flags, schema, world_size, rank_id, strategy,
      base_full, base_delta, generation, step, digest, descriptor_bytes,
      payload_bytes, logical_bytes, payload_crc, descriptor_crc,
      header_crc) = values
-    if magic != DELTA_MAGIC or version != FRAME_VERSION:
+    if magic != DELTA_MAGIC or version not in (FRAME_VERSION, FRAME_VERSION_LARGE):
         raise ValueError("invalid v4 frame magic/version")
     if schema != 1 or strategy != 0:
         raise ValueError("unsupported v4 schema or strategy")
@@ -225,7 +253,7 @@ def unpack_r0_frame(frame: bytes) -> dict:
     if end != len(frame) or logical_bytes != payload_bytes:
         raise ValueError("v4 frame length mismatch")
     values[-1] = 0
-    if _crc32(_HEADER.pack(*values)) != header_crc:
+    if _crc32(header_struct.pack(*values)) != header_crc:
         raise ValueError("v4 header CRC mismatch")
     descriptor = frame[FRAME_HEADER_SIZE:FRAME_HEADER_SIZE + descriptor_bytes]
     payload = frame[FRAME_HEADER_SIZE + descriptor_bytes:end]
@@ -281,5 +309,5 @@ def unpack_r0_frame(frame: bytes) -> dict:
     }
 
 
-__all__ = ["FRAME_VERSION", "pack_r0_frame", "unpack_r0_frame",
+__all__ = ["FRAME_VERSION", "FRAME_VERSION_LARGE", "pack_r0_frame", "unpack_r0_frame",
            "pack_r0_frame_prefix", "unpack_r0_frame_prefix"]

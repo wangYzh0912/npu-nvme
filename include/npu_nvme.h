@@ -148,6 +148,15 @@ int npu_nvme_set_io_timeout_ms(NPUNVMEContext *ctx, uint32_t timeout_ms);
 /** @brief Return the configured blocking I/O timeout in milliseconds. */
 uint32_t npu_nvme_get_io_timeout_ms(NPUNVMEContext *ctx);
 
+/**
+ * @brief Wait until all queued and in-flight Reactor requests are quiescent.
+ *
+ * This is required after a blocking API returns a timeout and before the
+ * caller releases any HBM buffer or ACL context referenced by that request.
+ * @return 0 when no request remains, -ETIMEDOUT when the bound expires.
+ */
+int npu_nvme_wait_quiescent(NPUNVMEContext *ctx, uint32_t timeout_ms);
+
 /* Delta frame I/O: migrated to Python side via build_chunks_host +
  * write_batch_host / read_batch.  The SPSC ring-buffer pipeline handles
  * arbitrary frame sizes without the 64 MB sync_meta_io limitation. */

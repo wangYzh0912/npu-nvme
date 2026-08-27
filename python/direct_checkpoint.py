@@ -522,6 +522,14 @@ class DirectCheckpoint:
         io_error = None
         try:
             self.wait_for_io_completion()
+            if self.ctx and hasattr(lib, "npu_nvme_wait_quiescent"):
+                # A timed-out public batch call can leave a detached request
+                # owned by the Reactor.  Do not release ACL context/HBM until
+                # that request has reached a terminal state.
+                rc = lib.npu_nvme_wait_quiescent(self.ctx, 600000)
+                if rc != 0:
+                    raise RuntimeError(
+                        f"Reactor did not become quiescent (rc={rc})")
         except RuntimeError as error:
             io_error = error
         finally:

@@ -1105,3 +1105,31 @@ HBM 与回读 hash 一致、2317 个状态数组均 finite。slot wait 均值约
 在上述门禁完成前，正式结论限定为“真实 HBM snapshot、裸盘 frame recovery、S2 CPU
 oracle、短链真实训练和 13B 多卡入口分别通过”；不得外推为完整异步检查点、完整多
 rank checkpoint 或增量写入收益。
+
+### 9.23 R0 真实训练端到端重跑与时延记录（2026-08-27）
+
+为验证 R0 修复后的真实模型路径，在 83:00.0、单卡 NPU6、`ms_2.5` 环境执行了
+GPT-2 XL（`seq_len=129`）的 `FULL + R0 Delta` 单步实验。此前两次失败分别由 C 侧
+FULL 默认 60 s 超时未随 Python 参数同步，以及 v4 frame 的 32-bit payload 字段无法
+表示超过 4 GiB 的 frame 引起；本轮在 FULL 提交前设置 C 侧 900 s 超时，并引入 v5
+64-bit frame header 后重跑通过。
+
+| 阶段 | 结果 |
+|---|---:|
+| FULL 持久化 | 149829.1 ms，约 9.37 GiB，终端报告约 72.07 MB/s |
+| 参考状态初始化 | 43269.4 ms，2318 fields、10553 blocks |
+| 训练步（不含 R0） | 321.3 ms，loss=10.954421 |
+| R0 capture + Delta 持久化 | 880295.9 ms，7426 blocks，frame=6913658880 B |
+| 完整 step wall time | 880617.2 ms |
+| HBM 批处理/ACK | 59 个 batch 事件无错误，metadata 持久化和 ACK 均完成 |
+
+证据为 `experiments/output/r0-repair/gpt2xl-r0-1-final.json`；实现入口为
+`experiments/benchmarks/r0_real_e2e.py`。该结果证明当前 R0 在 GPT-2 XL 上可以完成
+真实训练后的 HBM 捕获、超过 4 GiB 的自描述 replacement frame 组装、83:00.0 写入和
+ACK 闭环；不证明恢复端已完成 NPU 真实模型加载，也不证明增量收益。以本次单步为例，
+Delta frame 约为 FULL 逻辑规模的 73.8%，R0 使训练步从 321.3 ms 增至约 880.6 s，
+当前方案明显不满足“稳定 step 开销不高于 10%”门槛，应优先转向写入间隔、后台异步
+流水或 R1/R2 候选筛选，而不是直接扩大 R0 的逐步 checkpoint 频率。
+
+本轮代码回归为 `57 passed`；本轮仍未关闭 I3 图输出到 frame buffer、I4 完整 NPU
+跨进程 replay、I5 非对齐/尾块矩阵和 I7 长链后台 I/O 门禁。

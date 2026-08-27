@@ -6,7 +6,8 @@ import numpy as np
 sys.path.insert(0, "python")
 from incremental_frame import (pack_r0_frame, unpack_r0_frame,
                                pack_r0_frame_prefix,
-                               unpack_r0_frame_prefix)  # noqa: E402
+                               unpack_r0_frame_prefix,
+                               FRAME_VERSION_LARGE)  # noqa: E402
 
 
 class IncrementalFrameTests(unittest.TestCase):
@@ -52,6 +53,35 @@ class IncrementalFrameTests(unittest.TestCase):
         info = unpack_r0_frame_prefix(prefix)
         self.assertEqual(len(info["blocks"]), 300)
         self.assertGreater(info["descriptor_bytes"], 4096)
+
+    def test_descriptor_reservation_keeps_prefix_size_stable(self):
+        blocks = [{
+            "kind": "block", "name": "model/x", "state_index": 0,
+            "block_index": 0, "element_offset": 0, "element_count": 4,
+            "dtype": "float16", "encoding": "raw", "payload_offset": 0,
+            "payload_bytes": 8, "crc32": 0xFFFFFFFF,
+        }]
+        reserved = len(pack_r0_frame_prefix(
+            1, 2, 1, 0, "44" * 32, blocks, [], 8, 0)) - 4096
+        actual = [dict(blocks[0], crc32=1)]
+        prefix = pack_r0_frame_prefix(
+            1, 2, 1, 0, "44" * 32, actual, [], 8, 0,
+            descriptor_bytes=reserved)
+        self.assertEqual(len(prefix) - 4096, reserved)
+        self.assertEqual(unpack_r0_frame_prefix(prefix)["descriptor_bytes"], reserved)
+
+    def test_invalid_descriptor_reservation_is_rejected(self):
+        with self.assertRaises(ValueError):
+            pack_r0_frame_prefix(1, 2, 1, 0, "55" * 32, [], [], 0, 0,
+                                 descriptor_bytes=4097)
+
+    def test_large_payload_uses_64bit_length_header(self):
+        payload_bytes = 0x100000000 + 4096
+        prefix = pack_r0_frame_prefix(
+            1, 2, 1, 0, "66" * 32, [], [], payload_bytes, 0)
+        info = unpack_r0_frame_prefix(prefix)
+        self.assertEqual(info["version"], FRAME_VERSION_LARGE)
+        self.assertEqual(info["payload_bytes"], payload_bytes)
 
 
 if __name__ == "__main__":

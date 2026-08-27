@@ -12,6 +12,7 @@ import binascii
 import ctypes
 import json
 import math
+import time
 from typing import Mapping
 
 import numpy as np
@@ -110,7 +111,8 @@ class R0NpuWriter:
     """Capture changed HBM blocks, persist a frame, metadata, then ACK."""
 
     def __init__(self, checkpoint, state, full_generation: int,
-                 slot_count: int = None, slot_size_mb: int = None):
+                 slot_count: int = None, slot_size_mb: int = None,
+                 batch_blocks: int = 128, event_sink=None):
         self.checkpoint = checkpoint
         self.state = state
         self.full_generation = int(full_generation)
@@ -119,6 +121,15 @@ class R0NpuWriter:
         if slot_size_mb is None:
             slot_size_mb = checkpoint.layout.delta_slot_bytes // 1024**2
         checkpoint.delta_init(slot_size_mb=slot_size_mb, slot_count=slot_count)
+        if int(batch_blocks) <= 0:
+            raise ValueError("batch_blocks must be positive")
+        self.batch_blocks = int(batch_blocks)
+        self.event_sink = event_sink
+
+    def _emit(self, event, **values):
+        if self.event_sink is not None:
+            self.event_sink({"event": event, "monotonic_ns": time.monotonic_ns(),
+                             **values})
 
     @property
     def manifest_digest(self):
@@ -127,29 +138,40 @@ class R0NpuWriter:
     def _write_device_records(self, records, slot_offset, descriptor_bytes):
         if not records:
             return
-        params = [{
-            "ptr": int(record["pointer"]),
-            "size": int(record["payload_bytes"]),
-            "offset": int(slot_offset + 4096 + descriptor_bytes +
-                           record["payload_offset"]),
-            "name": record["name"],
-        } for record in records]
-        chunks, _ = build_chunks(params, self.checkpoint.chunk_size)
-        ptrs, offsets, sizes = build_ctypes_arrays(chunks)
         if not hasattr(lib, "npu_nvme_write_batch_crc"):
             raise RuntimeError("C library lacks npu_nvme_write_batch_crc")
-        crc_values = (ctypes.c_uint32 * len(chunks))()
-        rc = lib.npu_nvme_write_batch_crc(
-            self.checkpoint.ctx, ptrs, offsets, sizes, crc_values, len(chunks))
-        if rc != 0:
-            raise RuntimeError(f"R0 HBM write failed (rc={rc})")
-        # R0's fixed block size is <= the 4 MiB transfer limit, so one record
-        # maps to one chunk.  Retain the assertion to prevent silent CRC
-        # ambiguity if a future configuration violates that contract.
-        if len(chunks) != len(records):
-            raise ValueError("R0 block exceeds one DMA transfer")
-        for record, crc in zip(records, crc_values):
-            record["crc32"] = int(crc)
+        for begin in range(0, len(records), self.batch_blocks):
+            batch = records[begin:begin + self.batch_blocks]
+            self._emit("hbm_batch_begin", begin=begin,
+                       end=begin + len(batch), blocks=len(batch))
+            params = [{
+                "ptr": int(record["pointer"]),
+                "size": int(record["payload_bytes"]),
+                "offset": int(slot_offset + 4096 + descriptor_bytes +
+                               record["payload_offset"]),
+                "name": record["name"],
+            } for record in batch]
+            chunks, _ = build_chunks(params, self.checkpoint.chunk_size)
+            if len(chunks) != len(batch):
+                raise ValueError("R0 block exceeds one DMA transfer")
+            ptrs, offsets, sizes = build_ctypes_arrays(chunks)
+            crc_values = (ctypes.c_uint32 * len(chunks))()
+            rc = lib.npu_nvme_write_batch_crc(
+                self.checkpoint.ctx, ptrs, offsets, sizes, crc_values,
+                len(chunks))
+            if rc != 0:
+                self._emit("hbm_batch_error", begin=begin,
+                           end=begin + len(batch), blocks=len(batch), rc=int(rc))
+                first = batch[0]
+                last = batch[-1]
+                raise RuntimeError(
+                    "R0 HBM write failed (rc=%d, records=%d:%d, first=%s, "
+                    "last=%s)" % (rc, begin, begin + len(batch),
+                                   first["name"], last["name"]))
+            self._emit("hbm_batch_end", begin=begin,
+                       end=begin + len(batch), blocks=len(batch))
+            for record, crc in zip(batch, crc_values):
+                record["crc32"] = int(crc)
 
     def _write_host(self, raw, offset):
         raw = bytes(raw)
@@ -168,8 +190,11 @@ class R0NpuWriter:
                            base_delta_generation: int = 0):
         if not self.state.initialized:
             raise RuntimeError("R0 state has not been initialized from FULL")
+        self._emit("capture_begin", step=int(step))
         flags = self.state.capture()
         changed = self.state.changed_buffers(flags)
+        self._emit("capture_end", step=int(step), changed_blocks=len(changed),
+                   total_blocks=int(flags.size))
         slot_idx = self.checkpoint._delta_next_slot % self.checkpoint._delta_slot_count
         slot_offset = self.checkpoint.layout.delta_slot_offset(slot_idx)
         delta_generation = max(
@@ -210,26 +235,21 @@ class R0NpuWriter:
             payload_cursor += len(raw)
         payload_bytes = _align(payload_cursor)
 
-        # CRCs are obtained by the HBM DMA write.  A provisional descriptor
-        # determines the aligned descriptor area; CRC digits do not normally
-        # cross its alignment boundary, but the retry handles that edge.
+        # Reserve enough descriptor space for the maximum decimal CRC width.
+        # This lets the HBM payload be written directly to its final address
+        # exactly once; the actual CRC values cannot shrink the reserved area.
         descriptors_blocks = [dict(record) for record in block_records]
         for record in descriptors_blocks:
             record.pop("pointer", None)
+            record["crc32"] = 0xFFFFFFFF
         descriptors_controls = [{key: value for key, value in record.items()
                                  if key != "payload"}
                                 for record in control_payloads]
-        self._write_device_records(block_records, slot_offset, _align(1))
-        descriptors_blocks = [dict(record) for record in block_records]
-        for record in descriptors_blocks:
-            record.pop("pointer", None)
         prefix_probe = pack_r0_frame_prefix(
             step, delta_generation, self.full_generation,
             int(base_delta_generation), self.manifest_digest,
             descriptors_blocks, descriptors_controls, payload_bytes, 0)
         descriptor_bytes = len(prefix_probe) - 4096
-        # If the descriptor size changed after real CRC values were known,
-        # rewrite the HBM payload at its final address.
         self._write_device_records(block_records, slot_offset, descriptor_bytes)
         descriptors_blocks = [dict(record) for record in block_records]
         for record in descriptors_blocks:
@@ -239,26 +259,17 @@ class R0NpuWriter:
         prefix = pack_r0_frame_prefix(
             step, delta_generation, self.full_generation,
             int(base_delta_generation), self.manifest_digest,
-            descriptors_blocks, descriptors_controls, payload_bytes, payload_crc)
-        final_descriptor_bytes = len(prefix) - 4096
-        if final_descriptor_bytes != descriptor_bytes:
-            self._write_device_records(block_records, slot_offset,
-                                       final_descriptor_bytes)
-            descriptors_blocks = [dict(record) for record in block_records]
-            for record in descriptors_blocks:
-                record.pop("pointer", None)
-            payload_crc = _combine_records(
-                descriptors_blocks + descriptors_controls, payload_bytes)
-            prefix = pack_r0_frame_prefix(
-                step, delta_generation, self.full_generation,
-                int(base_delta_generation), self.manifest_digest,
-                descriptors_blocks, descriptors_controls, payload_bytes, payload_crc)
+            descriptors_blocks, descriptors_controls, payload_bytes, payload_crc,
+            descriptor_bytes=descriptor_bytes)
 
         for record in control_payloads:
             self._write_host(record["payload"], slot_offset + 4096 +
                              len(prefix) - 4096 + record["payload_offset"])
         self._write_host(prefix, slot_offset)
         self.checkpoint.flush_nvme()
+        self._emit("payload_metadata_persisted", step=int(step),
+                   generation=int(delta_generation), blocks=len(descriptors_blocks),
+                   payload_bytes=int(payload_bytes), frame_bytes=len(prefix) + payload_bytes)
 
         key = f"step_{int(step)}"
         for old_key, old_record in list(
@@ -283,6 +294,7 @@ class R0NpuWriter:
         self.checkpoint._persist_metadata(self.checkpoint.metadata_generation + 1)
         self.checkpoint._delta_next_slot += 1
         self.state.commit_ack()
+        self._emit("ack_complete", step=int(step), generation=int(delta_generation))
         return self.checkpoint.meta_dict["delta_chain"][key]
 
 
@@ -338,12 +350,18 @@ class R0NpuReader:
                 "name": name,
             })
         if dev_params:
-            chunks, _ = build_chunks(dev_params, self.checkpoint.chunk_size)
-            ptrs, offsets, sizes = build_ctypes_arrays(chunks)
-            rc = lib.npu_nvme_read_batch(
-                self.checkpoint.ctx, ptrs, offsets, sizes, len(chunks))
-            if rc != 0:
-                raise RuntimeError(f"R0 HBM replay failed (rc={rc})")
+            for begin in range(0, len(dev_params), 128):
+                batch = dev_params[begin:begin + 128]
+                chunks, _ = build_chunks(batch, self.checkpoint.chunk_size)
+                if len(chunks) != len(batch):
+                    raise ValueError("R0 replay block exceeds one DMA transfer")
+                ptrs, offsets, sizes = build_ctypes_arrays(chunks)
+                rc = lib.npu_nvme_read_batch(
+                    self.checkpoint.ctx, ptrs, offsets, sizes, len(chunks))
+                if rc != 0:
+                    raise RuntimeError(
+                        "R0 HBM replay failed (rc=%d, records=%d:%d)" %
+                        (rc, begin, begin + len(batch)))
         controls = {}
         for item in info["controls"]:
             raw = self._read_host(slot_offset + len(prefix) +

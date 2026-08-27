@@ -138,6 +138,26 @@ static int wait_request_done(NPUNVMEContext *ctx, atomic_int *done,
     return 0;
 }
 
+/* After a public data API times out, the caller must still keep its HBM/host
+ * buffers alive until the Reactor has completed the detached request. */
+static int wait_reactor_quiescent(NPUNVMEContext *ctx, uint32_t timeout_ms) {
+    if (!ctx) return -1;
+    uint64_t start = get_time_us();
+    for (;;) {
+        bool idle = ctx->write_fsm.state == WRITE_FSM_IDLE &&
+                    ctx->read_fsm.state == READ_FSM_IDLE &&
+                    ctx->meta_req == NULL &&
+                    (!ctx->write_ring || spdk_ring_count(ctx->write_ring) == 0) &&
+                    (!ctx->read_ring || spdk_ring_count(ctx->read_ring) == 0) &&
+                    (!ctx->meta_ring || spdk_ring_count(ctx->meta_ring) == 0);
+        if (idle) return 0;
+        if (timeout_ms > 0 &&
+            get_time_us() - start >= (uint64_t)timeout_ms * 1000ULL)
+            return -ETIMEDOUT;
+        usleep(1000);
+    }
+}
+
 /* ---- IO task factory ---- */
 
 /* Allocate and initialise an array of io_task_t descriptors.
@@ -402,8 +422,11 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     }
 
     /* Poll for completion (non-busy: usleep yields CPU). */
-    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+    if (wait_request_done(ctx, &req->done, &req->detached) != 0) {
+        /* Do not let the Python caller release HBM while ACL DMA is active. */
+        (void)wait_reactor_quiescent(ctx, 0);
         return -ETIMEDOUT;
+    }
 
     write_profiling_csv(ctx, tasks, num_items, PIPELINE_WRITE);
     int result = req->result;
@@ -441,8 +464,10 @@ int npu_nvme_write_batch_crc(NPUNVMEContext *ctx, void **npu_ptrs,
     if (spdk_ring_enqueue(ctx->write_ring, &obj, 1, NULL) != 1) {
         free(tasks); free(req); return -1;
     }
-    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+    if (wait_request_done(ctx, &req->done, &req->detached) != 0) {
+        (void)wait_reactor_quiescent(ctx, 0);
         return -ETIMEDOUT;
+    }
     for (int i = 0; i < num_items; ++i)
         crc32_out[i] = req->tasks[i].crc32;
     int result = req->result;
@@ -485,8 +510,10 @@ int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
         free(tasks); free(req); return -1;
     }
 
-    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+    if (wait_request_done(ctx, &req->done, &req->detached) != 0) {
+        (void)wait_reactor_quiescent(ctx, 0);
         return -ETIMEDOUT;
+    }
     /* Host writes skip profiling (no meaningful NPU timestamps). */
     int result = req->result;
     free(tasks);
@@ -527,8 +554,10 @@ int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
         free(tasks); free(req); return -1;
     }
 
-    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+    if (wait_request_done(ctx, &req->done, &req->detached) != 0) {
+        (void)wait_reactor_quiescent(ctx, 0);
         return -ETIMEDOUT;
+    }
 
     write_profiling_csv(ctx, tasks, num_items, PIPELINE_READ);
     int result = req->result;
@@ -570,8 +599,10 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
         free(tasks); free(req); return -1;
     }
 
-    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+    if (wait_request_done(ctx, &req->done, &req->detached) != 0) {
+        (void)wait_reactor_quiescent(ctx, 0);
         return -ETIMEDOUT;
+    }
     /* Host reads skip profiling. */
     int result = req->result;
     free(tasks);
@@ -610,6 +641,10 @@ int npu_nvme_set_io_timeout_ms(NPUNVMEContext *ctx, uint32_t timeout_ms) {
 
 uint32_t npu_nvme_get_io_timeout_ms(NPUNVMEContext *ctx) {
     return ctx ? ctx->io_timeout_ms : 0;
+}
+
+int npu_nvme_wait_quiescent(NPUNVMEContext *ctx, uint32_t timeout_ms) {
+    return wait_reactor_quiescent(ctx, timeout_ms);
 }
 
 /* ---- ACL context helper ----

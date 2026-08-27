@@ -1,0 +1,61 @@
+{
+  "config": {
+    "capture_blocks": 128,
+    "ckpt_every": 1,
+    "commit_fields": 16,
+    "delta_timeout_ms": 60000,
+    "io_batch_blocks": 128,
+    "io_timeout": 900.0,
+    "mode": "capture_only",
+    "model": "gpt2",
+    "npu": 1,
+    "output": "experiments/output/r0-repair/gpt2-capture-3.json",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 8,
+    "seed": 17,
+    "seq_len": 129,
+    "shm_id": 2301,
+    "slot_size_gb": 10,
+    "steps": 3
+  },
+  "events": [
+    {
+      "blocks": 1241,
+      "elapsed_ms": 10096.466159,
+      "event": "r0_reference_initialized",
+      "fields": 590
+    }
+  ],
+  "mode": "capture_only",
+  "model": "gpt2",
+  "npu": 1,
+  "pci": "0000:83:00.0",
+  "seed": 17,
+  "status": "PASS",
+  "steps": [
+    {
+      "changed_blocks": 1240,
+      "loss": 10.850339889526367,
+      "r0_capture_ms": 114195.469482,
+      "step": 1,
+      "step_wall_ms": 114253.44616,
+      "training_ms_before_r0": 57.976678
+    },
+    {
+      "changed_blocks": 1240,
+      "loss": 10.815021514892578,
+      "r0_capture_ms": 339.620322,
+      "step": 2,
+      "step_wall_ms": 393.370912,
+      "training_ms_before_r0": 53.75059
+    },
+    {
+      "changed_blocks": 1240,
+      "loss": 10.892906188964844,
+      "r0_capture_ms": 322.126938,
+      "step": 3,
+      "step_wall_ms": 366.665508,
+      "training_ms_before_r0": 44.53857
+    }
+  ]
+}

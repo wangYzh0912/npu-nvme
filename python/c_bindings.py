@@ -153,6 +153,9 @@ try:
         lib.npu_nvme_set_io_timeout_ms.restype = ctypes.c_int
         lib.npu_nvme_get_io_timeout_ms.argtypes = [ctypes.c_void_p]
         lib.npu_nvme_get_io_timeout_ms.restype = ctypes.c_uint32
+    if hasattr(lib, "npu_nvme_wait_quiescent"):
+        lib.npu_nvme_wait_quiescent.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+        lib.npu_nvme_wait_quiescent.restype = ctypes.c_int
 
 except OSError as e:
     print(f"[Warning] Failed to load {_LIB_PATH}. Error: {e}")

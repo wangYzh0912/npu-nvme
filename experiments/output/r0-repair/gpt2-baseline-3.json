@@ -1,0 +1,48 @@
+{
+  "config": {
+    "capture_blocks": 128,
+    "ckpt_every": 1,
+    "commit_fields": 16,
+    "delta_timeout_ms": 60000,
+    "io_batch_blocks": 128,
+    "io_timeout": 900.0,
+    "mode": "baseline",
+    "model": "gpt2",
+    "npu": 0,
+    "output": "experiments/output/r0-repair/gpt2-baseline-3.json",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 8,
+    "seed": 17,
+    "seq_len": 129,
+    "shm_id": 2301,
+    "slot_size_gb": 10,
+    "steps": 3
+  },
+  "events": [],
+  "mode": "baseline",
+  "model": "gpt2",
+  "npu": 0,
+  "pci": "0000:83:00.0",
+  "seed": 17,
+  "status": "PASS",
+  "steps": [
+    {
+      "loss": 10.850339889526367,
+      "step": 1,
+      "step_wall_ms": 44.297709,
+      "training_ms_before_r0": 44.297709
+    },
+    {
+      "loss": 10.815021514892578,
+      "step": 2,
+      "step_wall_ms": 42.640563,
+      "training_ms_before_r0": 42.640563
+    },
+    {
+      "loss": 10.892906188964844,
+      "step": 3,
+      "step_wall_ms": 42.008949,
+      "training_ms_before_r0": 42.008949
+    }
+  ]
+}

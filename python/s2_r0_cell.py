@@ -79,7 +79,7 @@ class R0NpuState:
     """Complete R0 state capture with HBM reference and ACK commit cells."""
 
     def __init__(self, components, block_size=524288, small_threshold=10000,
-                 shard_fields=64):
+                 shard_fields=16, capture_blocks=128):
         self.manifest = build_training_state_manifest(
             components, block_size=block_size, small_threshold=small_threshold)
         self.fields = self.manifest.fields
@@ -93,17 +93,33 @@ class R0NpuState:
 
         self.capture_cells = []
         self.commit_cells = []
+        capture_group = []
+        capture_count = 0
+        for field in self.fields:
+            for begin in range(0, len(field.blocks), int(capture_blocks)):
+                blocks = field.blocks[begin:begin + int(capture_blocks)]
+                if capture_group and capture_count + len(blocks) > int(capture_blocks):
+                    self.capture_cells.append(self._make_capture_cell(capture_group))
+                    capture_group = []
+                    capture_count = 0
+                capture_group.append((field, blocks))
+                capture_count += len(blocks)
+        if capture_group:
+            self.capture_cells.append(self._make_capture_cell(capture_group))
+
         for begin in range(0, len(self.fields), int(shard_fields)):
             end = min(begin + int(shard_fields), len(self.fields))
             fields = self.fields[begin:end]
-            self.capture_cells.append(_CaptureShard(
-                [self.current[field.canonical_name] for field in fields],
-                self.persisted[begin:end],
-                [field.blocks for field in fields]))
             self.commit_cells.append(_CommitShard(
                 [self.current[field.canonical_name] for field in fields],
                 self.persisted[begin:end]))
         self.initialized = False
+
+    def _make_capture_cell(self, group):
+        return _CaptureShard(
+            [self.current[field.canonical_name] for field, _ in group],
+            [self.persisted[field.state_index] for field, _ in group],
+            [blocks for _, blocks in group])
 
     @staticmethod
     def _collect_current(components):
@@ -122,8 +138,6 @@ class R0NpuState:
 
     def initialize(self):
         """Capture and commit the FULL state as persisted reference."""
-        for cell in self.capture_cells:
-            cell()
         for cell in self.commit_cells:
             cell()
         if hasattr(ms.hal, "synchronize"):
@@ -154,19 +168,38 @@ class R0NpuState:
             raise ValueError("changed bitmap length does not match manifest")
         from direct_checkpoint import get_dev_ptr
         buffers = []
+        base_ptrs = {}
+        total_bytes = {}
+        for field in self.fields:
+            name = field.canonical_name
+            base = int(get_dev_ptr(self.current[name]) or 0)
+            if base <= 0:
+                raise RuntimeError(f"current parameter has no HBM pointer: {name}")
+            itemsize = np.dtype(field.dtype).itemsize
+            elements = int(np.prod(field.shape, dtype=np.int64))
+            base_ptrs[name] = base
+            total_bytes[name] = elements * itemsize
         for flag, block, field in zip(flags, all_blocks,
                                        [field for field in self.fields
                                         for _ in field.blocks]):
             if not flag:
                 continue
-            pointer = get_dev_ptr(self.current[field.canonical_name])
-            if not pointer:
-                raise RuntimeError(f"current parameter has no HBM pointer: {field.canonical_name}")
+            name = field.canonical_name
             itemsize = np.dtype(field.dtype).itemsize
+            offset_bytes = int(block.element_offset) * itemsize
+            size_bytes = int(block.element_count) * itemsize
+            if (block.element_offset < 0 or block.element_count < 0 or
+                    offset_bytes < 0 or offset_bytes + size_bytes > total_bytes[name]):
+                raise ValueError(f"R0 block exceeds parameter bounds: {name}/"
+                                 f"{block.block_index}")
+            pointer = base_ptrs[name] + offset_bytes
+            if pointer <= 0 or pointer + size_bytes <= pointer:
+                raise ValueError(f"R0 HBM pointer overflow: {name}/"
+                                 f"{block.block_index}")
             buffers.append(R0BlockBuffer(
                 field.state_index, block.block_index, field.canonical_name,
                 block.element_offset, block.element_count, field.dtype,
-                pointer + block.element_offset * itemsize))
+                pointer))
         return buffers
 
 
