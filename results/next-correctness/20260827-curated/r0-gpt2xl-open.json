@@ -1,0 +1,20 @@
+{
+  "status": "OPEN",
+  "model": "gpt2_xl",
+  "seed": 17,
+  "device": "0000:83:00.0",
+  "full": {
+    "status": "PASS",
+    "state_bytes": 9839827208,
+    "written_mib": 9367.58,
+    "spdk_seconds": 126.94,
+    "io_timeout_ms": 300000
+  },
+  "r0_graph": {
+    "fields": 2318,
+    "blocks": 10553,
+    "status": "not_closed",
+    "failure": "Ascend devmm Incorrect address during large R0 graph initialization/capture; process exited before Delta metadata commit"
+  },
+  "next_action": "Reduce graph compilation/pointer fanout while preserving 524288-element R0 block semantics, then rerun fresh XL capture/replay."
+}

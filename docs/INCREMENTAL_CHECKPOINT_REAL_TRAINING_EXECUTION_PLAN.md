@@ -272,6 +272,11 @@ restart 基线包络；至少 100 Delta、两次回绕和 10 类故障全部通�
 10 steps 续训。一次 step79 后的进程中断已通过 FULL80 resume 处理。G5 总出口仍未完成：
 十类注入故障、连续训练/FULL restart 包络比较以及 GPT-2 XL 三 seeds 尚待执行。
 
+XL feasibility update：GPT-2 XL FULL 已在提高 I/O timeout 至 300 s 后成功写入
+9,839,827,208 bytes；但 2318 fields/10553 blocks 的 R0 图在初始化/捕获阶段出现
+Ascend `devmm Incorrect address` 并退出，尚未提交 XL Delta。XL 必须先完成图规模和
+HBM pointer fanout 优化，再重跑三 seeds，不能将该 FULL 结果当作 R0 闭环结果。
+
 ### G6：S2-R1/R2 真实轨迹候选筛选
 
 先在 G1 冻结轨迹上做 CPU 扫描，避免 NPU 参数笛卡尔积：
