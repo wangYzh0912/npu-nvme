@@ -56,6 +56,19 @@ class DiskLayoutTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "CRC"):
             unpack_metadata(corrupted)
 
+    def test_large_metadata_is_compressed_and_round_trips(self):
+        payload = {"checkpoints": {"step_10": {"params": {
+            f"model/layer_{index:04d}/weight": {
+                "offset": index * 4096, "size": 4096,
+                "shape": [1024], "dtype": "float32",
+                "sha256": "a" * 64,
+        } for index in range(3000)}}}}
+        raw = pack_metadata(payload, 7)
+        self.assertEqual(len(raw), META_SLOT_BYTES)
+        generation, restored = unpack_metadata(raw)
+        self.assertEqual(generation, 7)
+        self.assertEqual(restored, payload)
+
     def test_superblock_crc_rejection(self):
         layout = make_layout(
             total_bytes=256 * 1024 * 1024,

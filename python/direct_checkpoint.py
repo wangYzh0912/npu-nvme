@@ -318,8 +318,11 @@ class DirectCheckpoint:
                 "offset": p["offset"], "size": p["size"],
                 "shape": p["shape"], "dtype": p["dtype"],
             }
-            for field in ("category", "component", "source_name", "codec",
-                          "sha256", "placement"):
+            # Keep the on-disk record compact.  The namespace in the key
+            # already identifies model/optimizer/control and source_name is
+            # the suffix after the first slash; placement is known from the
+            # target object at load time.
+            for field in ("sha256", "codec"):
                 if field in p:
                     record[field] = p[field]
             param_records[p["name"]] = record
@@ -1245,8 +1248,8 @@ class DirectCheckpoint:
 
         saved = record.get("params", {})
         saved_control_names = {
-            info.get("source_name") for info in saved.values()
-            if info.get("category") == "control"
+            name.split("/", 1)[1] for name in saved
+            if name.startswith("control/")
         }
         if saved_control_names != set(record.get("control_names", [])):
             raise ValueError("training-state control manifest mismatch")
@@ -1254,8 +1257,8 @@ class DirectCheckpoint:
             components, with_checksums=False)
         targets = {item["name"]: item for item in target_items}
         saved_parameter_names = {
-            name for name, info in saved.items()
-            if info.get("category", "parameter") == "parameter"
+            name for name in saved
+            if not name.startswith("control/")
         }
         if set(targets) != saved_parameter_names:
             missing = sorted(saved_parameter_names - set(targets))
@@ -1266,7 +1269,7 @@ class DirectCheckpoint:
 
         dev_buffers, host_buffers, control_buffers = [], [], {}
         for name, info in saved.items():
-            if info.get("category", "parameter") == "control":
+            if name.startswith("control/"):
                 if info.get("dtype") != "uint8" or info.get("size", 0) <= 0:
                     raise ValueError(f"invalid control-state record: {name}")
                 array = np.empty(int(info["size"]), dtype=np.uint8)
@@ -1327,7 +1330,7 @@ class DirectCheckpoint:
 
         controls = {}
         for qualified_name, (array, info) in control_buffers.items():
-            source_name = info.get("source_name")
+            source_name = qualified_name.split("/", 1)[1]
             if not source_name or qualified_name != f"control/{source_name}":
                 raise ValueError(f"invalid control-state namespace: {qualified_name}")
             controls[source_name] = decode_control_value(array, info)

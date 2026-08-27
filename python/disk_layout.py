@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import binascii
 import json
 import struct
+import zlib
 
 
 # -- Superblock and metadata area -------------------------------------------
@@ -21,7 +22,9 @@ META_SLOT_BYTES = 400 * 1024
 MAGIC_NUMBER = b"NPUNVME1"
 FORMAT_VERSION = 2
 METADATA_MAGIC = b"NVMETA02"
-METADATA_VERSION = 1
+METADATA_VERSION = 2
+METADATA_VERSION_LEGACY = 1
+METADATA_FLAG_ZLIB = 1
 
 # -- Miscellaneous ----------------------------------------------------------
 UINT32_BYTES = 4
@@ -184,26 +187,33 @@ def unpack_superblock(raw: bytes) -> DiskLayout:
 
 
 def pack_metadata(payload: dict, generation: int) -> bytes:
-    """Wrap JSON metadata in a generation-tagged CRC envelope."""
+    """Wrap compressed JSON metadata in a generation-tagged CRC envelope.
+
+    Version 1 metadata remains readable. Compression is required for large
+    real-model manifests, whose parameter names otherwise exceed the fixed
+    400 KiB A/B metadata slots.
+    """
     if generation < 0:
         raise ValueError("metadata generation must be non-negative")
     body = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    body_bytes = body.encode("utf-8")
+    body_bytes = zlib.compress(body.encode("utf-8"), level=6)
     if _METADATA_HEADER_SIZE + len(body_bytes) > META_SLOT_BYTES:
         raise ValueError("metadata payload exceeds metadata slot")
     crc = binascii.crc32(body_bytes) & 0xFFFFFFFF
     header = struct.pack(_METADATA_HEADER_FMT, METADATA_MAGIC,
-                         METADATA_VERSION, 0, generation, len(body_bytes),
-                         crc, 0)
+                         METADATA_VERSION, 0, generation,
+                         len(body_bytes),
+                         crc, METADATA_FLAG_ZLIB)
     return (header + body_bytes).ljust(META_SLOT_BYTES, b"\0")
 
 
 def unpack_metadata(raw: bytes):
     if len(raw) < _METADATA_HEADER_SIZE:
         raise ValueError("metadata slot is truncated")
-    magic, version, _reserved, generation, length, stored_crc, _flags = \
+    magic, version, _reserved, generation, length, stored_crc, flags = \
         struct.unpack(_METADATA_HEADER_FMT, raw[:_METADATA_HEADER_SIZE])
-    if magic != METADATA_MAGIC or version != METADATA_VERSION:
+    if magic != METADATA_MAGIC or version not in (METADATA_VERSION_LEGACY,
+                                                  METADATA_VERSION):
         raise ValueError("unsupported metadata envelope")
     end = _METADATA_HEADER_SIZE + length
     if end > len(raw):
@@ -211,4 +221,9 @@ def unpack_metadata(raw: bytes):
     body = raw[_METADATA_HEADER_SIZE:end]
     if binascii.crc32(body) & 0xFFFFFFFF != stored_crc:
         raise ValueError("metadata CRC mismatch")
+    if version == METADATA_VERSION and (flags & METADATA_FLAG_ZLIB):
+        try:
+            body = zlib.decompress(body)
+        except zlib.error as error:
+            raise ValueError("metadata zlib decompression failed") from error
     return generation, json.loads(body.decode("utf-8"))

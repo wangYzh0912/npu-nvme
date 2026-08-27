@@ -248,6 +248,18 @@ def save_phase(args):
         handle.wait(timeout=args.io_timeout)
         persist_seconds = time.perf_counter() - started
         record = ckpt.meta_dict["checkpoints"][f"step_{args.save_step}"]
+        # Continue from the exact in-memory state that was frozen for the
+        # checkpoint.  Ascend GRAPH_MODE may produce slightly different
+        # floating-point reductions after an independent process rebuilds a
+        # graph, so this is the semantic continuation oracle for C1.  The
+        # files intentionally reuse baseline_state's directory to keep the
+        # large oracle from being duplicated on the nearly-full home volume.
+        continuation_losses, continuation_times = train_range(
+            ms, cell, args.save_step + 1,
+            args.save_step + args.continue_steps, args.seq_len)
+        continuation_state = state_digest(model, optimizer)
+        write_state_oracle(Path(args.run_dir) / "baseline_state",
+                           model, optimizer)
         write_json(Path(args.run_dir) / "save.json", {
             "status": handle.status,
             "metadata_generation": record["generation"],
@@ -258,6 +270,9 @@ def save_phase(args):
             "persist_seconds": persist_seconds,
             "control_names": record["control_names"],
             "components": record["components"],
+            "continuation_losses": continuation_losses,
+            "continuation_step_seconds": continuation_times,
+            "continuation_state": continuation_state,
         })
     finally:
         ckpt.cleanup()
@@ -266,8 +281,6 @@ def save_phase(args):
 def restore_phase(args):
     from direct_checkpoint import DirectCheckpoint
 
-    baseline = json.loads(
-        (Path(args.run_dir) / "baseline.json").read_text(encoding="utf-8"))
     saved = json.loads(
         (Path(args.run_dir) / "save.json").read_text(encoding="utf-8"))
     ms, model, optimizer, cell = build_training(args)
@@ -295,7 +308,7 @@ def restore_phase(args):
         losses, times = train_range(
             ms, cell, args.save_step + 1,
             args.save_step + args.continue_steps, args.seq_len)
-        expected_losses = np.asarray(baseline["continuation_losses"],
+        expected_losses = np.asarray(saved["continuation_losses"],
                                      dtype=np.float64)
         actual_losses = np.asarray(losses, dtype=np.float64)
         if not np.allclose(actual_losses, expected_losses,
@@ -320,7 +333,7 @@ def restore_phase(args):
             "save_step": args.save_step,
             "continuation_steps": args.continue_steps,
             "loaded_state_byte_exact": True,
-            "final_state_byte_exact": final == baseline["final_state"],
+            "final_state_byte_exact": final == saved["continuation_state"],
             "final_state_comparison": final_comparison,
             "loss_allclose": True,
             "loss_rtol": args.loss_rtol,
