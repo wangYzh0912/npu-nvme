@@ -1,0 +1,52 @@
+{
+  "status": "PASS",
+  "model": "gpt2",
+  "seed": 13,
+  "device": "0000:83:00.0",
+  "npu_devices": [0, 1, 2, 3, 4, 5, 6, 7],
+  "layout": {
+    "full_slots": 3,
+    "full_slot_gib": 10,
+    "delta_slots": 32,
+    "delta_slot_gib": 10
+  },
+  "state": {
+    "fields": 590,
+    "blocks": 1241,
+    "state_bytes": 1485020168,
+    "manifest_digest": "0462e191ba77cf0d6fa97e6ff7a62ec9546fe3ebf77809bb655f2ca902220832"
+  },
+  "trajectory": {
+    "training_steps": 100,
+    "historical_r0_deltas": 100,
+    "periodic_full_steps": [1, 40, 80],
+    "ring_wraps": ">=3",
+    "frame_bytes": 1485713408,
+    "payload_bytes": 1485377536,
+    "changed_blocks_per_frame": 1240,
+    "control_records_per_frame": 3
+  },
+  "fresh_replay": {
+    "base_full_step": 80,
+    "replayed_delta_steps": [81, 103],
+    "replayed_frame_count": 23,
+    "byte_exact": true,
+    "final_state_sha256": "8211633b4e514a2dbface00c7d4ee3546a805bed33be04049bdffc99d8aa2c27",
+    "final_controls": {
+      "data_cursor": {"epoch": 0, "sample": 103},
+      "global_step": "[104]",
+      "loss_scale": "1.0"
+    }
+  },
+  "continuation": {
+    "status": "PASS",
+    "steps_after_step_100": 10,
+    "step_range": [101, 110]
+  },
+  "notes": [
+    "All HBM blocks used native dtype and were written through npu_nvme_write_batch_crc.",
+    "Each frame completed payload write, flush, metadata commit, and reference ACK before the next step.",
+    "The first 100-step driver disconnected after step 79; FULL(step80) recovery and resume were used as an explicit restart event.",
+    "The ten planned injected fault classes and three-seed GPT-2 XL G5 matrix remain open."
+  ]
+}

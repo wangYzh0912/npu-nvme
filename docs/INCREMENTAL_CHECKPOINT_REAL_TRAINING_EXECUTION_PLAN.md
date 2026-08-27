@@ -266,7 +266,11 @@ metadata A、commit 后 ACK 前、ACK 后 reference commit 前、ring 回绕和�
 restart 基线包络；至少 100 Delta、两次回绕和 10 类故障全部通过。GPT-2 先通过，
 再执行 GPT-2 XL 3 seeds。
 
-当前状态：未完成。这是项目能够宣称“真实训练增量检查点闭环”的最小出口。
+当前状态：GPT-2 单 rank correctness 子门禁已通过：100 个历史 R0 Delta、step 1/40/80
+周期 FULL、至少三次 ring 回绕；fresh NPU process 从 FULL80 回放 step81–103 后，590
+字段/1,485,020,168 bytes 状态与 source digest 字节一致，controls 恢复，且完成恢复后
+10 steps 续训。一次 step79 后的进程中断已通过 FULL80 resume 处理。G5 总出口仍未完成：
+十类注入故障、连续训练/FULL restart 包络比较以及 GPT-2 XL 三 seeds 尚待执行。
 
 ### G6：S2-R1/R2 真实轨迹候选筛选
 
