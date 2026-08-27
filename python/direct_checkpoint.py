@@ -1236,6 +1236,22 @@ class DirectCheckpoint:
         """Restore namespaced parameters and return decoded control state."""
         validate_state_names(components, {})
         selected_step, record = self._select_checkpoint_record(step)
+        if record.get("type") == "MULTI_TRAINING_STATE_FULL":
+            rank_record = record.get("ranks", {}).get(str(self.rank_id))
+            if rank_record is None:
+                raise ValueError(
+                    f"checkpoint has no shard for rank {self.rank_id}")
+            # Coordinator metadata carries the global commit fields at the
+            # outer level and a normal TRAINING_STATE_FULL-shaped manifest in
+            # each rank record.  Keep all subsequent validation and DMA code
+            # shared with the single-rank path.
+            record = {
+                **rank_record,
+                "type": "TRAINING_STATE_FULL",
+                "schema_version": record.get("schema_version"),
+                "state_step": record.get("state_step"),
+                "chunk_size": record.get("chunk_size", self.chunk_size),
+            }
         if record.get("type") != "TRAINING_STATE_FULL":
             raise ValueError(
                 f"step {selected_step} is not a complete training-state checkpoint")
@@ -1280,7 +1296,17 @@ class DirectCheckpoint:
                 continue
 
             target = targets[name]
-            if (list(info.get("shape", [])) != list(target["shape"]) or
+            saved_shape = list(info.get("shape", []))
+            target_shape = list(target["shape"])
+            # MindSpore may materialize scalar optimizer hyperparameters as
+            # either [] or [1] in fresh processes.  They are byte-compatible
+            # when dtype and payload size agree; keep strict shape checks for
+            # all non-singleton tensors.
+            singleton_shape = (
+                int(info.get("size", -1)) == int(target["size"]) and
+                np.prod(saved_shape or [1]) == 1 and
+                np.prod(target_shape or [1]) == 1)
+            if ((saved_shape != target_shape and not singleton_shape) or
                     np.dtype(info.get("dtype")) != np.dtype(target["dtype"]) or
                     int(info.get("size", -1)) != int(target["size"])):
                 raise ValueError(f"shape/dtype/size mismatch for {name}")

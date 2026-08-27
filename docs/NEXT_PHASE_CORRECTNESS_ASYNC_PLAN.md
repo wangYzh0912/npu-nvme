@@ -75,6 +75,22 @@ loss scale、RNG 和游标必须逐项一致。续训逐 step 比较 loss、数�
 退出。任何 rank 失败都不得暴露半成品，上一 generation 必须仍可恢复。
 该 host/Unix-socket 转发路径仅用于正确性，不作为最终性能结果。
 
+#### C2 当前执行记录（2026-08-27）
+
+已完成 correctness-first 的两 rank 版本：GPT-2 小模型、rank 0/1 各运行
+真实 MindFormers 训练 cell 与 Adam，保存完整 model/optimizer/control state；
+rank 通过 Unix socket 将 manifest 和 4 MiB 分片发送给单一 coordinator，
+coordinator 在 `0000:83:00.0` 上完成校验、分片写入和一次全局 metadata commit。
+两个 fresh restore 进程随后分别加载自己的 shard，并完成 1 个 continuation
+step；两 rank 的 loss 均为 `10.875582695007324`，与保存进程 continuation
+完全一致，结果为 C2 PASS。
+
+本轮同时修复了两个问题：SPDK shared-memory primary 约束导致的并发 restore
+冲突改为串行 restore；MindSpore fresh process 对单元素 optimizer 参数可能
+产生 `[]`/`[1]` 形状差异，加入仅限单元素且 dtype/size 一致的兼容规则。
+本实现是两真实进程的多 rank 状态提交/恢复验证，尚未启用 HCCL 梯度同步，
+因此不能替代 C3 的四卡实际分布式训练和故障矩阵。
+
 ### C3：四卡与 13B 规模门禁
 
 先用四卡 GPT2-XL 完成正常恢复及两卡相同的故障矩阵。通过后运行四卡
