@@ -26,7 +26,6 @@ FRAME_FLAGS_REPLACEMENT = 1
 FRAME_FLAGS_CONTROLS = 2
 _HEADER = struct.Struct("<IHHIIIIQQQQ32sIIIIII")
 _HEADER_CRC_OFFSET = _HEADER.size - 4
-_MAX_DESCRIPTOR_BYTES = FRAME_HEADER_SIZE - _HEADER.size
 
 
 def _crc32(value: bytes) -> int:
@@ -46,6 +45,94 @@ def _raw_value(value, dtype):
     np_dtype = np.dtype(dtype).newbyteorder("<")
     array = np.ascontiguousarray(np.asarray(value, dtype=np_dtype).reshape(-1))
     return array, array.tobytes()
+
+
+def _descriptor_bytes(blocks, controls, pad=True):
+    raw = json.dumps({"blocks": list(blocks), "controls": list(controls)},
+                     sort_keys=True, separators=(",", ":"),
+                     ensure_ascii=True).encode("utf-8")
+    if pad:
+        raw = raw.ljust(((len(raw) + FRAME_HEADER_SIZE - 1) //
+                         FRAME_HEADER_SIZE) * FRAME_HEADER_SIZE, b" ")
+    return raw
+
+
+def pack_r0_frame_prefix(step: int, generation: int,
+                         base_full_generation: int,
+                         base_delta_generation: int, manifest_digest: str,
+                         blocks, controls, payload_bytes: int,
+                         payload_crc: int, world_size: int = 1,
+                         rank_id: int = 0) -> bytes:
+    """Pack the fixed header and padded descriptor area for a DMA frame.
+
+    The payload is intentionally supplied separately so HBM buffers can be
+    written directly to their final NVMe offsets without a host-sized frame
+    allocation.
+    """
+    if step < 0 or generation <= 0 or base_full_generation < 0:
+        raise ValueError("invalid frame identity")
+    if base_delta_generation < 0 or generation <= base_delta_generation:
+        raise ValueError("generation must follow base_delta_generation")
+    if payload_bytes < 0 or not 0 <= int(payload_crc) <= 0xFFFFFFFF:
+        raise ValueError("invalid payload size or CRC")
+    if world_size <= 0 or rank_id < 0 or rank_id >= world_size:
+        raise ValueError("invalid rank identity")
+    descriptor = _descriptor_bytes(blocks, controls, pad=True)
+    flags = FRAME_FLAGS_REPLACEMENT | (FRAME_FLAGS_CONTROLS if controls else 0)
+    values = [DELTA_MAGIC, FRAME_VERSION, flags, 1, int(world_size), int(rank_id),
+              0, int(base_full_generation), int(base_delta_generation),
+              int(generation), int(step), _digest(manifest_digest),
+              len(descriptor), int(payload_bytes), int(payload_bytes),
+              int(payload_crc), _crc32(descriptor), 0]
+    header = bytearray(_HEADER.pack(*values))
+    values[-1] = _crc32(bytes(header))
+    header = _HEADER.pack(*values)
+    return header + bytes(FRAME_HEADER_SIZE - len(header)) + descriptor
+
+
+def unpack_r0_frame_prefix(prefix: bytes) -> dict:
+    """Validate a header plus descriptor area, without reading the payload."""
+    prefix = bytes(prefix)
+    if len(prefix) < FRAME_HEADER_SIZE or len(prefix) < _HEADER.size:
+        raise ValueError("frame prefix is shorter than the v4 header")
+    values = list(_HEADER.unpack_from(prefix))
+    (magic, version, flags, schema, world_size, rank_id, strategy,
+     base_full, base_delta, generation, step, digest, descriptor_bytes,
+     payload_bytes, logical_bytes, payload_crc, descriptor_crc,
+     header_crc) = values
+    if magic != DELTA_MAGIC or version != FRAME_VERSION:
+        raise ValueError("invalid v4 frame magic/version")
+    if schema != 1 or strategy != 0 or world_size <= 0 or rank_id >= world_size:
+        raise ValueError("unsupported v4 prefix identity")
+    if generation <= base_delta or generation <= 0:
+        raise ValueError("invalid v4 generation lineage")
+    if descriptor_bytes < FRAME_HEADER_SIZE or descriptor_bytes % FRAME_HEADER_SIZE:
+        raise ValueError("v4 descriptor area is not aligned")
+    end = FRAME_HEADER_SIZE + descriptor_bytes
+    if end != len(prefix) or logical_bytes != payload_bytes:
+        raise ValueError("v4 prefix length mismatch")
+    values[-1] = 0
+    if _crc32(_HEADER.pack(*values)) != header_crc:
+        raise ValueError("v4 header CRC mismatch")
+    descriptor = prefix[FRAME_HEADER_SIZE:end]
+    if _crc32(descriptor) != descriptor_crc:
+        raise ValueError("v4 descriptor CRC mismatch")
+    try:
+        document = json.loads(descriptor.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("invalid v4 descriptor JSON") from error
+    if not isinstance(document.get("blocks", []), list) or not isinstance(
+            document.get("controls", []), list):
+        raise ValueError("invalid v4 descriptor lists")
+    return {
+        "version": version, "flags": flags, "schema_version": schema,
+        "world_size": world_size, "rank_id": rank_id,
+        "base_full_generation": base_full, "base_delta_generation": base_delta,
+        "generation": generation, "step": step,
+        "manifest_digest": digest.hex(), "descriptor_bytes": descriptor_bytes,
+        "payload_bytes": payload_bytes, "payload_crc": payload_crc,
+        "blocks": document["blocks"], "controls": document["controls"],
+    }
 
 
 def pack_r0_frame(step: int, generation: int, base_full_generation: int,
@@ -95,11 +182,7 @@ def pack_r0_frame(step: int, generation: int, base_full_generation: int,
             "crc32": _crc32(raw),
         })
 
-    descriptor = json.dumps({"blocks": blocks, "controls": controls},
-                            sort_keys=True, separators=(",", ":"),
-                            ensure_ascii=True).encode("utf-8")
-    if len(descriptor) > _MAX_DESCRIPTOR_BYTES:
-        raise ValueError("frame descriptors exceed fixed header area")
+    descriptor = _descriptor_bytes(blocks, controls, pad=True)
     logical_bytes = len(payload)
     descriptor_crc = _crc32(descriptor)
     payload_crc = _crc32(payload)
@@ -134,8 +217,10 @@ def unpack_r0_frame(frame: bytes) -> dict:
         raise ValueError("invalid v4 rank identity")
     if generation <= base_delta or generation <= 0:
         raise ValueError("invalid v4 generation lineage")
-    if descriptor_bytes > _MAX_DESCRIPTOR_BYTES:
-        raise ValueError("v4 descriptor area exceeds fixed header")
+    if descriptor_bytes < 2:
+        raise ValueError("v4 descriptor area is empty")
+    if descriptor_bytes < FRAME_HEADER_SIZE or descriptor_bytes % FRAME_HEADER_SIZE:
+        raise ValueError("v4 descriptor area is not aligned")
     end = FRAME_HEADER_SIZE + descriptor_bytes + payload_bytes
     if end != len(frame) or logical_bytes != payload_bytes:
         raise ValueError("v4 frame length mismatch")
@@ -196,4 +281,5 @@ def unpack_r0_frame(frame: bytes) -> dict:
     }
 
 
-__all__ = ["FRAME_VERSION", "pack_r0_frame", "unpack_r0_frame"]
+__all__ = ["FRAME_VERSION", "pack_r0_frame", "unpack_r0_frame",
+           "pack_r0_frame_prefix", "unpack_r0_frame_prefix"]

@@ -259,8 +259,10 @@ class DirectCheckpoint:
                 "Run format_npu_disk.py with the V2 layout to initialize the disk.") from error
         if self.layout.total_bytes != self.total_bytes:
             raise RuntimeError("superblock capacity does not match NVMe capacity")
-        self.active_meta_slot = self.layout.active_meta_slot
-        self.metadata_generation = self.layout.generation
+        sb_active_meta_slot = self.layout.active_meta_slot
+        sb_generation = self.layout.generation
+        self.active_meta_slot = sb_active_meta_slot
+        self.metadata_generation = sb_generation
         self.stack_start_bytes = self.layout.full_base
 
         valid = []
@@ -277,9 +279,24 @@ class DirectCheckpoint:
                 valid.append((generation, slot, payload))
             except (ValueError, json.JSONDecodeError):
                 continue
-        if not valid:
-            raise RuntimeError("both metadata replicas are invalid")
-        generation, slot, payload = max(valid, key=lambda item: item[0])
+        # The superblock is the commit point.  A valid-looking inactive
+        # replica may be a torn/future write and must not become visible just
+        # because it has a larger generation.  The designated slot must
+        # match the superblock generation; the other slot is only a usable
+        # previous committed replica.
+        committed = [item for item in valid
+                     if item[1] == sb_active_meta_slot
+                     and item[0] == sb_generation]
+        if committed:
+            generation, slot, payload = committed[0]
+        else:
+            previous = [item for item in valid
+                        if item[1] != sb_active_meta_slot
+                        and item[0] < sb_generation]
+            if not previous:
+                raise RuntimeError(
+                    "no metadata replica matches the committed superblock")
+            generation, slot, payload = max(previous, key=lambda item: item[0])
         self.metadata_generation = generation
         self.active_meta_slot = slot
         self.meta_dict = payload

@@ -4,7 +4,9 @@ import unittest
 import numpy as np
 
 sys.path.insert(0, "python")
-from incremental_frame import pack_r0_frame, unpack_r0_frame  # noqa: E402
+from incremental_frame import (pack_r0_frame, unpack_r0_frame,
+                               pack_r0_frame_prefix,
+                               unpack_r0_frame_prefix)  # noqa: E402
 
 
 class IncrementalFrameTests(unittest.TestCase):
@@ -37,6 +39,19 @@ class IncrementalFrameTests(unittest.TestCase):
     def test_generation_lineage_is_rejected(self):
         with self.assertRaises(ValueError):
             pack_r0_frame(1, 2, 1, 2, "22" * 32, [])
+
+    def test_large_descriptor_prefix_is_self_describing(self):
+        blocks = [{
+            "kind": "block", "name": f"model/p{i}", "state_index": i,
+            "block_index": 0, "element_offset": 0, "element_count": 1,
+            "dtype": "float32", "encoding": "raw", "payload_offset": i * 4096,
+            "payload_bytes": 4, "crc32": i,
+        } for i in range(300)]
+        prefix = pack_r0_frame_prefix(5, 6, 1, 0, "33" * 32, blocks, [],
+                                      300 * 4096, 0)
+        info = unpack_r0_frame_prefix(prefix)
+        self.assertEqual(len(info["blocks"]), 300)
+        self.assertGreater(info["descriptor_bytes"], 4096)
 
 
 if __name__ == "__main__":

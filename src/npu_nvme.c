@@ -166,6 +166,17 @@ io_task_t *create_io_tasks(int num_tasks, void **npu_ptrs,
  * chunk data from NPU HBM (or host DRAM when is_host is set) into it.
  */
 
+static uint32_t crc32_buffer(const void *data, size_t size) {
+    const unsigned char *bytes = (const unsigned char *)data;
+    uint32_t crc = 0xFFFFFFFFU;
+    for (size_t i = 0; i < size; ++i) {
+        crc ^= bytes[i];
+        for (int bit = 0; bit < 8; ++bit)
+            crc = (crc >> 1) ^ (0xEDB88320U & (-(int)(crc & 1U)));
+    }
+    return ~crc;
+}
+
 /* Submit one chunk to the DMA buffer pool.  Returns 0 on success,
  * -1 if the ring is full, -2 on ACL memcpy error. */
 int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
@@ -185,6 +196,7 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
 
     if (is_host) {
         memcpy(ctx->dma.pool[buf_idx].buf, task->npu_ptr, task->size);
+        task->crc32 = crc32_buffer(ctx->dma.pool[buf_idx].buf, task->size);
         if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
         task->state = CHUNK_NPU_DONE;
     } else {
@@ -195,6 +207,7 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host) {
             ring_push(&ctx->dma.free_ring, buf_idx);
             return -2;
         }
+        task->crc32 = crc32_buffer(ctx->dma.pool[buf_idx].buf, task->size);
         if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
         task->state = CHUNK_NPU_DONE;
     }
@@ -378,6 +391,7 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
     req->done = 0;
     atomic_init(&req->detached, 0);
     req->result = 0;
+    req->crc32_out = NULL;
 
     /* Enqueue to reactor.  If the ring is full, the reactor is stuck —
      * this should never happen with a 16-slot ring and 1 producer. */
@@ -392,6 +406,45 @@ int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
         return -ETIMEDOUT;
 
     write_profiling_csv(ctx, tasks, num_items, PIPELINE_WRITE);
+    int result = req->result;
+    free(tasks);
+    free(req);
+    return result;
+}
+
+/**
+ * @brief HBM -> NVMe write and return CRC32 for every logical chunk.
+ *
+ * CRC is calculated in the Reactor after the ACL copy and before the SPDK
+ * command is submitted.  Padding added to satisfy the NVMe block size is not
+ * included in the checksum.
+ */
+int npu_nvme_write_batch_crc(NPUNVMEContext *ctx, void **npu_ptrs,
+                             uint64_t *nvme_offsets, size_t *sizes,
+                             uint32_t *crc32_out, int num_items) {
+    if (!crc32_out || validate_io_batch(ctx, npu_ptrs, nvme_offsets, sizes,
+                                        num_items) != 0)
+        return -1;
+    if (aclrtSetCurrentContext(ctx->acl.acl_ctx) != ACL_SUCCESS) return -1;
+    write_request_t *req = calloc(1, sizeof(write_request_t));
+    if (!req) return -1;
+    io_task_t *tasks = create_io_tasks(num_items, npu_ptrs, nvme_offsets, sizes);
+    if (!tasks) { free(req); return -1; }
+    req->tasks = tasks;
+    req->num_tasks = num_items;
+    req->is_host = false;
+    req->done = 0;
+    atomic_init(&req->detached, 0);
+    req->result = 0;
+    req->crc32_out = crc32_out;
+    void *obj = req;
+    if (spdk_ring_enqueue(ctx->write_ring, &obj, 1, NULL) != 1) {
+        free(tasks); free(req); return -1;
+    }
+    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+        return -ETIMEDOUT;
+    for (int i = 0; i < num_items; ++i)
+        crc32_out[i] = req->tasks[i].crc32;
     int result = req->result;
     free(tasks);
     free(req);

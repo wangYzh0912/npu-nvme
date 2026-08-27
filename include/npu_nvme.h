@@ -66,6 +66,11 @@ int npu_nvme_flush(NPUNVMEContext *ctx);
 int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                          uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
+/** @brief HBM write with one CRC32 result per logical (unpadded) chunk. */
+int npu_nvme_write_batch_crc(NPUNVMEContext *ctx, void **npu_ptrs,
+                             uint64_t *nvme_offsets, size_t *sizes,
+                             uint32_t *crc32_out, int num_items);
+
 /**
  * @brief Batch read: NVMe -> NPU HBM (blocking).
  *

@@ -35,6 +35,7 @@ typedef struct {
     void *npu_ptr;          /* source (write) or dest (read) address */
     size_t size;
     uint64_t nvme_offset;   /* absolute byte offset on NVMe */
+    uint32_t crc32;         /* CRC of the unpadded logical payload */
     uint64_t ts_submit;     /* profiling: submission timestamp */
     uint64_t ts_npu_done;   /* profiling: NPU copy completion */
     uint64_t ts_spdk_done;  /* profiling: SPDK I/O completion */
@@ -81,6 +82,7 @@ typedef struct {
     atomic_int done;            /* set to 1 when all chunks complete */
     atomic_int detached;        /* caller timed out; reactor owns cleanup */
     int result;                 /* 0 = success, -1 = any chunk failed */
+    uint32_t *crc32_out;        /* optional caller-owned per-task CRC array */
     uint64_t ts_batch_start;    /* C-layer: first DMA submit time (us) */
     uint64_t ts_batch_end;      /* C-layer: last SPDK completion time (us) */
 } write_request_t;
