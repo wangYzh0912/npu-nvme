@@ -175,12 +175,15 @@ def policy_summary(result_paths, expected_seeds=3):
             row["write_ratio"]["median"] / max(write_min, 1e-30) +
             row["step_nrmse"]["median"] / max(error_min, 1e-30))[
                 "candidate_id"]
-    return {"expected_seeds": expected_seeds, "candidates": candidates,
-            "eligible_count": len(eligible), "finalists": finalists}
+    return {"expected_seeds": expected_seeds,
+            "complete": bool(candidates) and all(
+                row["seed_count"] >= expected_seeds for row in candidates),
+            "candidates": candidates, "eligible_count": len(eligible),
+            "finalists": finalists}
 
 
 def make_decision(trajectories, policies):
-    complete = trajectories["complete"]
+    complete = trajectories["complete"] and policies.get("complete", False)
     eligible = policies["eligible_count"]
     if not complete:
         status = "INCOMPLETE"
@@ -189,7 +192,7 @@ def make_decision(trajectories, policies):
     else:
         status = "PIVOT"
     return {"status": status,
-            "reason": ("formal trajectory set is incomplete" if not complete
+            "reason": ("formal trajectory or policy set is incomplete" if not complete
                        else "at least one exact R2 candidate passed all gates"
                        if eligible else
                        "no exact R2 candidate passed all first-round gates")}

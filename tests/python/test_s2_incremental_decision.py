@@ -54,12 +54,14 @@ class IncrementalDecisionTests(unittest.TestCase):
             trajectory = trajectory_summary(runs, expected_steps=2)
             policy_result = policy_summary(policies, expected_seeds=3)
             self.assertTrue(trajectory["complete"])
+            self.assertTrue(policy_result["complete"])
             self.assertEqual(policy_result["eligible_count"], 1)
             self.assertEqual(make_decision(trajectory, policy_result)["status"],
                              "GO_R2")
 
     def test_incomplete_trajectory_blocks_decision(self):
-        decision = make_decision({"complete": False}, {"eligible_count": 1})
+        decision = make_decision({"complete": False},
+                                 {"complete": True, "eligible_count": 1})
         self.assertEqual(decision["status"], "INCOMPLETE")
 
 
