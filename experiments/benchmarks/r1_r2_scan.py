@@ -23,12 +23,15 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "python"))
 
+from s2_policy import S2SelectivePolicy  # noqa: E402
+
 
 def trajectory(steps, seed=42):
     rng = np.random.default_rng(seed)
     sizes = (4096, 2048, 1024, 511)
     state = {f"p{i}": rng.normal(0, 0.05, n).astype(np.float32)
              for i, n in enumerate(sizes)}
+    initial = {name: value.copy() for name, value in state.items()}
     states = []
     for step in range(steps):
         current = {name: value.copy() for name, value in state.items()}
@@ -44,80 +47,49 @@ def trajectory(steps, seed=42):
             current["p3"] += 0.001
         states.append(current)
         state = current
-    return states
+    return initial, states
 
 
-def blocks(states, block_size):
-    names = list(states[0])
-    layout = []
-    for name in names:
-        n = states[0][name].size
-        for start in range(0, n, block_size):
-            layout.append((name, start, min(block_size, n - start)))
-    return layout
-
-
-def quantize(values):
-    peak = float(np.max(np.abs(values))) if values.size else 0.0
-    scale = peak / 127.0 if peak > 0 else 1.0
-    q = np.clip(np.rint(values / scale), -127, 127).astype(np.int8)
-    return q.astype(np.float32) * scale, scale
-
-
-def scan_policy(states, block_size, fraction, policy, max_age=0):
-    initial = {name: value.copy() for name, value in states[0].items()}
-    layout = blocks(states, block_size)
-    reference = {name: value.copy() for name, value in initial.items()}
-    residual = {name: np.zeros_like(value) for name, value in initial.items()}
-    age = np.zeros(len(layout), dtype=np.int64)
-    total_bytes = 0
+def scan_policy(initial, states, block_size, fraction, policy, max_age=0,
+                encoding="int8", full_interval=0):
+    oracle = S2SelectivePolicy(
+        initial, block_size, fraction, encoding=encoding,
+        max_age=max_age if policy == "r2_implicit" else 0,
+        small_threshold=0)
+    delta_bytes = 0
+    periodic_full_bytes = 0
     selected_counts = []
     errors = []
     max_ages = []
-    for state in states:
-        scores = []
-        for index, (name, start, count) in enumerate(layout):
-            end = start + count
-            delta = state[name][start:end] - reference[name][start:end]
-            if policy == "r2_residual":
-                delta = residual[name][start:end] + delta
-            scores.append(float(np.linalg.norm(delta.astype(np.float64))))
-        target = max(1, int(np.ceil(len(layout) * fraction)))
-        selected = set(np.argsort(np.asarray(scores))[::-1][:target].tolist())
-        if policy == "r2_residual" and max_age > 0:
-            selected.update(np.nonzero(age >= max_age - 1)[0].tolist())
-        for index, (name, start, count) in enumerate(layout):
-            end = start + count
-            if index in selected:
-                stored, scale = quantize(state[name][start:end])
-                reference[name][start:end] = stored
-                total_bytes += count + 4 + 24  # INT8 data + scale + frame header
-                residual[name][start:end] = state[name][start:end] - stored
-                age[index] = 0
-            else:
-                residual[name][start:end] = state[name][start:end] - reference[name][start:end]
-                age[index] += 1
-        selected_counts.append(len(selected))
-        max_ages.append(int(age.max(initial=0)))
-        sq = 0.0
-        denom = 0.0
-        for name in state:
-            diff = (state[name] - reference[name]).astype(np.float64)
-            sq += float(np.dot(diff, diff))
-            denom += float(np.dot(state[name].astype(np.float64), state[name]))
-        errors.append(float(np.sqrt(sq / max(denom, 1e-30))))
-    full_bytes = sum(value.nbytes for value in states[-1].values()) * len(states)
+    state_bytes = sum(value.nbytes for value in initial.values())
+    for step, state in enumerate(states, 1):
+        if full_interval and step % full_interval == 0:
+            periodic_full_bytes += ((state_bytes + 4095) // 4096) * 4096
+            oracle.reset_full(state)
+            selected_counts.append(0)
+        else:
+            frame = oracle.observe(state, step)
+            oracle.ack(frame["generation"])
+            delta_bytes += frame["physical_bytes"]
+            selected_counts.append(len(frame["selected"]))
+        max_ages.append(int(oracle.age.max(initial=0)))
+        errors.append(oracle.relative_l2(state))
+    full_bytes = state_bytes * len(states)
     return {
         "policy": policy,
         "block_size": block_size,
         "selection_fraction": fraction,
-        "max_age": max_age if policy == "r2_residual" else None,
+        "max_age": max_age if policy == "r2_implicit" else None,
+        "encoding": encoding, "full_interval": full_interval,
         "steps": len(states),
-        "blocks": len(layout),
+        "blocks": len(oracle.blocks),
         "mean_selected_blocks": float(np.mean(selected_counts)),
-        "total_int8_frame_bytes": int(total_bytes),
+        "delta_physical_bytes": int(delta_bytes),
+        "periodic_full_bytes": int(periodic_full_bytes),
+        "total_physical_bytes": int(delta_bytes + periodic_full_bytes),
         "full_value_bytes": int(full_bytes),
-        "write_ratio": float(total_bytes / max(full_bytes, 1)),
+        "write_ratio": float((delta_bytes + periodic_full_bytes) /
+                             max(full_bytes, 1)),
         "final_relative_l2_error": errors[-1],
         "max_relative_l2_error": max(errors),
         "max_block_age": max(max_ages),
@@ -135,17 +107,26 @@ def main():
     if args.steps <= 0:
         raise SystemExit("--steps must be positive")
     started = time.perf_counter()
-    states = trajectory(args.steps, args.seed)
+    initial, states = trajectory(args.steps, args.seed)
     rows = []
     for block_size in (64, 256, 1024):
         for fraction in (0.01, 0.05, 0.10, 0.20):
-            rows.append(scan_policy(states, block_size, fraction, "r1_int8"))
-            rows.append(scan_policy(states, block_size, fraction, "r2_residual", max_age=8))
+            for encoding in ("fp16", "int8"):
+                for full_interval in (20, 50, 100, 200):
+                    rows.append(scan_policy(
+                        initial, states, block_size, fraction, "r1",
+                        encoding=encoding, full_interval=full_interval))
+                    for max_age in (4, 8, 16):
+                        rows.append(scan_policy(
+                            initial, states, block_size, fraction,
+                            "r2_implicit", max_age=max_age,
+                            encoding=encoding, full_interval=full_interval))
     result = {
         "status": "pass",
         "experiment": "R1_R2_CPU_POLICY_SCAN",
         "semantic_scope": "S2 lossless replacement oracle with INT8 candidate encoding",
-        "note": "synthetic deterministic trajectory; not a real MindSpore training result",
+        "note": ("synthetic deterministic trajectory; S2-R2 uses implicit "
+                 "current-minus-decoded-reference error feedback"),
         "seed": args.seed,
         "steps": args.steps,
         "rows": rows,

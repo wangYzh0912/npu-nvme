@@ -1,0 +1,241 @@
+#!/usr/bin/env python3
+"""Online CPU R1/R2 scan over a deterministic real MindSpore trajectory.
+
+Each invocation owns only one candidate batch.  ``--preset grid`` is split by
+``--batch-index/--batch-count`` so the full Cartesian scan never needs every
+decoded persisted reference resident at once.  Repeated batches use the same
+seed and logical-step data and record losses for trajectory identity checks.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path[:0] = [str(REPO_ROOT), str(REPO_ROOT / "python")]
+
+from experiments.benchmarks.io_matrix import (  # noqa: E402
+    check_npu_free, environment_snapshot,
+)
+from experiments.benchmarks.r0_real_e2e import (  # noqa: E402
+    build, control_state, train_one,
+)
+from experiments.benchmarks.s2_real_trajectory import snapshot_state  # noqa: E402
+from s2_delta import build_block_manifest, score_manifest_blocks  # noqa: E402
+from s2_policy import S2SelectivePolicy  # noqa: E402
+from training_state import encode_control_value  # noqa: E402
+
+
+def align(value, alignment=4096):
+    return ((int(value) + alignment - 1) // alignment) * alignment
+
+
+def write_json(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8")
+
+
+def threshold_calibration(initial, current, block_sizes, fractions):
+    thresholds = {}
+    for block_size in block_sizes:
+        manifest = build_block_manifest(initial, block_size, small_threshold=0)
+        scores = score_manifest_blocks(current, initial, manifest)
+        values = np.asarray([item["score"] for item in scores], dtype=np.float64)
+        thresholds[str(block_size)] = {}
+        for fraction in fractions:
+            count = max(1, int(math.ceil(values.size * fraction)))
+            thresholds[str(block_size)][str(fraction)] = float(
+                values[min(count - 1, values.size - 1)]) if values.size else 0.0
+    return thresholds
+
+
+def candidate_grid(thresholds):
+    candidates = []
+    block_sizes = (65536, 262144, 524288)
+    topk = (("topk", value) for value in (0.01, 0.05, 0.10, 0.20))
+    energy = (("error_budget", value) for value in (0.80, 0.90, 0.95, 0.99))
+    modes = list(topk) + list(energy) + [
+        ("threshold", value) for value in (0.01, 0.05, 0.10, 0.20)]
+    for block_size in block_sizes:
+        for selection_mode, budget in modes:
+            threshold = (thresholds[str(block_size)][str(budget)]
+                         if selection_mode == "threshold" else 0.0)
+            for encoding in ("fp16", "int8"):
+                for full_interval in (20, 50, 100, 200):
+                    candidates.append({
+                        "strategy": "r1", "block_size": block_size,
+                        "selection_mode": selection_mode, "budget": budget,
+                        "score_threshold": threshold, "encoding": encoding,
+                        "max_age": 0, "full_interval": full_interval,
+                    })
+                    for max_age in (4, 8, 16):
+                        candidates.append({
+                            "strategy": "r2", "block_size": block_size,
+                            "selection_mode": selection_mode, "budget": budget,
+                            "score_threshold": threshold, "encoding": encoding,
+                            "max_age": max_age,
+                            "full_interval": full_interval,
+                        })
+    return candidates
+
+
+def quick_candidates():
+    return [
+        {"strategy": "r2", "block_size": 262144,
+         "selection_mode": "topk", "budget": 0.05,
+         "score_threshold": 0.0, "encoding": "int8", "max_age": 8,
+         "full_interval": 100},
+        {"strategy": "r2", "block_size": 65536,
+         "selection_mode": "topk", "budget": 0.20,
+         "score_threshold": 0.0, "encoding": "fp16", "max_age": 4,
+         "full_interval": 20},
+        {"strategy": "r2", "block_size": 262144,
+         "selection_mode": "error_budget", "budget": 0.90,
+         "score_threshold": 0.0, "encoding": "int8", "max_age": 8,
+         "full_interval": 50},
+    ]
+
+
+def candidate_id(config):
+    canonical = json.dumps(config, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()[:12]
+
+
+def control_bytes(ms, optimizer, step, seed):
+    controls = control_state(ms, optimizer, step, seed)
+    payload = 0
+    for value in controls.values():
+        encoded, _metadata = encode_control_value(value)
+        payload += int(encoded.nbytes)
+    return payload, len(controls)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", choices=("gpt2", "gpt2_xl"), default="gpt2")
+    parser.add_argument("--steps", type=int, default=100)
+    parser.add_argument("--seq-len", type=int, default=129)
+    parser.add_argument("--seed", type=int, default=41)
+    parser.add_argument("--npu", type=int, default=0)
+    parser.add_argument("--pci", default="0000:83:00.0")
+    parser.add_argument("--preset", choices=("quick", "grid"), default="quick")
+    parser.add_argument("--batch-index", type=int, default=0)
+    parser.add_argument("--batch-count", type=int, default=1)
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args()
+    if args.steps <= 0 or args.batch_count <= 0 or not 0 <= args.batch_index < args.batch_count:
+        raise ValueError("invalid scan dimensions")
+    npu_info = check_npu_free(args.npu)
+    started = time.perf_counter()
+    ms, model, optimizer, cell = build(args)
+    initial = snapshot_state(model, optimizer, True)
+    state_bytes = sum(int(value.nbytes) for value in initial.values())
+
+    first_loss, first_ms = train_one(cell, ms, 1, args.seq_len)
+    current = snapshot_state(model, optimizer, True)
+    thresholds = threshold_calibration(
+        initial, current, (65536, 262144, 524288),
+        (0.01, 0.05, 0.10, 0.20))
+    all_candidates = (quick_candidates() if args.preset == "quick"
+                      else candidate_grid(thresholds))
+    candidates = [config for index, config in enumerate(all_candidates)
+                  if index % args.batch_count == args.batch_index]
+    policies = {}
+    metrics = {}
+    for config in candidates:
+        key = candidate_id(config)
+        policies[key] = S2SelectivePolicy(
+            initial, config["block_size"], config["budget"],
+            encoding=config["encoding"], max_age=config["max_age"],
+            small_threshold=10000,
+            selection_mode=config["selection_mode"],
+            score_threshold=config["score_threshold"])
+        metrics[key] = {"candidate_id": key, "config": config,
+                        "physical_bytes": 0, "delta_bytes": 0,
+                        "full_bytes": 0, "errors": [], "max_ages": [],
+                        "selected_blocks": []}
+    estimated_reference_bytes = state_bytes * len(candidates)
+    losses = [first_loss]
+    training_ms = [first_ms]
+
+    for step in range(1, args.steps + 1):
+        if step > 1:
+            loss, elapsed = train_one(cell, ms, step, args.seq_len)
+            losses.append(loss)
+            training_ms.append(elapsed)
+            current = snapshot_state(model, optimizer, True)
+        controls_payload, controls_count = control_bytes(
+            ms, optimizer, step, args.seed)
+        for key, policy in policies.items():
+            row = metrics[key]
+            interval = row["config"]["full_interval"]
+            if interval and step % interval == 0:
+                physical = align(state_bytes + controls_payload +
+                                 controls_count * 96 + 4096)
+                row["physical_bytes"] += physical
+                row["full_bytes"] += physical
+                row["selected_blocks"].append(0)
+                policy.reset_full(current)
+            else:
+                frame = policy.observe(current, step)
+                policy.ack(frame["generation"])
+                physical = align(4096 + frame["descriptor_bytes"] +
+                                 frame["payload_bytes"] + controls_payload +
+                                 controls_count * 96)
+                row["physical_bytes"] += physical
+                row["delta_bytes"] += physical
+                row["selected_blocks"].append(len(frame["selected"]))
+            row["errors"].append(policy.relative_l2(current))
+            row["max_ages"].append(int(policy.age.max(initial=0)))
+        del current
+
+    full_per_checkpoint = align(state_bytes + 4096)
+    full_only_bytes = full_per_checkpoint * args.steps
+    rows = []
+    for row in metrics.values():
+        row["write_ratio"] = row["physical_bytes"] / full_only_bytes
+        row["final_relative_l2_error"] = row["errors"][-1]
+        row["max_relative_l2_error"] = max(row["errors"])
+        row["max_block_age"] = max(row["max_ages"], default=0)
+        row["eligible_write_age"] = (
+            row["write_ratio"] < 0.20 and
+            (row["config"]["strategy"] == "r2" and
+             row["max_block_age"] < row["config"]["max_age"]))
+        rows.append(row)
+    rows.sort(key=lambda row: (row["write_ratio"],
+                               row["final_relative_l2_error"]))
+    result = {
+        "status": "PASS", "experiment": "S2_REAL_POLICY_SCAN",
+        "semantic": "S2 implicit current-minus-decoded-reference feedback",
+        "model": args.model, "seed": args.seed, "steps": args.steps,
+        "preset": args.preset, "batch_index": args.batch_index,
+        "batch_count": args.batch_count,
+        "all_candidates": len(all_candidates),
+        "batch_candidates": len(candidates),
+        "state_bytes": state_bytes,
+        "estimated_reference_bytes": estimated_reference_bytes,
+        "full_only_bytes": full_only_bytes,
+        "thresholds": thresholds, "losses": losses,
+        "training_ms": training_ms, "rows": rows,
+        "environment": environment_snapshot(args, npu_info),
+        "elapsed_ms": (time.perf_counter() - started) * 1000.0,
+    }
+    write_json(args.output, result)
+    print(json.dumps({"status": result["status"], "model": args.model,
+                      "steps": args.steps, "candidates": len(rows),
+                      "best_write_ratio": rows[0]["write_ratio"] if rows else None},
+                     sort_keys=True), flush=True)
+
+
+if __name__ == "__main__":
+    main()

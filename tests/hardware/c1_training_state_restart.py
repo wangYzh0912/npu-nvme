@@ -28,6 +28,9 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(REPO_ROOT), str(REPO_ROOT / "python")]
 
+from training_state import (capture_training_controls,
+                            restore_training_controls)  # noqa: E402
+
 
 def write_json(path, value):
     Path(path).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n",
@@ -177,35 +180,21 @@ def compare_state_oracle(root, model, optimizer, rtol, atol):
 
 
 def control_state(ms, optimizer, cursor, args):
-    global_step = np.asarray(optimizer.global_step.asnumpy()).copy()
-    return {
-        "global_step": global_step,
-        "loss_scale": np.float32(args.loss_scale),
-        "python_rng": random.getstate(),
-        "numpy_rng": np.random.get_state(),
-        "mindspore_seed": int(args.seed),
-        "mindspore_rng": np.asarray(ms.get_rng_state().asnumpy()).copy(),
-        "data_cursor": {"epoch": 0, "sample": int(cursor)},
-    }
+    return capture_training_controls(
+        ms, optimizer, {"epoch": 0, "sample": int(cursor)},
+        args.loss_scale, args.seed)
 
 
-def apply_control_state(ms, controls, expected_cursor, args):
-    required = {"global_step", "loss_scale", "python_rng", "numpy_rng",
-                "mindspore_seed", "mindspore_rng", "data_cursor"}
-    if set(controls) != required:
-        raise AssertionError(
-            f"control fields differ: expected={sorted(required)} "
-            f"actual={sorted(controls)}")
+def apply_control_state(ms, optimizer, controls, expected_cursor, args):
+    restored = restore_training_controls(ms, optimizer, controls)
     if controls["data_cursor"] != {"epoch": 0, "sample": expected_cursor}:
         raise AssertionError("restored data cursor is incorrect")
     if int(controls["mindspore_seed"]) != args.seed:
         raise AssertionError("restored MindSpore seed is incorrect")
     if float(controls["loss_scale"]) != float(np.float32(args.loss_scale)):
         raise AssertionError("restored loss scale is incorrect")
-    random.setstate(controls["python_rng"])
-    np.random.set_state(controls["numpy_rng"])
-    ms.common.set_seed(int(controls["mindspore_seed"]))
-    ms.set_rng_state(ms.Tensor(controls["mindspore_rng"]))
+    if restored["data_cursor"] != controls["data_cursor"]:
+        raise AssertionError("control restore returned a different cursor")
 
 
 def baseline_phase(args):
@@ -304,7 +293,7 @@ def restore_phase(args):
         actual_global_step = np.asarray(optimizer.global_step.asnumpy())
         if not np.array_equal(actual_global_step, controls["global_step"]):
             raise AssertionError("optimizer and control global_step differ")
-        apply_control_state(ms, controls, args.save_step, args)
+        apply_control_state(ms, optimizer, controls, args.save_step, args)
         losses, times = train_range(
             ms, cell, args.save_step + 1,
             args.save_step + args.continue_steps, args.seq_len)

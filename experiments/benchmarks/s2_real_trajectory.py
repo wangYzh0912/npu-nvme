@@ -70,19 +70,69 @@ def block_scores(current, reference, manifest):
     return score_manifest_blocks(current, reference, manifest)
 
 
-def coverage(scores, budgets):
+def coverage(scores, budgets, include_ids=True):
     total = sum(item["score"] ** 2 for item in scores)
     output = {}
     for budget in budgets:
         count = max(1, int(np.ceil(len(scores) * budget))) if scores else 0
         selected = scores[:count]
         energy = sum(item["score"] ** 2 for item in selected)
-        output[str(int(budget * 100))] = {
+        record = {
             "count": len(selected),
             "energy_fraction": (energy / total) if total else 1.0,
-            "block_ids": [item["block_id"] for item in selected],
+        }
+        if include_ids:
+            record["block_ids"] = [item["block_id"] for item in selected]
+        output[str(int(budget * 100))] = record
+    return output
+
+
+def state_category(name):
+    if name.startswith("model/"):
+        return "model"
+    if name.startswith("optimizer/m/"):
+        return "adam_m"
+    if name.startswith("optimizer/v/"):
+        return "adam_v"
+    return "optimizer_other"
+
+
+def category_metrics(scores, budgets):
+    grouped = {}
+    for item in scores:
+        grouped.setdefault(state_category(item["name"]), []).append(item)
+    output = {}
+    for category, records in sorted(grouped.items()):
+        records.sort(key=lambda item: (-item["score"], item["block_id"]))
+        output[category] = {
+            "blocks": len(records),
+            "changed_blocks": sum(bool(item["nonzero"]) for item in records),
+            "l2": float(np.sqrt(sum(item["score"] ** 2 for item in records))),
+            "max_abs": max((item["max_abs"] for item in records), default=0.0),
+            "relative_l2_median": float(np.median(
+                [item["relative_l2"] for item in records])) if records else 0.0,
+            "coverage": coverage(records, budgets, include_ids=False),
         }
     return output
+
+
+def small_state_metrics(current, reference, manifest):
+    by_category = {}
+    for item in manifest["small"]:
+        name = item["name"]
+        left = np.asarray(current[name])
+        right = np.asarray(reference[name])
+        changed = not np.array_equal(left, right, equal_nan=True)
+        category = state_category(name)
+        record = by_category.setdefault(
+            category, {"fields": 0, "changed_fields": 0,
+                       "bytes": 0, "changed_bytes": 0})
+        record["fields"] += 1
+        record["bytes"] += int(left.nbytes)
+        if changed:
+            record["changed_fields"] += 1
+            record["changed_bytes"] += int(left.nbytes)
+    return by_category
 
 
 def main():
@@ -91,9 +141,13 @@ def main():
     parser.add_argument("--steps", type=int, default=100)
     parser.add_argument("--seq-len", type=int, default=1025)
     parser.add_argument("--block-size", type=int, default=65536)
+    parser.add_argument("--block-sizes", default=None,
+                        help="comma-separated block sizes; overrides --block-size")
     parser.add_argument("--small-threshold", type=int, default=10000)
     parser.add_argument("--top-k-percent", type=float, default=10.0)
     parser.add_argument("--sample-every", type=int, default=1)
+    parser.add_argument("--sample-windows", default=None,
+                        help="inclusive ranges such as 1-30,236-265,471-500")
     parser.add_argument("--no-optimizer", action="store_true")
     parser.add_argument("--numeric-only", action="store_true",
                         help="check loss/state health without S2 scoring/frames")
@@ -104,12 +158,33 @@ def main():
     args = parser.parse_args()
     if args.steps <= 0 or args.sample_every <= 0 or not 0 < args.top_k_percent <= 100:
         raise ValueError("invalid trajectory dimensions")
+    block_sizes = ([int(item) for item in args.block_sizes.split(",")]
+                   if args.block_sizes else [args.block_size])
+    if not block_sizes or any(value <= 0 for value in block_sizes):
+        raise ValueError("block sizes must be positive")
+    block_sizes = tuple(dict.fromkeys(block_sizes))
+    sample_steps = None
+    capture_only_steps = set()
+    if args.sample_windows:
+        sample_steps = set()
+        for item in args.sample_windows.split(","):
+            begin_text, end_text = item.split("-", 1)
+            begin, end = int(begin_text), int(end_text)
+            if begin <= 0 or end < begin or end > args.steps:
+                raise ValueError("invalid sample window")
+            sample_steps.update(range(begin, end + 1))
+            if begin > 1:
+                capture_only_steps.add(begin - 1)
 
     writer = ResultWriter("I1_REAL", args)
     writer.config.update({
         "model": args.model,
         "state": "weights_only" if args.no_optimizer else "weights+adam_m_v+global_step",
         "oracle": "S2 persisted-reference replacement",
+        "block_sizes": list(block_sizes),
+        "state_categories": ["model", "adam_m", "adam_v", "optimizer_other",
+                             "small", "control"],
+        "sample_windows": args.sample_windows,
     })
     writer.write_json("config.json", writer.config)
     npu_info = check_npu_free(args.npu)
@@ -190,21 +265,35 @@ def main():
                           "run_id": writer.run_id,
                           "summary": result["summary"]}, indent=2), flush=True)
         return
-    oracle = S2DeltaOracle(initial, block_size=args.block_size,
-                           small_threshold=args.small_threshold,
-                           top_k=None)
+    oracles = {
+        block_size: S2DeltaOracle(
+            initial, block_size=block_size,
+            small_threshold=args.small_threshold, top_k=None)
+        for block_size in block_sizes
+    }
     previous = {name: np.array(value, copy=True)
                 for name, value in initial.items()}
-    persisted = {name: np.array(value, copy=True)
-                 for name, value in initial.items()}
-    policy_oracle = S2DeltaOracle(initial, block_size=args.block_size,
-                                  small_threshold=args.small_threshold,
-                                  top_k=max(1, int(len(oracle.manifest["blocks"])
-                                                 * args.top_k_percent / 100)))
-    manifest = oracle.manifest
+    persisted = {
+        block_size: {name: np.array(value, copy=True)
+                     for name, value in initial.items()}
+        for block_size in block_sizes
+    }
+    policy_oracles = {
+        block_size: S2DeltaOracle(
+            initial, block_size=block_size,
+            small_threshold=args.small_threshold,
+            top_k=max(1, int(len(oracles[block_size].manifest["blocks"])
+                             * args.top_k_percent / 100)))
+        for block_size in block_sizes
+    }
     budgets = (0.01, 0.05, 0.10, 0.20, 0.50, 1.0)
-    last_selected = set()
-    last_acked = {int(item["block_id"]): 0 for item in manifest["blocks"]}
+    last_selected = {block_size: set() for block_size in block_sizes}
+    last_acked = {
+        block_size: {
+            int(item["block_id"]): 0
+            for item in oracles[block_size].manifest["blocks"]}
+        for block_size in block_sizes
+    }
     trajectory = []
     try:
         for step in range(1, args.steps + 1):
@@ -220,7 +309,10 @@ def main():
             if not np.isfinite(loss_value):
                 raise FloatingPointError(
                     f"non-finite training loss at step {step}: {loss_value}")
-            if step % args.sample_every:
+            should_record = (step in sample_steps if sample_steps is not None
+                             else step % args.sample_every == 0)
+            should_capture = should_record or step in capture_only_steps
+            if not should_capture:
                 continue
             current = snapshot_state(model, optimizer, not args.no_optimizer)
             health = finite_diagnostics(current)
@@ -228,18 +320,56 @@ def main():
                 raise FloatingPointError(
                     f"non-finite training state at step {step}: "
                     f"{health['nonfinite'][:3]}")
-            oracle.set_current(current)
-            policy_oracle.set_current(current)
-            adjacent = block_scores(current, previous, manifest)
-            persisted_scores = block_scores(current, persisted, manifest)
-            selected = {item["block_id"] for item in persisted_scores[:max(
-                1, int(len(persisted_scores) * args.top_k_percent / 100))]}
-            for block_id in selected:
-                last_acked[block_id] = step
-            ages = [step - last_acked[item["block_id"]]
-                    for item in manifest["blocks"]]
-            frame = policy_oracle.observe(step)
-            policy_oracle.ack(frame)
+            if not should_record:
+                previous = {name: np.array(value, copy=True)
+                            for name, value in current.items()}
+                del current
+                continue
+            block_results = {}
+            for block_size in block_sizes:
+                oracle = oracles[block_size]
+                policy_oracle = policy_oracles[block_size]
+                manifest = oracle.manifest
+                oracle.set_current(current)
+                policy_oracle.set_current(current)
+                adjacent = block_scores(current, previous, manifest)
+                persisted_scores = block_scores(
+                    current, persisted[block_size], manifest)
+                selected = {item["block_id"] for item in persisted_scores[:max(
+                    1, int(len(persisted_scores) *
+                           args.top_k_percent / 100))]}
+                for block_id in selected:
+                    last_acked[block_size][block_id] = step
+                ages = [step - last_acked[block_size][item["block_id"]]
+                        for item in manifest["blocks"]]
+                frame = policy_oracle.observe(step)
+                policy_oracle.ack(frame)
+                previous_selected = last_selected[block_size]
+                block_results[str(block_size)] = {
+                    "block_count": len(adjacent),
+                    "frame_bytes_top_k": len(frame),
+                    "adjacent_l2": float(np.sqrt(sum(
+                        item["score"] ** 2 for item in adjacent))),
+                    "persisted_l2": float(np.sqrt(sum(
+                        item["score"] ** 2 for item in persisted_scores))),
+                    "selected_count": len(selected),
+                    "selected_jaccard": (
+                        len(selected & previous_selected) /
+                        len(selected | previous_selected)
+                        if selected | previous_selected else 1.0),
+                    "age": {"max": max(ages, default=0),
+                            "mean": float(np.mean(ages)) if ages else 0.0},
+                    "coverage": coverage(adjacent, budgets,
+                                         include_ids=False),
+                    "categories": category_metrics(adjacent, budgets),
+                    "small": small_state_metrics(current, previous, manifest),
+                }
+                last_selected[block_size] = selected
+                persisted[block_size] = {
+                    name: np.array(value, copy=True)
+                    for name, value in policy_oracle.persisted_reference.items()
+                }
+            primary = block_results[str(block_sizes[0])]
             sample = {
                 "run_id": writer.run_id,
                 "request_id": f"{writer.run_id}/step_{step:04d}",
@@ -249,36 +379,33 @@ def main():
                 "loss": loss_value,
                 "numeric_health": health,
                 "state_arrays": len(current),
-                "block_count": len(adjacent),
-                "frame_bytes_top_k": len(frame),
-                "adjacent_l2": float(np.sqrt(sum(item["score"] ** 2
-                                                   for item in adjacent))),
-                "persisted_l2": float(np.sqrt(sum(item["score"] ** 2
-                                                    for item in persisted_scores))),
-                "selected_count": len(selected),
-                "selected_jaccard": (len(selected & last_selected) /
-                                      len(selected | last_selected)
-                                      if selected | last_selected else 1.0),
-                "age": {"max": max(ages, default=0),
-                        "mean": float(np.mean(ages)) if ages else 0.0},
-                "coverage": coverage(adjacent, budgets),
+                "block_sizes": block_results,
+                "block_count": primary["block_count"],
+                "frame_bytes_top_k": primary["frame_bytes_top_k"],
+                "adjacent_l2": primary["adjacent_l2"],
+                "persisted_l2": primary["persisted_l2"],
+                "selected_count": primary["selected_count"],
+                "selected_jaccard": primary["selected_jaccard"],
+                "age": primary["age"],
+                "coverage": primary["coverage"],
                 "timeline_us": {"end_to_end": 0},
                 "events": [{"name": "trajectory_sample",
                             "monotonic_ns": time.monotonic_ns()}],
             }
             writer.add_sample(sample)
             trajectory.append(sample)
-            last_selected = selected
             previous = {name: np.array(value, copy=True)
                         for name, value in current.items()}
-            persisted = {name: np.array(value, copy=True)
-                         for name, value in policy_oracle.persisted_reference.items()}
             del current
         result = writer.finalize({
             "steps": args.steps,
             "samples": len(trajectory),
-            "manifest_digest": oracle.manifest_digest,
-            "final_generation": policy_oracle.persisted_generation,
+            "manifest_digests": {
+                str(block_size): oracles[block_size].manifest_digest
+                for block_size in block_sizes},
+            "final_generation": {
+                str(block_size): policy_oracles[block_size].persisted_generation
+                for block_size in block_sizes},
             "final_frame_bytes": trajectory[-1]["frame_bytes_top_k"] if trajectory else 0,
         }, status="pass")
         print(json.dumps({"status": result["status"], "run_id": writer.run_id,

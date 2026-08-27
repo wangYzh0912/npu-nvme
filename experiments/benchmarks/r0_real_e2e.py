@@ -35,6 +35,7 @@ from experiments.common import (  # noqa: E402
 from r0_pipeline import R0NpuWriter  # noqa: E402
 from s2_r0_cell import R0NpuState  # noqa: E402
 from training_cell import ProbeTrainOneStepCell  # noqa: E402
+from training_state import capture_training_controls  # noqa: E402
 
 
 def write_json(path, value):
@@ -44,13 +45,9 @@ def write_json(path, value):
                     encoding="utf-8")
 
 
-def control_state(optimizer, step):
-    global_step = np.asarray(optimizer.global_step.asnumpy()).copy()
-    return {
-        "global_step": global_step,
-        "loss_scale": np.float32(1.0),
-        "data_cursor": {"epoch": 0, "sample": int(step)},
-    }
+def control_state(ms, optimizer, step, seed):
+    return capture_training_controls(
+        ms, optimizer, {"epoch": 0, "sample": int(step)}, 1.0, seed)
 
 
 def batch_for_step(ms, step, seq_len, vocab_size=50257):
@@ -113,7 +110,7 @@ def run(args):
             full_start = time.perf_counter_ns()
             full_handle = ckpt.save_state(
                 {"model": model, "optimizer": optimizer},
-                control_state(optimizer, 0), step=0,
+                control_state(ms, optimizer, 0, args.seed), step=0,
                 meta_path=str(output.parent / "checkpoint_meta.pkl"))
             full_handle.wait(timeout=args.io_timeout)
             full_ms = (time.perf_counter_ns() - full_start) / 1e6
@@ -165,7 +162,7 @@ def run(args):
             elif args.mode == "r0" and step % args.ckpt_every == 0:
                 start = time.perf_counter_ns()
                 record = writer.capture_and_commit(
-                    step, control_state(optimizer, step))
+                    step, control_state(ms, optimizer, step, args.seed))
                 row["r0_total_ms"] = (time.perf_counter_ns() - start) / 1e6
                 row["changed_blocks"] = int(record["n_blocks"])
                 row["frame_bytes"] = int(record["frame_size"])

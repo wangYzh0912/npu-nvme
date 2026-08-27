@@ -1116,7 +1116,7 @@ FULL 默认 60 s 超时未随 Python 参数同步，以及 v4 frame 的 32-bit p
 
 | 阶段 | 结果 |
 |---|---:|
-| FULL 持久化 | 149829.1 ms，约 9.37 GiB，终端报告约 72.07 MB/s |
+| FULL 持久化 | 149829.1 ms，9839827208 B（9.840 GB / 9.164 GiB），终端报告约 72.07 MB/s |
 | 参考状态初始化 | 43269.4 ms，2318 fields、10553 blocks |
 | 训练步（不含 R0） | 321.3 ms，loss=10.954421 |
 | R0 capture + Delta 持久化 | 880295.9 ms，7426 blocks，frame=6913658880 B |
@@ -1127,9 +1127,73 @@ FULL 默认 60 s 超时未随 Python 参数同步，以及 v4 frame 的 32-bit p
 `experiments/benchmarks/r0_real_e2e.py`。该结果证明当前 R0 在 GPT-2 XL 上可以完成
 真实训练后的 HBM 捕获、超过 4 GiB 的自描述 replacement frame 组装、83:00.0 写入和
 ACK 闭环；不证明恢复端已完成 NPU 真实模型加载，也不证明增量收益。以本次单步为例，
-Delta frame 约为 FULL 逻辑规模的 73.8%，R0 使训练步从 321.3 ms 增至约 880.6 s，
+Delta frame 为 6913658880 B（6.914 GB / 6.439 GiB），约为 FULL 逻辑规模的 70.26%；
+此前 73.8% 混用了 GB/GiB 口径。R0 使训练步从 321.3 ms 增至约 880.6 s，
 当前方案明显不满足“稳定 step 开销不高于 10%”门槛，应优先转向写入间隔、后台异步
 流水或 R1/R2 候选筛选，而不是直接扩大 R0 的逐步 checkpoint 频率。
 
 本轮代码回归为 `57 passed`；本轮仍未关闭 I3 图输出到 frame buffer、I4 完整 NPU
 跨进程 replay、I5 非对齐/尾块矩阵和 I7 长链后台 I/O 门禁。
+
+### 9.24 增量检查点下一阶段唯一执行计划（2026-08-28）
+
+实施基线固定为 `origin/exp/r0-xl-repair@395b89c`，开发分支为
+`exp/incremental-r2-next`。本节替代此前独立的增量执行计划，后续只在本文件维护状态。
+路线固定为“R0 固化正确性，R2 验证实际收益；先优化增量生成，再引入异步流水”。R0
+不再承担减少写量的性能目标；同步 R2 未通过前不实现 `aclrtMemcpyAsync`，也不启动
+GPT-2 13B 扩展。
+
+现有 GPT-2 三个 seed、每组 10-step 的真实轨迹显示：Top-10% 块平均覆盖约
+65%～67% 变化能量，Top-20% 约覆盖 80%，选块 Jaccard 仅约 0.017～0.040。这只是训练
+早期短链结果，尚不能支持或否定 R2，下一轮必须以完整训练状态和更长轨迹复核。
+
+#### 9.24.1 固定语义与接口
+
+S2-R2 使用隐式误差反馈：`error_t = current_t - decoded_persisted`。未写出块不更新
+`decoded_persisted`，因此变化自然累计；INT8/FP16 块 ACK 后把参考态更新为实际解码值，
+量化误差自然进入下一次比较。禁止再计算 `current-persisted+residual`，避免重复累计。
+块年龄只在对应块持久化 ACK 后清零；失败、未选或错误 ACK 均不得推进参考态。
+
+R1/R2 的 ACK 接口必须接收 generation、实际持久化 block ID 和 decoded values，只更新
+本帧块。R0 可保留“全部变化块 raw replacement”的兼容入口。frame 继续使用 v4/v5
+布局，strategy 固定为 0/1/2 对应 R0/R1/R2，block descriptor 使用
+`raw|fp16|int8-symmetric` encoding；旧 R0 frame 必须保持可读。
+
+控制态统一保存 global step、loss scale、data cursor、Python RNG、NumPy RNG、
+MindSpore seed/RNG；可变 scheduler 存在时才保存 scheduler state，当前恒定学习率写入
+配置摘要即可。
+
+#### 9.24.2 第一轮四项任务与出口
+
+1. **控制态接入**：抽取 C1 已验证的 RNG capture/restore 为共享接口，接入 R0 FULL、
+   Delta source 和 restore，并覆盖编解码、缺字段、损坏和恢复单测。
+2. **GPT-2 XL 单帧 fresh-process replay**：seed 17、dropout 0、seq_len 129；保存 FULL，
+   训练一步，持久化大于 4 GiB 的 R0 frame，source 完全退出；fresh process 加载 FULL、
+   replay Delta、逐字段比较 2318 个状态和全部控制态，再继续训练两步。加载瞬间要求字节
+   一致，续训结果按 C1 FULL restart 数值非确定性包络判断。
+3. **真实变化观察**：GPT-2 seeds 41/42/43 各 100 steps、每步采样；GPT-2 XL seed 42
+   训练 500 steps，采样窗口固定为 1～30、236～265、471～500。同步统计 65K/262K/524K
+   elements 三种块大小，以及 model/Adam m/Adam v/optimizer other/small/control 分类。
+4. **真实轨迹 R1/R2 筛选**：扫描 Top-K、冻结阈值和 error-budget，selection fraction
+   1/5/10/20%，max age 4/8/16，FULL interval 20/50/100/200，FP16/INT8。每组输出逻辑
+   payload、frame/index/scale/control、4 KiB 对齐量、FULL 摊销、逐步/100-step NRMSE、
+   分类误差、最大年龄和恢复 loss；只保留最低写量、最低误差和 Pareto 折中三组。
+
+第一轮 Go 条件为至少一组在 FULL 摊销后物理写量低于 FULL-only 的 20%，100-step NRMSE
+中位数不高于 1e-2，无超龄块，固定批次恢复 loss 偏差不高于 1%。否则立即 Pivot 到
+低比特全量编码或低频 FULL，不进入 NPU R2 融合。
+
+#### 9.24.3 Go 后执行顺序
+
+R0 故障矩阵 → NPU 融合变化检测 → 连续 HBM frame buffer → 三个候选 CPU/NPU 等价 →
+同步 GPT-2/XL R2 端到端 → 双/四 HBM slot 与 ACL event → `aclrtMemcpyAsync` → XL
+500-step/3-seed 正式实验 → 13B 四卡扩展。异步阶段固定比较 slot 1/2/4、checkpoint
+interval 1/5/10/20 和 100 ms/1 s/5 s 延迟；所有已提交 generation 必须可恢复，稳定
+step overhead 不高于 10%，slot 满时只允许显式 busy 或背压，禁止静默丢弃。
+
+#### 9.24.4 证据与安全边界
+
+每个结果必须记录 commit、环境、配置、NPU/PCI、原始样本和统一时间线；首次图编译不
+进入稳态均值。逻辑 payload、frame bytes、4 KiB 对齐量和设备实际提交量分别报告。
+大型状态只驻留内存或 83:00.0 已声明分区，不写 `/models`；裸盘实验不格式化、不使用
+未声明 gap。结果目录固定为 `results/incremental-next-20260828/<RUN_ID>/`。

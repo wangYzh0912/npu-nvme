@@ -51,6 +51,14 @@ class S2DeltaOracleTests(unittest.TestCase):
                                    float(np.linalg.norm(diff)))
             self.assertEqual(by_id[item["block_id"]]["nonzero"],
                              int(np.count_nonzero(diff)))
+            self.assertAlmostEqual(by_id[item["block_id"]]["max_abs"],
+                                   float(np.max(np.abs(diff), initial=0.0)))
+            current_l2 = float(np.linalg.norm(a.astype(np.float64)))
+            self.assertAlmostEqual(by_id[item["block_id"]]["current_l2"],
+                                   current_l2)
+            self.assertAlmostEqual(
+                by_id[item["block_id"]]["relative_l2"],
+                float(np.linalg.norm(diff)) / max(current_l2, 1e-30))
 
     def test_z1_single_block_and_z2_repeated_small_change(self):
         oracle = S2DeltaOracle(self.initial, block_size=4, small_threshold=4)

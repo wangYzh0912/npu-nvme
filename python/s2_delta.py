@@ -129,28 +129,43 @@ def score_manifest_blocks(current: Mapping[str, np.ndarray],
         if a.shape != b.shape:
             raise ValueError(f"state shape mismatch: {name}")
         diff = np.subtract(a, b, dtype=np.float64)
+        current64 = a.astype(np.float64, copy=False)
         block_size = int(manifest["block_size"])
         full_count = diff.size // block_size
         full_scores = np.empty(0, dtype=np.float64)
         full_nonzero = np.empty(0, dtype=np.int64)
+        full_max_abs = np.empty(0, dtype=np.float64)
+        full_current_l2 = np.empty(0, dtype=np.float64)
         if full_count:
             full = diff[:full_count * block_size].reshape(full_count,
                                                           block_size)
             full_scores = np.sqrt(np.einsum("ij,ij->i", full, full))
             full_nonzero = np.count_nonzero(full, axis=1)
+            full_max_abs = np.max(np.abs(full), axis=1)
+            current_full = current64[:full_count * block_size].reshape(
+                full_count, block_size)
+            full_current_l2 = np.sqrt(np.einsum(
+                "ij,ij->i", current_full, current_full))
         for item in items:
             block_idx = int(item["block_idx"])
             count = int(item["element_count"])
             if count == block_size and block_idx < full_count:
                 score = float(full_scores[block_idx])
                 nonzero = int(full_nonzero[block_idx])
+                max_abs = float(full_max_abs[block_idx])
+                current_l2 = float(full_current_l2[block_idx])
             else:
                 start = int(item["element_offset"])
                 tail = diff[start:start + count]
                 score = float(np.linalg.norm(tail))
                 nonzero = int(np.count_nonzero(tail))
-            output.append({**item, "score": score, "nonzero": nonzero})
-        del diff
+                max_abs = float(np.max(np.abs(tail), initial=0.0))
+                current_l2 = float(np.linalg.norm(
+                    current64[start:start + count]))
+            output.append({**item, "score": score, "nonzero": nonzero,
+                           "max_abs": max_abs, "current_l2": current_l2,
+                           "relative_l2": score / max(current_l2, 1e-30)})
+        del diff, current64
     output.sort(key=lambda item: (-item["score"], int(item["block_id"])))
     return output
 
