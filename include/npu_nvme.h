@@ -50,6 +50,9 @@ int npu_nvme_get_max_transfer(NPUNVMEContext *ctx);
 int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
                           uint32_t total_bytes, int is_read, void *meta_buffer);
 
+/** @brief Submit and wait for an NVMe namespace flush on the metadata qpair. */
+int npu_nvme_flush(NPUNVMEContext *ctx);
+
 /**
  * @brief Batch write: NPU HBM -> NVMe (blocking).
  *

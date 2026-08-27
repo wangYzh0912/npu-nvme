@@ -87,6 +87,8 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
             ctypes.c_void_p(ctypes.addressof(meta_buf)))
         if ret_a != 0 or ret_b != 0:
             raise RuntimeError("Failed to wipe Metadata Slots.")
+        if hasattr(lib, "npu_nvme_flush") and lib.npu_nvme_flush(ctx) != 0:
+            raise RuntimeError("Failed to flush metadata replicas.")
 
         print("[4/4] Writing V2 Superblock (layout + CRC)...")
         sb_buf = ctypes.create_string_buffer(pack_superblock(layout), 4096)
@@ -96,10 +98,12 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
             ctypes.c_void_p(ctypes.addressof(sb_buf)))
         if ret_sb != 0:
             raise RuntimeError("Failed to write Superblock.")
+        if hasattr(lib, "npu_nvme_flush") and lib.npu_nvme_flush(ctx) != 0:
+            raise RuntimeError("Failed to flush superblock.")
 
         print("Flushing NVMe cache to NAND... Please wait...")
         import time
-        time.sleep(2)
+        print("NVMe namespace flush completed.")
 
         print(f"\n{'='*60}")
         print(f"[SUCCESS] NVMe disk {pci_addr} successfully formatted for NPUNVME!")

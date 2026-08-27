@@ -91,6 +91,9 @@ try:
         ctypes.c_uint32, ctypes.c_int, ctypes.c_void_p,
     ]
     lib.npu_nvme_sync_meta_io.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_flush"):
+        lib.npu_nvme_flush.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+        lib.npu_nvme_flush.restype = ctypes.c_int
 
     # -- Batch data transfer --
     lib.npu_nvme_write_batch.argtypes = [

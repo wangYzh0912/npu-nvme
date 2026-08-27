@@ -399,6 +399,7 @@ class DirectCheckpoint:
             ctypes.c_void_p(ctypes.addressof(meta_buf)))
         if rc != 0:
             raise RuntimeError(f"metadata replica write failed (rc={rc})")
+        self.flush_nvme()
         new_layout = replace(self.layout, generation=generation,
                              active_meta_slot=next_slot)
         sb_buf = ctypes.create_string_buffer(pack_superblock(new_layout), 4096)
@@ -407,9 +408,18 @@ class DirectCheckpoint:
             ctypes.c_void_p(ctypes.addressof(sb_buf)))
         if rc != 0:
             raise RuntimeError(f"superblock commit failed (rc={rc})")
+        self.flush_nvme()
         self.active_meta_slot = next_slot
         self.metadata_generation = generation
         self.layout = new_layout
+
+    def flush_nvme(self):
+        """Wait for the namespace persistence barrier used by R0 commits."""
+        if not hasattr(lib, "npu_nvme_flush"):
+            raise RuntimeError("C library lacks npu_nvme_flush; rebuild required")
+        rc = lib.npu_nvme_flush(self.ctx)
+        if rc != 0:
+            raise RuntimeError(f"NVMe flush failed (rc={rc})")
 
     # -- Probe flag helpers --------------------------------------------------
 

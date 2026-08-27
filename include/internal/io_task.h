@@ -127,6 +127,7 @@ typedef struct {
     uint64_t byte_offset;       /* absolute byte offset on NVMe */
     uint32_t total_bytes;       /* number of bytes to read/write */
     int is_read;                /* 1 = read, 0 = write */
+    int is_flush;               /* 1 = namespace flush, no data buffer */
     void *meta_buffer;          /* caller's host buffer */
     void *owned_buffer;         /* reactor-owned DMA staging copy */
     uint64_t submit_not_before_us; /* test hook; zero in normal operation */

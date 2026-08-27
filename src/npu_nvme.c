@@ -1353,7 +1353,10 @@ static int meta_poller_fn(void *arg) {
         uint64_t lba = req->byte_offset / ctx->block_size;
         uint32_t nblk = req->total_bytes / ctx->block_size;
         int rc;
-        if (req->is_read) {
+        if (req->is_flush) {
+            rc = spdk_nvme_ns_cmd_flush(ctx->ns, ctx->meta_qpair,
+                                        meta_io_complete_cb, req);
+        } else if (req->is_read) {
             rc = spdk_nvme_ns_cmd_read(ctx->ns, ctx->meta_qpair,
                                        ctx->meta_dma_buf, lba, nblk,
                                        meta_io_complete_cb, req, 0);
@@ -1375,7 +1378,7 @@ static int meta_poller_fn(void *arg) {
 
     if (atomic_load(&req->done)) {
         /* Copy result back for reads only after the command completed. */
-        if (req->is_read && req->result == 0) {
+        if (!req->is_flush && req->is_read && req->result == 0) {
             memcpy(req->owned_buffer, ctx->meta_dma_buf, req->total_bytes);
             if (!atomic_load(&req->detached))
                 memcpy(req->meta_buffer, req->owned_buffer, req->total_bytes);
@@ -1440,6 +1443,7 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
     req->byte_offset = byte_offset;
     req->total_bytes = total_bytes;
     req->is_read = is_read;
+    req->is_flush = 0;
     req->meta_buffer = meta_buffer;
     req->owned_buffer = malloc(total_bytes);
     if (!req->owned_buffer) { free(req); return -1; }
@@ -1470,6 +1474,36 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
 
     int result = req->result;
     free(req->owned_buffer);
+    free(req);
+    return result;
+}
+
+/**
+ * @brief Submit a namespace flush through the reactor-owned metadata qpair.
+ *
+ * A normal write completion only confirms command completion.  Callers that
+ * publish checkpoint metadata use this API to establish the explicit media
+ * persistence barrier required by the R0 protocol.
+ */
+int npu_nvme_flush(NPUNVMEContext *ctx) {
+    if (!ctx || !ctx->meta_ring || !ctx->meta_qpair) return -1;
+    meta_request_t *req = calloc(1, sizeof(*req));
+    if (!req) return -1;
+    req->is_flush = 1;
+    req->is_read = 0;
+    req->total_bytes = 0;
+    atomic_init(&req->done, 0);
+    atomic_init(&req->detached, 0);
+    req->result = 0;
+    req->submitted = 0;
+    void *obj = req;
+    if (spdk_ring_enqueue(ctx->meta_ring, &obj, 1, NULL) != 1) {
+        free(req);
+        return -1;
+    }
+    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+        return -ETIMEDOUT;
+    int result = req->result;
     free(req);
     return result;
 }
