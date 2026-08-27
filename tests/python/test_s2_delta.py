@@ -15,6 +15,9 @@ from delta_protocol import (pack_s2_replacement_frame,
 from s2_delta import (S2DeltaOracle, apply_s2_replacements,
                       build_block_manifest, score_manifest_blocks)
 from s2_delta import FileS2Ring
+from experiments.benchmarks.s2_real_trajectory import (  # noqa: E402
+    advance_topk_reference,
+)
 
 
 class S2DeltaOracleTests(unittest.TestCase):
@@ -59,6 +62,30 @@ class S2DeltaOracleTests(unittest.TestCase):
             self.assertAlmostEqual(
                 by_id[item["block_id"]]["relative_l2"],
                 float(np.linalg.norm(diff)) / max(current_l2, 1e-30))
+
+    def test_lightweight_topk_advance_matches_materialized_frame(self):
+        manifest = build_block_manifest(self.initial, block_size=4,
+                                        small_threshold=4)
+        current = {name: value.copy() for name, value in self.initial.items()}
+        current["backbone.blocks.0.weight"][:4] += 2
+        current["backbone.blocks.1.weight"][4] += 9
+        current["backbone.layernorm.bias"] += 1
+        scores = score_manifest_blocks(current, self.initial, manifest)
+        lightweight = {name: value.copy()
+                       for name, value in self.initial.items()}
+        advanced = advance_topk_reference(
+            current, lightweight, manifest, scores, top_k=2)
+
+        oracle = S2DeltaOracle(self.initial, block_size=4,
+                               small_threshold=4, top_k=2)
+        oracle.set_current(current)
+        frame = oracle.observe(1)
+        oracle.ack(frame)
+        self.assertEqual(advanced["frame_bytes"], len(frame))
+        self.assertEqual(advanced["changed_small"], 1)
+        for name in lightweight:
+            np.testing.assert_array_equal(
+                lightweight[name], oracle.persisted_reference[name])
 
     def test_z1_single_block_and_z2_repeated_small_change(self):
         oracle = S2DeltaOracle(self.initial, block_size=4, small_threshold=4)

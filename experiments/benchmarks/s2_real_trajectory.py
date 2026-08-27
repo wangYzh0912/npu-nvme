@@ -26,7 +26,8 @@ from experiments.common import (  # noqa: E402
     init_env, make_causal_lm_training, warmup_model,
 )
 from direct_checkpoint import ProbeTrainOneStepCell  # noqa: E402
-from s2_delta import S2DeltaOracle, score_manifest_blocks  # noqa: E402
+from delta_protocol import FRAME_HEADER_SIZE  # noqa: E402
+from s2_delta import build_block_manifest, score_manifest_blocks  # noqa: E402
 
 
 def snapshot_state(model, optimizer, include_optimizer):
@@ -133,6 +134,41 @@ def small_state_metrics(current, reference, manifest):
             record["changed_fields"] += 1
             record["changed_bytes"] += int(left.nbytes)
     return by_category
+
+
+def advance_topk_reference(current, reference, manifest, ranked_scores, top_k):
+    """Advance a sampled Top-K reference without materializing a huge frame.
+
+    The returned byte count is exactly the v3 native-replacement frame size.
+    This keeps trajectory observation semantically equivalent to
+    ``S2DeltaOracle.observe()+ack()`` while avoiding a multi-GiB temporary
+    frame and a second full-state scoring pass.
+    """
+    selected = [item for item in ranked_scores if item["nonzero"]][:top_k]
+    frame_bytes = FRAME_HEADER_SIZE
+    for item in selected:
+        name = item["name"]
+        start = int(item["element_offset"])
+        count = int(item["element_count"])
+        source = np.asarray(current[name]).reshape(-1)
+        target = np.asarray(reference[name]).reshape(-1)
+        target[start:start + count] = source[start:start + count]
+        frame_bytes += (28 + len(name.encode("utf-8")) +
+                        len(str(item["dtype"]).encode("ascii")) +
+                        count * np.dtype(item["dtype"]).itemsize)
+    changed_small = 0
+    for item in manifest["small"]:
+        name = item["name"]
+        source = np.asarray(current[name])
+        if np.array_equal(source, reference[name], equal_nan=True):
+            continue
+        reference[name] = np.array(source, copy=True)
+        changed_small += 1
+        frame_bytes += (14 + len(name.encode("utf-8")) +
+                        len(str(item["dtype"]).encode("ascii")) +
+                        int(source.nbytes))
+    return {"selected": selected, "changed_small": changed_small,
+            "frame_bytes": int(frame_bytes)}
 
 
 def main():
@@ -265,12 +301,11 @@ def main():
                           "run_id": writer.run_id,
                           "summary": result["summary"]}, indent=2), flush=True)
         return
-    oracles = {
-        block_size: S2DeltaOracle(
+    manifests = {
+        block_size: build_block_manifest(
             initial, block_size=block_size,
-            small_threshold=args.small_threshold, top_k=None)
-        for block_size in block_sizes
-    }
+            small_threshold=args.small_threshold)
+        for block_size in block_sizes}
     previous = {name: np.array(value, copy=True)
                 for name, value in initial.items()}
     persisted = {
@@ -278,20 +313,13 @@ def main():
                      for name, value in initial.items()}
         for block_size in block_sizes
     }
-    policy_oracles = {
-        block_size: S2DeltaOracle(
-            initial, block_size=block_size,
-            small_threshold=args.small_threshold,
-            top_k=max(1, int(len(oracles[block_size].manifest["blocks"])
-                             * args.top_k_percent / 100)))
-        for block_size in block_sizes
-    }
+    generations = {block_size: 0 for block_size in block_sizes}
     budgets = (0.01, 0.05, 0.10, 0.20, 0.50, 1.0)
     last_selected = {block_size: set() for block_size in block_sizes}
     last_acked = {
         block_size: {
             int(item["block_id"]): 0
-            for item in oracles[block_size].manifest["blocks"]}
+            for item in manifests[block_size]["blocks"]}
         for block_size in block_sizes
     }
     trajectory = []
@@ -327,27 +355,25 @@ def main():
                 continue
             block_results = {}
             for block_size in block_sizes:
-                oracle = oracles[block_size]
-                policy_oracle = policy_oracles[block_size]
-                manifest = oracle.manifest
-                oracle.set_current(current)
-                policy_oracle.set_current(current)
+                manifest = manifests[block_size]
                 adjacent = block_scores(current, previous, manifest)
                 persisted_scores = block_scores(
                     current, persisted[block_size], manifest)
-                selected = {item["block_id"] for item in persisted_scores[:max(
-                    1, int(len(persisted_scores) *
-                           args.top_k_percent / 100))]}
+                top_k = max(1, int(len(persisted_scores) *
+                                   args.top_k_percent / 100))
+                advance = advance_topk_reference(
+                    current, persisted[block_size], manifest,
+                    persisted_scores, top_k)
+                selected = {item["block_id"] for item in advance["selected"]}
                 for block_id in selected:
                     last_acked[block_size][block_id] = step
                 ages = [step - last_acked[block_size][item["block_id"]]
                         for item in manifest["blocks"]]
-                frame = policy_oracle.observe(step)
-                policy_oracle.ack(frame)
+                generations[block_size] += 1
                 previous_selected = last_selected[block_size]
                 block_results[str(block_size)] = {
                     "block_count": len(adjacent),
-                    "frame_bytes_top_k": len(frame),
+                    "frame_bytes_top_k": advance["frame_bytes"],
                     "adjacent_l2": float(np.sqrt(sum(
                         item["score"] ** 2 for item in adjacent))),
                     "persisted_l2": float(np.sqrt(sum(
@@ -365,10 +391,6 @@ def main():
                     "small": small_state_metrics(current, previous, manifest),
                 }
                 last_selected[block_size] = selected
-                persisted[block_size] = {
-                    name: np.array(value, copy=True)
-                    for name, value in policy_oracle.persisted_reference.items()
-                }
             primary = block_results[str(block_sizes[0])]
             sample = {
                 "run_id": writer.run_id,
@@ -401,10 +423,10 @@ def main():
             "steps": args.steps,
             "samples": len(trajectory),
             "manifest_digests": {
-                str(block_size): oracles[block_size].manifest_digest
+                str(block_size): manifests[block_size]["digest"]
                 for block_size in block_sizes},
             "final_generation": {
-                str(block_size): policy_oracles[block_size].persisted_generation
+                str(block_size): generations[block_size]
                 for block_size in block_sizes},
             "final_frame_bytes": trajectory[-1]["frame_bytes_top_k"] if trajectory else 0,
         }, status="pass")

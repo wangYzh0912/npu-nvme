@@ -1,0 +1,61 @@
+{
+  "config": {
+    "block_size": 65536,
+    "block_sizes": [
+      65536,
+      262144,
+      524288
+    ],
+    "experiment": "I1_REAL",
+    "model": "gpt2",
+    "no_optimizer": false,
+    "npu": 7,
+    "numeric_only": false,
+    "oracle": "S2 persisted-reference replacement",
+    "output_root": "results/incremental-next-20260828/trajectory-light-smoke",
+    "pci": "0000:83:00.0",
+    "run_id": "I1_REAL_20260828_012734_3f9ca328",
+    "sample_every": 1,
+    "sample_windows": null,
+    "seed": 47,
+    "seq_len": 129,
+    "small_threshold": 10000,
+    "state": "weights+adam_m_v+global_step",
+    "state_categories": [
+      "model",
+      "adam_m",
+      "adam_v",
+      "optimizer_other",
+      "small",
+      "control"
+    ],
+    "steps": 1,
+    "top_k_percent": 10.0
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "I1_REAL_20260828_012734_3f9ca328",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 1,
+  "status": "pass",
+  "summary": {
+    "final_frame_bytes": 149783829,
+    "final_generation": {
+      "262144": 1,
+      "524288": 1,
+      "65536": 1
+    },
+    "manifest_digests": {
+      "262144": "933d140f1e295d6181b2bccd3dcc674943e2ca339ebbd55948434244816ed1aa",
+      "524288": "424a635012456416aca67e6395a4c7f7f572a1d4212c469c8d0fd8573618323e",
+      "65536": "a401a93bdbf31ed144d76ee9ddad30b051b38c8a80cfc21fca32608eb9698e9b"
+    },
+    "samples": 1,
+    "steps": 1
+  }
+}
