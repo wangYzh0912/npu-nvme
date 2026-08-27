@@ -69,6 +69,8 @@ C 测试与硬件使用边界见 `tests/c/README.md`。
 
 近期的研发、实验与增量检查点路线见
 [`docs/NEAR_TERM_WORK_PLAN.md`](docs/NEAR_TERM_WORK_PLAN.md)。
+真实训练增量检查点的固定语义、实施门禁与正式实验矩阵见
+[`docs/INCREMENTAL_CHECKPOINT_REAL_TRAINING_EXECUTION_PLAN.md`](docs/INCREMENTAL_CHECKPOINT_REAL_TRAINING_EXECUTION_PLAN.md)。
 
 ### Python 层
 
@@ -82,4 +84,3 @@ ckpt.save(model, step=100)       # 全量保存
 ckpt.load(model, step=100)       # 全量加载
 ckpt.cleanup()
 ```
-
