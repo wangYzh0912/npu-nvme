@@ -1,0 +1,16 @@
+{
+  "gate": "C2",
+  "model": "gpt2",
+  "pci": "0000:83:00.0",
+  "world_size": 2,
+  "ranks": [0, 1],
+  "coordinator_npu": 7,
+  "training_npus": [1, 2],
+  "save_step": 2,
+  "fields_per_rank": 597,
+  "bytes_per_rank": 1485030880,
+  "restore": "fresh processes, serialized SPDK attach",
+  "continuation_loss": [10.875582695007324, 10.875582695007324],
+  "status": "pass",
+  "limitation": "stand-alone rank processes; HCCL gradient synchronization not covered"
+}
