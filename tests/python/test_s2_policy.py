@@ -83,6 +83,24 @@ class S2SelectivePolicyTests(unittest.TestCase):
         frame = policy.observe({"p": np.ones(4, dtype=np.float32)}, 1)
         self.assertEqual(frame["selected"], [])
 
+    def test_forced_small_state_is_always_raw(self):
+        initial = {"small": np.asarray([1000.25], dtype=np.float32),
+                   "large": np.zeros(8, dtype=np.float32)}
+        current = {"small": np.asarray([1000.5], dtype=np.float32),
+                   "large": np.ones(8, dtype=np.float32)}
+        policy = S2SelectivePolicy(
+            initial, block_size=4, selection_fraction=0.5, encoding="int8",
+            small_threshold=2)
+        frame = policy.observe(current, 1)
+        forced = [entry for entry in frame["decoded"]
+                  if policy.blocks[entry[0]].forced]
+        self.assertEqual(len(forced), 1)
+        self.assertEqual(forced[0][3], "raw")
+        self.assertEqual(frame["raw_payload_bytes"], 4)
+        policy.ack(frame["generation"])
+        np.testing.assert_array_equal(policy.reference["small"],
+                                      current["small"])
+
 
 if __name__ == "__main__":
     unittest.main()

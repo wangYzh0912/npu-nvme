@@ -2,12 +2,14 @@ import os
 import sys
 import unittest
 
+import numpy as np
+
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path[:0] = [REPO_ROOT, os.path.join(REPO_ROOT, "python")]
 
 from experiments.benchmarks.s2_real_policy_scan import (  # noqa: E402
-    candidate_grid, candidate_id, quick_candidates,
+    candidate_grid, candidate_id, quick_candidates, relative_l2_by_category,
 )
 
 
@@ -32,6 +34,19 @@ class RealPolicyScanConfigTests(unittest.TestCase):
         self.assertEqual({row["selection_mode"] for row in rows},
                          {"topk", "error_budget"})
         self.assertTrue(all(row["strategy"] == "r2" for row in rows))
+
+    def test_category_error_cannot_be_hidden_by_model_energy(self):
+        current = {
+            "model/p": np.full(100, 100.0, dtype=np.float32),
+            "optimizer/m/p": np.ones(2, dtype=np.float32),
+        }
+        reference = {
+            "model/p": current["model/p"].copy(),
+            "optimizer/m/p": np.zeros(2, dtype=np.float32),
+        }
+        errors = relative_l2_by_category(current, reference)
+        self.assertEqual(errors["model"], 0.0)
+        self.assertEqual(errors["adam_m"], 1.0)
 
 
 if __name__ == "__main__":

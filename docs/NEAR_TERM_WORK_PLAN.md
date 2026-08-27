@@ -1197,3 +1197,31 @@ step overhead 不高于 10%，slot 满时只允许显式 busy 或背压，禁止
 进入稳态均值。逻辑 payload、frame bytes、4 KiB 对齐量和设备实际提交量分别报告。
 大型状态只驻留内存或 83:00.0 已声明分区，不写 `/models`；裸盘实验不格式化、不使用
 未声明 gap。结果目录固定为 `results/incremental-next-20260828/<RUN_ID>/`。
+
+#### 9.24.5 第一轮执行记录（2026-08-28）
+
+实现提交 `1274660` 已推送到 `origin/exp/incremental-r2-next`。共享控制态接口已接入
+R0 source/restore，GPT-2 smoke 已验证 590 个字段逐字节一致、7 类控制态一致，恢复后
+两步 loss 与 source 完全相同。正式 GPT-2 XL fresh-process 门禁也已通过：
+
+| 项目 | 结果 |
+|---|---:|
+| 模型/配置 | GPT-2 XL，seed 17，dropout 0，seq_len 129 |
+| 状态 | 2318 fields，9822624008 B；fresh process 逐字段 SHA-256/字节一致 |
+| 控制态 | data cursor、global step、loss scale、Python/NumPy/MindSpore RNG/seed 共 7 类，全部一致 |
+| R0 frame | v5，generation 5，7426 blocks，6913679360 B（6.439 GiB） |
+| 相对本次状态 payload | 70.385%；再次确认 R0 不是低写量性能方案 |
+| source 训练步 / R0 | 287.96 ms / 866764.31 ms，R0 约为训练步的 3010 倍 |
+| fresh restore | FULL load 20611.63 ms，R0 replay 1984.61 ms |
+| 续训 | step 2/3 loss 分别为 10.838499/10.879709，与 source 逐值相同 |
+
+机器可读证据位于 `results/incremental-next-20260828/r0-gpt2xl-final/`。该结果关闭了
+“GPT-2 XL 大于 4 GiB R0 frame 能否在 source 完全退出后恢复”的缺口，并证明当前
+FULL + committed Delta、v5 大偏移、控制态恢复和继续训练协议在单帧路径成立；它不证明
+R2 的写量收益，也不改变当前 R0 capture 开销不可接受的判断。
+
+真实变化观察已按正式口径在 NPU 0/1/3 并行启动 GPT-2 seeds 41/42/43、100 steps、
+seq_len 1025；三种块大小和状态分类每步采样。两步策略 smoke 只证明工具可运行，因发现
+forced small state 仍被量化，旧 smoke 不进入性能结论。正式扫描前固定为小状态 raw、
+大块按 FP16/INT8 编码，并补齐分类 NRMSE、控制/descriptor/payload/对齐写量和固定批次
+恢复 loss。第一轮 Go/Pivot 判断仍等待三组 100-step 轨迹和精确候选回放，不提前下结论。

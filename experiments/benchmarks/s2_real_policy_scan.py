@@ -28,7 +28,9 @@ from experiments.benchmarks.io_matrix import (  # noqa: E402
 from experiments.benchmarks.r0_real_e2e import (  # noqa: E402
     build, control_state, train_one,
 )
-from experiments.benchmarks.s2_real_trajectory import snapshot_state  # noqa: E402
+from experiments.benchmarks.s2_real_trajectory import (  # noqa: E402
+    snapshot_state, state_category,
+)
 from s2_delta import build_block_manifest, score_manifest_blocks  # noqa: E402
 from s2_policy import S2SelectivePolicy  # noqa: E402
 from training_state import encode_control_value  # noqa: E402
@@ -120,6 +122,39 @@ def control_bytes(ms, optimizer, step, seed):
     return payload, len(controls)
 
 
+def assign_state(ms, model, optimizer, state):
+    """Assign one canonical host state to the compiled training cell."""
+    parameters = {}
+    for parameter in model.get_parameters():
+        parameters[f"model/{parameter.name}"] = parameter
+    for prefix, values in (("optimizer/m", optimizer.moments1),
+                           ("optimizer/v", optimizer.moments2)):
+        for parameter in values:
+            parameters[f"{prefix}/{parameter.name}"] = parameter
+    parameters["optimizer/global_step"] = optimizer.global_step
+    if set(parameters) != set(state):
+        missing = sorted(set(parameters) - set(state))
+        extra = sorted(set(state) - set(parameters))
+        raise ValueError(f"state assignment field mismatch: missing={missing[:3]} "
+                         f"extra={extra[:3]}")
+    for name, parameter in parameters.items():
+        parameter.set_data(ms.Tensor(np.asarray(state[name])))
+
+
+def relative_l2_by_category(current, reference):
+    totals = {}
+    for name, value in current.items():
+        actual = np.asarray(value).astype(np.float64)
+        restored = np.asarray(reference[name]).astype(np.float64)
+        category = state_category(name)
+        record = totals.setdefault(category, [0.0, 0.0])
+        difference = actual - restored
+        record[0] += float(np.vdot(difference, difference))
+        record[1] += float(np.vdot(actual, actual))
+    return {category: float(np.sqrt(error / max(energy, 1e-30)))
+            for category, (error, energy) in totals.items()}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", choices=("gpt2", "gpt2_xl"), default="gpt2")
@@ -163,10 +198,15 @@ def main():
         metrics[key] = {"candidate_id": key, "config": config,
                         "physical_bytes": 0, "delta_bytes": 0,
                         "full_bytes": 0, "errors": [], "max_ages": [],
-                        "selected_blocks": []}
+                        "selected_blocks": [], "payload_bytes": 0,
+                        "raw_payload_bytes": 0,
+                        "encoded_payload_bytes": 0,
+                        "descriptor_bytes": 0, "control_bytes": 0,
+                        "category_errors": []}
     estimated_reference_bytes = state_bytes * len(candidates)
     losses = [first_loss]
     training_ms = [first_ms]
+    full_only_bytes = 0
 
     for step in range(1, args.steps + 1):
         if step > 1:
@@ -176,6 +216,8 @@ def main():
             current = snapshot_state(model, optimizer, True)
         controls_payload, controls_count = control_bytes(
             ms, optimizer, step, args.seed)
+        full_only_bytes += align(
+            state_bytes + controls_payload + controls_count * 96 + 4096)
         for key, policy in policies.items():
             row = metrics[key]
             interval = row["config"]["full_interval"]
@@ -184,6 +226,7 @@ def main():
                                  controls_count * 96 + 4096)
                 row["physical_bytes"] += physical
                 row["full_bytes"] += physical
+                row["control_bytes"] += controls_payload
                 row["selected_blocks"].append(0)
                 policy.reset_full(current)
             else:
@@ -194,23 +237,53 @@ def main():
                                  controls_count * 96)
                 row["physical_bytes"] += physical
                 row["delta_bytes"] += physical
+                row["payload_bytes"] += frame["payload_bytes"]
+                row["raw_payload_bytes"] += frame["raw_payload_bytes"]
+                row["encoded_payload_bytes"] += frame[
+                    "encoded_payload_bytes"]
+                row["descriptor_bytes"] += frame["descriptor_bytes"]
+                row["control_bytes"] += controls_payload
                 row["selected_blocks"].append(len(frame["selected"]))
             row["errors"].append(policy.relative_l2(current))
+            row["category_errors"].append(relative_l2_by_category(
+                current, policy.reference))
             row["max_ages"].append(int(policy.age.max(initial=0)))
         del current
 
-    full_per_checkpoint = align(state_bytes + 4096)
-    full_only_bytes = full_per_checkpoint * args.steps
+    committed_state = snapshot_state(model, optimizer, True)
+    assign_state(ms, model, optimizer, committed_state)
+    oracle_recovery_loss, _oracle_ms = train_one(
+        cell, ms, args.steps + 1, args.seq_len)
+    for key, policy in policies.items():
+        assign_state(ms, model, optimizer, policy.reference)
+        recovered_loss, _recovered_ms = train_one(
+            cell, ms, args.steps + 1, args.seq_len)
+        row = metrics[key]
+        row["oracle_recovery_loss"] = oracle_recovery_loss
+        row["recovered_loss"] = recovered_loss
+        row["recovery_loss_relative_error"] = abs(
+            recovered_loss - oracle_recovery_loss) / max(
+                abs(oracle_recovery_loss), 1e-30)
     rows = []
     for row in metrics.values():
         row["write_ratio"] = row["physical_bytes"] / full_only_bytes
         row["final_relative_l2_error"] = row["errors"][-1]
         row["max_relative_l2_error"] = max(row["errors"])
+        categories = sorted({category for sample in row["category_errors"]
+                             for category in sample})
+        row["max_category_relative_l2_error"] = {
+            category: max(sample.get(category, 0.0)
+                          for sample in row["category_errors"])
+            for category in categories}
+        row["final_category_relative_l2_error"] = (
+            row["category_errors"][-1] if row["category_errors"] else {})
         row["max_block_age"] = max(row["max_ages"], default=0)
-        row["eligible_write_age"] = (
+        row["eligible_go"] = (
             row["write_ratio"] < 0.20 and
             (row["config"]["strategy"] == "r2" and
-             row["max_block_age"] < row["config"]["max_age"]))
+             row["max_block_age"] < row["config"]["max_age"]) and
+            row["final_relative_l2_error"] <= 1e-2 and
+            row["recovery_loss_relative_error"] <= 0.01)
         rows.append(row)
     rows.sort(key=lambda row: (row["write_ratio"],
                                row["final_relative_l2_error"]))

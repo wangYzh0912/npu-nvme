@@ -123,19 +123,30 @@ class S2SelectivePolicy:
 
         decoded = []
         payload_bytes = 0
+        raw_payload_bytes = 0
+        encoded_payload_bytes = 0
         for index in sorted(selected):
             block = self.blocks[index]
             values = np.asarray(current[block.name]).reshape(-1)[
                 block.offset:block.offset + block.count]
-            restored, encoded_bytes, scale = self._encode(values, self.encoding)
-            decoded.append((index, np.array(restored, copy=True), scale))
+            block_encoding = "raw" if block.forced else self.encoding
+            restored, encoded_bytes, scale = self._encode(
+                values, block_encoding)
+            decoded.append((index, np.array(restored, copy=True), scale,
+                            block_encoding))
             payload_bytes += encoded_bytes
+            if block.forced:
+                raw_payload_bytes += encoded_bytes
+            else:
+                encoded_payload_bytes += encoded_bytes
         descriptor_bytes = _align(max(1, len(decoded)) * 96)
         physical_bytes = _align(4096 + descriptor_bytes + payload_bytes)
         self.pending = {
             "step": int(step), "generation": self.generation + 1,
             "selected": sorted(selected), "decoded": decoded,
             "payload_bytes": int(payload_bytes),
+            "raw_payload_bytes": int(raw_payload_bytes),
+            "encoded_payload_bytes": int(encoded_payload_bytes),
             "descriptor_bytes": int(descriptor_bytes),
             "physical_bytes": int(physical_bytes),
             "scores": scores,
@@ -146,7 +157,7 @@ class S2SelectivePolicy:
         if self.pending is None or int(generation) != self.pending["generation"]:
             raise ValueError("stale or unknown S2 policy ACK")
         selected = set(self.pending["selected"])
-        for index, values, _scale in self.pending["decoded"]:
+        for index, values, _scale, _encoding in self.pending["decoded"]:
             block = self.blocks[index]
             target = self.reference[block.name].reshape(-1)
             target[block.offset:block.offset + block.count] = values
