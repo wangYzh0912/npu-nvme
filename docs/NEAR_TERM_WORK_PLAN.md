@@ -1287,3 +1287,10 @@ Adam v `0`。这说明 XL 也存在可利用的能量集中性，但 Adam m 仍�
 age 达到 500 是采样语义下的观察 age，不是逐步执行策略的正式 max-age。XL 结果可支持
 “变化能量集中、需状态分类”的规模侧判断，但不能推翻 GPT-2 三 seed 精确 R2 的 PIVOT，
 也不能单独授权 NPU 融合或异步流水。
+
+## 9.25 PPT 证据实验计划
+
+完整的 E0–E16 执行矩阵、统一结果 schema、E1 双盘安全边界、真实 DMA 异步接口和阶段
+门禁见 [PPT_EVIDENCE_EXPERIMENT_PLAN.md](PPT_EVIDENCE_EXPERIMENT_PLAN.md)。当前从
+`dac5508` 建立实验分支 `exp/ppt-evidence-20260829`；在 E12 分类感知 CPU 策略未通过
+前，不进入分类感知 NPU、异步长程和 13B 扩展。
