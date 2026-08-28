@@ -44,8 +44,8 @@ class IncrementalDecisionTests(unittest.TestCase):
                     "status": "PASS", "seed": seed, "rows": [{
                         "candidate_id": "candidate", "config": {
                             "strategy": "r2", "max_age": 4},
-                        "write_ratio": 0.1, "errors": [0.005, 0.006],
-                        "final_relative_l2_error": 0.006,
+                        "write_ratio": 0.1, "errors": [0.004, 0.005],
+                        "final_relative_l2_error": 0.005,
                         "recovery_loss_relative_error": 0.001,
                         "max_block_age": 3,
                         "final_category_relative_l2_error": {"model": 0.006},

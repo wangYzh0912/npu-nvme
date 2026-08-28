@@ -17,6 +17,9 @@ from pathlib import Path
 import numpy as np
 
 
+SINGLE_STEP_NRMSE_LIMIT = 5e-3
+
+
 def load_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -160,7 +163,7 @@ def policy_summary(result_paths, expected_seeds=3):
         record["eligible_go"] = (
             len(seeds) >= expected_seeds and
             record["write_ratio"]["max"] < 0.20 and
-            record["step_nrmse"]["median"] <= 1e-2 and
+            record["step_nrmse"]["median"] <= SINGLE_STEP_NRMSE_LIMIT and
             record["recovery_loss_relative_error"]["max"] <= 0.01 and
             age_ok)
         candidates.append(record)
