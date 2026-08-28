@@ -1,0 +1,94 @@
+{
+  "config": {
+    "experiment": "A6",
+    "npu": 7,
+    "output_root": "results/ppt-evidence-20260829/E5/raw-400k",
+    "path": "sync_meta_control_vs_request_ring_fsm",
+    "payload_bytes": 409600,
+    "pci": "0000:83:00.0",
+    "repetitions": 30,
+    "ring_offset": 274878726144,
+    "run_id": "A6_20260829_022351_0c7340d5",
+    "scope": "API/control-plane microbenchmark, not full model checkpoint",
+    "shm_id": 7000,
+    "sync_offset": 274877906944,
+    "warmups": 10
+  },
+  "failed_samples": 1,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "A6_20260829_022351_0c7340d5",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 5,
+  "status": "fail",
+  "summary": {
+    "ring_read_ms": {
+      "ci95": [
+        0.31329102063652114,
+        2.6547769793634792
+      ],
+      "ci95_method": "student-t(df=4)",
+      "max": 3.170713,
+      "mean": 1.484034,
+      "median": 1.062364,
+      "min": 1.061944,
+      "n": 5,
+      "p95": 2.7491373999999995,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 0.9428822781824356
+    },
+    "ring_write_ms": {
+      "ci95": [
+        6.338337241084105,
+        6.342989958915897
+      ],
+      "ci95_method": "student-t(df=4)",
+      "max": 6.342786,
+      "mean": 6.340663600000001,
+      "median": 6.341425,
+      "min": 6.338536,
+      "n": 5,
+      "p95": 6.3425738,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 0.001873581676895847
+    },
+    "sync_read_ms": {
+      "ci95": [
+        0.27557229175547526,
+        2.648899708244525
+      ],
+      "ci95_method": "student-t(df=4)",
+      "max": 3.171843,
+      "mean": 1.462236,
+      "median": 1.035375,
+      "min": 1.030804,
+      "n": 5,
+      "p95": 2.7453491999999997,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 0.9557043692667204
+    },
+    "sync_write_ms": {
+      "ci95": [
+        1.1046727126493219,
+        1.1125244873506783
+      ],
+      "ci95_method": "student-t(df=4)",
+      "max": 1.112484,
+      "mean": 1.1085986,
+      "median": 1.108674,
+      "min": 1.103695,
+      "n": 5,
+      "p95": 1.1118902000000002,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 0.003161795265351607
+    }
+  }
+}

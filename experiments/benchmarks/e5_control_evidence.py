@@ -107,6 +107,34 @@ def newest(root: Path) -> Path:
     return runs[-1].parent
 
 
+def record_failed(args):
+    raw_run = Path(args.failed_path)
+    config = json.loads((raw_run / "config.json").read_text())
+    env_path = raw_run / "environment.json"
+    env = json.loads(env_path.read_text()) if env_path.exists() else {}
+    bundle = EvidenceBundle("E5", {
+        "model": "control_microbench", "seed": None,
+        "mode": "single_owner_sync_vs_request_ring_batch",
+        "pci": config.get("pci", "0000:83:00.0"),
+        "npu": config.get("npu", args.npu),
+        "state_bytes": config.get("payload_bytes"),
+        "measurement_kind": "failed control microbenchmark",
+        "failure_phase": "sync control readback",
+    }, root=args.evidence_root, repo_root=REPO_ROOT, environment=env)
+    shutil.copytree(raw_run, bundle.raw_dir / "failed_run")
+    failures_path = raw_run / "failures.jsonl"
+    if failures_path.exists():
+        for line in failures_path.read_text().splitlines():
+            if line.strip():
+                bundle.add_failure(json.loads(line))
+    bundle.finalize(metrics={"model": "control_microbench",
+                             "mode": "single_owner_sync_vs_request_ring_batch",
+                             "state_bytes": config.get("payload_bytes"),
+                             "logical_bytes": config.get("payload_bytes"),
+                             "slot_count": 1}, status="fail")
+    print(json.dumps({"failed_bundle": str(bundle.run_dir)}, indent=2), flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--npu", type=int, default=7)
@@ -116,9 +144,13 @@ def main():
     parser.add_argument("--required-samples", type=int, default=30)
     parser.add_argument("--raw-root", default=None)
     parser.add_argument("--evidence-root", default=None)
+    parser.add_argument("--failed-path", default=None)
     args = parser.parse_args()
     args.raw_root = args.raw_root or str(REPO_ROOT / "results/ppt-evidence-20260829/E5/raw")
     args.evidence_root = args.evidence_root or str(REPO_ROOT / "results/ppt-evidence-20260829")
+    if args.failed_path:
+        record_failed(args)
+        return
     raw_root = Path(args.raw_root)
     raw_root.mkdir(parents=True, exist_ok=True)
     cmd = [sys.executable, str(REPO_ROOT / "experiments/benchmarks/sync_ring_ab.py"),
