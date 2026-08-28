@@ -112,9 +112,13 @@ results/ppt-evidence-20260829/<EXPERIMENT_ID>/<RUN_ID>/
 - E3 尚未完成：完整 Host staging 对照、RSS/pinned DRAM 实测、chunk=1/16 MiB、GPT-2
   13B 和每配置 30 个正式样本。完成这些缺口前，不宣称“内存随 slot×chunk 有界”的
   正式结论。
-- 下一执行点：先修复/缩小 GPT-2 XL 首 cell 驱动同步问题并完成 E3-Host staging 与
-  真实 HBM 对照；随后进入 E5 单所有者控制压力和 E8 真实 PMU 复测。E2/E4 异步 DMA
-  仍不得提前替代 E3/E5/E8 的批次 A 门禁。
+- E5：已完成 400 KiB、单生产者、单所有者的受控同步 vs request-ring＋batch，10 次
+  预热＋30 次正式样本，读回校验通过；request-ring 写均值约 6.339 ms、读均值约
+  1.765 ms。一次独立重跑曾出现同步读回不一致，已作为未通过样本保留在原始目录，
+  成功重跑才进入正式证据包。
+- 下一执行点：完成 E3-Host staging 与 13B 缺口后，扩展 E5 到 4 MiB、XL/13B 和
+  1/2/4/8 生产者，并补齐内存峰值/锁等待/错误传播；随后进入 E8 真实 PMU 复测。
+  E2/E4 异步 DMA 仍不得提前替代 E3/E5/E8 的批次 A 门禁。
 
 对应证据：`results/ppt-evidence-20260829/E3/summary.json`、
 `experiments/benchmarks/e3_hbm_evidence.py` 和 `experiments/benchmarks/summarize_e3_ppt.py`。
