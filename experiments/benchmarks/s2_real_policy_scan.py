@@ -166,9 +166,11 @@ def main():
     parser.add_argument("--preset", choices=("quick", "grid"), default="quick")
     parser.add_argument("--batch-index", type=int, default=0)
     parser.add_argument("--batch-count", type=int, default=1)
+    parser.add_argument("--recovery-steps", type=int, default=10)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
-    if args.steps <= 0 or args.batch_count <= 0 or not 0 <= args.batch_index < args.batch_count:
+    if (args.steps <= 0 or args.recovery_steps <= 0 or args.batch_count <= 0
+            or not 0 <= args.batch_index < args.batch_count):
         raise ValueError("invalid scan dimensions")
     npu_info = check_npu_free(args.npu)
     started = time.perf_counter()
@@ -207,6 +209,13 @@ def main():
     losses = [first_loss]
     training_ms = [first_ms]
     full_only_bytes = 0
+    recovery_checkpoint_step = max(0, args.steps - 1)
+    recovery_state = {name: np.array(value, copy=True)
+                      for name, value in initial.items()}
+    recovery_references = {
+        key: {name: np.array(value, copy=True)
+              for name, value in initial.items()}
+        for key in policies}
 
     for step in range(1, args.steps + 1):
         if step > 1:
@@ -248,22 +257,36 @@ def main():
             row["category_errors"].append(relative_l2_by_category(
                 current, policy.reference))
             row["max_ages"].append(int(policy.age.max(initial=0)))
+            if step == recovery_checkpoint_step:
+                recovery_references[key] = {
+                    name: np.array(value, copy=True)
+                    for name, value in policy.reference.items()}
+        if step == recovery_checkpoint_step:
+            recovery_state = {name: np.array(value, copy=True)
+                              for name, value in current.items()}
         del current
 
-    committed_state = snapshot_state(model, optimizer, True)
-    assign_state(ms, model, optimizer, committed_state)
-    oracle_recovery_loss, _oracle_ms = train_one(
-        cell, ms, args.steps + 1, args.seq_len)
+    assign_state(ms, model, optimizer, recovery_state)
+    oracle_recovery_losses = []
+    for recovery_step in range(1, args.recovery_steps + 1):
+        oracle_loss, _oracle_ms = train_one(
+            cell, ms, args.steps + recovery_step, args.seq_len)
+        oracle_recovery_losses.append(oracle_loss)
     for key, policy in policies.items():
-        assign_state(ms, model, optimizer, policy.reference)
-        recovered_loss, _recovered_ms = train_one(
-            cell, ms, args.steps + 1, args.seq_len)
+        assign_state(ms, model, optimizer, recovery_references[key])
+        recovered_losses = []
+        for recovery_step in range(1, args.recovery_steps + 1):
+            recovered_loss, _recovered_ms = train_one(
+                cell, ms, args.steps + recovery_step, args.seq_len)
+            recovered_losses.append(recovered_loss)
+        relative_errors = [abs(actual - expected) / max(abs(expected), 1e-30)
+                           for actual, expected in zip(
+                               recovered_losses, oracle_recovery_losses)]
         row = metrics[key]
-        row["oracle_recovery_loss"] = oracle_recovery_loss
-        row["recovered_loss"] = recovered_loss
-        row["recovery_loss_relative_error"] = abs(
-            recovered_loss - oracle_recovery_loss) / max(
-                abs(oracle_recovery_loss), 1e-30)
+        row["oracle_recovery_losses"] = oracle_recovery_losses
+        row["recovered_losses"] = recovered_losses
+        row["recovery_loss_relative_errors"] = relative_errors
+        row["recovery_loss_relative_error"] = max(relative_errors)
     rows = []
     for row in metrics.values():
         row["write_ratio"] = row["physical_bytes"] / full_only_bytes
@@ -298,6 +321,8 @@ def main():
         "state_bytes": state_bytes,
         "estimated_reference_bytes": estimated_reference_bytes,
         "full_only_bytes": full_only_bytes,
+        "recovery_checkpoint_step": recovery_checkpoint_step,
+        "recovery_steps": args.recovery_steps,
         "thresholds": thresholds, "losses": losses,
         "training_ms": training_ms, "rows": rows,
         "environment": environment_snapshot(args, npu_info),
