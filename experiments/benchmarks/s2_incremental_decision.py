@@ -135,8 +135,8 @@ def policy_summary(result_paths, expected_seeds=3):
             for category, value in row[
                     "final_category_relative_l2_error"].items():
                 category_final[category].append(value)
-            for category, value in row[
-                    "max_category_relative_l2_error"].items():
+            for category, value in row.get(
+                    "max_category_relative_l2_error", {}).items():
                 category_max[category].append(value)
         max_age = max((row["max_block_age"] for row in rows), default=0)
         age_ok = bool(config.get("max_age")) and max_age < config["max_age"]
