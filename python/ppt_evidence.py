@@ -177,8 +177,10 @@ class EvidenceBundle:
                             "run_id": self.run_id})
         self._write("config.json", self.config)
         self._write("commit.json", self._commit_snapshot())
-        if environment is not None:
-            self._write("environment.json", environment)
+        # Keep the file present even for host-only/import runs.  An empty
+        # object is preferable to a broken manifest path; hardware runners
+        # should pass environment_snapshot(...).
+        self._write("environment.json", environment or {})
         self.failures_path.touch()
 
     def _commit_snapshot(self):
