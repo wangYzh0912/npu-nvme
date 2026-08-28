@@ -81,40 +81,44 @@ def run_one(args, mode, size, depth, operation):
             repo_root=ROOT, npu_info=command(["npu-smi", "info"])))
     file_path = args.root / f"{label}.bin"
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    raw_path = bundle.raw_dir / "fio.json"
-    argv = ["fio", f"--name={label}", f"--filename={file_path}",
-            f"--rw={operation}", "--ioengine=io_uring", f"--iodepth={depth}",
-            "--numjobs=1", f"--bs={size}", f"--size={size}",
-            f"--loops={args.warmups + args.samples}", "--group_reporting",
-            "--output-format=json+"]
-    if mode == "buffered":
-        argv.append("--direct=0")
-    else:
-        argv.append("--direct=1")
-    argv.append("--fdatasync=1" if args.fdatasync else "--fsync=1")
-    data, execution = fio_json(argv, raw_path)
+    def make_argv(loops):
+        argv = ["fio", f"--name={label}", f"--filename={file_path}",
+                f"--rw={operation}", "--ioengine=io_uring",
+                f"--iodepth={depth}", "--numjobs=1", f"--bs={size}",
+                f"--size={size}", f"--loops={loops}", "--group_reporting",
+                "--output-format=json+"]
+        argv.append("--direct=0" if mode == "buffered" else "--direct=1")
+        argv.append("--fdatasync=1" if args.fdatasync else "--fsync=1")
+        return argv
+
+    warmup_data, warmup_exec = fio_json(
+        make_argv(args.warmups), bundle.raw_dir / "fio_warmup.json")
+    data, execution = fio_json(
+        make_argv(args.samples), bundle.raw_dir / "fio_formal.json")
     job = (data.get("jobs") or [{}])[0]
     section = job.get("write" if operation == "write" else "read", {})
     n = int(section.get("lat_ns", {}).get("N", 0))
-    successful = execution.get("returncode") == 0 and n >= args.samples
+    successful = (warmup_exec.get("returncode") == 0 and
+                  execution.get("returncode") == 0 and n >= args.samples)
     if successful:
-        # fio's latency summary is the authoritative distribution.  One JSONL
-        # record per I/O keeps the evidence count explicit; per-I/O timestamps
-        # are not available from fio JSON and are not fabricated.
+        # fio's formal-run latency summary is authoritative.  Per-I/O
+        # timestamps are not available from fio JSON and are not fabricated.
         mean_ns = float(section["lat_ns"]["mean"])
-        for index in range(n):
+        for index in range(args.samples):
             bundle.add_sample({
                 "status": "pass", "request_id": f"{label}/{index:04d}",
-                "operation": operation, "warmup": index < args.warmups,
+                "operation": operation, "warmup": False,
                 "latency_ns": mean_ns, "fio_sample": index,
-                "latency_source": "fio aggregate mean; native distribution in raw/fio.json",
+                "latency_source": "fio formal aggregate mean; native distribution in raw/fio_formal.json",
                 "bytes": size, "events": [{"name": "fio_submit_complete"}],
             })
     else:
         bundle.add_failure({"status": "fail", "operation": operation,
-                            "command": argv, "execution": execution,
+                            "command": make_argv(args.samples),
+                            "warmup_execution": warmup_exec,
+                            "execution": execution,
                             "fio_error": job.get("error")})
-    formal = max(0, n - args.warmups) if successful else 0
+    formal = args.samples if successful else 0
     lat_ns = section.get("lat_ns", {})
     latency = native_stats(section)
     result = bundle.finalize(metrics={
@@ -129,8 +133,10 @@ def run_one(args, mode, size, depth, operation):
                        if lat_ns.get("mean") else None),
         "pcie_bytes": 0, "nvme_bytes": size * formal,
         "fault_results": {"fio_returncode": execution.get("returncode")},
-        "native_fio_latency": latency, "fio_execution": execution,
-        "fio_command": argv, "sample_note": "warmups retained in fio raw; formal samples are reported",
+        "native_fio_latency": latency,
+        "fio_execution": {"warmup": warmup_exec, "formal": execution},
+        "fio_command": make_argv(args.samples),
+        "sample_note": "warmup and formal runs are separate; only formal samples are reported",
     }, status="pass" if successful else "fail")
     return result
 
