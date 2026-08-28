@@ -55,9 +55,17 @@ def native_stats(section):
               "stdev_ns": value.get("stddev"), "min_ns": value.get("min"),
               "max_ns": value.get("max")}
     percentiles = value.get("percentile", {})
+    # fio reports aggregate end-to-end mean/stdev in lat_ns but exposes the
+    # percentile histogram on clat_ns.  Preserve that distinction instead of
+    # inventing persistence percentiles from a mean-only summary.
+    percentile_source = "lat_ns"
+    if not percentiles:
+        percentiles = section.get("clat_ns", {}).get("percentile", {})
+        percentile_source = "clat_ns (completion; fsync excluded)"
     result["p50_ns"] = percentiles.get("50.000000")
     result["p95_ns"] = percentiles.get("95.000000")
     result["p99_ns"] = percentiles.get("99.000000") if n >= 30 else None
+    result["percentile_source"] = percentile_source
     result["p99_status"] = "reported" if n >= 30 else f"not reported (n={n}<30)"
     return result
 

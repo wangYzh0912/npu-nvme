@@ -1,0 +1,87 @@
+{
+  "chunk_size": 1048576,
+  "cube_util": null,
+  "failed_samples": 0,
+  "fault_results": {
+    "fio_returncode": 0
+  },
+  "fio_command": [
+    "fio",
+    "--name=buffered_write_size1048576_qd4",
+    "--filename=/models/npu_nvme_exp/ppt-evidence-20260829/buffered_write_size1048576_qd4.bin",
+    "--rw=write",
+    "--ioengine=io_uring",
+    "--iodepth=4",
+    "--numjobs=1",
+    "--bs=1048576",
+    "--size=1048576",
+    "--loops=30",
+    "--group_reporting",
+    "--output-format=json+",
+    "--direct=0",
+    "--fsync=1"
+  ],
+  "fio_execution": {
+    "formal": {
+      "returncode": 0,
+      "stderr": "",
+      "wall_ms": 176.046981
+    },
+    "warmup": {
+      "returncode": 0,
+      "stderr": "",
+      "wall_ms": 156.189981
+    }
+  },
+  "foreground_wait": null,
+  "hbm_bandwidth": null,
+  "hbm_peak": null,
+  "host_rss_peak": null,
+  "latency_mean": 309891.866667,
+  "latency_p50": 284672,
+  "latency_p95": 333824,
+  "logical_bytes": 1048576,
+  "loss_deviation": null,
+  "mode": "buffered",
+  "model": "synthetic_io",
+  "native_fio_latency": {
+    "max_ns": 438342,
+    "mean_ns": 309891.866667,
+    "min_ns": 269701,
+    "n": 30,
+    "p50_ns": 284672,
+    "p95_ns": 333824,
+    "p99_ns": 407552,
+    "p99_status": "reported",
+    "percentile_source": "clat_ns (completion; fsync excluded)",
+    "stdev_ns": 33763.551386
+  },
+  "nvme_bytes": 31457280,
+  "paths": {
+    "commit": "commit.json",
+    "config": "config.json",
+    "environment": "environment.json",
+    "failures": "failures.jsonl",
+    "raw": "raw/",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "pcie_bytes": 0,
+  "percentile_note": "clat_ns (completion; fsync excluded)",
+  "physical_bytes": 1048576,
+  "pinned_dram_peak": null,
+  "pipeline_depth": 4,
+  "recovery_error": null,
+  "run_id": "E1_20260829_011532_3fd61f91",
+  "sample_note": "warmup and formal runs are separate; only formal samples are reported",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 30,
+  "seed": 17,
+  "slot_count": 4,
+  "state_bytes": 1048576,
+  "status": "pass",
+  "step_overhead": null,
+  "throughput": 3383683512.825997,
+  "vector_util": null
+}
