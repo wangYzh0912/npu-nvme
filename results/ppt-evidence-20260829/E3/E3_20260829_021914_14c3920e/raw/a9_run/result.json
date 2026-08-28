@@ -1,0 +1,87 @@
+{
+  "config": {
+    "chunk_size": 4194304,
+    "ckpt_every": 3,
+    "experiment": "A9_HBM",
+    "io_delay_ms": 5000.0,
+    "io_timeout_s": 120.0,
+    "model": "gpt2_xl",
+    "npu": 7,
+    "output_root": "/home/user7/npu-nvme/experiments/output/a9_hbm_slow",
+    "path": "A9_HBM_snapshot_slot_lifecycle",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 4,
+    "run_id": "A9_HBM_20260826_152754_f5e9322d",
+    "scope": "real MindSpore HBM slots",
+    "shm_id": 1420,
+    "slot_count": 1,
+    "slots": [
+      1,
+      2,
+      4
+    ],
+    "steps": 15,
+    "warmups": 1
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "A9_HBM_20260826_152754_f5e9322d",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 4,
+  "status": "pass",
+  "summary": {
+    "checkpoints": 5,
+    "end_to_end_ms": {
+      "ci95": [
+        13016.283111772831,
+        13133.114302627171
+      ],
+      "max": 13176.773444,
+      "mean": 13074.698707200001,
+      "min": 13041.563300000002,
+      "n": 5,
+      "stdev": 57.74590730383672
+    },
+    "formal_samples": 4,
+    "hbm_bytes_per_slot": 3280687104,
+    "slot_wait_ms": {
+      "ci95": [
+        3057.9585114939127,
+        11018.832664106088
+      ],
+      "max": 8874.136644,
+      "mean": 7038.395587800001,
+      "min": 0.0687,
+      "n": 5,
+      "stdev": 3934.804545880164
+    },
+    "snapshot_ms": {
+      "ci95": [
+        3118.040707563655,
+        3130.3727464363446
+      ],
+      "max": 3135.013125,
+      "mean": 3124.206727,
+      "min": 3120.483526,
+      "n": 5,
+      "stdev": 6.095330950597714
+    },
+    "step_ms": {
+      "ci95": [
+        -6096.617394106196,
+        17139.028396906197
+      ],
+      "max": 77426.386591,
+      "mean": 5521.205501400001,
+      "min": 382.309251,
+      "n": 15,
+      "stdev": 19891.969316305363
+    },
+    "steps": 15
+  }
+}

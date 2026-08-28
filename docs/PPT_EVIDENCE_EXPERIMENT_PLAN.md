@@ -99,3 +99,22 @@ results/ppt-evidence-20260829/<EXPERIMENT_ID>/<RUN_ID>/
   preliminary、historical、cross-disk、trajectory estimate 和负结果必须显式标注。
 - 代码、证据、文档按批次独立提交并推送 `exp/ppt-evidence-20260829`；核心实验确认后再
   合并远端主分支。
+
+## 5. 执行状态（2026-08-29）
+
+- E0：已完成历史结果统一导入；E1：已完成 84.0.0/XFS `io_uring` 与 83.0.0/SPDK
+  async-qpair 正式矩阵，每配置 10 次预热＋30 次有效样本。E1 是跨盘校准结果，不作为
+  严格同盘比较。
+- E3：已导入 GPT-2 XL 真实 HBM snapshot 的 1/2/4 槽、正常盘和 5 s 延迟共 6 组历史
+  实测；均完成 SHA-256 回读校验，但每组仅 3/4 个样本，且没有历史 RSS/VmPin 峰值，
+  只能作为 partial/historical 证据。新增正式运行曾在首个训练 cell 的 Ascend 驱动同步
+  阶段超时，已独立保存失败证据，不计入统计。
+- E3 尚未完成：完整 Host staging 对照、RSS/pinned DRAM 实测、chunk=1/16 MiB、GPT-2
+  13B 和每配置 30 个正式样本。完成这些缺口前，不宣称“内存随 slot×chunk 有界”的
+  正式结论。
+- 下一执行点：先修复/缩小 GPT-2 XL 首 cell 驱动同步问题并完成 E3-Host staging 与
+  真实 HBM 对照；随后进入 E5 单所有者控制压力和 E8 真实 PMU 复测。E2/E4 异步 DMA
+  仍不得提前替代 E3/E5/E8 的批次 A 门禁。
+
+对应证据：`results/ppt-evidence-20260829/E3/summary.json`、
+`experiments/benchmarks/e3_hbm_evidence.py` 和 `experiments/benchmarks/summarize_e3_ppt.py`。
