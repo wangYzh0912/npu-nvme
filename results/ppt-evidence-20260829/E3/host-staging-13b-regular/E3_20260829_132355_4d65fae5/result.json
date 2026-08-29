@@ -1,0 +1,117 @@
+{
+  "config": {
+    "chunk_size": 4194304,
+    "experiment": "E3",
+    "host_staging": true,
+    "mode": "regular",
+    "model": "gpt2_13b",
+    "modes": [
+      "regular"
+    ],
+    "npu": 7,
+    "output_root": "results/ppt-evidence-20260829/E3/host-staging-13b-regular",
+    "pci": null,
+    "run_id": "E3_20260829_132355_4d65fae5",
+    "samples": 30,
+    "slot_count": 1,
+    "ssd_policy": "not touched; no /models",
+    "state_bytes": 26204712960,
+    "warmups": 10
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "E3_20260829_132355_4d65fae5",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 30,
+  "status": "pass",
+  "summary": {
+    "chunk_size": 4194304,
+    "fault_results": {
+      "hbm_host_h2d_roundtrip": "pass"
+    },
+    "foreground_wait": {
+      "ci95": [
+        1398.6896094472745,
+        1406.518857219392
+      ],
+      "ci95_method": "student-t(df=29)",
+      "max": 1414.419,
+      "mean": 1402.6042333333332,
+      "median": 1408.3515,
+      "min": 1380.818,
+      "n": 30,
+      "p95": 1411.60725,
+      "p99": 1413.65514,
+      "p99_status": "reported",
+      "stdev": 10.483555305345137
+    },
+    "hbm_peak": null,
+    "host_rss_peak": 55966212096,
+    "latency_mean": 2643.4178315,
+    "latency_p50": 2648.2707075,
+    "latency_p95": 2654.9436714000003,
+    "logical_bytes": 26204712960,
+    "loss_deviation": null,
+    "memory_scope": "memory-only HBM\u2194Host roundtrip; no /models or SSD",
+    "mode": "regular",
+    "mode_summary": {
+      "latency": {
+        "ci95": [
+          2638.958541495824,
+          2647.8771215041756
+        ],
+        "ci95_method": "student-t(df=29)",
+        "max": 2656.35192,
+        "mean": 2643.4178315,
+        "median": 2648.2707075,
+        "min": 2618.896855,
+        "n": 30,
+        "p95": 2654.9436714000003,
+        "p99": 2655.95778477,
+        "p99_status": "reported",
+        "stdev": 11.942197958745359
+      },
+      "mode": "regular",
+      "peak": {
+        "rssanon_bytes": 54866317312,
+        "rssfile_bytes": 1099862016,
+        "vmlck_bytes": 0,
+        "vmpin_bytes": 0,
+        "vmrss_bytes": 55966212096
+      },
+      "samples": 30,
+      "state_bytes": 26204712960
+    },
+    "model": "gpt2_13b",
+    "nvme_bytes": 0,
+    "pcie_bytes": 1572282777600,
+    "physical_bytes": 0,
+    "pinned_dram_peak": 0,
+    "pipeline_depth": 1,
+    "recovery_error": 0,
+    "slot_count": 1,
+    "state_bytes": 26204712960,
+    "step_overhead": null,
+    "throughput": {
+      "ci95": [
+        9438.12901578699,
+        9470.162045974716
+      ],
+      "ci95_method": "student-t(df=29)",
+      "max": 9542.476509159807,
+      "mean": 9454.145530880853,
+      "median": 9436.634618266846,
+      "min": 9407.925783700377,
+      "n": 30,
+      "p95": 9539.754392349623,
+      "p99": 9541.964258021906,
+      "p99_status": "reported",
+      "stdev": 42.89301518426597
+    }
+  }
+}

@@ -1409,7 +1409,33 @@ static int read_fsm_poller_fn(void *arg) {
 static void meta_io_complete_cb(void *arg, const struct spdk_nvme_cpl *cpl) {
     meta_request_t *req = (meta_request_t *)arg;
     req->result = spdk_nvme_cpl_is_error(cpl) ? -1 : 0;
-    atomic_store(&req->done, 1);
+    /* The callback only confirms the device command.  The reactor still has
+     * to copy read data and detach ctx->meta_req before the caller may free
+     * this request. */
+    atomic_store_explicit(&req->io_done, 1, memory_order_release);
+}
+
+/* Wait for metadata publication while arbitrating timeout ownership with the
+ * reactor.  A timeout may detach a request only while the reactor still owns
+ * neither the caller buffer nor the final publication step. */
+static int wait_meta_request_done(NPUNVMEContext *ctx, meta_request_t *req) {
+    uint64_t start = get_time_us();
+    for (;;) {
+        if (atomic_load_explicit(&req->done, memory_order_acquire))
+            return 0;
+
+        if (ctx->io_timeout_ms > 0 &&
+            get_time_us() - start >= (uint64_t)ctx->io_timeout_ms * 1000ULL) {
+            int expected = META_CALLER_WAITING;
+            if (atomic_compare_exchange_strong_explicit(
+                    &req->owner_state, &expected, META_CALLER_DETACHED,
+                    memory_order_acq_rel, memory_order_acquire))
+                return -ETIMEDOUT;
+            /* COPYING means the reactor has borrowed meta_buffer.  Wait for
+             * its bounded memcpy to finish before returning to the caller. */
+        }
+        usleep(1000);
+    }
 }
 
 static int meta_poller_fn(void *arg) {
@@ -1457,22 +1483,34 @@ static int meta_poller_fn(void *arg) {
         req->submitted = (rc == 0);
         if (rc != 0) {
             req->result = -1;
-            atomic_store(&req->done, 1);
+            atomic_store(&req->io_done, 1);
         }
     }
 
-    if (req->submitted && !atomic_load(&req->done))
+    if (req->submitted && !atomic_load_explicit(&req->io_done,
+                                                memory_order_acquire))
         spdk_nvme_qpair_process_completions(ctx->meta_qpair, 0);
 
-    if (atomic_load(&req->done)) {
-        /* Copy result back for reads only after the command completed. */
-        if (!req->is_flush && req->is_read && req->result == 0) {
+    if (atomic_load_explicit(&req->io_done, memory_order_acquire)) {
+        int expected = META_CALLER_WAITING;
+        bool caller_attached = atomic_compare_exchange_strong_explicit(
+            &req->owner_state, &expected, META_REACTOR_COPYING,
+            memory_order_acq_rel, memory_order_acquire);
+
+        if (caller_attached && !req->is_flush && req->is_read &&
+            req->result == 0) {
+            /* Device -> reactor-owned storage -> caller storage.  The
+             * caller is not released until both copies and ctx detachment
+             * are complete. */
             memcpy(req->owned_buffer, ctx->meta_dma_buf, req->total_bytes);
-            if (!atomic_load(&req->detached))
-                memcpy(req->meta_buffer, req->owned_buffer, req->total_bytes);
+            memcpy(req->meta_buffer, req->owned_buffer, req->total_bytes);
         }
         ctx->meta_req = NULL;
-        if (atomic_load(&req->detached)) {
+        if (caller_attached) {
+            atomic_store_explicit(&req->owner_state, META_CALLER_DONE,
+                                  memory_order_release);
+            atomic_store_explicit(&req->done, 1, memory_order_release);
+        } else {
             free(req->owned_buffer);
             free(req);
         }
@@ -1537,6 +1575,8 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
     if (!req->owned_buffer) { free(req); return -1; }
     if (!is_read) memcpy(req->owned_buffer, meta_buffer, total_bytes);
     atomic_init(&req->done, 0);
+    atomic_init(&req->io_done, 0);
+    atomic_init(&req->owner_state, META_CALLER_WAITING);
     atomic_init(&req->detached, 0);
     req->result = 0;
     req->submit_not_before_us = 0;
@@ -1557,8 +1597,10 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
     }
 
     /* Poll for completion. */
-    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+    if (wait_meta_request_done(ctx, req) != 0) {
+        atomic_store(&req->detached, 1);
         return -ETIMEDOUT;
+    }
 
     int result = req->result;
     free(req->owned_buffer);
@@ -1581,6 +1623,8 @@ int npu_nvme_flush(NPUNVMEContext *ctx) {
     req->is_read = 0;
     req->total_bytes = 0;
     atomic_init(&req->done, 0);
+    atomic_init(&req->io_done, 0);
+    atomic_init(&req->owner_state, META_CALLER_WAITING);
     atomic_init(&req->detached, 0);
     req->result = 0;
     req->submitted = 0;
@@ -1589,8 +1633,10 @@ int npu_nvme_flush(NPUNVMEContext *ctx) {
         free(req);
         return -1;
     }
-    if (wait_request_done(ctx, &req->done, &req->detached) != 0)
+    if (wait_meta_request_done(ctx, req) != 0) {
+        atomic_store(&req->detached, 1);
         return -ETIMEDOUT;
+    }
     int result = req->result;
     free(req);
     return result;

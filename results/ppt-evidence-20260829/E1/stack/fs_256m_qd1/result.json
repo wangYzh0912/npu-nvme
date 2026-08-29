@@ -1,0 +1,39 @@
+{
+  "status": "pass",
+  "experiment": "E1",
+  "mode": "fs",
+  "size": 268435456,
+  "depth": 1,
+  "persistence": "fsync",
+  "command": [
+    "fio",
+    "--name=e1_fs_268435456_1",
+    "--filename=/models/npu_nvme_exp/e1_stack_profile/e1_profile_268435456_1.bin",
+    "--rw=write",
+    "--ioengine=io_uring",
+    "--iodepth=1",
+    "--numjobs=1",
+    "--bs=268435456",
+    "--size=268435456",
+    "--loops=30",
+    "--direct=0",
+    "--fsync=1",
+    "--group_reporting",
+    "--output-format=json+"
+  ],
+  "perf_stat_returncode": 0,
+  "perf_record_returncode": 0,
+  "trace": {
+    "status": "enabled",
+    "events": [
+      "block:block_rq_complete",
+      "block:block_rq_issue",
+      "syscalls:sys_enter_write",
+      "syscalls:sys_exit_write",
+      "writeback:writeback_start",
+      "writeback:writeback_written"
+    ]
+  },
+  "wall_ms": 15233.626381,
+  "layer_time_policy": "only end-to-end is measured; per-layer absolute times require trace closure"
+}

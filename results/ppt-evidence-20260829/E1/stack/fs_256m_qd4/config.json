@@ -1,0 +1,25 @@
+{
+  "experiment": "E1",
+  "mode": "fs",
+  "size": 268435456,
+  "depth": 4,
+  "persistence": "fsync",
+  "ssd_pci": "0000:84:00.0",
+  "command": [
+    "fio",
+    "--name=e1_fs_268435456_4",
+    "--filename=/models/npu_nvme_exp/e1_stack_profile/e1_profile_268435456_4.bin",
+    "--rw=write",
+    "--ioengine=io_uring",
+    "--iodepth=4",
+    "--numjobs=1",
+    "--bs=268435456",
+    "--size=268435456",
+    "--loops=30",
+    "--direct=0",
+    "--fsync=1",
+    "--group_reporting",
+    "--output-format=json+"
+  ],
+  "trace_scope": "representative run; counters not layer-time estimates"
+}

@@ -245,11 +245,22 @@ def run_slot_count(args, slot_count):
     ckpt = None
     runner = None
     try:
+        writer.add_event({"name": "model_build_start",
+                          "monotonic_ns": time.monotonic_ns()})
         init_env(device_id=args.npu)
         model, dataset, optimizer = make_causal_lm_training(
             "gpt2_xl", total_steps=args.steps + 2, device_id=args.npu,
             seq_len=1025)
-        warmup_model(model, optimizer, dataset)
+        # Compile the exact Cell used by the formal loop before allocating
+        # multi-GB HBM snapshot slots. A second Cell here can trigger a
+        # second Ascend graph compilation after HBM/SPDK resources are live.
+        cell = __import__("direct_checkpoint").ProbeTrainOneStepCell(
+            model, optimizer, enable_probe=False, ckpt_interval=9999)
+        writer.add_event({"name": "graph_compile_start",
+                          "monotonic_ns": time.monotonic_ns()})
+        warmup_model(model, optimizer, dataset, cell=cell)
+        writer.add_event({"name": "graph_compile_end",
+                          "monotonic_ns": time.monotonic_ns()})
         initial_health = training_numeric_health(model, optimizer)
         if initial_health["nonfinite_arrays"]:
             raise FloatingPointError(
@@ -261,10 +272,14 @@ def run_slot_count(args, slot_count):
             pipeline_depth=args.pipeline_depth, requested_chunk_size=CHUNK_SIZE,
             rank_id=0, world_size=1, keep_last_n=3, slot_size_gb=10,
             spdk_shm_id=args.shm_id + slot_count)
+        writer.add_event({"name": "spdk_init_end",
+                          "monotonic_ns": time.monotonic_ns()})
         runner = HbmSlotRunner(args, model, param_descs, ckpt, writer, slot_count)
+        writer.add_event({"name": "hbm_slot_allocation_end",
+                          "monotonic_ns": time.monotonic_ns(),
+                          "slot_count": slot_count,
+                          "slot_bytes": runner.total})
         runner.worker.start()
-        cell = __import__("direct_checkpoint").ProbeTrainOneStepCell(
-            model, optimizer, enable_probe=False, ckpt_interval=9999)
         iterator = dataset.create_tuple_iterator()
         step_times = []
         checkpoint_index = 0

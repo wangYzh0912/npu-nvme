@@ -125,6 +125,17 @@ typedef struct {
 
 /* ---- Metadata I/O request (V4) ---- */
 
+/* The NVMe callback and the caller cannot share one completion flag: an
+ * NVMe read callback runs before the reactor has copied the DMA buffer back
+ * to the caller.  This state also closes the timeout-vs-copy ownership race.
+ */
+typedef enum {
+    META_CALLER_WAITING = 0,
+    META_REACTOR_COPYING,
+    META_CALLER_DETACHED,
+    META_CALLER_DONE,
+} meta_owner_state_t;
+
 typedef struct {
     uint64_t byte_offset;       /* absolute byte offset on NVMe */
     uint32_t total_bytes;       /* number of bytes to read/write */
@@ -134,7 +145,9 @@ typedef struct {
     void *owned_buffer;         /* reactor-owned DMA staging copy */
     uint64_t submit_not_before_us; /* test hook; zero in normal operation */
     int submitted;              /* NVMe command has been submitted */
-    atomic_int done;            /* set to 1 when I/O completes */
+    atomic_int done;            /* set only after reactor publication */
+    atomic_int io_done;         /* set by NVMe callback */
+    atomic_int owner_state;     /* meta_owner_state_t */
     atomic_int detached;        /* caller timed out; reactor owns cleanup */
     int result;                 /* 0 = success, -1 = I/O error */
 } meta_request_t;

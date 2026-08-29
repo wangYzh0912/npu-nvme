@@ -103,8 +103,8 @@ results/ppt-evidence-20260829/<EXPERIMENT_ID>/<RUN_ID>/
 ## 5. 执行状态（2026-08-29）
 
 - E0：已完成历史结果统一导入；E1：已完成 84.0.0/XFS `io_uring` 与 83.0.0/SPDK
-  async-qpair 正式矩阵，每配置 10 次预热＋30 次有效样本。E1 是跨盘校准结果，不作为
-  严格同盘比较。
+  async-qpair 的代表性采集，结果包含端到端时间和 trace/perf 状态，但尚未形成逐层绝对
+  时间闭合。E1 是跨盘校准结果，不作为严格同盘比较。
 - E3：已导入 GPT-2 XL 真实 HBM snapshot 的 1/2/4 槽、正常盘和 5 s 延迟共 6 组历史
   实测；均完成 SHA-256 回读校验，但每组仅 3/4 个样本，且没有历史 RSS/VmPin 峰值，
   只能作为 partial/historical 证据。新增正式运行曾在首个训练 cell 的 Ascend 驱动同步
@@ -116,9 +116,106 @@ results/ppt-evidence-20260829/<EXPERIMENT_ID>/<RUN_ID>/
   预热＋30 次正式样本，读回校验通过；request-ring 写均值约 6.339 ms、读均值约
   1.765 ms。一次独立重跑曾出现同步读回不一致，已作为未通过样本保留在原始目录，
   成功重跑才进入正式证据包。
-- 下一执行点：完成 E3-Host staging 与 13B 缺口后，扩展 E5 到 4 MiB、XL/13B 和
-  1/2/4/8 生产者，并补齐内存峰值/锁等待/错误传播；随后进入 E8 真实 PMU 复测。
-  E2/E4 异步 DMA 仍不得提前替代 E3/E5/E8 的批次 A 门禁。
+- 下一执行点：补齐 E3 slot×chunk×慢盘矩阵和 E5 GPT-2 13B 多生产者压力；随后执行 E1
+  全尺寸逐层闭合，以及 E2/E4 的真实异步 DMA 和训练端到端门禁。E2/E4 异步 DMA 仍不得
+  用已有队列级流水结果替代真正 `aclrtMemcpyAsync` 证据。
 
 对应证据：`results/ppt-evidence-20260829/E3/summary.json`、
 `experiments/benchmarks/e3_hbm_evidence.py` 和 `experiments/benchmarks/summarize_e3_ppt.py`。
+
+## 6. 批次 A 增补执行计划（2026-08-29）
+
+本节将 E3、E5、E1 和 E8 的新增要求固化为可执行门禁；未达到门禁的运行只保留在
+`failures.jsonl`/失败目录，不进入 PPT 成功均值。
+
+### E3：Host staging 与内存峰值
+
+- GPT-2 XL：完整状态 Host staging、1/2/4 slot，chunk=1/4/16 MiB；正常盘和 5 s
+  慢盘；每个配置 10 次预热＋30 次正式样本。
+- GPT-2 13B：先执行单卡 checkpoint-only 的完整状态 Host staging/单槽基线；2/4 槽
+  使用四卡真实分片、rank0 单 I/O owner，不把单卡无法容纳的配置伪装成完整模型结果。
+- 记录进程 RSS、VmPin/VmLck、pinned DRAM、HBM snapshot slot、分配次数、slot wait、
+  吞吐、OOM/退化和 checkpoint 完成率。VmPin 不可见时记录 `null`，不以 slot 大小替代。
+- 通过条件：实测内存峰值随 `slot_count × chunk_size` 有界，并且没有以吞吐、回读校验或
+  恢复正确性换取峰值下降。
+
+### E5：单所有者控制压力
+
+- 负载固定为 4 MiB 数据请求和 400 KiB 控制请求；对照为受控同步、单 owner request
+  ring、单 owner ring＋batch。
+- 覆盖 GPT-2 XL/13B checkpoint-only 负载及 producer=1/2/4/8；每个可运行配置至少
+  10 次预热＋30 次正式样本，压力组另执行 1,000 请求。
+- 记录 owner 线程、producer 数、队列等待、ring 占用、P50/P95/P99（仅 n≥30）、Reactor
+  CPU、producer CPU、上下文切换、锁等待、busy、completion 和错误传播；禁止重新引入
+  多线程共享 SPDK context 的不安全对照。
+- 通过条件：无死锁、双释放、静默覆盖或状态错乱；失败 generation 不可见；所有请求
+  都有 completion/busy/error 结果。
+
+### E1：逐层软件栈剖析
+
+- 84.0.0/XFS 只测 Buffered FS/O_DIRECT＋`fsync/fdatasync`；83.0.0 只测 SPDK
+  async-qpair＋flush/metadata commit。两盘先用同样 256 MiB 控制负载做校准，结果标记
+  为跨盘同型号校准，不写成严格同盘结论。
+- 顺序写覆盖 4 KiB/64 KiB/1 MiB/4 MiB/256 MiB，QD=1/4；随机写作为附录。每组保留
+  10 warmup＋30 formal，并另做低重复 profiler run。
+- `perf stat/record`、tracefs/ftrace（权限允许时）、fio JSON、SPDK timeline 共同记录
+  应用处理、拷贝、syscall、页缓存/回写、文件系统/块层、队列等待、设备服务、flush 和
+  端到端时间；不可观测层明确写 `unavailable`，不伪造分解值。时间分解闭合残差目标 ≤10%。
+
+### E8：真实 Vector PMU
+
+- 移除历史硬编码作为正式结果的路径；GPT-2、GPT-2 XL，各 seed=41/42/43，各运行
+  ArithmeticUtilization 和 Memory 两组；每组 10 次预热＋30 个真实稳态训练 step。
+- 每次运行记录 commit、设备、采样窗口、step/loss、真实 `PROF_*` 原始目录；通过
+  `msprof --export=on --type=text --summary-format=csv` 解析本次 run 的
+  `op_statistic`、`op_summary`、`hbm` 数据。
+- 通过条件：无真实 CSV 的 run 必须失败；Cube/Vector/HBM 指标来自本次采样，且只作为
+  资源利用率证据，不直接表述为“免费算力”。
+
+执行顺序固定为 E8 smoke→GPT-2 三 seed→GPT-2 XL 三 seed；E3/E5 正式硬件运行必须先
+  通过 `npu-smi info` 检查空闲 NPU，并通过 83 lock 保证单一 SPDK owner。
+
+## 7. 批次 A 执行记录（2026-08-29，持续更新）
+
+### 已完成并可纳入证据
+
+- **E3 Host staging**：GPT-2 XL 和 GPT-2 13B 的 regular Host staging 均完成 30 个
+  正式样本，覆盖完整 checkpoint 状态的 D2H/H2D 往返，并记录 RSS/VmPin。XL 状态为
+  3,274,208,000 bytes，13B 状态为 26,204,712,960 bytes；13B regular 样本中 RSS 约
+  55.97 GB、VmPin=0。单个完整 pinned host buffer 的 XL/13B 分配均以 ACL 返回码
+  107000 失败，作为边界负结果保存，不能用 slot 大小替代 pinned DRAM 峰值。
+  这批结果证明了完整 Host staging 的内存代价和 pinned 单缓冲的容量限制，但尚未证明
+  `slot_count × chunk_size` 有界；1/2/4 slot、1/16 MiB 的 Host staging 矩阵仍待实现。
+
+- **E5 4 MiB 控制压力**：单 owner、SPDK Reactor、producer=1/2/4/8 均完成 30 个正式
+  样本（相应样本数为 30/60/120/240），写入/读回和控制路径通过。生产者由 1 增至 8
+  时，批量有效吞吐约由 62.3 MiB/s 降至 13.9 MiB/s，端到端延迟随并发上升；该结果是
+  控制面和 owner 串行化压力证据，不应解释为物理盘吞吐提升。
+
+- **E1 软件栈剖析**：84.0.0 的 Buffered FS/O_DIRECT＋fsync/fdatasync 代表性运行、
+  83.0.0 的 SPDK＋flush/metadata 边界代表性运行均保留 perf stat/record、tracefs
+  可用性和端到端结果。当前 tracefs 可观测 6 类 block/syscall/writeback 事件，但尚未
+  形成“页缓存/文件系统/块层/设备服务”绝对时间的闭合分解；因此 PPT 只能写成
+  instrumentation-ready/代表性路径结果，不能伪造逐层百分比。
+
+- **E8 Vector PMU**：GPT-2 seed=41/42/43 的 ArithmeticUtilization 和 Memory 共
+  6 个真实训练运行均通过；每个运行有 10 次预热＋30 个稳态 step，并由本次 `msprof`
+  CSV 解析 Cube/Vector/HBM 指标。GPT-2 的 step mean 约 83.3–92.6 ms，HBM read
+  约 13.0–14.0 GB/s、write 约 10.5–11.4 GB/s；结果只表示实际资源利用率，不等同于
+  “可免费使用的算力”。
+
+### 进行中/待完成
+
+- E5 GPT-2 XL 4 MiB、producer=1/4/8 的完整状态单 owner 矩阵已完成；每组 30 个正式
+  样本，完整 flat-HBM 读回哈希均通过。此前一次未产生首样本的运行已标记为
+  per-parameter D2H 校验超时，现行版本改用 4 KiB 对齐的连续 HBM flat snapshot，失败
+  和修正路径均保留。
+- E8 GPT-2 XL 三 seed 已完成 ArithmeticUtilization/Memory 共 6 组真实 PMU 运行；每组
+  10 次预热＋30 个稳态 step，结果由本次 `PROF_*` CSV 解析。为避免 XL profiler raw
+  JSON/SQLite 填满 home 文件，已保留真实 CSV/命令/结果并清理可重生成派生 JSON/DB；
+  首轮空间失败目录作为负样本保存。
+- E5 GPT-2 13B 多生产者正式矩阵尚未开始；必须在 XL 运行结束并确认 NPU4、83.0.0
+  释放后执行，优先 producer=1，再扩展 producer=4/8。
+- E3 slot×chunk×慢盘矩阵、E1 全尺寸/随机写的逐层闭合、E2 真正
+  `aclrtMemcpyAsync` 重叠、E4 真实训练端到端影响、E6/E7 故障和提交开销仍属于后续
+  门禁，不能由本批次结果替代。

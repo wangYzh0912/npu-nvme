@@ -1,0 +1,33 @@
+{
+  "experiment": "E1",
+  "mode": "spdk",
+  "size": 268435456,
+  "depth": 1,
+  "persistence": "nvme_flush+metadata_commit",
+  "ssd_pci": "0000:83:00.0",
+  "command": [
+    "/root/miniconda3/envs/ms_2.5/bin/python",
+    "/home/user7/npu-nvme/experiments/benchmarks/io_matrix.py",
+    "--experiment",
+    "E1",
+    "--item-bytes",
+    "268435456",
+    "--depths",
+    "1",
+    "--warmups",
+    "10",
+    "--repetitions",
+    "30",
+    "--npu",
+    "5",
+    "--pci",
+    "0000:83:00.0",
+    "--shm-id",
+    "8901",
+    "--offset",
+    "274877906944",
+    "--output-root",
+    "results/ppt-evidence-20260829/E1/stack/spdk_256m_qd1/spdk"
+  ],
+  "trace_scope": "representative run; counters not layer-time estimates"
+}

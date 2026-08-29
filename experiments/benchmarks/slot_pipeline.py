@@ -26,6 +26,7 @@ from experiments.benchmarks.io_matrix import (  # noqa: E402
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--experiment", choices=("A9", "E5"), default="E5")
     parser.add_argument("--pci", default="0000:83:00.0")
     parser.add_argument("--npu", type=int, default=7)
     parser.add_argument("--shm-id", type=int, default=83)
@@ -43,10 +44,13 @@ def main():
     from direct_checkpoint import DirectCheckpoint
 
     for slot_count in args.slots:
-        writer = ResultWriter("A9", args)
+        writer = ResultWriter(args.experiment, args)
         writer.config.update({"path": "mpsc_request_ring", "slot_count": slot_count,
                               "pipeline_depth": args.pipeline_depth,
-                              "item_bytes": args.item_bytes})
+                              "item_bytes": args.item_bytes,
+                              "producer_count": slot_count,
+                              "owner": "single SPDK Reactor owner",
+                              "measurement_kind": "control pressure; model payload size only"})
         writer.write_json("config.json", writer.config)
         writer.write_json("environment.json", environment_snapshot(args, check))
         ckpt = DirectCheckpoint(

@@ -350,7 +350,7 @@ def init_env(device_id=1, mode=None, seed=42):
     ms.set_recursion_limit(10000)
 
 
-def warmup_model(model, opt, ds):
+def warmup_model(model, opt, ds, cell=None):
     """Run one excluded real training step to allocate lazy device memory.
 
     CRITICAL: Must be called before any DirectCheckpoint operations
@@ -363,12 +363,18 @@ def warmup_model(model, opt, ds):
         opt:   optimizer
         ds:    dataset (must have at least 1 batch)
 
+    Args:
+        cell: Optional pre-created training Cell. Long-running HBM
+            experiments should pass the exact Cell used by the formal loop,
+            so graph compilation is completed before HBM/SPDK resources are
+            allocated.
+
     Returns:
         The finite scalar loss from the excluded warmup training step.
     """
     from direct_checkpoint import ProbeTrainOneStepCell
 
-    warmup_cell = ProbeTrainOneStepCell(
+    warmup_cell = cell or ProbeTrainOneStepCell(
         model, opt, enable_probe=False, ckpt_interval=9999)
     it = ds.create_tuple_iterator()
     loss = warmup_cell(*next(it))

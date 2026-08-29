@@ -31,25 +31,36 @@ SYNC_OFFSET = SAFE_OFFSET + 192 * 1024 * 1024 * 1024
 RING_OFFSET = SYNC_OFFSET + 2 * META_SLOT_BYTES
 
 
-def sync_once(ckpt, offset, payload=None, read=False):
+def sync_once(ckpt, offset, total_bytes, payload=None, read=False):
     from c_bindings import lib
 
-    buffer = ctypes.create_string_buffer(payload if not read else META_SLOT_BYTES)
+    buffer = ctypes.create_string_buffer(payload if not read else total_bytes)
     start = time.perf_counter_ns()
     rc = lib.npu_nvme_sync_meta_io(
-        ckpt.ctx, offset, META_SLOT_BYTES, 1 if read else 0,
+        ckpt.ctx, offset, total_bytes, 1 if read else 0,
         ctypes.c_void_p(ctypes.addressof(buffer)))
     elapsed_ms = (time.perf_counter_ns() - start) / 1e6
     if rc != 0:
         raise RuntimeError(f"sync_meta_io failed ({rc})")
-    return elapsed_ms, bytes(buffer.raw[:META_SLOT_BYTES]) if read else None
+    return elapsed_ms, bytes(buffer.raw[:total_bytes]) if read else None
 
 
-def ring_once(ckpt, offset, payload, read=False):
+def flush_once(ckpt):
+    from c_bindings import lib
+
+    start = time.perf_counter_ns()
+    rc = lib.npu_nvme_flush(ckpt.ctx)
+    elapsed_ms = (time.perf_counter_ns() - start) / 1e6
+    if rc != 0:
+        raise RuntimeError(f"metadata flush failed ({rc})")
+    return elapsed_ms
+
+
+def ring_once(ckpt, offset, total_bytes, payload, read=False):
     from c_bindings import lib
 
     source = ctypes.create_string_buffer(payload, len(payload))
-    buffers = [source] if not read else [ctypes.create_string_buffer(META_SLOT_BYTES)]
+    buffers = [source] if not read else [ctypes.create_string_buffer(total_bytes)]
     ptrs, offsets, sizes = host_chunk_arrays(
         buffers, [offset], ckpt.chunk_size)
     start = time.perf_counter_ns()
@@ -62,7 +73,7 @@ def ring_once(ckpt, offset, payload, read=False):
     elapsed_ms = (time.perf_counter_ns() - start) / 1e6
     if rc != 0:
         raise RuntimeError(f"request-ring I/O failed ({rc})")
-    value = bytes(buffers[0].raw[:META_SLOT_BYTES]) if read else None
+    value = bytes(buffers[0].raw[:total_bytes]) if read else None
     return elapsed_ms, value, ckpt.get_last_io_us(read)
 
 
@@ -74,17 +85,24 @@ def main():
     parser.add_argument("--shm-id", type=int, default=210)
     parser.add_argument("--warmups", type=int, default=5)
     parser.add_argument("--repetitions", type=int, default=10)
+    parser.add_argument("--payload-bytes", type=int, default=META_SLOT_BYTES)
     parser.add_argument("--output-root", default=None)
     args = parser.parse_args()
-    if META_SLOT_BYTES % ALIGNMENT:
+    if args.payload_bytes <= 0 or args.payload_bytes % ALIGNMENT:
         raise ValueError("metadata payload must be 4 KiB aligned")
+    if args.payload_bytes > 1 * 1024 * 1024:
+        raise ValueError("sync metadata stress payload must be <= 1 MiB")
+
+    payload_bytes = args.payload_bytes
+    sync_offset = SYNC_OFFSET
+    ring_offset = sync_offset + 2 * payload_bytes
 
     writer = ResultWriter("A6", args)
     writer.config.update({
         "path": "sync_meta_control_vs_request_ring_fsm",
-        "payload_bytes": META_SLOT_BYTES,
-        "sync_offset": SYNC_OFFSET,
-        "ring_offset": RING_OFFSET,
+        "payload_bytes": payload_bytes,
+        "sync_offset": sync_offset,
+        "ring_offset": ring_offset,
         "scope": "API/control-plane microbenchmark, not full model checkpoint",
     })
     writer.write_json("config.json", writer.config)
@@ -99,18 +117,27 @@ def main():
             nvme_addr=args.pci, npu_device_id=args.npu, pipeline_depth=4,
             requested_chunk_size=4 * 1024 * 1024, spdk_shm_id=args.shm_id,
             profiling_dir=str(writer.run_dir / "profiling"))
-        payload = bytes((index * 19 + 23) % 256
-                        for index in range(META_SLOT_BYTES))
-        digest = hashlib.sha256(payload).hexdigest()
         for index in range(args.warmups + args.repetitions):
-            sync_write, _ = sync_once(ckpt, SYNC_OFFSET, payload, read=False)
-            sync_read, value = sync_once(ckpt, SYNC_OFFSET, read=True)
+            payload = bytes((index * 19 + byte_index * 7 + 23) % 256
+                            for byte_index in range(payload_bytes))
+            digest = hashlib.sha256(payload).hexdigest()
+            sync_write, _ = sync_once(ckpt, sync_offset, payload_bytes,
+                                      payload, read=False)
+            sync_flush = flush_once(ckpt)
+            sync_read, value = sync_once(ckpt, sync_offset, payload_bytes,
+                                         read=True)
             if value != payload:
-                raise AssertionError("sync control readback mismatch")
+                expected = hashlib.sha256(payload).hexdigest()
+                actual = hashlib.sha256(value).hexdigest()
+                first = next((i for i, pair in enumerate(zip(payload, value))
+                              if pair[0] != pair[1]), None)
+                raise AssertionError(
+                    f"sync control readback mismatch iteration={index} "
+                    f"expected={expected} actual={actual} first_byte={first}")
             ring_write, _, ring_c_write = ring_once(
-                ckpt, RING_OFFSET, payload, read=False)
+                ckpt, ring_offset, payload_bytes, payload, read=False)
             ring_read, value, ring_c_read = ring_once(
-                ckpt, RING_OFFSET, payload, read=True)
+                ckpt, ring_offset, payload_bytes, payload, read=True)
             if value != payload:
                 raise AssertionError("request-ring readback mismatch")
             sample = {
@@ -119,12 +146,13 @@ def main():
                 "checkpoint_id": f"a6_{index:02d}",
                 "warmup": index < args.warmups,
                 "path": "sync_control_vs_request_ring_fsm",
-                "bytes": META_SLOT_BYTES,
+                "bytes": payload_bytes,
                 "status": "pass",
                 "sha256": digest,
                 "events": [],
                 "timeline_us": {
                     "sync_write": sync_write * 1000,
+                    "sync_flush": sync_flush * 1000,
                     "sync_read": sync_read * 1000,
                     "ring_write": ring_write * 1000,
                     "ring_read": ring_read * 1000,

@@ -1,0 +1,73 @@
+{
+  "config": {
+    "experiment": "E5",
+    "item_bytes": 4194304,
+    "measurement_kind": "control pressure; model payload size only",
+    "npu": 5,
+    "offset": 223338299392,
+    "output_root": "results/ppt-evidence-20260829/E5/owner-pressure-4m-formal",
+    "owner": "single SPDK Reactor owner",
+    "path": "mpsc_request_ring",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 4,
+    "producer_count": 8,
+    "repetitions": 30,
+    "run_id": "E5_20260829_131017_62effc4d",
+    "shm_id": 8600,
+    "slot_count": 8,
+    "slots": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "warmups": 10
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "E5_20260829_131017_62effc4d",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 240,
+  "status": "pass",
+  "summary": {
+    "effective_mib_per_s": {
+      "ci95": [
+        13.157250301739454,
+        14.700280052284102
+      ],
+      "ci95_method": "student-t(df=239)",
+      "max": 31.207627356337753,
+      "mean": 13.928765177011778,
+      "median": 11.857792658708414,
+      "min": 5.327964726891505,
+      "n": 240,
+      "p95": 30.340245613240274,
+      "p99": 31.004594264865595,
+      "p99_status": "reported",
+      "stdev": 6.067322181194832
+    },
+    "end_to_end_us": {
+      "ci95": [
+        319155.0481401038,
+        350187.2523015629
+      ],
+      "ci95_method": "student-t(df=239)",
+      "max": 750755.721,
+      "mean": 334671.15022083337,
+      "median": 337330.911,
+      "min": 128173.794,
+      "n": 240,
+      "p95": 442371.6055,
+      "p99": 723327.3721000003,
+      "p99_status": "reported",
+      "stdev": 122021.2251732211
+    },
+    "samples_per_slot": 30,
+    "slot_count": 8
+  }
+}

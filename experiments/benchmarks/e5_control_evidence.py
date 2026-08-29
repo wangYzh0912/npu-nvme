@@ -141,6 +141,7 @@ def main():
     parser.add_argument("--shm-id", type=int, default=7000)
     parser.add_argument("--warmups", type=int, default=10)
     parser.add_argument("--repetitions", type=int, default=30)
+    parser.add_argument("--payload-bytes", type=int, default=409600)
     parser.add_argument("--required-samples", type=int, default=30)
     parser.add_argument("--raw-root", default=None)
     parser.add_argument("--evidence-root", default=None)
@@ -156,6 +157,7 @@ def main():
     cmd = [sys.executable, str(REPO_ROOT / "experiments/benchmarks/sync_ring_ab.py"),
            "--npu", str(args.npu), "--shm-id", str(args.shm_id),
            "--warmups", str(args.warmups), "--repetitions", str(args.repetitions),
+           "--payload-bytes", str(args.payload_bytes),
            "--output-root", str(raw_root)]
     log = raw_root / "child.stdout.log"
     stream = log.open("w", encoding="utf-8")

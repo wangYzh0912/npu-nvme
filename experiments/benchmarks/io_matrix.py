@@ -186,6 +186,12 @@ class ResultWriter:
         with (self.run_dir / "failures.jsonl").open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(failure, sort_keys=True, default=str) + "\n")
 
+    def add_event(self, event):
+        """Append a run-level event without pretending it is a sample."""
+        with self.timeline_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps({"run_id": self.run_id, "event": event},
+                                    sort_keys=True, default=str) + "\n")
+
     def finalize(self, summary, status="pass"):
         result = {"status": status, "run_id": self.run_id,
                   "config": self.config, "samples": len(self.samples),

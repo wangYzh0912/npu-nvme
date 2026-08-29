@@ -1,0 +1,47 @@
+{
+  "status": "pass",
+  "experiment": "E1",
+  "mode": "spdk",
+  "size": 268435456,
+  "depth": 1,
+  "persistence": "nvme_flush+metadata_commit",
+  "command": [
+    "/root/miniconda3/envs/ms_2.5/bin/python",
+    "/home/user7/npu-nvme/experiments/benchmarks/io_matrix.py",
+    "--experiment",
+    "E1",
+    "--item-bytes",
+    "268435456",
+    "--depths",
+    "1",
+    "--warmups",
+    "10",
+    "--repetitions",
+    "30",
+    "--npu",
+    "5",
+    "--pci",
+    "0000:83:00.0",
+    "--shm-id",
+    "8901",
+    "--offset",
+    "274877906944",
+    "--output-root",
+    "results/ppt-evidence-20260829/E1/stack/spdk_256m_qd1/spdk"
+  ],
+  "perf_stat_returncode": 0,
+  "perf_record_returncode": 0,
+  "trace": {
+    "status": "enabled",
+    "events": [
+      "block:block_rq_complete",
+      "block:block_rq_issue",
+      "syscalls:sys_enter_write",
+      "syscalls:sys_exit_write",
+      "writeback:writeback_start",
+      "writeback:writeback_written"
+    ]
+  },
+  "wall_ms": 373561.331641,
+  "layer_time_policy": "only end-to-end is measured; per-layer absolute times require trace closure"
+}

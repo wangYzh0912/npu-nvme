@@ -1,0 +1,83 @@
+{
+  "config": {
+    "chunk_size": 4194304,
+    "experiment": "E5",
+    "mode": "model_mpsc_single_owner",
+    "model": "gpt2_xl",
+    "npu": 4,
+    "offset": 377957122048,
+    "output_root": "results/ppt-evidence-20260829/E5/model-xl-pressure-v3",
+    "owner": "single SPDK Reactor owner",
+    "pci": "0000:83:00.0",
+    "persistence": "payload completion; no generation publish",
+    "producer_count": 4,
+    "producers": [
+      1,
+      4,
+      8
+    ],
+    "run_id": "E5_20260829_142031_fb47aaaa",
+    "safe_region": [
+      377957122048,
+      381232066560
+    ],
+    "samples": 30,
+    "shm_id": 9300,
+    "state_bytes": 3274208000,
+    "warmups": 10
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "E5_20260829_142031_fb47aaaa",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 30,
+  "status": "pass",
+  "summary": {
+    "chunk_size": 4194304,
+    "fault_results": {
+      "device_hash_roundtrip": "pass"
+    },
+    "foreground_wait": null,
+    "hbm_peak": null,
+    "host_rss_peak": null,
+    "latency_mean": 44923.87547523333,
+    "latency_p50": 44924.3544395,
+    "latency_p95": 44955.98253085,
+    "logical_bytes": 3274208000,
+    "loss_deviation": null,
+    "mode": "model_mpsc_single_owner",
+    "model": "gpt2_xl",
+    "nvme_bytes": 98226240000,
+    "owner": "single SPDK Reactor owner",
+    "pcie_bytes": 0,
+    "physical_bytes": 98226240000,
+    "pinned_dram_peak": null,
+    "pipeline_depth": 4,
+    "producer_count": 4,
+    "recovery_error": 0,
+    "slot_count": 4,
+    "state_bytes": 3274208000,
+    "step_overhead": null,
+    "throughput": {
+      "ci95": [
+        69.4948223768261,
+        69.51939755367307
+      ],
+      "ci95_method": "student-t(df=29)",
+      "max": 69.56904626819802,
+      "mean": 69.50710996524958,
+      "median": 69.50635387145371,
+      "min": 69.44357231625466,
+      "n": 30,
+      "p95": 69.55628434439973,
+      "p99": 69.56726532855438,
+      "p99_status": "reported",
+      "stdev": 0.0329067661559508
+    }
+  }
+}

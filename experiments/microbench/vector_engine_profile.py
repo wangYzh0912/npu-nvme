@@ -11,7 +11,8 @@ import os, sys
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO, "python"))
 
-import time, json, csv, glob, argparse, warnings, gc, re
+import time, json, csv, glob, argparse, warnings, gc, re, subprocess
+from pathlib import Path
 from collections import defaultdict
 import numpy as np
 import mindspore as ms
@@ -25,7 +26,13 @@ OUTPUT_FILE = os.path.join(OUTPUT_DIR, "vector_engine_profile.json")
 # — PMU parser —
 def parse_pmu_csv(csv_dir):
     """Parse Ascend PMU CSV files, return dict of core-type statistics."""
-    files = sorted(glob.glob(os.path.join(csv_dir, "*.csv")))
+    all_files = sorted(Path(csv_dir).rglob("*.csv"))
+    # op_statistic is the exported aggregate PMU table.  Do not mix it with
+    # task_time/op_summary/hbm tables, which would double count kernels.
+    files = sorted(str(path) for path in all_files
+                   if path.name.startswith("op_statistic_"))
+    if not files:
+        files = [str(path) for path in all_files]
     if not files:
         print(f"  Warning: no PMU CSV found in {csv_dir}")
         return None
@@ -35,8 +42,16 @@ def parse_pmu_csv(csv_dir):
             reader = csv.DictReader(f)
             for row in reader:
                 core = row.get("Core Type", row.get("core_type", ""))
-                op_name = row.get("Kernel Name", row.get("op_name", row.get("Node Type", "")))
-                dur_us = float(row.get("Duration(us)", row.get("total_time_us", row.get("Total Cycle", 0))))
+                op_name = row.get("OP Type", row.get("Kernel Name", row.get("op_name", row.get("Node Type", ""))))
+                # Exported msprof op_statistic files use "Total Time(us)";
+                # raw/task files use one of the other spellings.
+                raw_duration = row.get(
+                    "Total Time(us)", row.get("Duration(us)",
+                    row.get("total_time_us", row.get("Total Cycle", 0))))
+                try:
+                    dur_us = float(str(raw_duration).strip())
+                except (TypeError, ValueError):
+                    dur_us = 0.0
                 if dur_us <= 0: dur_us = float(row.get("Task Time(us)", 0))
                 if dur_us <= 0: continue
                 by_core[core]["total_time_us"] += dur_us
@@ -44,6 +59,24 @@ def parse_pmu_csv(csv_dir):
                 by_core[core]["ops"][op_name]["count"] += 1
                 by_core[core]["ops"][op_name]["total_us"] += dur_us
     return dict(by_core) if by_core else None
+
+
+def parse_hbm_csv(csv_dir):
+    """Return exported HBM read/write rates, if the run contains the table."""
+    files = sorted(Path(csv_dir).rglob("hbm_*.csv"))
+    if not files:
+        return None
+    rows = []
+    for path in files:
+        with path.open(newline="") as stream:
+            rows.extend(csv.DictReader(stream))
+    averages = [row for row in rows if row.get("Metric") == "Average"]
+    row = averages[0] if averages else (rows[0] if rows else None)
+    if not row:
+        return None
+    return {"read_mb_s": float(row.get("Read(MB/s)", 0) or 0),
+            "write_mb_s": float(row.get("Write(MB/s)", 0) or 0),
+            "source": str(files[0])}
 
 def extract_op_statistic(by_core, total_time_us):
     result = {}
@@ -123,6 +156,179 @@ def run_V1(device_id=1):
             }
         }
     }
+
+
+def _real_training_child(model_name, device_id, seed, warmups, steps,
+                         ready_file, go_file, output_file):
+    """Compile once, wait for profiler attach, then run real steady steps."""
+    from experiments.common import init_env, make_causal_lm_training, warmup_model
+    from direct_checkpoint import ProbeTrainOneStepCell
+
+    init_env(device_id=device_id, seed=seed)
+    model, dataset, optimizer = make_causal_lm_training(
+        model_name=model_name, total_steps=warmups + steps + 2,
+        device_id=device_id, seq_len=1025)
+    cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=False,
+                                 ckpt_interval=9999)
+    warmup_model(model, optimizer, dataset, cell=cell)
+    iterator = dataset.create_tuple_iterator()
+    warmup_times = []
+    for _ in range(warmups):
+        batch = next(iterator)
+        start = time.perf_counter_ns()
+        loss = cell(*batch)
+        ms.hal.synchronize()
+        value = float(np.asarray(loss.asnumpy()).reshape(()))
+        if not np.isfinite(value):
+            raise FloatingPointError(f"non-finite warmup loss: {value}")
+        warmup_times.append((time.perf_counter_ns() - start) / 1e6)
+    Path(ready_file).write_text(json.dumps({
+        "model": model_name, "seed": seed, "device": device_id,
+        "warmups": warmups, "warmup_step_ms": warmup_times,
+    }) + "\n")
+    while not Path(go_file).exists():
+        time.sleep(0.05)
+
+    samples = []
+    for index in range(steps):
+        batch = next(iterator)
+        start = time.perf_counter_ns()
+        loss = cell(*batch)
+        ms.hal.synchronize()
+        value = float(np.asarray(loss.asnumpy()).reshape(()))
+        elapsed_ms = (time.perf_counter_ns() - start) / 1e6
+        if not np.isfinite(value):
+            raise FloatingPointError(f"non-finite profile loss: {value}")
+        samples.append({"step": index + 1, "loss": value,
+                        "step_ms": elapsed_ms,
+                        "monotonic_ns": time.monotonic_ns()})
+    Path(output_file).write_text(json.dumps({
+        "model": model_name, "seed": seed, "device": device_id,
+        "warmups": warmups, "steps": steps, "samples": samples,
+    }, indent=2) + "\n")
+
+
+def run_real_pmu(model_name, device_id, seed, metric_group, output_dir,
+                 warmups=10, steps=30):
+    """Run a real MindSpore training process and parse this run's msprof CSV."""
+    run_dir = Path(output_dir)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    ready = run_dir / "ready.json"
+    go = run_dir / "go"
+    child_result = run_dir / "child_result.json"
+    profile_dir = run_dir / "msprof"
+    profile_dir.mkdir()
+    child_cmd = [sys.executable, __file__, "--train-child",
+                 "--model", model_name, "--device-id", str(device_id),
+                 "--seed", str(seed), "--warmups", str(warmups),
+                 "--steps", str(steps), "--ready-file", str(ready),
+                 "--go-file", str(go), "--child-output", str(child_result)]
+    proc = subprocess.Popen(child_cmd, cwd=REPO,
+                            stdout=(run_dir / "child.stdout").open("w"),
+                            stderr=subprocess.STDOUT,
+                            env={**os.environ, "PYTHONUNBUFFERED": "1",
+                                 "PROFILING_MODE": "dynamic"})
+    deadline = time.monotonic() + 900
+    while not ready.exists() and proc.poll() is None and time.monotonic() < deadline:
+        time.sleep(0.1)
+    if not ready.exists():
+        proc.terminate()
+        proc.wait(timeout=30)
+        raise RuntimeError(f"training child did not reach profiler barrier: {proc.returncode}")
+
+    msprof = os.environ.get("MSPROF", "/usr/local/Ascend/ascend-toolkit/latest/bin/msprof")
+    profile_cmd = [msprof, "--dynamic=on", f"--pid={proc.pid}",
+                   f"--output={profile_dir}",
+                   "--ascendcl=on", "--task-time=on",
+                   "--runtime-api=on", "--ai-core=on",
+                   "--aic-mode=task-based", f"--aic-metrics={metric_group}",
+                   "--sys-hardware-mem=on", "--sys-hardware-mem-freq=10",
+                   "--sys-pid-profiling=on", f"--host-sys-pid={proc.pid}"]
+    profile_log = (run_dir / "msprof.stdout").open("w")
+    profile_proc = subprocess.Popen(profile_cmd, stdin=subprocess.PIPE,
+                                     stdout=profile_log,
+                                     stderr=subprocess.STDOUT, text=True)
+    # The local CANN 7.x dynamic server requires the interactive ``start``
+    # command to leave its prompt and create PROF_*.  It automatically closes
+    # after the target exits; do not send a racing ``stop`` command.
+    control_error = None
+    try:
+        profile_proc.stdin.write("start\n")
+        profile_proc.stdin.flush()
+    except (BrokenPipeError, OSError) as error:
+        control_error = repr(error)
+    time.sleep(2.0)
+    go.touch()
+    proc.wait(timeout=1800)
+    try:
+        profile_proc.wait(timeout=360)
+    except subprocess.TimeoutExpired:
+        profile_proc.terminate()
+        profile_proc.wait(timeout=30)
+    try:
+        profile_proc.stdin.close()
+    except (BrokenPipeError, OSError):
+        pass
+    profile_log.close()
+    if proc.returncode != 0:
+        raise RuntimeError(f"training child failed: {proc.returncode}")
+    if not child_result.exists():
+        raise RuntimeError("training child produced no result")
+    # Dynamic collection leaves a PROF_* raw directory.  CANN 7.x does not
+    # necessarily export CSV during dynamic stop, so explicitly run the
+    # documented offline export step before parsing this RUN_ID.
+    export_cmd = [msprof, "--export=on", f"--output={profile_dir}",
+                  "--type=text", "--summary-format=csv"]
+    export_log_path = run_dir / "msprof_export.stdout"
+    export_proc = subprocess.run(export_cmd, cwd=REPO, text=True,
+                                 stdout=export_log_path.open("w"),
+                                 stderr=subprocess.STDOUT, check=False,
+                                 timeout=1800)
+    parsed = parse_pmu_csv(profile_dir)
+    if parsed is None:
+        raise RuntimeError(
+            f"msprof produced no CSV for this RUN_ID; export_rc={export_proc.returncode}")
+    child = json.loads(child_result.read_text())
+    # Keep the PROF_* tree and the CSV evidence used for the result, but drop
+    # multi-hundred-MB timeline/sqlite intermediates.  A three-seed XL matrix
+    # otherwise exhausts the experiment filesystem before the summary can be
+    # written.  This is evidence-preserving: parse_pmu_csv/parse_hbm_csv read
+    # the CSV exports above, and all deleted files are derived profiler data.
+    for raw_file in profile_dir.rglob("*"):
+        if raw_file.is_file() and raw_file.suffix.lower() in {".json", ".db"}:
+            try:
+                raw_file.unlink()
+            except OSError:
+                pass
+    total_us = sum(item["total_time_us"] for item in parsed.values())
+    return {"model": model_name, "seed": seed, "device": device_id,
+            "metric_group": metric_group, "warmups": warmups, "steps": steps,
+            "step_stats_ms": _stats([item["step_ms"] for item in child["samples"]]),
+            "loss_first": child["samples"][0]["loss"],
+            "loss_last": child["samples"][-1]["loss"],
+            "pmu_total_time_us": total_us,
+            "pmu_by_core": parsed,
+            "hbm": parse_hbm_csv(profile_dir),
+            "profile_command": profile_cmd,
+            "export_command": export_cmd,
+            "export_returncode": export_proc.returncode,
+            "profile_returncode": profile_proc.returncode,
+            "profile_control": "interactive start; automatic collection until target exit",
+            "profile_control_error": control_error}
+
+
+def _stats(values):
+    values = [float(value) for value in values]
+    if not values:
+        return {"n": 0}
+    ordered = sorted(values)
+    return {"n": len(values), "mean": float(np.mean(values)),
+            "median": float(np.median(values)),
+            "stdev": float(np.std(values, ddof=1)) if len(values) > 1 else 0.0,
+            "ci95": (1.96 * float(np.std(values, ddof=1)) /
+                     np.sqrt(len(values))) if len(values) > 1 else 0.0,
+            "p95": float(np.percentile(values, 95)),
+            "p99": float(np.percentile(values, 99)) if len(values) >= 30 else None}
 
 def run_V2(device_id=1):
     print("\n=== V2: GPT-2 6L PMU ===", flush=True)
@@ -214,20 +420,61 @@ def run_V3(device_id=1):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--exp", type=str, default="V1,V2,V3", help="comma-separated: V1,V2,V3")
-    parser.add_argument("--device-id", type=int, default=1)
+    parser.add_argument("--exp", type=str, default="V2,V3",
+                        help="comma-separated real runs: V2,V3")
+    parser.add_argument("--device-id", type=int, default=6)
+    parser.add_argument("--model", choices=("gpt2", "gpt2_xl"), default=None)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--seeds", type=str, default="41,42,43")
+    parser.add_argument("--warmups", type=int, default=10)
+    parser.add_argument("--steps", type=int, default=30)
+    parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--train-child", action="store_true")
+    parser.add_argument("--ready-file", default=None)
+    parser.add_argument("--go-file", default=None)
+    parser.add_argument("--child-output", default=None)
     args = parser.parse_args()
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    if args.train_child:
+        if not all((args.model, args.ready_file, args.go_file, args.child_output)):
+            raise ValueError("train-child requires model, ready/go/output files")
+        _real_training_child(args.model, args.device_id, args.seed,
+                             args.warmups, args.steps, args.ready_file,
+                             args.go_file, args.child_output)
+        return
 
-    exps = args.exp.split(",")
-    results = {}
-    if "V1" in exps: results["V1"] = run_V1(args.device_id)
-    if "V2" in exps: results["V2"] = run_V2(args.device_id)
-    if "V3" in exps: results["V3"] = run_V3(args.device_id)
-
-    with open(OUTPUT_FILE, "w") as f:
-        json.dump(results, f, indent=2)
-    print(f"\n[OK] Results → {OUTPUT_FILE}")
+    output_dir = Path(args.output_dir or
+                      os.path.join(REPO, "results/ppt-evidence-20260829/E8"))
+    output_dir.mkdir(parents=True, exist_ok=True)
+    models = ([args.model] if args.model else
+              (["gpt2"] if "V2" in args.exp.split(",") and "V3" not in args.exp.split(",")
+               else ["gpt2", "gpt2_xl"]))
+    seeds = [int(value) for value in args.seeds.split(",") if value.strip()]
+    results = []
+    for model_name in models:
+        for seed in seeds:
+            for metric in ("ArithmeticUtilization", "Memory"):
+                run_dir = output_dir / (
+                    f"E8_{model_name}_seed{seed}_{metric}_"
+                    f"{time.strftime('%Y%m%d_%H%M%S')}")
+                try:
+                    result = run_real_pmu(model_name, args.device_id, seed,
+                                          metric, run_dir, args.warmups,
+                                          args.steps)
+                    result["status"] = "pass"
+                except BaseException as error:
+                    result = {"status": "fail", "model": model_name,
+                              "seed": seed, "metric_group": metric,
+                              "error": repr(error)}
+                (run_dir / "result.json").write_text(
+                    json.dumps(result, indent=2, sort_keys=True) + "\n")
+                results.append(result)
+                print(json.dumps(result, sort_keys=True), flush=True)
+    summary = output_dir / "E8_real_summary.json"
+    summary.write_text(json.dumps({"results": results}, indent=2,
+                                  sort_keys=True) + "\n")
+    if not results or any(item["status"] != "pass" for item in results):
+        raise SystemExit(1)
+    print(f"\n[OK] Real PMU results → {summary}")
 
 if __name__ == "__main__":
     main()
