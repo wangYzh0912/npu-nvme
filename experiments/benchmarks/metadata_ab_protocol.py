@@ -130,8 +130,11 @@ def main():
         slot_offsets = (slot_a, slot_b)
 
         for index in range(args.warmups + args.repetitions):
+            flush_start = time.perf_counter_ns()
             single_write, _ = sync_io(
                 ckpt, slot_a, META_SLOT_BYTES, control_payload, read=False)
+            ckpt.flush_nvme()
+            single_flush = (time.perf_counter_ns() - flush_start) / 1e6
             single_read, raw = sync_io(
                 ckpt, slot_a, META_SLOT_BYTES, read=True)
             if raw != control_payload:
@@ -139,13 +142,18 @@ def main():
 
             generation_a = index * 2
             generation_b = generation_a + 1
+            crc_start = time.perf_counter_ns()
             payload_a = pack_metadata({"round": index, "slot": "A"}, generation_a)
             payload_b = pack_metadata({"round": index, "slot": "B"}, generation_b)
+            crc_generation_ms = (time.perf_counter_ns() - crc_start) / 1e6
             commit_start = time.perf_counter_ns()
             sync_io(ckpt, slot_a, META_SLOT_BYTES, payload_a, read=False)
+            ckpt.flush_nvme()
             sync_io(ckpt, slot_b, META_SLOT_BYTES, payload_b, read=False)
+            ckpt.flush_nvme()
             sync_io(ckpt, active_offset, ACTIVE_BYTES,
                     pack_active(generation_b, 1), read=False)
+            ckpt.flush_nvme()
             winner, active, read_ms = read_replicas(
                 ckpt, slot_offsets, active_offset)
             commit_ms = (time.perf_counter_ns() - commit_start) / 1e6
@@ -183,6 +191,8 @@ def main():
                 ],
                 "timeline_us": {
                     "single_write": single_write * 1000,
+                    "single_flush": single_flush * 1000,
+                    "crc_generation": crc_generation_ms * 1000,
                     "single_read": single_read * 1000,
                     "ab_commit": commit_ms * 1000,
                     "ab_read_validation": read_ms * 1000,
@@ -203,6 +213,10 @@ def main():
                                    for s in writer.samples]),
         "single_read_ms": stats([s["timeline_us"]["single_read"] / 1000
                                   for s in writer.samples]),
+        "single_flush_ms": stats([s["timeline_us"]["single_flush"] / 1000
+                                   for s in writer.samples]),
+        "crc_generation_ms": stats([s["timeline_us"]["crc_generation"] / 1000
+                                     for s in writer.samples]),
         "ab_commit_ms": stats([s["timeline_us"]["ab_commit"] / 1000
                                 for s in writer.samples]),
         "fault_recovery_ms": stats([s["timeline_us"]["fault_recovery"] / 1000

@@ -30,8 +30,25 @@ from experiments.benchmarks.io_matrix import (  # noqa: E402
     ResultWriter, check_npu_free, environment_snapshot, stats,
 )
 from experiments.common import (  # noqa: E402
-    init_env, make_causal_lm_checkpoint_model, warmup_checkpoint_model,
+    init_env, make_causal_lm_checkpoint_model, make_causal_lm_training,
+    warmup_checkpoint_model, warmup_model,
 )
+
+
+def training_state_descriptors(model, optimizer):
+    descs, seen = [], set()
+    for component, obj in (("model", model), ("optimizer", optimizer)):
+        for name, parameter in obj.parameters_and_names():
+            if id(parameter) in seen:
+                continue
+            seen.add(id(parameter))
+            dtype = np.dtype(tpc.ms.dtype_to_nptype(parameter.dtype))
+            ptr = tpc.get_dev_ptr(parameter)
+            descs.append({"name": f"{component}/{name}", "ptr": ptr,
+                          "size": int(parameter.size) * dtype.itemsize,
+                          "dtype_np": dtype, "param_ref": parameter,
+                          "host_resident": ptr == 0})
+    return descs
 
 
 def proc_status():
@@ -47,6 +64,13 @@ def restore_ptr(param_descs, host_ptr, offsets, device_id):
     tpc._ensure_acl_device(device_id)
     start = time.perf_counter_ns()
     for desc in param_descs:
+        if desc.get("host_resident"):
+            raw = ctypes.string_at(host_ptr + offsets[desc["name"]],
+                                   desc["size"])
+            value = np.frombuffer(raw, dtype=desc["dtype_np"]).reshape(
+                desc["param_ref"].shape).copy()
+            desc["param_ref"].set_data(tpc.ms.Tensor(value))
+            continue
         ret = tpc.acl_lib.aclrtMemcpy(
             ctypes.c_void_p(desc["ptr"]), desc["size"],
             ctypes.c_void_p(host_ptr + offsets[desc["name"]]), desc["size"],
@@ -67,13 +91,20 @@ def run_mode(args, model, descs, offsets, total, mode, writer):
         host_ptr = int(pinned)
     rss_peak = proc_status()
     samples = []
+    device_descs = [desc for desc in descs if not desc.get("host_resident")]
     try:
         for index in range(args.warmups + args.samples):
             before = proc_status()
             if mode == "regular":
-                snap = tpc.snapshot_d2h(descs, regular, offsets, args.npu)
+                snap = tpc.snapshot_d2h(device_descs, regular, offsets, args.npu)
             else:
-                snap = tpc.snapshot_d2h_pinned(descs, host_ptr, offsets, args.npu)
+                snap = tpc.snapshot_d2h_pinned(device_descs, host_ptr, offsets,
+                                               args.npu)
+            for desc in descs:
+                if desc.get("host_resident"):
+                    value = np.ascontiguousarray(desc["param_ref"].asnumpy())
+                    ctypes.memmove(host_ptr + offsets[desc["name"]],
+                                   int(value.ctypes.data), desc["size"])
             restore_ms = restore_ptr(descs, host_ptr, offsets, args.npu)
             after = proc_status()
             for key in rss_peak:
@@ -115,6 +146,7 @@ def main():
     parser.add_argument("--modes", nargs="+", choices=("regular", "pinned"),
                         default=("regular", "pinned"))
     parser.add_argument("--chunk-size", type=int, default=4 * 1024 * 1024)
+    parser.add_argument("--complete-training-state", action="store_true")
     parser.add_argument("--output-root", default=None)
     args = parser.parse_args()
     if args.samples < 30:
@@ -122,9 +154,16 @@ def main():
     root = Path(args.output_root or ROOT / "results/ppt-evidence-20260829/E3/host-staging")
     check_npu_free(args.npu)
     init_env(device_id=args.npu)
-    model, cfg = make_causal_lm_checkpoint_model(args.model, seq_len=128)
-    warmup_checkpoint_model(model, cfg, seq_len=128)
-    descs = tpc.get_param_descriptors(model)
+    if args.complete_training_state:
+        model, dataset, optimizer = make_causal_lm_training(
+            args.model, total_steps=2, device_id=args.npu, seq_len=129,
+            dropout_rate=0.0)
+        warmup_model(model, optimizer, dataset)
+        descs = training_state_descriptors(model, optimizer)
+    else:
+        model, cfg = make_causal_lm_checkpoint_model(args.model, seq_len=128)
+        warmup_checkpoint_model(model, cfg, seq_len=128)
+        descs = tpc.get_param_descriptors(model)
     offsets = {}
     cursor = 0
     for desc in descs:
@@ -136,6 +175,7 @@ def main():
         writer.config.update({"model": args.model, "mode": mode,
                               "state_bytes": total, "chunk_size": args.chunk_size,
                               "slot_count": 1, "host_staging": True,
+                              "state_scope": "model+optimizer" if args.complete_training_state else "model",
                               "pci": None, "ssd_policy": "not touched; no /models"})
         writer.write_json("config.json", writer.config)
         writer.write_json("environment.json", environment_snapshot(args, None))

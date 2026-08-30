@@ -32,7 +32,8 @@ void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion);
 
 /* Submit a single NPU-to-DMA copy.  Returns 0 on success, -1 if the ring
  * buffer is full, -2 on ACL error. */
-int try_submit_async(struct NPUNVMEContext *ctx, io_task_t *task, bool is_host);
+int try_submit_async(struct NPUNVMEContext *ctx, io_task_t *task, bool is_host,
+                     bool async_dma);
 
 /* --- Timestamp --- */
 uint64_t get_time_us(void);

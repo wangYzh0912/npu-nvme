@@ -11,6 +11,7 @@ import argparse
 import ctypes
 import hashlib
 import queue
+import re
 import sys
 import threading
 import time
@@ -34,12 +35,17 @@ from frame_lifecycle import FrameBufferPool  # noqa: E402
 from chunk_helpers import build_chunks, build_chunks_host, build_ctypes_arrays  # noqa: E402
 
 
-CHUNK_SIZE = 4 * 1024 * 1024
 BASE_OFFSET = SAFE_OFFSET + 8 * 1024**3
 
 
 def round_up(value, alignment=ALIGNMENT):
     return (value + alignment - 1) // alignment * alignment
+
+
+def proc_rss_bytes():
+    text = Path("/proc/self/status").read_text(encoding="utf-8")
+    match = re.search(r"^VmRSS:\s+(\d+)\s+kB$", text, re.MULTILINE)
+    return int(match.group(1)) * 1024 if match else None
 
 
 def parameter_offsets(param_descs):
@@ -80,7 +86,7 @@ def readback_hash(ckpt, write_chunks):
         ret = lib.npu_nvme_read_batch_host(
             ckpt.ctx, ptrs, offsets, sizes, len(chunks))
         if ret != 0:
-            raise RuntimeError(f"A9 readback failed at {start}: {ret}")
+            raise RuntimeError(f"A9 readback failed at {offset}: {ret}")
         digest.update(buffer.raw[:size])
     return digest.hexdigest()
 
@@ -109,7 +115,7 @@ class HbmSlotRunner:
                 write_chunks.append({"ptr": ptr, "size": end - start,
                                      "offset": base + start,
                                      "name": f"slot{slot_id}@{start}"})
-            chunks, _ = build_chunks(write_chunks, CHUNK_SIZE)
+            chunks, _ = build_chunks(write_chunks, args.chunk_size)
             self.slots.append({"slot_id": slot_id, "flat": flat,
                                "write_chunks": chunks})
         self.capture_bytes = sum(
@@ -119,6 +125,7 @@ class HbmSlotRunner:
             raise RuntimeError(f"A9 safe range exceeds 83.0.0: {end}")
         self.worker = threading.Thread(target=self._drain, name="a9-spdk-owner",
                                        daemon=True)
+        self.baseline_rss = proc_rss_bytes()
 
     def _drain(self):
         lib = __import__("c_bindings").lib
@@ -208,6 +215,7 @@ class HbmSlotRunner:
             "frozen_sha256": frozen_sha256,
             "snapshot_ms": snapshot_ms, "capture_ns": capture_start,
             "slot_wait_ms": wait_ms,
+            "host_rss_bytes": proc_rss_bytes(),
             "events": [
                 {"name": "snapshot_start", "monotonic_ns": capture_start},
                 {"name": "snapshot_ready", "monotonic_ns": capture_end},
@@ -238,7 +246,8 @@ def run_slot_count(args, slot_count):
     writer.config.update({"slot_count": slot_count, "model": "gpt2_xl",
                           "path": "A9_HBM_snapshot_slot_lifecycle",
                           "scope": "real MindSpore HBM slots",
-                          "chunk_size": CHUNK_SIZE})
+                          "chunk_size": args.chunk_size,
+                          "state_scope": "model+optimizer; device-resident fields"})
     writer.write_json("config.json", writer.config)
     npu_info = check_npu_free(args.npu)
     writer.write_json("environment.json", environment_snapshot(args, npu_info))
@@ -266,12 +275,17 @@ def run_slot_count(args, slot_count):
             raise FloatingPointError(
                 f"A9 post-warmup state is non-finite: "
                 f"{initial_health['nonfinite'][:3]}")
-        param_descs = tpc.get_param_descriptors(model)
         ckpt = __import__("direct_checkpoint").DirectCheckpoint(
             nvme_addr=args.pci, npu_device_id=args.npu,
-            pipeline_depth=args.pipeline_depth, requested_chunk_size=CHUNK_SIZE,
+            pipeline_depth=args.pipeline_depth,
+            requested_chunk_size=args.chunk_size,
             rank_id=0, world_size=1, keep_last_n=3, slot_size_gb=10,
             spdk_shm_id=args.shm_id + slot_count)
+        all_descs = ckpt._prepare_state_components(
+            {"model": model, "optimizer": optimizer}, with_checksums=False)
+        param_descs = [item for item in all_descs if item["ptr"]]
+        host_state_bytes = sum(item["size"] for item in all_descs
+                               if not item["ptr"])
         writer.add_event({"name": "spdk_init_end",
                           "monotonic_ns": time.monotonic_ns()})
         runner = HbmSlotRunner(args, model, param_descs, ckpt, writer, slot_count)
@@ -320,7 +334,13 @@ def run_slot_count(args, slot_count):
                 s["timeline_us"]["end_to_end"] / 1000
                 for s in runner.results]),
             "hbm_bytes_per_slot": runner.total,
+            "complete_state_bytes": sum(item["size"] for item in all_descs),
+            "host_resident_state_bytes": host_state_bytes,
             "captured_segment_bytes_per_slot": runner.capture_bytes,
+            "baseline_rss_bytes": runner.baseline_rss,
+            "peak_rss_bytes": max(
+                [runner.baseline_rss or 0] +
+                [sample.get("host_rss_bytes") or 0 for sample in runner.results]),
             "numeric_health": {"initial": initial_health,
                                "final": final_health},
         }
@@ -348,6 +368,7 @@ def main():
     parser.add_argument("--ckpt-every", type=int, default=5)
     parser.add_argument("--warmups", type=int, default=5)
     parser.add_argument("--pipeline-depth", type=int, default=4)
+    parser.add_argument("--chunk-size", type=int, default=4 * 1024 * 1024)
     parser.add_argument("--io-timeout-s", type=float, default=120.0)
     parser.add_argument("--io-delay-ms", type=float, default=0.0,
                         help="controlled delay before each SPDK write")

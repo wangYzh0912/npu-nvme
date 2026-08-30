@@ -11,6 +11,7 @@ extern "C" {
 
 /** @brief Opaque context handle.  Python sees this as an opaque pointer. */
 typedef struct NPUNVMEContext NPUNVMEContext;
+typedef struct NPUNVMERequest NPUNVMERequest;
 
 /**
  * @brief Initialise the NPU-NVMe SPDK environment.
@@ -30,6 +31,26 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
 
 /** @brief Release all resources (SPDK, ACL, DMA pool, Reactor thread). */
 void npu_nvme_cleanup(NPUNVMEContext *ctx);
+
+/**
+ * @brief Submit an HBM-to-NVMe batch without waiting for completion.
+ *
+ * The source buffers must remain valid until poll/wait reports completion.
+ * A timeout does not cancel the request.  Release is valid only after the
+ * request reaches a terminal state.
+ */
+int npu_nvme_submit_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
+                                uint64_t *nvme_offsets, size_t *sizes,
+                                int num_items, NPUNVMERequest **out_request);
+
+/** @brief Poll a submitted request; result is returned once done is true. */
+int npu_nvme_poll_request(NPUNVMERequest *request, int *done);
+
+/** @brief Wait up to timeout_ms (zero means unbounded). */
+int npu_nvme_wait_request(NPUNVMERequest *request, uint32_t timeout_ms);
+
+/** @brief Release a terminal request.  Non-terminal requests are retained. */
+void npu_nvme_release_request(NPUNVMERequest *request);
 
 /** @brief Return total NVMe capacity in bytes. */
 uint64_t npu_nvme_get_total_blocks(NPUNVMEContext *ctx);

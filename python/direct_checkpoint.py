@@ -46,7 +46,7 @@ import atexit
 
 # -- Re-exports from sub-modules (backward-compatible surface) ---------------
 import c_bindings  # keep module reference for _LIB_PATH
-from c_bindings import lib, acl_lib, NPUNVMEContext
+from c_bindings import lib, acl_lib, NPUNVMEContext, NPUNVMERequest
 from disk_layout import (SUPERBLOCK_OFFSET, SUPERBLOCK_HEADER_BYTES,
                           META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
                           META_SLOT_BYTES, MAGIC_NUMBER, UINT32_BYTES,
@@ -145,6 +145,10 @@ class CheckpointHandle:
         if self.status != self.PERSISTED:
             raise TimeoutError("checkpoint did not reach PERSISTED state")
         return self
+
+    def done(self):
+        """Return whether this generation reached a terminal state."""
+        return self._done.is_set()
 
     def __iter__(self):
         """Legacy tuple compatibility for existing benchmark callers."""
@@ -960,7 +964,9 @@ class DirectCheckpoint:
 
     def save(self, model: ms.nn.Cell, step: int,
              meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True,
-             _prepared_params=None, _checkpoint_meta=None):
+             _prepared_params=None, _checkpoint_meta=None, io_mode="queue"):
+        if io_mode not in ("queue", "async", "serial"):
+            raise ValueError("io_mode must be queue, async, or serial")
         # A previous generation owns its snapshot buffers until it reaches a
         # terminal state.  Never overwrite/reuse those buffers implicitly.
         self.wait_for_io_completion()
@@ -1044,15 +1050,45 @@ class DirectCheckpoint:
 
         def background_io_worker(c_ptrs_d, c_offs_d, c_sizes_d, n_dev, d_sz,
                                  c_ptrs_h, c_offs_h, c_sizes_h, n_host, h_sz):
+            def write_device(ptrs, offsets, sizes, count):
+                if count <= 0:
+                    return
+                if io_mode == "serial":
+                    for index in range(count):
+                        one_ptr = (ctypes.c_void_p * 1)(ptrs[index])
+                        one_off = (ctypes.c_uint64 * 1)(offsets[index])
+                        one_size = (ctypes.c_size_t * 1)(sizes[index])
+                        rc = lib.npu_nvme_write_batch(
+                            self.ctx, one_ptr, one_off, one_size, 1)
+                        if rc != 0:
+                            raise RuntimeError(f"serial write failed (rc={rc})")
+                    return
+                if io_mode == "async" and hasattr(
+                        lib, "npu_nvme_submit_write_batch"):
+                    request = ctypes.POINTER(NPUNVMERequest)()
+                    rc = lib.npu_nvme_submit_write_batch(
+                        self.ctx, ptrs, offsets, sizes, count,
+                        ctypes.byref(request))
+                    if rc != 0:
+                        raise RuntimeError(f"async submit failed (rc={rc})")
+                    try:
+                        rc = lib.npu_nvme_wait_request(request, 0)
+                        if rc != 0:
+                            raise RuntimeError(f"async request failed (rc={rc})")
+                    finally:
+                        lib.npu_nvme_release_request(request)
+                    return
+                rc = lib.npu_nvme_write_batch(
+                    self.ctx, ptrs, offsets, sizes, count)
+                if rc != 0:
+                    raise RuntimeError(f"write_batch failed (rc={rc})")
+
             try:
                 t_spdk_start = time.perf_counter()
                 total_written = 0
 
                 if n_dev > 0:
-                    rc = lib.npu_nvme_write_batch(
-                        self.ctx, c_ptrs_d, c_offs_d, c_sizes_d, n_dev)
-                    if rc != 0:
-                        raise RuntimeError(f"write_batch failed (rc={rc})")
+                    write_device(c_ptrs_d, c_offs_d, c_sizes_d, n_dev)
                     total_written += d_sz
 
                 if n_host > 0:
@@ -1070,6 +1106,10 @@ class DirectCheckpoint:
                 T_SPDK = t_spdk_end - t_spdk_start
 
                 t_meta_start = time.perf_counter()
+                generation_delay_ms = float(os.environ.get(
+                    "NPU_NVME_TEST_GENERATION_DELAY_MS", "0"))
+                if generation_delay_ms > 0:
+                    time.sleep(generation_delay_ms / 1000.0)
                 self.last_layout = layout
                 if commit_meta:
                     self._commit_metadata(
@@ -1204,7 +1244,8 @@ class DirectCheckpoint:
 
     def save_state(self, components, control_state, step: int,
                    meta_path: str = "checkpoint_meta.pkl",
-                   commit_meta: bool = True, verify_checksums: bool = True):
+                   commit_meta: bool = True, verify_checksums: bool = True,
+                   io_mode: str = "queue"):
         """Freeze and persist a versioned complete training state.
 
         ``components`` maps namespaces such as ``model`` and ``optimizer`` to
@@ -1244,7 +1285,8 @@ class DirectCheckpoint:
         }
         return self.save(
             None, step=step, meta_path=meta_path, commit_meta=commit_meta,
-            _prepared_params=params, _checkpoint_meta=checkpoint_meta)
+            _prepared_params=params, _checkpoint_meta=checkpoint_meta,
+            io_mode=io_mode)
 
     def _select_checkpoint_record(self, step):
         self._mount_filesystem()

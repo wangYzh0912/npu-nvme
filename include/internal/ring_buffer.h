@@ -1,7 +1,7 @@
 /* Internal: SPSC ring buffer for DMA slot management.
  *
  * Used by the write/read pipelines to track free buffer slots.
- * Single-producer, single-consumer with acquire/release barriers
+ * Reactor-owned ring with acquire/release barriers
  * for cross-thread visibility on weakly-ordered architectures (ARM64).
  */
 #ifndef NPU_NVME_RING_BUFFER_H
@@ -13,7 +13,7 @@
 typedef struct {
     int *slots;
     int capacity;
-    int head;   /* consumer index (Python thread or reactor, not both) */
+    int head;   /* consumer index (reactor thread) */
     int tail;   /* producer index (reactor thread) */
 } ring_t;
 
@@ -52,7 +52,7 @@ static inline int ring_push(ring_t *r, int val) {
     return 0;
 }
 
-/* Pop a slot index.  Called from the Python thread (consumer). */
+/* Pop a slot index.  Called from the reactor thread (consumer). */
 static inline int ring_pop(ring_t *r, int *out) {
     if (ring_is_empty(r)) return -1;
     *out = r->slots[r->head];

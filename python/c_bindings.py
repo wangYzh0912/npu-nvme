@@ -37,6 +37,11 @@ class NPUNVMEContext(ctypes.Structure):
     pass
 
 
+class NPUNVMERequest(ctypes.Structure):
+    """Opaque asynchronous write request."""
+    pass
+
+
 try:
     lib = ctypes.CDLL(_LIB_PATH)
 
@@ -77,6 +82,25 @@ try:
 
     lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
     lib.npu_nvme_cleanup.restype = None
+
+    if hasattr(lib, "npu_nvme_submit_write_batch"):
+        lib.npu_nvme_submit_write_batch.argtypes = [
+            ctypes.POINTER(NPUNVMEContext),
+            ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64),
+            ctypes.POINTER(ctypes.c_size_t), ctypes.c_int,
+            ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+        ]
+        lib.npu_nvme_submit_write_batch.restype = ctypes.c_int
+        lib.npu_nvme_poll_request.argtypes = [
+            ctypes.POINTER(NPUNVMERequest), ctypes.POINTER(ctypes.c_int)]
+        lib.npu_nvme_poll_request.restype = ctypes.c_int
+        lib.npu_nvme_wait_request.argtypes = [
+            ctypes.POINTER(NPUNVMERequest), ctypes.c_uint32]
+        lib.npu_nvme_wait_request.restype = ctypes.c_int
+        lib.npu_nvme_release_request.argtypes = [
+            ctypes.POINTER(NPUNVMERequest)]
+        lib.npu_nvme_release_request.restype = None
 
     # -- Query --
     lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]

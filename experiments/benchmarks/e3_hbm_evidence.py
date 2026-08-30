@@ -203,6 +203,7 @@ def run_one(args, slots: int) -> Path:
            "--ckpt-every", str(args.ckpt_every),
            "--warmups", str(args.warmups),
            "--pipeline-depth", str(args.pipeline_depth),
+           "--chunk-size", str(args.chunk_size),
            "--shm-id", str(args.shm_id + slots),
            "--io-timeout-s", str(args.io_timeout_s),
            "--output-root", str(raw_root)]
@@ -321,6 +322,7 @@ def main():
     parser.add_argument("--ckpt-every", type=int, default=5)
     parser.add_argument("--warmups", type=int, default=10)
     parser.add_argument("--pipeline-depth", type=int, default=4)
+    parser.add_argument("--chunk-size", type=int, default=4 * 1024 * 1024)
     parser.add_argument("--shm-id", type=int, default=3000)
     parser.add_argument("--io-timeout-s", type=float, default=120.0)
     parser.add_argument("--io-delay-ms", type=float, default=0.0)

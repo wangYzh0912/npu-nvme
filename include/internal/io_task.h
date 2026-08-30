@@ -36,9 +36,14 @@ typedef struct {
     size_t size;
     uint64_t nvme_offset;   /* absolute byte offset on NVMe */
     uint32_t crc32;         /* CRC of the unpadded logical payload */
+    uint64_t ts_slot_wait;  /* profiling: started waiting for a DMA slot */
+    uint64_t ts_slot_acquire; /* profiling: DMA slot acquired */
     uint64_t ts_submit;     /* profiling: submission timestamp */
     uint64_t ts_npu_done;   /* profiling: NPU copy completion */
+    uint64_t ts_spdk_submit; /* profiling: NVMe command submission */
     uint64_t ts_spdk_done;  /* profiling: SPDK I/O completion */
+    uint64_t ts_slot_release; /* profiling: DMA slot returned */
+    uint32_t queue_depth;   /* profiling: request queue depth at submit */
 } io_task_t;
 
 /* --- SPDK callback context --- */
@@ -75,13 +80,16 @@ typedef enum {
     WRITE_FSM_RUNNING,
 } write_fsm_state_t;
 
-typedef struct {
+typedef struct NPUNVMERequest {
+    struct NPUNVMEContext *ctx; /* owner used by public poll/wait API */
     io_task_t *tasks;           /* array of per-chunk descriptors */
     int num_tasks;              /* number of chunks in this write */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy D2H */
+    bool async_dma;             /* true → aclrtMemcpyAsync + event polling */
     atomic_int done;            /* set to 1 when all chunks complete */
-    atomic_int detached;        /* caller timed out; reactor owns cleanup */
+    atomic_int detached;        /* reserved for legacy internal requests */
     int result;                 /* 0 = success, -1 = any chunk failed */
+    bool compute_crc;           /* calculate CRC after async DMA completion */
     uint32_t *crc32_out;        /* optional caller-owned per-task CRC array */
     uint64_t ts_batch_start;    /* C-layer: first DMA submit time (us) */
     uint64_t ts_batch_end;      /* C-layer: last SPDK completion time (us) */
@@ -109,7 +117,7 @@ typedef struct {
     int num_tasks;              /* number of chunks in this read */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy H2D */
     atomic_int done;            /* set to 1 when all chunks complete */
-    atomic_int detached;        /* caller timed out; reactor owns cleanup */
+    atomic_int detached;        /* reserved for legacy internal requests */
     int result;                 /* 0 = success, -1 = any chunk failed */
     uint64_t ts_batch_start;    /* C-layer: first SPDK submit time (us) */
     uint64_t ts_batch_end;      /* C-layer: last DMA completion time (us) */
