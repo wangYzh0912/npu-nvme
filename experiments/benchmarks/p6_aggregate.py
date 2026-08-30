@@ -14,7 +14,7 @@ def main():
     records = []
     for result_path in sorted(args.source.rglob("result.json")):
         result = json.loads(result_path.read_text())
-        if (result.get("model") != "gpt2_xl" or
+        if (result.get("model") not in ("gpt2", "gpt2_xl") or
                 result.get("seed") not in (41, 42, 43) or
                 result.get("status") != "pass"):
             continue
@@ -23,6 +23,7 @@ def main():
         summary = timeline.get("summary", {})
         records.append({
             "source_run": str(result_path.parent),
+            "model": result.get("model"),
             "seed": result["seed"],
             "metric_group": result.get("metric_group"),
             "step_stats_ms": result.get("step_stats_ms"),
@@ -31,10 +32,12 @@ def main():
             "timeline_summary": summary,
         })
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    models = sorted({record.get("model") for record in records if record.get("model")})
     args.output.write_text(json.dumps({
         "experiment": "P6",
-        "model": "gpt2_xl",
-        "seeds": [41, 42, 43],
+        "model": models[0] if len(models) == 1 else None,
+        "models": models,
+        "seeds": sorted({record["seed"] for record in records}),
         "source": str(args.source),
         "records": records,
         "note": "completed real msprof CSV exports; compact timeline summaries only",

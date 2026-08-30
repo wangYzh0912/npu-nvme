@@ -7,7 +7,7 @@ def main():
   r=json.loads(path.read_text())
   config_path=path.parent/"config.json"
   config=json.loads(config_path.read_text()) if config_path.exists() else {}
-  if r.get("model")=="gpt2_xl" and r.get("mode") in ("none","sync","queue","async"):
+  if r.get("model") in ("gpt2", "gpt2_xl") and r.get("mode") in ("none","sync","queue","async"):
    r={**r,"checkpoint_interval":r.get("checkpoint_interval",config.get("checkpoint_interval")),"seed":r.get("seed",config.get("seed"))}
    rows.append(r)
  baseline={r.get("seed"):r for r in rows if r["mode"]=="none"}; out=[]

@@ -77,12 +77,12 @@ def batch_overlap(rows):
 def run_one(args, mode, chunk, depth, delay_ms, seed):
     init_env(device_id=args.npu, seed=seed)
     model, dataset, optimizer = make_causal_lm_training(
-        "gpt2_xl", total_steps=1, device_id=args.npu,
+        args.model, total_steps=1, device_id=args.npu,
         seq_len=args.seq_len, dropout_rate=0.0)
     warmup_model(model, optimizer, dataset)
     run_root = Path(args.output_root or ROOT / "results/ppt-evidence-20260829")
     bundle = EvidenceBundle("P3", {
-        "model": "gpt2_xl", "seed": seed, "mode": mode,
+        "model": args.model, "seed": seed, "mode": mode,
         "chunk_size": chunk, "pipeline_depth": depth,
         "delay_ms": delay_ms,
         "state": "model+optimizer+control",
@@ -148,7 +148,7 @@ def run_one(args, mode, chunk, depth, delay_ms, seed):
             os.environ["NPU_NVME_TEST_GENERATION_DELAY_MS"] = old_delay
     elapsed = stats(elapsed_values)
     result = bundle.finalize(metrics={
-        "model": "gpt2_xl", "seed": seed, "mode": mode,
+        "model": args.model, "seed": seed, "mode": mode,
         "chunk_size": chunk, "pipeline_depth": depth,
         "delay_ms": delay_ms,
         "latency_mean": elapsed.get("mean"),
@@ -182,10 +182,13 @@ def main():
     parser.add_argument("--shm-id", type=int, default=9200)
     parser.add_argument("--slot-size-gb", type=int, default=10,
                         help="must match the formatted FULL-slot layout")
+    parser.add_argument("--model", choices=("gpt2", "gpt2_xl"), default="gpt2_xl")
+    parser.add_argument("--allow-fewer-samples", action="store_true",
+                        help="permit short trend runs; do not use for formal gates")
     parser.add_argument("--output-root", default=None)
     args = parser.parse_args()
-    if args.samples < 30:
-        raise SystemExit("formal samples must be >= 30")
+    if args.samples < 30 and not args.allow_fewer_samples:
+        raise SystemExit("formal samples must be >= 30 unless --allow-fewer-samples is set")
     for seed in args.seeds:
         for mode in args.modes:
             for chunk in args.chunks:

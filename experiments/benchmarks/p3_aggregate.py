@@ -22,7 +22,7 @@ def main():
             if result.get(field) is None and config.get(field) is not None:
                 result[field] = config[field]
         mode = result.get("mode")
-        if (result.get("model") != "gpt2_xl" or
+        if (result.get("model") not in ("gpt2", "gpt2_xl") or
                 mode not in ("serial", "queue", "async") or
                 result.get("status") != "pass"):
             continue

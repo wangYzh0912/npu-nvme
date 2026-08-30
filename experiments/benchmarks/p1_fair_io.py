@@ -80,7 +80,7 @@ def run_spdk(args, operation, block, depth):
         "target_pci": args.pci, "raw_offset": args.offset,
         "cross_disk_calibration": True,
     }
-    bundle = EvidenceBundle("P1", config, repo_root=ROOT,
+    bundle = EvidenceBundle("P1", config, root=args.output_root, repo_root=ROOT,
         environment=environment_snapshot(
             pci=args.pci, npu=str(args.npu), repo_root=ROOT,
             npu_info=command(["npu-smi", "info"])))
@@ -179,7 +179,7 @@ def run_fs(args, mode, operation, block, depth):
               "persist_boundary": "fio end_fsync (one fsync per sample)",
               "filesystem": "XFS", "filesystem_pci": "0000:84:00.0",
               "target_path": str(target), "cross_disk_calibration": True}
-    bundle = EvidenceBundle("P1", config, repo_root=ROOT,
+    bundle = EvidenceBundle("P1", config, root=args.output_root, repo_root=ROOT,
         environment=environment_snapshot(pci="0000:84:00.0", npu=str(args.npu),
                                           repo_root=ROOT,
                                           npu_info=command(["npu-smi", "info"])))
@@ -273,10 +273,13 @@ def main():
                         help="maximum physical NVMe command size; larger logical blocks are segmented")
     parser.add_argument("--offset", type=int, default=SAFE_OFFSET)
     parser.add_argument("--fs-root", type=Path, default=Path("/models/npu_nvme_exp/ppt-evidence-20260829"))
+    parser.add_argument("--output-root", type=Path, default=None)
+    parser.add_argument("--allow-fewer-samples", action="store_true",
+                        help="permit short trend runs; do not use for formal gates")
     parser.add_argument("--timeout", type=int, default=1800)
     args = parser.parse_args()
-    if args.total_bytes <= 0 or args.samples < 30 or args.warmups < 1:
-        raise SystemExit("total-bytes > 0, warmups >= 1 and samples >= 30 are required")
+    if args.total_bytes <= 0 or (args.samples < 30 and not args.allow_fewer_samples) or args.warmups < 1:
+        raise SystemExit("total-bytes > 0, warmups >= 1 and samples >= 30 are required unless --allow-fewer-samples is set")
     paths = ("buffered", "odirect", "spdk") if args.path == "all" else (args.path,)
     for path in paths:
         for operation in args.operations:

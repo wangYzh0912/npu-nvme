@@ -1,0 +1,604 @@
+{
+  "experiment": "P6",
+  "model": "gpt2",
+  "models": [
+    "gpt2"
+  ],
+  "note": "completed real msprof CSV exports; compact timeline summaries only",
+  "records": [
+    {
+      "hbm": {
+        "read_mb_s": 6705.371,
+        "source": "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_ArithmeticUtilization_20260830_194514/msprof/PROF_000001_20260830194559766_QMOBDFGOPHIIGLBB/mindstudio_profiler_output/hbm_20260830194625.csv",
+        "write_mb_s": 5423.826
+      },
+      "metric_group": "ArithmeticUtilization",
+      "model": "gpt2",
+      "pmu_by_core": {
+        "AI_CORE": {
+          "kernel_count": 2,
+          "ops": {
+            "BatchMatMulV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 31625.72
+            },
+            "MatMulV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 49490.46
+            }
+          },
+          "total_time_us": 81116.18
+        },
+        "AI_CPU": {
+          "kernel_count": 1,
+          "ops": {
+            "CheckNumerics": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 2440.4
+            }
+          },
+          "total_time_us": 2440.4
+        },
+        "AI_VECTOR_CORE": {
+          "kernel_count": 26,
+          "ops": {
+            "AdamApplyOneWithDecayAssign": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 37292.18
+            },
+            "Add": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 13303.34
+            },
+            "AddN": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 8138.46
+            },
+            "AssignAdd": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 14.2
+            },
+            "Cast": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 42668.82
+            },
+            "DropOutDoMask": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 10203.4
+            },
+            "Exp": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 7310.56
+            },
+            "GatherV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 351.84
+            },
+            "Gelu": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 2394.72
+            },
+            "GeluGrad": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 5876.48
+            },
+            "LayerNormBetaGammaBackpropV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 5163.94
+            },
+            "LayerNormV3": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 6404.94
+            },
+            "LayerNormXBackpropV3": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 8791.88
+            },
+            "Log": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 13.54
+            },
+            "MemSet": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 3124.04
+            },
+            "Mul": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 8268.8
+            },
+            "Neg": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 3037.14
+            },
+            "NotEqual": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 22.46
+            },
+            "OneHot": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 906.32
+            },
+            "RealDiv": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 3695.84
+            },
+            "SoftmaxGrad": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 12737.06
+            },
+            "SoftmaxV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 12526.94
+            },
+            "StridedSlice": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 321.22
+            },
+            "Sub": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 12813.94
+            },
+            "Tile": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 16.28
+            },
+            "Transpose": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 19734.3
+            }
+          },
+          "total_time_us": 225132.64000000004
+        },
+        "DSA_SQE": {
+          "kernel_count": 1,
+          "ops": {
+            "DSAGenBitMask": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 13839.88
+            }
+          },
+          "total_time_us": 13839.88
+        },
+        "MIX_AIC": {
+          "kernel_count": 2,
+          "ops": {
+            "MatMulV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 5309.74
+            },
+            "MatMulV3": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 5725.3
+            }
+          },
+          "total_time_us": 11035.04
+        },
+        "MIX_AIV": {
+          "kernel_count": 3,
+          "ops": {
+            "ReduceMax": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 1569.66
+            },
+            "ReduceSum": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 12764.5
+            },
+            "UnsortedSegmentSum": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 973.94
+            }
+          },
+          "total_time_us": 15308.1
+        }
+      },
+      "seed": 41,
+      "source_run": "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_ArithmeticUtilization_20260830_194514",
+      "step_stats_ms": {
+        "ci95": 4.153061699901229,
+        "mean": 89.30932390000001,
+        "median": 89.8509825,
+        "n": 10,
+        "p95": 98.29807325,
+        "p99": null,
+        "stdev": 6.700578691274781
+      },
+      "timeline_summary": {
+        "below_20_fraction": 1.0,
+        "below_30_fraction": 1.0,
+        "below_50_fraction": 1.0,
+        "cube_busy_vector_low_fraction": 0.0,
+        "hbm_device_average_read_gb_s": 6.705371,
+        "hbm_device_average_write_gb_s": 5.423826,
+        "hbm_files": [
+          "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_ArithmeticUtilization_20260830_194514/msprof/PROF_000001_20260830194559766_QMOBDFGOPHIIGLBB/mindstudio_profiler_output/hbm_20260830194625.csv"
+        ],
+        "hbm_metric_interpretation": "device averages come from msprof hbm.csv Average rows; legacy hbm_*_mean fields are duration-weighted per-op projections, and neither is an HBM utilization percentage",
+        "hbm_read_gb_s_mean": null,
+        "hbm_write_gb_s_mean": null,
+        "metric_interpretation": "legacy vector_util fields are duration-weighted ArithmeticUtilization issue ratios projected onto device wall-clock; they are not whole-device Vector occupancy",
+        "op_summary_files": [
+          "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_ArithmeticUtilization_20260830_194514/msprof/PROF_000001_20260830194559766_QMOBDFGOPHIIGLBB/mindstudio_profiler_output/op_summary_20260830194625.csv"
+        ],
+        "step_alignment": "duration-normalized to child formal step durations; device and host clocks have no exported common epoch",
+        "step_alignment_valid": false,
+        "task_files": [
+          "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_ArithmeticUtilization_20260830_194514/msprof/PROF_000001_20260830194559766_QMOBDFGOPHIIGLBB/mindstudio_profiler_output/task_time_20260830194625.csv"
+        ],
+        "utilization_source": "ArithmeticUtilization PMU issue ratios; not whole-device occupancy",
+        "vector_mean": 0.017864318604651163,
+        "vector_p95": 0.04100863,
+        "windows": 129
+      }
+    },
+    {
+      "hbm": {
+        "read_mb_s": 6931.574,
+        "source": "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_Memory_20260830_194625/msprof/PROF_000001_20260830194711443_MFNQABLQLPJIELHC/mindstudio_profiler_output/hbm_20260830194737.csv",
+        "write_mb_s": 5595.063
+      },
+      "metric_group": "Memory",
+      "model": "gpt2",
+      "pmu_by_core": {
+        "AI_CORE": {
+          "kernel_count": 2,
+          "ops": {
+            "BatchMatMulV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 31917.9
+            },
+            "MatMulV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 49439.68
+            }
+          },
+          "total_time_us": 81357.58
+        },
+        "AI_CPU": {
+          "kernel_count": 1,
+          "ops": {
+            "CheckNumerics": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 2338.12
+            }
+          },
+          "total_time_us": 2338.12
+        },
+        "AI_VECTOR_CORE": {
+          "kernel_count": 26,
+          "ops": {
+            "AdamApplyOneWithDecayAssign": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 37249.4
+            },
+            "Add": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 13351.94
+            },
+            "AddN": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 8427.34
+            },
+            "AssignAdd": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 13.02
+            },
+            "Cast": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 42444.56
+            },
+            "DropOutDoMask": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 10315.44
+            },
+            "Exp": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 7243.58
+            },
+            "GatherV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 355.22
+            },
+            "Gelu": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 2393.4
+            },
+            "GeluGrad": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 5715.14
+            },
+            "LayerNormBetaGammaBackpropV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 5379.48
+            },
+            "LayerNormV3": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 6403.64
+            },
+            "LayerNormXBackpropV3": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 8929.26
+            },
+            "Log": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 13.08
+            },
+            "MemSet": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 3408.94
+            },
+            "Mul": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 8341.92
+            },
+            "Neg": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 3025.66
+            },
+            "NotEqual": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 22.36
+            },
+            "OneHot": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 948.86
+            },
+            "RealDiv": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 3630.14
+            },
+            "SoftmaxGrad": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 12746.2
+            },
+            "SoftmaxV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 12503.64
+            },
+            "StridedSlice": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 322.76
+            },
+            "Sub": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 12854.5
+            },
+            "Tile": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 17.16
+            },
+            "Transpose": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 19883.0
+            }
+          },
+          "total_time_us": 225939.64
+        },
+        "DSA_SQE": {
+          "kernel_count": 1,
+          "ops": {
+            "DSAGenBitMask": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 13844.62
+            }
+          },
+          "total_time_us": 13844.62
+        },
+        "MIX_AIC": {
+          "kernel_count": 2,
+          "ops": {
+            "MatMulV2": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 5321.32
+            },
+            "MatMulV3": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 5729.0
+            }
+          },
+          "total_time_us": 11050.32
+        },
+        "MIX_AIV": {
+          "kernel_count": 3,
+          "ops": {
+            "ReduceMax": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 1709.08
+            },
+            "ReduceSum": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 12435.86
+            },
+            "UnsortedSegmentSum": {
+              "count": 1,
+              "fp16_ratio": 0.0,
+              "fp32_ratio": 0.0,
+              "total_us": 987.48
+            }
+          },
+          "total_time_us": 15132.42
+        }
+      },
+      "seed": 41,
+      "source_run": "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_Memory_20260830_194625",
+      "step_stats_ms": {
+        "ci95": 3.31221953339463,
+        "mean": 85.6798358,
+        "median": 82.71094,
+        "n": 10,
+        "p95": 95.19640245,
+        "p99": null,
+        "stdev": 5.3439580796057005
+      },
+      "timeline_summary": {
+        "below_20_fraction": null,
+        "below_30_fraction": null,
+        "below_50_fraction": null,
+        "cube_busy_vector_low_fraction": null,
+        "hbm_device_average_read_gb_s": 6.9315739999999995,
+        "hbm_device_average_write_gb_s": 5.595063,
+        "hbm_files": [
+          "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_Memory_20260830_194625/msprof/PROF_000001_20260830194711443_MFNQABLQLPJIELHC/mindstudio_profiler_output/hbm_20260830194737.csv"
+        ],
+        "hbm_metric_interpretation": "device averages come from msprof hbm.csv Average rows; legacy hbm_*_mean fields are duration-weighted per-op projections, and neither is an HBM utilization percentage",
+        "hbm_read_gb_s_mean": 0.13702319395161294,
+        "hbm_write_gb_s_mean": 0.07575651713709679,
+        "metric_interpretation": "legacy vector_util fields are duration-weighted ArithmeticUtilization issue ratios projected onto device wall-clock; they are not whole-device Vector occupancy",
+        "op_summary_files": [
+          "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_Memory_20260830_194625/msprof/PROF_000001_20260830194711443_MFNQABLQLPJIELHC/mindstudio_profiler_output/op_summary_20260830194737.csv"
+        ],
+        "step_alignment": "duration-normalized to child formal step durations; device and host clocks have no exported common epoch",
+        "step_alignment_valid": false,
+        "task_files": [
+          "/tmp/npu-nvme-quick-trend-20260830/P6_profile/E8_gpt2_seed41_Memory_20260830_194625/msprof/PROF_000001_20260830194711443_MFNQABLQLPJIELHC/mindstudio_profiler_output/task_time_20260830194737.csv"
+        ],
+        "utilization_source": "PMU export has no arithmetic ratios; Vector utilization unavailable",
+        "vector_mean": null,
+        "vector_p95": null,
+        "windows": 124
+      }
+    }
+  ],
+  "seeds": [
+    41
+  ],
+  "source": "/tmp/npu-nvme-quick-trend-20260830/P6_profile"
+}

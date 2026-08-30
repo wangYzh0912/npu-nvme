@@ -21,16 +21,18 @@ from ppt_evidence import EvidenceBundle, environment_snapshot, stats, command
 
 def run_one(args, mode, interval, seed):
     init_env(device_id=args.npu, seed=seed)
-    total_steps = interval * args.checkpoints + args.warmup_steps + 2
+    formal_steps = (args.total_formal_steps if args.total_formal_steps is not None
+                    else interval * args.checkpoints + 2)
+    total_steps = formal_steps + args.warmup_steps
     model, dataset, optimizer = make_causal_lm_training(
-        "gpt2_xl", total_steps=total_steps, device_id=args.npu,
+        args.model, total_steps=total_steps, device_id=args.npu,
         seq_len=args.seq_len, dropout_rate=0.0)
     cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=False,
                                  ckpt_interval=999999)
     iterator = dataset.create_tuple_iterator()
     root = Path(args.output_root or ROOT / "results/ppt-evidence-20260829")
     bundle = EvidenceBundle("P4", {
-        "model": "gpt2_xl", "seed": seed, "mode": mode,
+        "model": args.model, "seed": seed, "mode": mode,
         "checkpoint_interval": interval, "formal_checkpoints": args.checkpoints,
         "state": "model+optimizer+control", "warmup_steps": args.warmup_steps,
     }, root=root, repo_root=ROOT,
@@ -135,7 +137,7 @@ def run_one(args, mode, interval, seed):
     accepted = bool(restore_verified and step_overhead_ratio is not None and
                     step_overhead_ratio <= 0.05)
     result = bundle.finalize(metrics={
-        "model": "gpt2_xl", "seed": seed, "mode": mode,
+        "model": args.model, "seed": seed, "mode": mode,
         "step_ms": stats(ordinary), "checkpoint_step_ms": stats(checkpoint),
         "foreground_wait": stats(waits), "backlog": stats(backlog),
         "loss": stats(losses),
@@ -163,6 +165,8 @@ def main():
     parser.add_argument("--intervals", nargs="+", type=int, default=(1, 5, 10, 20, 50))
     parser.add_argument("--seeds", nargs="+", type=int, default=(41, 42, 43))
     parser.add_argument("--checkpoints", type=int, default=30)
+    parser.add_argument("--total-formal-steps", type=int, default=None,
+                        help="use the same formal step count for every mode")
     parser.add_argument("--warmup-steps", type=int, default=10)
     parser.add_argument("--seq-len", type=int, default=129)
     parser.add_argument("--chunk-size", type=int, default=4 * 1024 * 1024)
@@ -172,6 +176,7 @@ def main():
     parser.add_argument("--shm-id", type=int, default=9400)
     parser.add_argument("--slot-size-gb", type=int, default=10,
                         help="must match the formatted FULL-slot layout")
+    parser.add_argument("--model", choices=("gpt2", "gpt2_xl"), default="gpt2_xl")
     parser.add_argument("--output-root", default=None)
     args = parser.parse_args()
     for seed in args.seeds:
