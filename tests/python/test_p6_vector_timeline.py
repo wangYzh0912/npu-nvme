@@ -1,6 +1,8 @@
 import csv
 
-from experiments.benchmarks.p6_vector_timeline import read_pmu, windows
+import pytest
+
+from experiments.benchmarks.p6_vector_timeline import read_hbm_average, read_pmu, windows
 
 
 def test_arithmetic_pmu_does_not_invent_hbm_zero(tmp_path):
@@ -39,3 +41,17 @@ def test_arithmetic_pmu_does_not_invent_hbm_zero(tmp_path):
     assert bins[0]["cube_util"] == 0.5
     assert bins[0]["hbm_read_gb_s"] is None
     assert bins[0]["hbm_write_gb_s"] is None
+
+
+def test_hbm_average_is_read_from_device_export(tmp_path):
+    path = tmp_path / "hbm.csv"
+    path.write_text(
+        "Device_id,Metric,Read(MB/s),Write(MB/s)\n"
+        "6,Average,20546.703,21708.906\n"
+        "6,0,20552.849,21709.529\n"
+    )
+
+    read_gb_s, write_gb_s = read_hbm_average([path])
+
+    assert read_gb_s == pytest.approx(20.546703)
+    assert write_gb_s == pytest.approx(21.708906)

@@ -1,0 +1,370 @@
+{
+  "phases": {
+    "P1": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p1_fair_io.py",
+        "--path",
+        "all",
+        "--npu",
+        "7"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P1_aggregate": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p1_aggregate.py",
+        "--root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P1",
+        "--output",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P1/summary.json"
+      ],
+      "ended": "2026-08-30T12:44:08+0800",
+      "log": "/home/user7/npu-nvme/results/ppt-evidence-20260829/orchestrator_logs/P1_aggregate.log",
+      "returncode": 0,
+      "started": "2026-08-30T12:44:08+0800",
+      "status": "pass"
+    },
+    "P1_calibration": {
+      "argv": [
+        "/home/user7/npu-nvme/scripts/calibrate_same_ssd_readonly.sh",
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P1/calibration.json"
+      ],
+      "ended": "2026-08-30T12:03:41+0800",
+      "log": "/home/user7/npu-nvme/results/ppt-evidence-20260829/orchestrator_logs/P1_calibration.log",
+      "returncode": 0,
+      "started": "2026-08-30T12:03:14+0800",
+      "status": "pass"
+    },
+    "P2": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p2_stack_decompose.py",
+        "--npu",
+        "7"
+      ],
+      "ended": "2026-08-30T12:48:12+0800",
+      "log": "/home/user7/npu-nvme/results/ppt-evidence-20260829/orchestrator_logs/P2.log",
+      "returncode": 0,
+      "started": "2026-08-30T12:44:08+0800",
+      "status": "pass"
+    },
+    "P3": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p3_async_pipeline.py",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P3_aggregate": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p3_aggregate.py",
+        "--root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P3",
+        "--output",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P3/summary.json"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P4": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p4_training_e2e.py",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P4_aggregate": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p4_aggregate.py",
+        "--root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P4",
+        "--output",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P4/summary.json"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P5": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p5_ring_memory.py",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P5"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P6_analyze": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p6_analyze_tree.py",
+        "--root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P6/profile"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P6_aux": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p6_aux_injection.py",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P6_profile": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/microbench/vector_engine_profile.py",
+        "--model",
+        "gpt2_xl",
+        "--device-id",
+        "7",
+        "--seeds",
+        "41,42,43",
+        "--warmups",
+        "10",
+        "--steps",
+        "30",
+        "--output-dir",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P6/profile"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P7_analyze": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p7_analyze_tree.py",
+        "--root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P7"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P7_seed41": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/s2_real_trajectory.py",
+        "--model",
+        "gpt2_xl",
+        "--seed",
+        "41",
+        "--steps",
+        "500",
+        "--sample-windows",
+        "1-30,236-265,471-500",
+        "--block-sizes",
+        "65536,262144,524288",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P7/seed41"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P7_seed42": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/s2_real_trajectory.py",
+        "--model",
+        "gpt2_xl",
+        "--seed",
+        "42",
+        "--steps",
+        "500",
+        "--sample-windows",
+        "1-30,236-265,471-500",
+        "--block-sizes",
+        "65536,262144,524288",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P7/seed42"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P7_seed43": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/s2_real_trajectory.py",
+        "--model",
+        "gpt2_xl",
+        "--seed",
+        "43",
+        "--steps",
+        "500",
+        "--sample-windows",
+        "1-30,236-265,471-500",
+        "--block-sizes",
+        "65536,262144,524288",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/P7/seed43"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "P8_P9": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/p8_p9_matrix.py",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    },
+    "reliability": {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/reliability_gate.py",
+        "--npu",
+        "7",
+        "--output-root",
+        "/home/user7/npu-nvme/results/ppt-evidence-20260829/reliability"
+      ],
+      "ended": "2026-08-30T02:52:41+0800",
+      "returncode": null,
+      "started": "2026-08-30T02:52:41+0800",
+      "status": "planned"
+    }
+  },
+  "preflight": {
+    "blockers": [],
+    "driver_83": "uio_pci_generic",
+    "euid": 0,
+    "hugepages": "MemTotal:       2107993572 kB\nMemFree:        1939505288 kB\nMemAvailable:   2066569264 kB\nBuffers:         2985444 kB\nCached:         138981448 kB\nSwapCached:            0 kB\nActive:         61799164 kB\nInactive:       84720852 kB\nActive(anon):    1829312 kB\nInactive(anon): 11739608 kB\nActive(file):   59969852 kB\nInactive(file): 72981244 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        4194300 kB\nDirty:              5004 kB\nWriteback:             0 kB\nAnonPages:       4446880 kB\nMapped:           768460 kB\nShmem:           9015952 kB\nKReclaimable:    3371964 kB\nSlab:            9156976 kB\nSReclaimable:    3371964 kB\nSUnreclaim:      5785012 kB\nKernelStack:       72096 kB\nPageTables:        64176 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1057012460 kB\nCommitted_AS:   27224892 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1660980 kB\nVmallocChunk:          0 kB\nPercpu:          4978176 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   1814528 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1151\nHugePages_Free:     1151\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         2357248 kB\n",
+    "library": "/home/user7/npu-nvme/build_out/lib/libnpu_nvme.so",
+    "library_exists": true,
+    "lspci_83": {
+      "argv": [
+        "lspci",
+        "-s",
+        "83:00.0",
+        "-nnk"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "83:00.0 Non-Volatile memory controller [0108]: Huawei Technologies Co., Ltd. ES3000 V6 NVMe PCIe SSD [19e5:3754]\n\tSubsystem: Huawei Technologies Co., Ltd. NVMe SSD ES3500P V6 3840GB 2.5\" U.2 [19e5:6213]\n\tKernel driver in use: uio_pci_generic\n\tKernel modules: nvme\n"
+    },
+    "lspci_84": {
+      "argv": [
+        "lspci",
+        "-s",
+        "84:00.0",
+        "-nnk"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "84:00.0 Non-Volatile memory controller [0108]: Huawei Technologies Co., Ltd. ES3000 V6 NVMe PCIe SSD [19e5:3754]\n\tSubsystem: Huawei Technologies Co., Ltd. NVMe SSD ES3500P V6 3840GB 2.5\" U.2 [19e5:6213]\n\tKernel driver in use: nvme\n\tKernel modules: nvme\n"
+    },
+    "models": {
+      "argv": [
+        "findmnt",
+        "-no",
+        "SOURCE,FSTYPE,OPTIONS",
+        "-T",
+        "/models"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "/dev/nvme1n1 xfs    rw,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota\n"
+    },
+    "npu_smi": {
+      "argv": [
+        "npu-smi",
+        "info"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "+------------------------------------------------------------------------------------------------+\n| npu-smi 24.1.rc3                 Version: 24.1.rc3                                             |\n+---------------------------+---------------+----------------------------------------------------+\n| NPU   Name                | Health        | Power(W)    Temp(C)           Hugepages-Usage(page)|\n| Chip                      | Bus-Id        | AICore(%)   Memory-Usage(MB)  HBM-Usage(MB)        |\n+===========================+===============+====================================================+\n| 0     910B3               | OK            | 93.5        33                0    / 0             |\n| 0                         | 0000:C1:00.0  | 0           0    / 0          3369 / 65536         |\n+===========================+===============+====================================================+\n| 1     910B3               | OK            | 90.5        32                0    / 0             |\n| 0                         | 0000:C2:00.0  | 0           0    / 0          3368 / 65536         |\n+===========================+===============+====================================================+\n| 2     910B3               | OK            | 90.4        32                0    / 0             |\n| 0                         | 0000:81:00.0  | 0           0    / 0          3366 / 65536         |\n+===========================+===============+====================================================+\n| 3     910B3               | OK            | 90.8        32                0    / 0             |\n| 0                         | 0000:82:00.0  | 0           0    / 0          3366 / 65536         |\n+===========================+===============+====================================================+\n| 4     910B3               | OK            | 88.3        37                0    / 0             |\n| 0                         | 0000:01:00.0  | 0           0    / 0          3367 / 65536         |\n+===========================+===============+====================================================+\n| 5     910B3               | OK            | 98.1        37                0    / 0             |\n| 0                         | 0000:02:00.0  | 0           0    / 0          3367 / 65536         |\n+===========================+===============+====================================================+\n| 6     910B3               | OK            | 91.7        37                0    / 0             |\n| 0                         | 0000:41:00.0  | 0           0    / 0          3371 / 65536         |\n+===========================+===============+====================================================+\n| 7     910B3               | OK            | 92.1        38                0    / 0             |\n| 0                         | 0000:42:00.0  | 0           0    / 0          3369 / 65536         |\n+===========================+===============+====================================================+\n+---------------------------+---------------+----------------------------------------------------+\n| NPU     Chip              | Process id    | Process name             | Process memory(MB)      |\n+===========================+===============+====================================================+\n| No running processes found in NPU 0                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 1                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 2                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 3                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 4                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 5                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 6                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 7                                                            |\n+===========================+===============+====================================================+\n"
+    },
+    "status": "pass",
+    "sudo_probe": {
+      "argv": [
+        "sudo",
+        "-n",
+        "true"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "sudo_stat": {
+      "argv": [
+        "stat",
+        "-c",
+        "uid=%u mode=%a",
+        "/usr/bin/sudo"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "uid=0 mode=4111\n"
+    },
+    "timestamp": "2026-08-30T12:44:07+0800",
+    "uio_nodes": [
+      "/dev/uio0"
+    ]
+  },
+  "requested_phases": [
+    "P1_aggregate",
+    "P2"
+  ],
+  "status": "pass"
+}

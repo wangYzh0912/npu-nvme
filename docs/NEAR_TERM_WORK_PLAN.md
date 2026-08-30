@@ -1294,3 +1294,11 @@ age 达到 500 是采样语义下的观察 age，不是逐步执行策略的正�
 门禁见 [PPT_EVIDENCE_EXPERIMENT_PLAN.md](PPT_EVIDENCE_EXPERIMENT_PLAN.md)。当前从
 `dac5508` 建立实验分支 `exp/ppt-evidence-20260829`；在 E12 分类感知 CPU 策略未通过
 前，不进入分类感知 NPU、异步长程和 13B 扩展。
+
+### 9.26 P1–P9 成稿前执行入口（2026-08-29）
+
+下一阶段采用 `docs/PPT_EVIDENCE_EXPERIMENT_PLAN.md` 第8节的 P1–P9 计划。编号固定为
+P1 SSD公平路径、P2 软件栈分解、P3 DMA-NVMe异步、P4 训练端到端、P5 环形内存、P6
+Vector利用率、P7 变化规律、P8 实际增量写量、P9 增量恢复。P3/P4 FULL异步独立推进；
+P8/P9未通过时，不实现分类感知NPU增量和长程Delta。当前执行分支为
+`exp/ppt-evidence-20260829`，所有大型profiler raw先写入`/tmp`并只归档可复核精简证据。

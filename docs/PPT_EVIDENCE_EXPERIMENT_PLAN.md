@@ -219,3 +219,63 @@ results/ppt-evidence-20260829/<EXPERIMENT_ID>/<RUN_ID>/
 - E3 slot×chunk×慢盘矩阵、E1 全尺寸/随机写的逐层闭合、E2 真正
   `aclrtMemcpyAsync` 重叠、E4 真实训练端到端影响、E6/E7 故障和提交开销仍属于后续
   门禁，不能由本批次结果替代。
+
+## 8. P1–P9 成稿前执行计划（2026-08-29）
+
+本节是下一阶段唯一执行入口。P1–P9 使用统一的 `results/ppt-evidence-20260829/P<编号>/`
+结果目录、10 次预热＋30 次正式微基准样本、3 seeds 真实训练和失败样本隔离。P5/P6/P7
+分别固定为环形内存、Vector 利用率、变化规律；P8 为实际增量写量，P9 为恢复正确性。
+
+### 8.1 固定口径和安全边界
+
+- 设备固定 Ascend 910B3；83/84 为同型号 Huawei ES3000 V6。83.0.0 仅用于 SPDK 和
+  声明安全偏移的临时 O_DIRECT 校准；84.0.0 文件系统实验只写
+  `/models/npu_nvme_exp/ppt-evidence-20260829/`。
+- 83 的 O_DIRECT 校准允许临时切回内核 NVMe 驱动，使用64 GiB安全偏移；运行前读取并
+  校验superblock/FULL/Delta布局，若区域重叠则停止。校准后恢复SPDK绑定并重新probe。
+- 慢盘延迟只在每个generation的payload完成后、metadata/ACK前注入一次，避免将XL单个
+  分块延迟误报为设备服务时间。
+- 大型 `msprof` 原始目录使用 `/tmp/npu-nvme-ppt-raw/<RUN_ID>/`；结束后提取必要CSV、
+  命令、时间线和SHA-256清单，原始失败目录不计入成功均值。
+
+### 8.2 实验顺序
+
+1. P1：84 Buffered FS/O_DIRECT 与83 SPDK的4 KiB/64 KiB/1 MiB/4 MiB/256 MiB、QD1/4、
+   读写公平矩阵；写入分别等待fsync/fdatasync或flush＋metadata commit，读取主结果清冷缓存。
+2. P2：在P1的4 MiB/256 MiB代表组上使用perf、tracefs、block trace、fio JSON和SPDK
+   timeline分解应用、复制、页缓存/writeback、文件系统/块层、队列、设备服务和flush；
+   互斥时间桶闭合残差目标≤10%，否则降级为事件/CPU开销对比。
+3. P3：实现C层 `submit/poll/wait/release` 请求句柄，使用 `aclrtMemcpyAsync`＋ACL event
+   串联DMA和SPDK，比较串行、现有队列、真实异步三条路径；XL覆盖chunk=1/4/16 MiB、
+   depth=1/2/4/8和正常/100 ms/1 s/5 s尾部延迟。
+4. P4：XL seed 41/42/43比较无checkpoint、同步FULL、现有队列和真实异步；interval=1/5/10/
+   20/50，至少30个正式checkpoint，记录普通step、checkpoint step、前台等待、积压、
+   busy、generation、tokens/s、loss和最终drain。
+5. P5：XL完整训练状态比较full staging与1/2/4槽、1/4/16 MiB、正常盘和5 s尾部延迟；
+   记录RSS、VmPin/VmLck、pinned DRAM、HBM、slot wait和吞吐，13B只复核最佳配置。
+6. P6：从msprof task/op时间戳构造与step对齐的10 ms Vector/Cube/HBM时间序列，并注入
+   差分、norm、Top-K、FP16、INT8和完整链；仅当oracle一致且step overhead≤5%时支持
+   “Vector低利用窗口可用于预处理”。
+7. P7：GPT-2三seed的已有100-step轨迹加XL seed 41/43补齐三seed、500-step早/中/晚窗口，
+   输出三种block size的能量覆盖、Jaccard和状态分类贡献；结果标注为轨迹估计。
+8. P8：CPU分类感知Model/Adam-m/Adam-v策略扫描并选最低写量、最低误差、Pareto最多三组，
+   在83执行真实frame、metadata、对齐和周期FULL，按SPDK提交字节及SMART增量统计实际写量。
+9. P9：对候选执行FULL＋10/100 Delta、fresh-process恢复、控制态校验和10/100步续训；
+   联合写量、NRMSE、loss、年龄和generation门禁决定Go/Pivot。
+
+### 8.3 异步接口和验收门禁
+
+新增不透明 `NPUNVMERequest` 及 `npu_nvme_submit_write_batch()`、
+`npu_nvme_poll_request()`、`npu_nvme_wait_request()`、`npu_nvme_release_request()`；
+现有阻塞API由submit＋wait实现。请求逐块状态为
+`QUEUED→DMA_INFLIGHT→DMA_DONE→NVME_INFLIGHT→DATA_DONE/FAILED`，ACL event、NVMe
+completion和ACK前不得复用槽位，槽满返回`-EBUSY`。
+
+P3通过要求真实异步路径在4 MiB/depth4正常盘下重叠率中位数≥0.30且CI下界>0，端到端
+耗时较串行下降≥10%；P4平均step overhead≤5%；P5内存随slot×chunk有界且实用配置吞吐
+不低于full staging的90%；P8实际摊销写量低于FULL-only的20%；P9单步NRMSE≤5e-3、
+恢复loss偏差≤1%、无超龄块且所有已提交generation可恢复。未达到的结果保留为正式负结果，
+不得用历史或逻辑估计替代。
+
+P3/P4 FULL异步独立于P8/P9推进；只有P8/P9同时通过，才实现分类感知NPU增量和长程Delta。
+每阶段独立提交并推送 `exp/ppt-evidence-20260829`，确认核心结果后再合并master。

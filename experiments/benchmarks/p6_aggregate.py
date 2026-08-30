@@ -29,7 +29,6 @@ def main():
             "pmu_by_core": result.get("pmu_by_core"),
             "hbm": result.get("hbm"),
             "timeline_summary": summary,
-            "windows": timeline.get("windows"),
         })
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps({

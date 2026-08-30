@@ -33,6 +33,18 @@ def read_pmu(paths):
                     "hbm_write_gb_s":number(row.get("aiv_main_mem_write_bw(GB/s)"))+number(row.get("aic_main_mem_write_bw(GB/s)"))})
     return rows, has_vector_ratio, has_hbm_metrics
 
+def read_hbm_average(paths):
+    reads=[]; writes=[]
+    for path in paths:
+        with Path(path).open(newline="") as stream:
+            for row in csv.DictReader(stream):
+                if str(row.get("Metric", "")).strip().lower() != "average":
+                    continue
+                reads.append(number(row.get("Read(MB/s)")) / 1000.0)
+                writes.append(number(row.get("Write(MB/s)")) / 1000.0)
+    return ((float(np.mean(reads)) if reads else None),
+            (float(np.mean(writes)) if writes else None))
+
 def read_tasks(paths):
     rows=[]
     for path in paths:
@@ -85,6 +97,7 @@ def main():
     p.add_argument("--output", type=Path, required=True); args=p.parse_args()
     rows=read_tasks(args.task_time)
     pmu, vector_ratio_available, hbm_metrics_available=read_pmu(args.op_summary)
+    hbm_device_read, hbm_device_write=read_hbm_average(args.hbm)
     bins=windows(rows,args.window_us,pmu,vector_ratio_available,
                  hbm_metrics_available)
     alignment="unavailable"
@@ -105,6 +118,9 @@ def main():
              "cube_busy_vector_low_fraction":float(np.mean([(c>.5 and v<.3) for c,v in zip(cube,vals)])) if vals else None,
              "hbm_read_gb_s_mean":float(np.mean([b["hbm_read_gb_s"] for b in bins])) if pmu and hbm_metrics_available else None,
              "hbm_write_gb_s_mean":float(np.mean([b["hbm_write_gb_s"] for b in bins])) if pmu and hbm_metrics_available else None,
+             "hbm_device_average_read_gb_s":hbm_device_read,
+             "hbm_device_average_write_gb_s":hbm_device_write,
+             "hbm_metric_interpretation":"device averages come from msprof hbm.csv Average rows; legacy hbm_*_mean fields are duration-weighted per-op projections, and neither is an HBM utilization percentage",
              "op_summary_files":[str(x) for x in args.op_summary],"hbm_files":[str(x) for x in args.hbm],
              "step_alignment":alignment,
              "step_alignment_valid":False,
