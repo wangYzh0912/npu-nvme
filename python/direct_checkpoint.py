@@ -65,6 +65,8 @@ from training_cell import ProbeTrainOneStepCell
 from training_state import (TRAINING_STATE_SCHEMA_VERSION,
                             decode_control_value, encode_control_value,
                             validate_state_names)
+from full_checkpoint_protocol import (CheckpointState, TERMINAL_STATES,
+                                      require_transition)
 
 
 # -- Device pointer helper (single entry point for all MS pointer access) ----
@@ -118,28 +120,107 @@ class CheckpointHandle:
     PERSISTED = "PERSISTED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
+    TIMED_OUT = "TIMED_OUT"
 
-    def __init__(self, owner, request_id, generation, step):
+    def __init__(self, owner, request_id, generation, step, rank_id=0,
+                 snapshot_slot=None, timeout=None, snapshot_generation=None):
         self.owner = owner
         self.request_id = request_id
         self.generation = generation
+        self.snapshot_generation = (generation if snapshot_generation is None
+                                    else snapshot_generation)
+        self.metadata_generation = None
         self.step = step
+        self.rank_id = int(rank_id)
+        self.snapshot_slot = snapshot_slot
+        self.dma_slot = None
+        self.acl_event = None
+        self.nvme_completion = None
+        self.checksum = None
+        self.timeout = timeout
         self.status = self.DISPATCHED
+        self.state = CheckpointState.CREATED
         self.error = None
+        self.events = []
         self._done = threading.Event()
+        self._lock = threading.Lock()
+        self._record_event(self.state)
+
+    def _record_event(self, state):
+        self.events.append({"state": CheckpointState(state).value,
+                            "monotonic_ns": time.monotonic_ns()})
+
+    def transition(self, state):
+        state = CheckpointState(state)
+        with self._lock:
+            require_transition(self.state, state)
+            self.state = state
+            self._record_event(state)
 
     def _complete(self):
+        if self.state == CheckpointState.TIMED_OUT:
+            # The underlying request is not cancellable. Preserve the
+            # caller-visible timeout even if the reactor drains later.
+            self._done.set()
+            return
+        if self.state in (CheckpointState.FAILED, CheckpointState.CANCELLED):
+            self._done.set()
+            return
+        if self.state != CheckpointState.PERSISTED:
+            self.transition(CheckpointState.PERSISTED)
         self.status = self.PERSISTED
         self._done.set()
 
     def _fail(self, error):
+        if self.state == CheckpointState.TIMED_OUT:
+            self.error = error
+            self.status = self.TIMED_OUT
+            self._done.set()
+            return
+        if self.state == CheckpointState.PERSISTED:
+            return
+        with self._lock:
+            if self.state not in TERMINAL_STATES:
+                require_transition(self.state, CheckpointState.FAILED)
+                self.state = CheckpointState.FAILED
+                self._record_event(self.state)
         self.status = self.FAILED
         self.error = error
         self._done.set()
 
+    def as_dict(self):
+        return {
+            "request_id": self.request_id,
+            "checkpoint_step": self.step,
+            "generation": self.generation,
+            "snapshot_generation": self.snapshot_generation,
+            "metadata_generation": self.metadata_generation,
+            "rank_id": self.rank_id,
+            "snapshot_slot": self.snapshot_slot,
+            "dma_slot": self.dma_slot,
+            "acl_event": self.acl_event,
+            "nvme_completion": self.nvme_completion,
+            "checksum": self.checksum,
+            "timeout": self.timeout,
+            "state": self.state.value,
+            "status": self.status,
+            "error": repr(self.error) if self.error is not None else None,
+            "events": list(self.events),
+        }
+
     def wait(self, timeout=None):
         """Wait for durable completion and raise the original failure."""
-        self.owner.wait_for_io_completion(timeout=timeout)
+        try:
+            self.owner.wait_for_io_completion(timeout=timeout)
+        except TimeoutError as error:
+            with self._lock:
+                if self.state not in TERMINAL_STATES:
+                    require_transition(self.state, CheckpointState.TIMED_OUT)
+                    self.state = CheckpointState.TIMED_OUT
+                    self._record_event(self.state)
+            self.status = self.TIMED_OUT
+            self.error = error
+            raise
         if self.status == self.FAILED:
             raise RuntimeError("checkpoint persistence failed") from self.error
         if self.status != self.PERSISTED:
@@ -358,16 +439,35 @@ class DirectCheckpoint:
         }
         if checkpoint_meta:
             checkpoint_record.update(checkpoint_meta)
+
+        # A FULL slot is selected by step modulo keep_last_n.  Once its new
+        # payload is durable, no older record that points at the same physical
+        # slot may remain visible under a different step/generation.
+        target_slot = int(step) % int(self.keep_last_n)
+        for old_key, old_record in list(
+                self.meta_dict.get("checkpoints", {}).items()):
+            if not old_key.startswith("step_"):
+                continue
+            try:
+                old_step = int(old_key.split("_", 1)[1])
+            except ValueError:
+                continue
+            if (old_step != int(step) and
+                    old_step % int(self.keep_last_n) == target_slot and
+                    int(old_record.get("rank_id", self.rank_id)) == self.rank_id):
+                del self.meta_dict["checkpoints"][old_key]
         self.meta_dict["checkpoints"][ckpt_key] = checkpoint_record
 
-        saved_steps = []
-        for k in self.meta_dict["checkpoints"].keys():
+        saved_records = []
+        for k, record in self.meta_dict["checkpoints"].items():
             if k.startswith("step_"):
                 try:
-                    saved_steps.append(int(k.split('_')[1]))
+                    saved_records.append((int(record.get("generation", 0)),
+                                          int(k.split('_')[1])))
                 except ValueError:
                     pass
-        saved_steps = sorted(saved_steps)
+        saved_records.sort()
+        saved_steps = [step_id for _generation, step_id in saved_records]
 
         delta_keys = []
         for k in self.meta_dict.get("delta_chain", {}).keys():
@@ -380,8 +480,8 @@ class DirectCheckpoint:
             if saved_steps and ds < saved_steps[0]:
                 del self.meta_dict["delta_chain"][f"step_{ds}"]
 
-        while len(saved_steps) > self.keep_last_n:
-            oldest_step = saved_steps.pop(0)
+        while len(saved_records) > self.keep_last_n:
+            _oldest_generation, oldest_step = saved_records.pop(0)
             old_key = f"step_{oldest_step}"
             if old_key in self.meta_dict.get("checkpoints", {}):
                 del self.meta_dict["checkpoints"][old_key]
@@ -828,6 +928,7 @@ class DirectCheckpoint:
         Returns:
             list[dict] — chunk descriptors suitable for C-layer registration.
         """
+        self._require_incremental_enabled()
         if not hasattr(self, '_delta_slot_count'):
             self.delta_init()
 
@@ -915,6 +1016,7 @@ class DirectCheckpoint:
         Returns:
             (dev_flag: int, dev_step: int) — HBM addresses.
         """
+        self._require_incremental_enabled()
         if not hasattr(self, 'chunks') or len(self.chunks) == 0:
             self.build_layout_for_delta(delta_cell)
 
@@ -981,8 +1083,15 @@ class DirectCheckpoint:
 
         self._request_counter += 1
         self._snapshot_generation += 1
-        request_id = self._request_counter
-        generation = self._snapshot_generation
+        request_id = (f"rank{self.rank_id}-pid{os.getpid()}-"
+                      f"request{self._request_counter}")
+        snapshot_generation = self._snapshot_generation
+        # A FULL request's public generation is the generation it will publish
+        # in the durable metadata commit.  Keep the local snapshot counter as
+        # a separate diagnostic so requests can still be correlated before
+        # the commit occurs.
+        generation = (self.metadata_generation + 1
+                      if commit_meta else snapshot_generation)
         # Freeze the graph before copying any parameter address.  A D2D copy
         # submitted while the optimizer is still running would otherwise
         # produce a mixed-step checkpoint.
@@ -992,40 +1101,60 @@ class DirectCheckpoint:
             ms.runtime.synchronize()
         elif acl_lib is not None and hasattr(acl_lib, "aclrtSynchronizeStream"):
             acl_lib.aclrtSynchronizeStream(None)
-        params = self._snapshot_params(params, generation)
-        handle = CheckpointHandle(self, request_id, generation, step)
+        snapshot_slot = int(step) % int(self.keep_last_n)
+        handle = CheckpointHandle(
+            self, request_id, generation, step, rank_id=self.rank_id,
+            snapshot_slot=snapshot_slot,
+            snapshot_generation=snapshot_generation)
+        handle.transition(CheckpointState.SNAPSHOTTING)
+        try:
+            params = self._snapshot_params(params, generation)
+        except BaseException as error:
+            handle._fail(error)
+            raise
+        handle.transition(CheckpointState.SNAPSHOT_READY)
+        checksum = hashlib.sha256()
+        for item in sorted(params, key=lambda value: value["name"]):
+            checksum.update(item["name"].encode("utf-8"))
+            checksum.update(str(item.get("sha256") or "").encode("ascii"))
+        handle.checksum = checksum.hexdigest()
 
         # -- T_Layout --
-        base_offset_bytes = self._get_current_slot_base_offset(step)
-        print(f"[DirectCkpt] Rank {self.rank_id} saving step {step} to offset "
-              f"{base_offset_bytes / 1024**3:.2f} GB ...", flush=True)
+        try:
+            base_offset_bytes = self._get_current_slot_base_offset(step)
+            print(f"[DirectCkpt] Rank {self.rank_id} saving step {step} to offset "
+                  f"{base_offset_bytes / 1024**3:.2f} GB ...", flush=True)
 
-        current_offset = base_offset_bytes
-        layout, dev_params, host_params = [], [], []
+            current_offset = base_offset_bytes
+            layout, dev_params, host_params = [], [], []
 
-        for p in params:
-            aligned_bytes = int(math.ceil(p["size"] / 4096.0)) * 4096
+            for p in params:
+                aligned_bytes = int(math.ceil(p["size"] / 4096.0)) * 4096
 
-            if current_offset + aligned_bytes > self.total_bytes:
-                raise MemoryError(
-                    f"Rank {self.rank_id} CRITICAL: DMA Write will exceed disk "
-                    f"physical capacity! Offset: "
-                    f"{(current_offset + aligned_bytes)/1024**3:.2f}GB > "
-                    f"Total: {self.total_bytes/1024**3:.2f}GB")
+                if current_offset + aligned_bytes > self.total_bytes:
+                    raise MemoryError(
+                        f"Rank {self.rank_id} CRITICAL: DMA Write will exceed disk "
+                        f"physical capacity! Offset: "
+                        f"{(current_offset + aligned_bytes)/1024**3:.2f}GB > "
+                        f"Total: {self.total_bytes/1024**3:.2f}GB")
 
-            if (current_offset - base_offset_bytes) + aligned_bytes > self.slot_bytes:
-                raise MemoryError(
-                    f"Rank {self.rank_id} OOM! Tensor {p['name']} exceeds slot size.")
+                if (current_offset - base_offset_bytes) + aligned_bytes > self.slot_bytes:
+                    raise MemoryError(
+                        f"Rank {self.rank_id} OOM! Tensor {p['name']} exceeds slot size.")
 
-            p_record = {**p, "offset": current_offset}
-            layout.append(p_record)
+                p_record = {**p, "offset": current_offset}
+                layout.append(p_record)
 
-            if p.get("np_arr") is not None:
-                host_params.append(p_record)
-            else:
-                dev_params.append(p_record)
+                if p.get("np_arr") is not None:
+                    host_params.append(p_record)
+                else:
+                    dev_params.append(p_record)
 
-            current_offset += aligned_bytes
+                current_offset += aligned_bytes
+        except BaseException as error:
+            handle._fail(error)
+            self._release_snapshot(params)
+            raise
 
         total_written = 0
 
@@ -1084,10 +1213,12 @@ class DirectCheckpoint:
                     raise RuntimeError(f"write_batch failed (rc={rc})")
 
             try:
+                handle.transition(CheckpointState.DMA_COPYING)
                 t_spdk_start = time.perf_counter()
                 total_written = 0
 
                 if n_dev > 0:
+                    handle.acl_event = "c-layer-per-dma-slot"
                     write_device(c_ptrs_d, c_offs_d, c_sizes_d, n_dev)
                     total_written += d_sz
 
@@ -1102,8 +1233,18 @@ class DirectCheckpoint:
                             f"write_batch_host failed (rc={rc})")
                     total_written += h_sz
 
+                handle.transition(CheckpointState.NVME_WRITING)
+                handle.nvme_completion = "all-data-completions-observed"
                 t_spdk_end = time.perf_counter()
                 T_SPDK = t_spdk_end - t_spdk_start
+
+                # The data durability barrier is deliberately before any
+                # metadata write.  _persist_metadata() performs additional
+                # barriers for the replica and superblock commit point.
+                handle.transition(CheckpointState.FLUSHING)
+                self.flush_nvme()
+                if handle.state == CheckpointState.TIMED_OUT:
+                    raise TimeoutError("checkpoint timed out before metadata commit")
 
                 t_meta_start = time.perf_counter()
                 generation_delay_ms = float(os.environ.get(
@@ -1112,8 +1253,12 @@ class DirectCheckpoint:
                     time.sleep(generation_delay_ms / 1000.0)
                 self.last_layout = layout
                 if commit_meta:
+                    handle.transition(CheckpointState.METADATA_COMMITTING)
                     self._commit_metadata(
                         step, layout, checkpoint_meta=_checkpoint_meta)
+                    handle.metadata_generation = self.metadata_generation
+                else:
+                    handle.transition(CheckpointState.METADATA_COMMITTING)
 
                 with open(meta_path, "wb") as f:
                     pickle.dump(self.meta_dict, f)
@@ -1160,6 +1305,7 @@ class DirectCheckpoint:
             target=background_io_worker,
             args=(c_ptrs_dev, c_offs_dev, c_sizes_dev, num_dev_val, dev_sz_val,
                   c_ptrs_host, c_offs_host, c_sizes_host, num_host_val, host_sz_val))
+        handle.transition(CheckpointState.QUEUED)
         self.io_thread.start()
 
         t_return = time.perf_counter()
@@ -1223,7 +1369,8 @@ class DirectCheckpoint:
                                     np.ascontiguousarray(parameter.value().asnumpy(),
                                                          dtype=dtype_np))
                     checksum = hashlib.sha256(
-                        np.ascontiguousarray(checksum_arr).tobytes()).hexdigest()
+                        np.ascontiguousarray(checksum_arr, dtype=dtype_np)
+                        .reshape(-1).tobytes()).hexdigest()
                 params.append({
                     "name": name,
                     "source_name": source_name,
@@ -1426,8 +1573,15 @@ class DirectCheckpoint:
                 expected = saved[name].get("sha256")
                 if not expected:
                     raise ValueError(f"missing checksum for {name}")
-                actual = hashlib.sha256(np.ascontiguousarray(
-                    target["param_ref"].value().asnumpy()).tobytes()).hexdigest()
+                actual_arr = np.ascontiguousarray(
+                    target["param_ref"].value().asnumpy(),
+                    dtype=np.dtype(target["dtype"])).reshape(-1)
+                expected_bytes = int(saved[name].get("size", actual_arr.nbytes))
+                if actual_arr.nbytes != expected_bytes:
+                    raise ValueError(
+                        f"parameter byte-size mismatch for {name}: "
+                        f"actual={actual_arr.nbytes} expected={expected_bytes}")
+                actual = hashlib.sha256(actual_arr.tobytes()).hexdigest()
                 if actual != expected:
                     raise ValueError(f"parameter checksum mismatch for {name}")
 
@@ -1525,7 +1679,14 @@ class DirectCheckpoint:
 
     # -- Delta frame I/O --------------------------------------------------------
 
+    @staticmethod
+    def _require_incremental_enabled():
+        if os.environ.get("NPU_NVME_FULL_ONLY") == "1":
+            raise RuntimeError(
+                "incremental checkpoint entry points are disabled in FULL-only mode")
+
     def delta_init(self, slot_size_mb: int = 256, slot_count: int = 128):
+        self._require_incremental_enabled()
         slot_bytes = slot_size_mb * 1024 * 1024
         if self.layout is None:
             raise RuntimeError("disk layout is not mounted")
@@ -1562,6 +1723,7 @@ class DirectCheckpoint:
 
     def delta_save(self, step: int, block_patches: list, small_patches: list,
                    lossless: bool = False, base_generation: int = None):
+        self._require_incremental_enabled()
         if not hasattr(self, '_delta_slot_count'):
             self.delta_init()
 
@@ -1648,6 +1810,7 @@ class DirectCheckpoint:
     def delta_save_lossless(self, step: int, block_patches: list,
                             small_patches: list, base_generation: int = None):
         """Persist one R0 self-described FP16 Delta frame."""
+        self._require_incremental_enabled()
         return self.delta_save(
             step, block_patches, small_patches, lossless=True,
             base_generation=base_generation)
@@ -1697,6 +1860,7 @@ class DirectCheckpoint:
         return bytes(frame_buf.raw[:frame_size])
 
     def delta_load_slot(self, slot_idx: int, return_meta: bool = False):
+        self._require_incremental_enabled()
         if not hasattr(self, '_delta_slot_size'):
             raise RuntimeError(
                 "Delta not initialized. Call delta_init() first.")
@@ -1744,6 +1908,7 @@ class DirectCheckpoint:
         return decoded[:3]
 
     def delta_load_chain(self, from_step: int, to_step: int):
+        self._require_incremental_enabled()
         chain = []
         for s in range(from_step + 1, to_step + 1):
             key = f"step_{s}"

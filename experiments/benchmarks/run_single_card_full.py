@@ -1,0 +1,363 @@
+#!/usr/bin/env python3
+"""Reusable single-card/single-disk FULL training baseline.
+
+The orchestrator deliberately uses separate processes for baseline, source
+save, and restore.  A result is a pass only when the source process has exited
+after PERSISTED and a fresh process has restored and continued training.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import random
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path[:0] = [str(ROOT), str(ROOT / "python")]
+
+from ppt_evidence import environment_snapshot, command  # noqa: E402
+from full_checkpoint_protocol import validate_result_gate  # noqa: E402
+
+
+def batch_for_step(ms, step, seq_len, vocab_size=50257):
+    start = (int(step) * 104729) % vocab_size
+    ids = (np.arange(seq_len, dtype=np.int32) + start) % vocab_size
+    mask = np.ones(seq_len, dtype=np.int32)
+    return ms.Tensor(ids[None, :]), ms.Tensor(mask[None, :])
+
+
+def digest_state(model, optimizer):
+    digest = hashlib.sha256()
+    fields = 0
+    total = 0
+    seen = set()
+    for component, obj in (("model", model), ("optimizer", optimizer)):
+        for name, parameter in obj.parameters_and_names():
+            if id(parameter) in seen:
+                continue
+            seen.add(id(parameter))
+            array = np.ascontiguousarray(parameter.value().asnumpy())
+            digest.update(f"{component}/{name}".encode())
+            digest.update(array.dtype.str.encode())
+            digest.update(repr(array.shape).encode())
+            digest.update(array.tobytes())
+            fields += 1
+            total += int(array.nbytes)
+    return {"sha256": digest.hexdigest(), "fields": fields, "bytes": total}
+
+
+def train_steps(ms, cell, begin, end, seq_len):
+    losses = []
+    elapsed = []
+    for step in range(int(begin), int(end) + 1):
+        started = time.perf_counter()
+        value = cell(*batch_for_step(ms, step, seq_len))
+        ms.hal.synchronize()
+        loss = float(np.asarray(value.asnumpy()).reshape(()))
+        if not np.isfinite(loss):
+            raise FloatingPointError(f"non-finite loss at step {step}")
+        losses.append(loss)
+        elapsed.append(time.perf_counter() - started)
+    return losses, elapsed
+
+
+def build(args):
+    import mindspore as ms
+    from experiments.common import init_env, make_causal_lm_training
+    from direct_checkpoint import ProbeTrainOneStepCell
+    init_env(device_id=args.npu, seed=args.seed)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    model, _dataset, optimizer = make_causal_lm_training(
+        args.model, total_steps=1, device_id=args.npu,
+        seq_len=args.seq_len, dropout_rate=0.0, require_dataset=False)
+    cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=False,
+                                 ckpt_interval=999999)
+    # Allocate lazy parameters consistently in every process.
+    _ = cell(*batch_for_step(ms, 0, args.seq_len))
+    ms.hal.synchronize()
+    # The excluded compilation step updates optimizer state.  Every process
+    # sees the same warmup state; reset only the logical counter so checkpoint
+    # step and optimizer global_step remain the same contract.
+    global_step = np.asarray(optimizer.global_step.asnumpy())
+    optimizer.global_step.set_data(ms.Tensor(np.zeros_like(global_step)))
+    return ms, model, optimizer, cell
+
+
+def phase_baseline(args, run_dir):
+    ms, model, optimizer, cell = build(args)
+    losses, elapsed = train_steps(ms, cell, 1, args.total_steps, args.seq_len)
+    payload = {"losses": losses, "step_seconds": elapsed,
+               "state": digest_state(model, optimizer)}
+    (run_dir / "baseline.json").write_text(json.dumps(payload, indent=2),
+                                            encoding="utf-8")
+
+
+def phase_source(args, run_dir):
+    from direct_checkpoint import DirectCheckpoint
+    ms, model, optimizer, cell = build(args)
+    steps = [int(item) for item in args.checkpoint_steps]
+    previous = 0
+    records = []
+    ckpt = DirectCheckpoint(
+        nvme_addr=args.pci, npu_device_id=args.npu,
+        pipeline_depth=args.pipeline_depth, requested_chunk_size=args.chunk_size,
+        enable_profiling=True, profiling_dir=str(run_dir / "raw"),
+        keep_last_n=args.keep_last_n, slot_size_gb=args.slot_size_gb,
+        spdk_shm_id=args.shm_id)
+    try:
+        for step in steps:
+            train_steps(ms, cell, previous + 1, step, args.seq_len)
+            controls = {
+                "global_step": np.asarray(optimizer.global_step.asnumpy()).copy(),
+                "loss_scale": np.float32(1.0),
+                "python_rng": random.getstate(),
+                "numpy_rng": np.random.get_state(),
+                "mindspore_seed": int(args.seed),
+                "mindspore_rng": np.asarray(ms.get_rng_state().asnumpy()).copy(),
+                "data_cursor": {"epoch": 0, "sample": int(step)},
+            }
+            started = time.perf_counter()
+            handle = ckpt.save_state(
+                {"model": model, "optimizer": optimizer}, controls,
+                step=step, meta_path=str(run_dir / f"meta_{step:06d}.pkl"),
+                io_mode=args.mode)
+            handle.wait(timeout=args.timeout)
+            if handle.state.value != "PERSISTED":
+                raise RuntimeError(f"checkpoint did not persist: {handle.as_dict()}")
+            records.append({"step": step, "request": handle.as_dict(),
+                            "persist_seconds": time.perf_counter() - started,
+                            "state": digest_state(model, optimizer)})
+            previous = step
+        (run_dir / "source.json").write_text(
+            json.dumps({"status": "pass", "checkpoints": records}, indent=2,
+                       default=str), encoding="utf-8")
+    finally:
+        ckpt.cleanup()
+
+
+def phase_restore(args, run_dir):
+    import mindspore as ms
+    from direct_checkpoint import DirectCheckpoint
+    from training_state import restore_training_controls
+    baseline = json.loads((run_dir / "baseline.json").read_text())
+    source = json.loads((run_dir / "source.json").read_text())
+    target = int(args.restore_step or source["checkpoints"][-1]["step"])
+    ms, model, optimizer, cell = build(args)
+    ckpt = DirectCheckpoint(
+        nvme_addr=args.pci, npu_device_id=args.npu,
+        pipeline_depth=args.pipeline_depth, requested_chunk_size=args.chunk_size,
+        keep_last_n=args.keep_last_n, slot_size_gb=args.slot_size_gb,
+        spdk_shm_id=args.shm_id)
+    try:
+        controls = ckpt.load_state({"model": model, "optimizer": optimizer},
+                                   step=target, verify_checksums=True)
+        target_record = next(record for record in source["checkpoints"]
+                             if int(record["step"]) == target)
+        loaded_state = digest_state(model, optimizer)
+        if loaded_state != target_record["state"]:
+            raise AssertionError("fresh restore state digest mismatch")
+        expected_step = int(np.asarray(controls["global_step"]).reshape(-1)[0])
+        if expected_step != target:
+            raise AssertionError(f"global_step={expected_step} target={target}")
+        restored = restore_training_controls(ms, optimizer, controls)
+        if restored["data_cursor"] != {"epoch": 0, "sample": target}:
+            raise AssertionError("data cursor mismatch")
+        losses, elapsed = train_steps(ms, cell, target + 1,
+                                      args.total_steps, args.seq_len)
+        expected = np.asarray(baseline["losses"][target:], dtype=np.float64)
+        actual = np.asarray(losses, dtype=np.float64)
+        if expected.shape != actual.shape or not np.allclose(
+                expected, actual, rtol=args.loss_rtol, atol=args.loss_atol):
+            raise AssertionError("fresh continuation loss mismatch")
+        result = {"status": "pass", "model": args.model, "mode": args.mode,
+                  "seed": args.seed, "pci": args.pci, "npu": args.npu,
+                  "request_id": target_record["request"]["request_id"],
+                  "generation": target_record["request"]["metadata_generation"],
+                  "checkpoint_step": target, "persisted": True,
+                  "restore_verified": True, "loss_allclose": True,
+                  "loaded_state_byte_exact": True,
+                  "state_after_restore": loaded_state,
+                  "state_after_continuation": digest_state(model, optimizer),
+                  "continuation_losses": losses, "step_seconds": elapsed}
+        (run_dir / "restore.json").write_text(json.dumps(result, indent=2),
+                                               encoding="utf-8")
+    finally:
+        ckpt.cleanup()
+
+
+def run_orchestrated(args, run_dir):
+    config = vars(args).copy()
+    config.update({"experiment_id": "SINGLE_CARD_FULL",
+                   "run_id": run_dir.name,
+                   "state": "model+optimizer+control",
+                   "persistence": "data_complete+flush+metadata_commit"})
+    (run_dir / "config.json").write_text(json.dumps(config, indent=2,
+                                                     sort_keys=True),
+                                          encoding="utf-8")
+    (run_dir / "environment.json").write_text(
+        json.dumps(environment_snapshot(pci=args.pci, npu=str(args.npu),
+                                        repo_root=ROOT,
+                                        npu_info=command(["npu-smi", "info"])),
+                   indent=2, sort_keys=True), encoding="utf-8")
+    (run_dir / "commit.json").write_text(json.dumps({
+        "repo": command(["git", "-C", str(ROOT), "rev-parse", "HEAD"]),
+        "branch": command(["git", "-C", str(ROOT), "branch", "--show-current"]),
+        "status": command(["git", "-C", str(ROOT), "status", "--porcelain"]),
+        "spdk": command(["git", "-C", str(ROOT / "third_party" / "spdk"),
+                          "rev-parse", "HEAD"]),
+    }, indent=2, sort_keys=True), encoding="utf-8")
+    for filename in ("samples.jsonl", "timeline.jsonl", "failures.jsonl"):
+        (run_dir / filename).touch()
+    if args.mode == "none":
+        subprocess.run([sys.executable, str(Path(__file__).resolve()),
+                        "--phase", "baseline", "--run-dir", str(run_dir),
+                        "--model", args.model, "--mode", "none",
+                        "--checkpoint-steps", *[str(x) for x in args.checkpoint_steps],
+                        "--total-steps", str(args.total_steps),
+                        "--seq-len", str(args.seq_len), "--seed", str(args.seed),
+                        "--npu", str(args.npu), "--pci", args.pci],
+                       cwd=run_dir, check=True)
+        baseline = json.loads((run_dir / "baseline.json").read_text())
+        result = {"status": "pass", "model": args.model, "mode": "none",
+                  "seed": args.seed, "pci": args.pci, "npu": args.npu,
+                  "persisted": None, "restore_verified": None,
+                  "state": baseline["state"], "run_id": run_dir.name,
+                  "samples": args.total_steps, "failed_samples": 0}
+        validate_result_gate(result)
+        (run_dir / "result.json").write_text(json.dumps(result, indent=2),
+                                             encoding="utf-8")
+        print(json.dumps(result, sort_keys=True))
+        return
+    phases = ("baseline", "source", "restore")
+    try:
+        for phase in phases:
+            command_line = [sys.executable, str(Path(__file__).resolve()),
+                        "--phase", phase, "--run-dir", str(run_dir),
+                        "--model", args.model, "--mode", args.mode,
+                        "--checkpoint-steps", *[str(x) for x in args.checkpoint_steps],
+                        "--total-steps", str(args.total_steps),
+                        "--seq-len", str(args.seq_len), "--seed", str(args.seed),
+                        "--npu", str(args.npu), "--pci", args.pci,
+                        "--chunk-size", str(args.chunk_size),
+                        "--pipeline-depth", str(args.pipeline_depth),
+                        "--keep-last-n", str(args.keep_last_n),
+                        "--slot-size-gb", str(args.slot_size_gb),
+                        "--shm-id", str(args.shm_id), "--timeout", str(args.timeout),
+                        "--loss-rtol", str(args.loss_rtol),
+                        "--loss-atol", str(args.loss_atol)]
+            if args.restore_step is not None:
+                command_line.extend(("--restore-step", str(args.restore_step)))
+            subprocess.run(command_line, cwd=run_dir, check=True)
+    except BaseException as error:
+        failure = {"status": "fail", "phase": phase, "error": repr(error)}
+        with (run_dir / "failures.jsonl").open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(failure, sort_keys=True) + "\n")
+        (run_dir / "result.json").write_text(
+            json.dumps({**failure, "run_id": run_dir.name,
+                        "persisted": False, "restore_verified": False}, indent=2),
+            encoding="utf-8")
+        raise
+    result = json.loads((run_dir / "restore.json").read_text())
+    source = json.loads((run_dir / "source.json").read_text())
+    with (run_dir / "samples.jsonl").open("w", encoding="utf-8") as samples:
+        for record in source["checkpoints"]:
+            samples.write(json.dumps({
+                "run_id": run_dir.name, "status": "pass",
+                "step": record["step"],
+                "request_id": record["request"]["request_id"],
+                "generation": record["request"]["metadata_generation"],
+                "persist_seconds": record["persist_seconds"],
+                "checksum": record["request"]["checksum"],
+            }, sort_keys=True) + "\n")
+    with (run_dir / "timeline.jsonl").open("w", encoding="utf-8") as timeline:
+        for record in source["checkpoints"]:
+            timeline.write(json.dumps({
+                "run_id": run_dir.name,
+                "request_id": record["request"]["request_id"],
+                "checkpoint_step": record["step"],
+                "events": record["request"]["events"],
+            }, sort_keys=True) + "\n")
+        result.update({"run_id": run_dir.name, "samples": len(args.checkpoint_steps),
+                   "failed_samples": 0,
+                   "paths": {
+                       "config": "config.json", "environment": "environment.json",
+                       "commit": "commit.json", "samples": "samples.jsonl",
+                       "timeline": "timeline.jsonl", "failures": "failures.jsonl",
+                       "source": "source.json", "restore": "restore.json",
+                       "raw": "raw/", "result": "result.json"}})
+    validate_result_gate(result)
+    (run_dir / "result.json").write_text(json.dumps(result, indent=2),
+                                         encoding="utf-8")
+    print(json.dumps(result, sort_keys=True))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--phase", choices=("orchestrate", "baseline", "source", "restore"),
+                        default="orchestrate")
+    parser.add_argument("--run-dir", default=str(ROOT / "results" / "single-card-full" /
+                                                  time.strftime("run_%Y%m%d_%H%M%S")))
+    parser.add_argument("--model", choices=("gpt2", "gpt2_xl"), default="gpt2")
+    parser.add_argument("--mode", choices=("none", "serial", "queue", "async"),
+                        default="serial")
+    parser.add_argument("--checkpoint-steps", nargs="+", type=int, default=None)
+    parser.add_argument("--restore-step", type=int, default=None)
+    parser.add_argument("--total-steps", type=int, default=110)
+    parser.add_argument("--seq-len", type=int, default=129)
+    parser.add_argument("--seed", type=int, default=41)
+    parser.add_argument("--npu", type=int, default=7)
+    parser.add_argument("--pci", default="0000:83:00.0")
+    parser.add_argument("--chunk-size", type=int, default=4 * 1024 * 1024)
+    parser.add_argument("--pipeline-depth", type=int, default=4)
+    parser.add_argument("--keep-last-n", type=int, default=3)
+    parser.add_argument("--slot-size-gb", type=int, default=10)
+    parser.add_argument("--shm-id", type=int, default=17041)
+    parser.add_argument("--timeout", type=float, default=900.0)
+    parser.add_argument("--loss-rtol", type=float, default=1e-5)
+    parser.add_argument("--loss-atol", type=float, default=1e-6)
+    parser.add_argument("--smoke", action="store_true",
+                        help="use a short, explicitly non-formal run")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+    if args.checkpoint_steps is None:
+        args.checkpoint_steps = [2, 5] if args.smoke else [10, 50, 100]
+    if args.smoke and args.total_steps == 110:
+        args.total_steps = 10
+    if args.restore_step is not None and args.restore_step >= args.total_steps:
+        parser.error("restore step must leave at least one continuation step")
+    if args.total_steps <= 0 or any(step <= 0 or step > args.total_steps
+                                    for step in args.checkpoint_steps):
+        parser.error("checkpoint steps must be positive and <= total steps")
+    if sorted(args.checkpoint_steps) != list(args.checkpoint_steps):
+        parser.error("checkpoint steps must be sorted")
+    if len(set(args.checkpoint_steps)) != len(args.checkpoint_steps):
+        parser.error("checkpoint steps must be unique")
+    if args.dry_run:
+        print(json.dumps(vars(args), indent=2, sort_keys=True))
+        return 0
+    # This branch is an acceptance harness for complete training state only.
+    # Child baseline/source/restore processes inherit the explicit freeze.
+    os.environ["NPU_NVME_FULL_ONLY"] = "1"
+    run_dir = Path(args.run_dir).resolve()
+    run_dir.mkdir(parents=True, exist_ok=True)
+    if args.phase == "orchestrate":
+        run_orchestrated(args, run_dir)
+    elif args.phase == "baseline":
+        phase_baseline(args, run_dir)
+    elif args.phase == "source":
+        phase_source(args, run_dir)
+    else:
+        phase_restore(args, run_dir)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

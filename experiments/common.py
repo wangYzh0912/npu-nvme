@@ -39,7 +39,7 @@ _DEFAULT_TRAIN_MR = os.path.join(
 
 def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
                             device_id=1, seq_len=1025, train_mr=None,
-                            dropout_rate=None):
+                            dropout_rate=None, require_dataset=True):
     """Create a causal-LM training setup for a supported MindFormers model.
 
     ``seq_len`` is the input-record length.  MindFormers GPT-2 shifts a
@@ -94,6 +94,10 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
             if hasattr(model.backbone, "seq_length"):
                 model.backbone.seq_length = model_seq_len
 
+    opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
+    if not require_dataset:
+        return model, None, opt
+
     mr_path = train_mr or _DEFAULT_TRAIN_MR
     # The source MindRecord's physical column order is attention_mask,
     # input_ids, labels.  Passing that tuple directly to GPT2LMHeadModel made
@@ -113,7 +117,6 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
                 input_columns=["attention_mask"])
     ds = ds.batch(1, drop_remainder=True).take(total_steps)
 
-    opt = nn.AdamWeightDecay(model.trainable_params(), learning_rate=1e-5)
     return model, ds, opt
 
 
@@ -242,6 +245,11 @@ def setup_faf_checkpointing(ckpt, model, cell, ckpt_interval=10):
 
 # -- Delta-checkpoint helpers -----------------------------------------------
 
+def _require_incremental_enabled():
+    if os.environ.get("NPU_NVME_FULL_ONLY") == "1":
+        raise RuntimeError(
+            "incremental checkpoint helpers are disabled in FULL-only mode")
+
 def setup_delta_faf(ckpt, delta_cell, ckpt_interval=5):
     """Wire a DeltaTrainCell to the Reactor poller and initialise its delta area.
 
@@ -256,6 +264,7 @@ def setup_delta_faf(ckpt, delta_cell, ckpt_interval=5):
     Returns:
         (dev_flag: int, dev_step: int) — HBM addresses.
     """
+    _require_incremental_enabled()
     # Build layout for delta output buffers
     ckpt.build_layout_for_delta(delta_cell)
 
@@ -279,6 +288,7 @@ def make_delta_training(total_steps=20, device_id=1, seq_len=1024,
     Returns:
         (model, dataset, optimizer, delta_cell, ckpt)
     """
+    _require_incremental_enabled()
     from delta_cell import DeltaTrainCell
 
     # Standard training setup

@@ -5,6 +5,9 @@
 - `baselines/`：检查点方法与 I/O 路径对照实验。必须记录设备、数据集、参数和源码提交。
 - `benchmarks/checkpoint_trace.py`：同一字节流的 buffered FS、O_DIRECT 和 Host-SPDK
   分阶段计时；`scripts/same_device_83.sh` 负责受控的 83.0.0 文件系统/SPDK 切换。
+- `benchmarks/run_single_card_full.py`：单盘单卡 FULL 训练基准唯一入口，固定执行
+  baseline、source 持久化、source 退出、fresh restore 和续训校验；后续阶段复用该
+  入口，不重新实现训练生命周期。
 - `benchmarks/summarize_checkpoint_matrix.py`：汇总同盘 trace 与 MindFormers 模型矩阵。
 - `delta_e2e/`：Delta 路径的正确性门禁。所选用例全部通过且进程返回 0，才可进入性能比较。
 - `microbench/`：算子与更新路径微基准，只用于定位瓶颈，不能单独证明系统端到端收益。

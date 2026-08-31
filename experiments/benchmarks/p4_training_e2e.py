@@ -41,10 +41,13 @@ def run_one(args, mode, interval, seed):
                                       npu_info=command(["npu-smi", "info"])))
     ckpt = None
     ordinary, checkpoint, waits, backlog, losses = [], [], [], [], []
+    checkpoint_requests = []
     active_handle = None
     wall_start = time.perf_counter_ns()
     final_drain_ms = 0.0
-    restore_verified = mode == "none"
+    # ``none`` is a training-only control and has no checkpoint to restore.
+    # Keep this explicitly not-applicable; it must never satisfy a FULL gate.
+    restore_verified = None if mode == "none" else False
     try:
         if mode != "none":
             ckpt = DirectCheckpoint(
@@ -85,6 +88,7 @@ def run_one(args, mode, interval, seed):
                     {"global_step": step}, step=step,
                     meta_path=str(bundle.raw_dir / f"meta_{step:06d}.pkl"),
                     io_mode="serial" if mode == "sync" else mode)
+                checkpoint_requests.append(handle)
                 dispatch_ms = (time.perf_counter_ns() - ckpt_start) / 1e6
                 if mode == "sync":
                     handle.wait()
@@ -134,7 +138,8 @@ def run_one(args, mode, interval, seed):
         max(stats(ordinary).get("mean") or 1.0, 1e-9) - 1.0
         if ordinary else None
     )
-    accepted = bool(restore_verified and step_overhead_ratio is not None and
+    accepted = bool(mode != "none" and restore_verified and
+                    step_overhead_ratio is not None and
                     step_overhead_ratio <= 0.05)
     result = bundle.finalize(metrics={
         "model": args.model, "seed": seed, "mode": mode,
@@ -144,6 +149,9 @@ def run_one(args, mode, interval, seed):
         "training_throughput_steps_s": (len(losses) /
             max((time.perf_counter_ns() - wall_start) / 1e9, 1e-9)),
         "final_drain_ms": final_drain_ms,
+        "persisted": (None if mode == "none" else all(
+            item.state.value == "PERSISTED" for item in checkpoint_requests)),
+        "checkpoint_requests": [item.as_dict() for item in checkpoint_requests],
         "restore_verified": restore_verified,
         "step_overhead": step_overhead_ratio,
         "step_overhead_percent": (step_overhead_ratio * 100.0
@@ -152,8 +160,9 @@ def run_one(args, mode, interval, seed):
         "gate": {"mean_step_overhead_max": 0.05,
                   "backlog_monotonic": False,
                   "restore_required": mode != "none"},
-    }, status="pass" if not bundle.failures and len(losses) >= args.checkpoints
-        and restore_verified else "fail")
+    }, status=("pass" if mode == "none" and not bundle.failures and losses
+               else "pass" if not bundle.failures and len(losses) >= args.checkpoints
+               and restore_verified else "fail"))
     print(json.dumps({"run_id": result["run_id"], "status": result["status"],
                       "mode": mode, "interval": interval, "seed": seed}, sort_keys=True), flush=True)
 
