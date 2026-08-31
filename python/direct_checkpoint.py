@@ -27,6 +27,7 @@ Sub-modules (importable independently):
 """
 
 import ctypes
+import copy
 from dataclasses import replace
 import hashlib
 import math
@@ -46,7 +47,8 @@ import atexit
 
 # -- Re-exports from sub-modules (backward-compatible surface) ---------------
 import c_bindings  # keep module reference for _LIB_PATH
-from c_bindings import lib, acl_lib, NPUNVMEContext, NPUNVMERequest
+from c_bindings import (lib, acl_lib, NPUNVMEContext, NPUNVMERequest,
+                        NPUNVMEStats)
 from disk_layout import (SUPERBLOCK_OFFSET, SUPERBLOCK_HEADER_BYTES,
                           META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
                           META_SLOT_BYTES, MAGIC_NUMBER, UINT32_BYTES,
@@ -67,6 +69,14 @@ from training_state import (TRAINING_STATE_SCHEMA_VERSION,
                             validate_state_names)
 from full_checkpoint_protocol import (CheckpointState, TERMINAL_STATES,
                                       require_transition)
+
+
+class CheckpointBusyError(RuntimeError):
+    """No snapshot slot was available before a non-blocking admission deadline."""
+
+
+class CheckpointQueuePoisonedError(RuntimeError):
+    """A previous accepted generation failed and poisoned the queue."""
 
 
 # -- Device pointer helper (single entry point for all MS pointer access) ----
@@ -210,9 +220,8 @@ class CheckpointHandle:
 
     def wait(self, timeout=None):
         """Wait for durable completion and raise the original failure."""
-        try:
-            self.owner.wait_for_io_completion(timeout=timeout)
-        except TimeoutError as error:
+        if not self._done.wait(timeout=timeout):
+            error = TimeoutError("checkpoint did not reach a terminal state")
             with self._lock:
                 if self.state not in TERMINAL_STATES:
                     require_transition(self.state, CheckpointState.TIMED_OUT)
@@ -252,7 +261,8 @@ class DirectCheckpoint:
         rank_id: int = 0, world_size: int = 1,
         base_offset_bytes: int = 0, shard_span_bytes: int = None,
         spdk_shm_id: int = 1, keep_last_n: int = 3, slot_size_gb: int = 10,
-        warmup_fn: callable = None,
+        warmup_fn: callable = None, checkpoint_slots: int = 1,
+        admission: str = "block",
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
         self.npu_device_id = npu_device_id
@@ -265,6 +275,23 @@ class DirectCheckpoint:
         os.environ.setdefault("SPDK_SHM_ID", str(spdk_shm_id))
 
         self.keep_last_n = keep_last_n
+        if int(checkpoint_slots) <= 0:
+            raise ValueError("checkpoint_slots must be positive")
+        if admission not in ("block", "try"):
+            raise ValueError("admission must be block or try")
+        self.checkpoint_slots = int(checkpoint_slots)
+        self.admission = admission
+        self._slot_sem = threading.BoundedSemaphore(self.checkpoint_slots)
+        self._admission_lock = threading.Lock()
+        self._handles_lock = threading.Lock()
+        self._active_handles = set()
+        self._handle_threads = {}
+        self._metadata_lock = threading.Lock()
+        self._io_mutex = threading.Lock()
+        self._sequence_lock = threading.Lock()
+        self._io_order = threading.Condition()
+        self._next_io_sequence = 1
+        self._queue_poisoned = False
         self.slot_bytes = slot_size_gb * 1024**3
         self.active_meta_slot = 0
         self.metadata_generation = 0
@@ -325,6 +352,72 @@ class DirectCheckpoint:
         lib.npu_nvme_get_last_io_us.restype = ctypes.c_uint64
 
         self._mount_filesystem()
+        self._accepted_generation = self.metadata_generation
+
+    def _admit_checkpoint(self):
+        """Reserve the bounded FULL checkpoint admission slot."""
+        with self._admission_lock:
+            if self._queue_poisoned:
+                raise CheckpointQueuePoisonedError(
+                    "checkpoint queue is poisoned; reopen the context")
+        acquired = self._slot_sem.acquire(blocking=(self.admission == "block"))
+        if not acquired:
+            raise CheckpointBusyError("checkpoint admission is BUSY")
+        with self._admission_lock:
+            if self._queue_poisoned:
+                self._slot_sem.release()
+                raise CheckpointQueuePoisonedError(
+                    "checkpoint queue is poisoned; reopen the context")
+
+    def _release_checkpoint_slot(self, handle=None):
+        if handle is not None:
+            with self._handles_lock:
+                self._active_handles.discard(handle)
+                self._handle_threads.pop(handle.request_id, None)
+        try:
+            self._slot_sem.release()
+        except ValueError:
+            pass
+
+    def _advance_io_sequence(self, sequence):
+        with self._io_order:
+            if sequence == self._next_io_sequence:
+                self._next_io_sequence += 1
+                self._io_order.notify_all()
+
+    def reset_checkpoint_queue(self):
+        """Reopen admission after all handles are terminal."""
+        try:
+            self.wait_for_io_completion()
+        except RuntimeError:
+            # Reset is the explicit acknowledgement point for the recorded
+            # fail-stop error after all workers have reached a terminal state.
+            pass
+        with self._admission_lock:
+            if self._active_handles:
+                raise RuntimeError("cannot reset checkpoint queue while active")
+            self._queue_poisoned = False
+            self._io_error = None
+            self._accepted_generation = self.metadata_generation
+        with self._io_order:
+            self._next_io_sequence = self._request_counter + 1
+            self._io_order.notify_all()
+
+    def _poison_checkpoint_queue(self, failed_handle):
+        with self._admission_lock:
+            self._queue_poisoned = True
+        with self._handles_lock:
+            pending = [h for h in self._active_handles if h is not failed_handle]
+        for handle in pending:
+            if not handle.done():
+                handle.status = CheckpointHandle.CANCELLED
+                try:
+                    handle.transition(CheckpointState.CANCELLED)
+                except ValueError:
+                    pass
+                handle._done.set()
+        with self._io_order:
+            self._io_order.notify_all()
 
     # -- Filesystem mount ----------------------------------------------------
 
@@ -412,6 +505,7 @@ class DirectCheckpoint:
 
         if self.layout is None:
             raise RuntimeError("cannot commit metadata before mounting layout")
+        previous_meta = copy.deepcopy(self.meta_dict)
         next_generation = self.metadata_generation + 1
         ckpt_key = f"step_{step}"
         param_records = {}
@@ -490,15 +584,22 @@ class DirectCheckpoint:
 
         import pickle as _pickle
         os.makedirs(os.path.dirname(self._meta_pkl), exist_ok=True)
-        with open(self._meta_pkl, "wb") as _f:
-            _pickle.dump(self.meta_dict, _f)
-
         def _dump_meta_pkl():
             with open(self._meta_pkl, "wb") as _f:
                 _pickle.dump(self.meta_dict, _f)
         self._dump_meta_pkl = _dump_meta_pkl
 
-        self._persist_metadata(next_generation)
+        try:
+            self._persist_metadata(next_generation)
+        except BaseException:
+            # Data may be durable, but without the superblock commit point the
+            # generation is not visible.  Roll back the in-memory/sidecar
+            # ledger so an explicit queue reset cannot publish it later.
+            self.meta_dict = previous_meta
+            with open(self._meta_pkl, "wb") as stream:
+                _pickle.dump(self.meta_dict, stream)
+            raise
+        self._dump_meta_pkl()
         print(f"[DirectCkpt] Rank 0 Meta committed safely to "
               f"Slot {'B' if self.active_meta_slot == 1 else 'A'} "
               "(Superblock updated).",
@@ -651,6 +752,16 @@ class DirectCheckpoint:
             return 0
         return lib.npu_nvme_get_last_io_us(self.ctx, 1 if is_read else 0)
 
+    def get_runtime_stats(self):
+        """Return C-layer counters with explicit NVMe outstanding fields."""
+        if not self.ctx or not hasattr(lib, "npu_nvme_get_stats"):
+            return {}
+        stats = NPUNVMEStats()
+        rc = lib.npu_nvme_get_stats(self.ctx, ctypes.byref(stats))
+        if rc != 0:
+            raise RuntimeError(f"npu_nvme_get_stats failed: {rc}")
+        return {name: getattr(stats, name) for name, _ctype in stats._fields_}
+
     def close(self):
         if not getattr(self, '_closed', False) and hasattr(self, 'ctx') and self.ctx:
             print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down "
@@ -792,8 +903,12 @@ class DirectCheckpoint:
     # -- I/O synchronisation -------------------------------------------------
 
     def wait_for_io_completion(self, timeout=None):
-        thread = getattr(self, 'io_thread', None)
-        if thread is not None:
+        with self._handles_lock:
+            threads = list(self._handle_threads.values())
+        if not threads:
+            thread = getattr(self, 'io_thread', None)
+            threads = [thread] if thread is not None else []
+        for thread in threads:
             t_wait_start = time.perf_counter()
             if thread.is_alive():
                 print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for "
@@ -1069,15 +1184,24 @@ class DirectCheckpoint:
              _prepared_params=None, _checkpoint_meta=None, io_mode="queue"):
         if io_mode not in ("queue", "async", "serial"):
             raise ValueError("io_mode must be queue, async, or serial")
+        if self._queue_poisoned:
+            raise CheckpointQueuePoisonedError(
+                "checkpoint queue is poisoned; reopen the context")
         # A previous generation owns its snapshot buffers until it reaches a
         # terminal state.  Never overwrite/reuse those buffers implicitly.
-        self.wait_for_io_completion()
+        if self.checkpoint_slots == 1 and self.admission == "block":
+            self.wait_for_io_completion()
+        self._admit_checkpoint()
         t_start = time.perf_counter()
 
         # -- T_Prep --
         t_prep_start = time.perf_counter()
-        params = (_prepared_params if _prepared_params is not None
-                  else self._prepare_params(model))
+        try:
+            params = (_prepared_params if _prepared_params is not None
+                      else self._prepare_params(model))
+        except BaseException:
+            self._release_checkpoint_slot()
+            raise
         t_prep_end = time.perf_counter()
         T_Prep = t_prep_end - t_prep_start
 
@@ -1090,8 +1214,13 @@ class DirectCheckpoint:
         # in the durable metadata commit.  Keep the local snapshot counter as
         # a separate diagnostic so requests can still be correlated before
         # the commit occurs.
-        generation = (self.metadata_generation + 1
-                      if commit_meta else snapshot_generation)
+        with self._sequence_lock:
+            io_sequence = self._request_counter
+            if commit_meta:
+                self._accepted_generation += 1
+                generation = self._accepted_generation
+            else:
+                generation = snapshot_generation
         # Freeze the graph before copying any parameter address.  A D2D copy
         # submitted while the optimizer is still running would otherwise
         # produce a mixed-step checkpoint.
@@ -1111,6 +1240,9 @@ class DirectCheckpoint:
             params = self._snapshot_params(params, generation)
         except BaseException as error:
             handle._fail(error)
+            self._poison_checkpoint_queue(handle)
+            self._advance_io_sequence(io_sequence)
+            self._release_checkpoint_slot()
             raise
         handle.transition(CheckpointState.SNAPSHOT_READY)
         checksum = hashlib.sha256()
@@ -1153,7 +1285,10 @@ class DirectCheckpoint:
                 current_offset += aligned_bytes
         except BaseException as error:
             handle._fail(error)
+            self._poison_checkpoint_queue(handle)
+            self._advance_io_sequence(io_sequence)
             self._release_snapshot(params)
+            self._release_checkpoint_slot()
             raise
 
         total_written = 0
@@ -1213,6 +1348,20 @@ class DirectCheckpoint:
                     raise RuntimeError(f"write_batch failed (rc={rc})")
 
             try:
+                with self._io_order:
+                    while (io_sequence != self._next_io_sequence and
+                           not self._queue_poisoned and
+                           handle.state != CheckpointState.CANCELLED):
+                        self._io_order.wait(timeout=0.1)
+                if self._queue_poisoned or handle.state == CheckpointState.CANCELLED:
+                    if not handle.done():
+                        handle.status = CheckpointHandle.CANCELLED
+                        handle.transition(CheckpointState.CANCELLED)
+                        handle._done.set()
+                    return
+                self._io_mutex.acquire()
+                if self._queue_poisoned or handle.state == CheckpointState.CANCELLED:
+                    return
                 handle.transition(CheckpointState.DMA_COPYING)
                 t_spdk_start = time.perf_counter()
                 total_written = 0
@@ -1283,10 +1432,15 @@ class DirectCheckpoint:
             except BaseException as error:
                 self._io_error = error
                 handle._fail(error)
+                self._poison_checkpoint_queue(handle)
                 print(f"[Fatal][Rank {self.rank_id}] Background checkpoint "
                       f"failed: {error}", flush=True)
             finally:
+                if self._io_mutex.locked():
+                    self._io_mutex.release()
                 self._release_snapshot(params)
+                self._advance_io_sequence(io_sequence)
+                self._release_checkpoint_slot(handle)
 
         num_dev_val = len(dev_chunks) if dev_chunks else 0
         dev_sz_val = dev_sz if dev_chunks else 0
@@ -1295,6 +1449,8 @@ class DirectCheckpoint:
 
         self._io_error = None
         self._active_handle = handle
+        with self._handles_lock:
+            self._active_handles.add(handle)
         self._last_chunk_count = num_dev_val + num_host_val
         self._last_save_stats = {"prep_time": T_Prep,
                                  "layout_time": T_Layout,
@@ -1305,6 +1461,8 @@ class DirectCheckpoint:
             target=background_io_worker,
             args=(c_ptrs_dev, c_offs_dev, c_sizes_dev, num_dev_val, dev_sz_val,
                   c_ptrs_host, c_offs_host, c_sizes_host, num_host_val, host_sz_val))
+        with self._handles_lock:
+            self._handle_threads[request_id] = self.io_thread
         handle.transition(CheckpointState.QUEUED)
         self.io_thread.start()
 
@@ -1392,7 +1550,7 @@ class DirectCheckpoint:
     def save_state(self, components, control_state, step: int,
                    meta_path: str = "checkpoint_meta.pkl",
                    commit_meta: bool = True, verify_checksums: bool = True,
-                   io_mode: str = "queue"):
+                   io_mode: str = "queue", admission: str = None):
         """Freeze and persist a versioned complete training state.
 
         ``components`` maps namespaces such as ``model`` and ``optimizer`` to
@@ -1400,6 +1558,16 @@ class DirectCheckpoint:
         contains JSON-tagged Python/NumPy state and is returned by
         :meth:`load_state` for the caller to re-apply.
         """
+        requested_admission = self.admission if admission is None else admission
+        if requested_admission not in ("block", "try"):
+            raise ValueError("admission must be block or try")
+        if self._queue_poisoned:
+            raise CheckpointQueuePoisonedError(
+                "checkpoint queue is poisoned; reopen the context")
+        if requested_admission == "try":
+            with self._handles_lock:
+                if len(self._active_handles) >= self.checkpoint_slots:
+                    raise CheckpointBusyError("checkpoint admission is BUSY")
         validate_state_names(components, control_state)
         if hasattr(ms.hal, "synchronize"):
             ms.hal.synchronize()
@@ -1430,10 +1598,21 @@ class DirectCheckpoint:
             "components": self._ordered_components(components),
             "control_names": sorted(control_state),
         }
-        return self.save(
-            None, step=step, meta_path=meta_path, commit_meta=commit_meta,
-            _prepared_params=params, _checkpoint_meta=checkpoint_meta,
-            io_mode=io_mode)
+        previous_admission = self.admission
+        if admission is not None:
+            self.admission = admission
+        try:
+            return self.save(
+                None, step=step, meta_path=meta_path, commit_meta=commit_meta,
+                _prepared_params=params, _checkpoint_meta=checkpoint_meta,
+                io_mode=io_mode)
+        finally:
+            self.admission = previous_admission
+
+    def try_save_state(self, components, control_state, step: int, **kwargs):
+        """Submit a FULL generation or raise an explicit BUSY/poison error."""
+        kwargs["admission"] = "try"
+        return self.save_state(components, control_state, step, **kwargs)
 
     def _select_checkpoint_record(self, step):
         self._mount_filesystem()

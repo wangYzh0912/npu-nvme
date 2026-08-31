@@ -122,6 +122,7 @@ def run_one(args, mode, chunk, depth, delay_ms, seed):
             if index < args.warmups:
                 continue
             overlap = batch_overlap(timeline)
+            runtime_stats = ckpt.get_runtime_stats()
             overlaps.append(overlap)
             elapsed_values.append(elapsed_ms)
             foreground_values.append(wait_ms)
@@ -132,6 +133,7 @@ def run_one(args, mode, chunk, depth, delay_ms, seed):
                                "foreground_wait_ms": wait_ms,
                                "chunks": len(timeline),
                                "overlap_rate": overlap,
+                               "runtime_stats": runtime_stats,
                                "timeline": timeline,
                                "events": [{"name": "save_dispatched"},
                                           {"name": "persisted"}]})

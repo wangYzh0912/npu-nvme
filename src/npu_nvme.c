@@ -121,6 +121,42 @@ uint64_t get_time_us(void) {
            (uint64_t)ts.tv_nsec / 1000ULL;
 }
 
+static void update_peak_uint(atomic_uint *peak, unsigned value) {
+    unsigned current = atomic_load_explicit(peak, memory_order_relaxed);
+    while (value > current && !atomic_compare_exchange_weak_explicit(
+            peak, &current, value, memory_order_relaxed, memory_order_relaxed)) {
+        /* current is refreshed by compare_exchange */
+    }
+}
+
+static unsigned nvme_outstanding_inc(NPUNVMEContext *ctx) {
+    unsigned value = atomic_fetch_add_explicit(&ctx->nvme_outstanding, 1,
+                                                memory_order_relaxed) + 1;
+    update_peak_uint(&ctx->nvme_outstanding_peak, value);
+    atomic_fetch_add_explicit(&ctx->nvme_submit_count, 1, memory_order_relaxed);
+    return value;
+}
+
+static void nvme_outstanding_dec(NPUNVMEContext *ctx) {
+    atomic_fetch_sub_explicit(&ctx->nvme_outstanding, 1, memory_order_relaxed);
+    atomic_fetch_add_explicit(&ctx->nvme_complete_count, 1, memory_order_relaxed);
+}
+
+static void dma_inflight_inc(NPUNVMEContext *ctx) {
+    unsigned value = atomic_fetch_add_explicit(&ctx->dma_inflight, 1,
+                                                memory_order_relaxed) + 1;
+    update_peak_uint(&ctx->dma_inflight_peak, value);
+}
+
+static void dma_inflight_dec(NPUNVMEContext *ctx) {
+    atomic_fetch_sub_explicit(&ctx->dma_inflight, 1, memory_order_relaxed);
+}
+
+static bool test_fault(const char *name) {
+    const char *value = getenv(name);
+    return value && value[0] && strcmp(value, "0") != 0;
+}
+
 /* Wait for an internal request.  Callers drain timed-out requests before
  * releasing their buffers, so heap ownership never transfers implicitly. */
 static int wait_request_done(NPUNVMEContext *ctx, atomic_int *done) {
@@ -204,6 +240,7 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host,
     if (ring_pop(&ctx->dma.free_ring, &buf_idx) != 0) return -1;
 
     task->buf_idx = buf_idx;
+    dma_inflight_inc(ctx);
     if (ctx->enable_profiling) {
         task->ts_slot_acquire = get_time_us();
         task->ts_submit = task->ts_slot_acquire;
@@ -223,14 +260,28 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host,
         if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
         task->state = CHUNK_NPU_DONE;
     } else if (async_dma) {
+        if (test_fault("NPU_NVME_TEST_FAIL_ACL_COPY")) {
+            ring_push(&ctx->dma.free_ring, buf_idx);
+            task->buf_idx = -1;
+            dma_inflight_dec(ctx);
+            return -2;
+        }
+        atomic_fetch_add_explicit(&ctx->async_dma_submit_count, 1,
+                                  memory_order_relaxed);
         aclError ret = aclrtMemcpyAsync(ctx->dma.pool[buf_idx].buf, task->size,
                                        task->npu_ptr, task->size,
                                        ACL_MEMCPY_DEVICE_TO_HOST,
                                        ctx->acl.copy_stream);
         if (ret == ACL_SUCCESS) {
-            ret = aclrtRecordEvent(ctx->acl.events[buf_idx],
-                                   ctx->acl.copy_stream);
+            if (test_fault("NPU_NVME_TEST_FAIL_EVENT_RECORD")) {
+                ret = ACL_ERROR_FAILURE;
+            } else {
+                ret = aclrtRecordEvent(ctx->acl.events[buf_idx],
+                                       ctx->acl.copy_stream);
+            }
             if (ret != ACL_SUCCESS) {
+                atomic_fetch_add_explicit(&ctx->stream_sync_fallback_count, 1,
+                                          memory_order_relaxed);
                 /* The copy was accepted but cannot be polled.  Drain the
                  * stream before making this slot reusable. */
                 (void)aclrtSynchronizeStream(ctx->acl.copy_stream);
@@ -239,6 +290,7 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host,
         if (ret != ACL_SUCCESS) {
             ring_push(&ctx->dma.free_ring, buf_idx);
             task->buf_idx = -1;
+            dma_inflight_dec(ctx);
             return -2;
         }
         task->state = CHUNK_NPU_COPYING;
@@ -249,6 +301,7 @@ int try_submit_async(NPUNVMEContext *ctx, io_task_t *task, bool is_host,
         if (ret != ACL_SUCCESS) {
             ring_push(&ctx->dma.free_ring, buf_idx);
             task->buf_idx = -1;
+            dma_inflight_dec(ctx);
             return -2;
         }
         if (ctx->enable_profiling) task->ts_npu_done = get_time_us();
@@ -278,11 +331,20 @@ void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
                 cb_arg->task->task_idx,
                 completion->status.sc, completion->status.sct);
         *cb_arg->result = -1;
+        atomic_fetch_add_explicit(&cb_arg->ctx->completion_error_count, 1,
+                                  memory_order_relaxed);
+    }
+    if (test_fault("NPU_NVME_TEST_FAIL_NVME_COMPLETION")) {
+        *cb_arg->result = -1;
+        atomic_fetch_add_explicit(&cb_arg->ctx->completion_error_count, 1,
+                                  memory_order_relaxed);
     }
     if (cb_arg->ctx->enable_profiling) cb_arg->task->ts_spdk_done = get_time_us();
     cb_arg->task->state = CHUNK_DONE;
     (*cb_arg->completed_counter)++;
     ring_push(&cb_arg->ctx->dma.free_ring, cb_arg->task->buf_idx);
+    dma_inflight_dec(cb_arg->ctx);
+    nvme_outstanding_dec(cb_arg->ctx);
     if (cb_arg->ctx->enable_profiling)
         cb_arg->task->ts_slot_release = get_time_us();
     free(cb_arg);
@@ -292,6 +354,14 @@ void nvme_write_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
 int submit_to_spdk_write(NPUNVMEContext *ctx, io_task_t *task,
                           int *completed_counter, int *result) {
     static atomic_ulong test_write_submissions = 0;
+    if (test_fault("NPU_NVME_TEST_FAIL_NVME_SUBMIT")) return -EIO;
+    const char *delay_env = getenv("NPU_NVME_TEST_NVME_SUBMIT_DELAY_MS");
+    if (delay_env && delay_env[0]) {
+        char *end = NULL;
+        unsigned long delay_ms = strtoul(delay_env, &end, 10);
+        if (end != delay_env && *end == '\0' && delay_ms > 0)
+            usleep(delay_ms * 1000UL);
+    }
     const char *fail_at_env = getenv("NPU_NVME_TEST_FAIL_WRITE_AT");
     if (fail_at_env && fail_at_env[0]) {
         char *end = NULL;
@@ -315,6 +385,7 @@ int submit_to_spdk_write(NPUNVMEContext *ctx, io_task_t *task,
                                      lba, lba_count,
                                      nvme_write_complete_cb, cb_arg, 0);
     if (rc != 0) { free(cb_arg); return rc; }
+    nvme_outstanding_inc(ctx);
     if (ctx->enable_profiling) task->ts_spdk_submit = get_time_us();
     task->state = CHUNK_SPDK_WRITING;
     return 0;
@@ -464,6 +535,7 @@ static int submit_write_common(NPUNVMEContext *ctx, void **ptrs,
         free(req);
         return -EBUSY;
     }
+    update_peak_uint(&ctx->request_ring_peak, queued + 1);
     *out_request = req;
     return 0;
 }
@@ -721,6 +793,27 @@ uint64_t npu_nvme_get_last_io_us(NPUNVMEContext *ctx, int is_read) {
     return is_read ? ctx->last_read_io_us : ctx->last_write_io_us;
 }
 
+int npu_nvme_get_stats(NPUNVMEContext *ctx, NPUNVMEStats *out_stats) {
+    if (!ctx || !out_stats) return -EINVAL;
+    memset(out_stats, 0, sizeof(*out_stats));
+    out_stats->nvme_submit_count = atomic_load_explicit(&ctx->nvme_submit_count, memory_order_relaxed);
+    out_stats->nvme_complete_count = atomic_load_explicit(&ctx->nvme_complete_count, memory_order_relaxed);
+    out_stats->nvme_outstanding = atomic_load_explicit(&ctx->nvme_outstanding, memory_order_relaxed);
+    out_stats->nvme_outstanding_peak = atomic_load_explicit(&ctx->nvme_outstanding_peak, memory_order_relaxed);
+    out_stats->dma_inflight = atomic_load_explicit(&ctx->dma_inflight, memory_order_relaxed);
+    out_stats->dma_inflight_peak = atomic_load_explicit(&ctx->dma_inflight_peak, memory_order_relaxed);
+    out_stats->request_ring_depth = ctx->write_ring ? spdk_ring_count(ctx->write_ring) : 0;
+    out_stats->request_ring_peak = atomic_load_explicit(&ctx->request_ring_peak, memory_order_relaxed);
+    out_stats->async_dma_submit_count = atomic_load_explicit(&ctx->async_dma_submit_count, memory_order_relaxed);
+    out_stats->async_event_query_count = atomic_load_explicit(&ctx->async_event_query_count, memory_order_relaxed);
+    out_stats->async_event_query_error_count = atomic_load_explicit(&ctx->async_event_query_error_count, memory_order_relaxed);
+    out_stats->stream_sync_fallback_count = atomic_load_explicit(&ctx->stream_sync_fallback_count, memory_order_relaxed);
+    out_stats->spdk_retry_count = atomic_load_explicit(&ctx->spdk_retry_count, memory_order_relaxed);
+    out_stats->completion_error_count = atomic_load_explicit(&ctx->completion_error_count, memory_order_relaxed);
+    out_stats->reactor_cpu_us = atomic_load_explicit(&ctx->reactor_cpu_us, memory_order_relaxed);
+    return 0;
+}
+
 int npu_nvme_set_io_timeout_ms(NPUNVMEContext *ctx, uint32_t timeout_ms) {
     if (!ctx || timeout_ms == 0) return -1;
     ctx->io_timeout_ms = timeout_ms;
@@ -845,7 +938,18 @@ static void *reactor_loop(void *arg) {
            ctx->write_fsm.state != WRITE_FSM_IDLE ||
            ctx->read_fsm.state != READ_FSM_IDLE ||
            ctx->meta_req != NULL) {
+        struct timespec cpu_before, cpu_after;
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &cpu_before);
         spdk_thread_poll(ctx->reactor_thread, 0, 0);
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &cpu_after);
+        uint64_t before_us = (uint64_t)cpu_before.tv_sec * 1000000ULL +
+                             (uint64_t)cpu_before.tv_nsec / 1000ULL;
+        uint64_t after_us = (uint64_t)cpu_after.tv_sec * 1000000ULL +
+                            (uint64_t)cpu_after.tv_nsec / 1000ULL;
+        if (after_us >= before_us)
+            atomic_fetch_add_explicit(&ctx->reactor_cpu_us,
+                                      after_us - before_us,
+                                      memory_order_relaxed);
         usleep(100);
     }
 
@@ -1219,10 +1323,16 @@ static void write_fsm_tick(NPUNVMEContext *ctx) {
     for (int i = fsm->next_spdk_submit_idx; i < fsm->next_submit_idx; ++i) {
         io_task_t *task = &req->tasks[i];
         if (task->state != CHUNK_NPU_COPYING) continue;
+        atomic_fetch_add_explicit(&ctx->async_event_query_count, 1,
+                                  memory_order_relaxed);
         aclrtEventRecordedStatus status = ACL_EVENT_RECORDED_STATUS_NOT_READY;
         aclError ret = aclrtQueryEventStatus(ctx->acl.events[task->buf_idx],
                                              &status);
+        if (test_fault("NPU_NVME_TEST_FAIL_EVENT_QUERY"))
+            ret = ACL_ERROR_FAILURE;
         if (ret != ACL_SUCCESS) {
+            atomic_fetch_add_explicit(&ctx->async_event_query_error_count, 1,
+                                      memory_order_relaxed);
             req->result = -1;
             aclError sync_ret = aclrtSynchronizeEvent(
                 ctx->acl.events[task->buf_idx]);
@@ -1231,6 +1341,7 @@ static void write_fsm_tick(NPUNVMEContext *ctx) {
                 task->state = CHUNK_DONE;
                 fsm->completed_count++;
                 ring_push(&ctx->dma.free_ring, task->buf_idx);
+                dma_inflight_dec(ctx);
                 if (ctx->enable_profiling)
                     task->ts_slot_release = get_time_us();
                 continue;
@@ -1262,6 +1373,7 @@ static void write_fsm_tick(NPUNVMEContext *ctx) {
                 task->state = CHUNK_DONE;
                 fsm->completed_count++;
                 ring_push(&ctx->dma.free_ring, task->buf_idx);
+                dma_inflight_dec(ctx);
                 if (ctx->enable_profiling)
                     task->ts_slot_release = get_time_us();
             }
@@ -1422,6 +1534,7 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
         task->state = CHUNK_DONE;
         fsm->completed_count++;
         ring_push(&ctx->dma.free_ring, task->buf_idx);
+        dma_inflight_dec(ctx);
         fsm->next_copy_idx++;
     }
 
@@ -1445,6 +1558,7 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
                 fsm->next_submit_idx++;
             } else {
                 task->buf_idx = buf_idx;
+                dma_inflight_inc(ctx);
 
             spdk_cb_arg_t *cb_arg = malloc(sizeof(spdk_cb_arg_t));
             if (cb_arg) {
@@ -1459,6 +1573,7 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
                                                 lba, lba_count,
                                                 nvme_read_complete_cb, cb_arg, 0);
                 if (rc == 0) {
+                    nvme_outstanding_inc(ctx);
                     task->state = CHUNK_SPDK_READING;
                     fsm->next_submit_idx++;
                 } else if (rc == -ENOMEM || rc == -EAGAIN) {
@@ -1467,11 +1582,15 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
                      * retry on the next reactor tick, matching the write FSM
                      * behavior; treating this as a permanent I/O error makes
                      * high pipeline-depth reads fail spuriously. */
+                    atomic_fetch_add_explicit(&ctx->spdk_retry_count, 1,
+                                              memory_order_relaxed);
                     ring_push(&ctx->dma.free_ring, buf_idx);
+                    dma_inflight_dec(ctx);
                     free(cb_arg);
                 } else {
                     req->result = -1;
                     ring_push(&ctx->dma.free_ring, buf_idx);
+                    dma_inflight_dec(ctx);
                     free(cb_arg);
                     task->state = CHUNK_DONE;
                     fsm->completed_count++;
@@ -1480,6 +1599,7 @@ static void read_fsm_tick(NPUNVMEContext *ctx) {
                 } else {
                     req->result = -1;
                     ring_push(&ctx->dma.free_ring, buf_idx);
+                    dma_inflight_dec(ctx);
                     task->state = CHUNK_DONE;
                     fsm->completed_count++;
                     fsm->next_submit_idx++;
@@ -1658,8 +1778,11 @@ void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
         task->state = CHUNK_DONE;
         (*cb_arg->completed_counter)++;
         ring_push(&ctx->dma.free_ring, task->buf_idx);
+        dma_inflight_dec(ctx);
+        nvme_outstanding_dec(ctx);
     } else {
         task->state = CHUNK_SPDK_DONE;
+        nvme_outstanding_dec(ctx);
     }
     if (ctx->enable_profiling) task->ts_spdk_done = get_time_us();
     free(cb_arg);
@@ -1677,6 +1800,8 @@ void nvme_read_complete_cb(void *arg, const struct spdk_nvme_cpl *completion) {
 int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
                            uint32_t total_bytes, int is_read, void *meta_buffer) {
     if (!ctx || !meta_buffer) return -1;
+    if (!is_read && test_fault("NPU_NVME_TEST_FAIL_METADATA_WRITE"))
+        return -EIO;
     if (ctx->block_size == 0) return -1;
     if (byte_offset % ctx->block_size != 0 ||
         total_bytes == 0 || total_bytes % ctx->block_size != 0) return -1;
@@ -1741,6 +1866,7 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
  */
 int npu_nvme_flush(NPUNVMEContext *ctx) {
     if (!ctx || !ctx->meta_ring || !ctx->meta_qpair) return -1;
+    if (test_fault("NPU_NVME_TEST_FAIL_FLUSH")) return -EIO;
     meta_request_t *req = calloc(1, sizeof(*req));
     if (!req) return -1;
     req->is_flush = 1;
@@ -1800,6 +1926,21 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
 
     NPUNVMEContext *ctx = calloc(1, sizeof(NPUNVMEContext));
     if (!ctx) return -1;
+
+    atomic_init(&ctx->nvme_submit_count, 0);
+    atomic_init(&ctx->nvme_complete_count, 0);
+    atomic_init(&ctx->nvme_outstanding, 0);
+    atomic_init(&ctx->nvme_outstanding_peak, 0);
+    atomic_init(&ctx->dma_inflight, 0);
+    atomic_init(&ctx->dma_inflight_peak, 0);
+    atomic_init(&ctx->request_ring_peak, 0);
+    atomic_init(&ctx->async_dma_submit_count, 0);
+    atomic_init(&ctx->async_event_query_count, 0);
+    atomic_init(&ctx->async_event_query_error_count, 0);
+    atomic_init(&ctx->stream_sync_fallback_count, 0);
+    atomic_init(&ctx->spdk_retry_count, 0);
+    atomic_init(&ctx->completion_error_count, 0);
+    atomic_init(&ctx->reactor_cpu_us, 0);
 
     ctx->io_timeout_ms = 60000;
     const char *timeout_env = getenv("NPU_NVME_IO_TIMEOUT_MS");

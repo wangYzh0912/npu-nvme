@@ -126,6 +126,23 @@ typedef struct NPUNVMEContext {
     uint64_t last_write_io_us;   /* C-layer latency of most recent write */
     uint64_t last_read_io_us;    /* C-layer latency of most recent read */
     uint32_t io_timeout_ms;      /* bounded public API wait */
+
+    /* Runtime counters. The Reactor is the sole writer; public stats reads
+     * use relaxed atomics because counters are diagnostic, not ownership. */
+    atomic_ullong nvme_submit_count;
+    atomic_ullong nvme_complete_count;
+    atomic_uint nvme_outstanding;
+    atomic_uint nvme_outstanding_peak;
+    atomic_uint dma_inflight;
+    atomic_uint dma_inflight_peak;
+    atomic_uint request_ring_peak;
+    atomic_ullong async_dma_submit_count;
+    atomic_ullong async_event_query_count;
+    atomic_ullong async_event_query_error_count;
+    atomic_ullong stream_sync_fallback_count;
+    atomic_ullong spdk_retry_count;
+    atomic_ullong completion_error_count;
+    atomic_ullong reactor_cpu_us;
 } NPUNVMEContext;
 
 #endif

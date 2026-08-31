@@ -13,6 +13,25 @@ extern "C" {
 typedef struct NPUNVMEContext NPUNVMEContext;
 typedef struct NPUNVMERequest NPUNVMERequest;
 
+/** Runtime counters for one context. Values are a point-in-time snapshot. */
+typedef struct {
+    uint64_t nvme_submit_count;
+    uint64_t nvme_complete_count;
+    uint32_t nvme_outstanding;
+    uint32_t nvme_outstanding_peak;
+    uint32_t dma_inflight;
+    uint32_t dma_inflight_peak;
+    uint32_t request_ring_depth;
+    uint32_t request_ring_peak;
+    uint64_t async_dma_submit_count;
+    uint64_t async_event_query_count;
+    uint64_t async_event_query_error_count;
+    uint64_t stream_sync_fallback_count;
+    uint64_t spdk_retry_count;
+    uint64_t completion_error_count;
+    uint64_t reactor_cpu_us;
+} NPUNVMEStats;
+
 /**
  * @brief Initialise the NPU-NVMe SPDK environment.
  *
@@ -193,6 +212,9 @@ int npu_nvme_wait_quiescent(NPUNVMEContext *ctx, uint32_t timeout_ms);
  * @return latency in microseconds, or 0 if no I/O has been performed
  */
 uint64_t npu_nvme_get_last_io_us(NPUNVMEContext *ctx, int is_read);
+
+/** @brief Copy current runtime counters into caller-owned storage. */
+int npu_nvme_get_stats(NPUNVMEContext *ctx, NPUNVMEStats *out_stats);
 
 #ifdef __cplusplus
 }

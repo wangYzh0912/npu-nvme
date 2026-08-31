@@ -201,6 +201,36 @@ python experiments/benchmarks/run_single_card_full.py --model gpt2_xl \
 协议和结果目录结构不变。`--dry-run` 不初始化硬件，`--smoke` 配置应由调用者显式
 缩短步数，不能作为正式门禁结果。
 
+阶段 2 独立数据面（筛选默认 3 次，正式默认 10 次 warmup + 30 次计入样本）：
+
+```bash
+python experiments/benchmarks/s2_async_data_plane.py --screening \
+  --npu 7 --pci 0000:83:00.0 --output-root results/stage2-async/screening
+python experiments/benchmarks/s2_async_data_plane.py \
+  --payloads 268435456 --chunks 4194304 --depths 2 4 --modes queue async \
+  --npu 7 --pci 0000:83:00.0 --output-root results/stage2-async/formal
+```
+
+阶段 3 正式矩阵复用同一个 fresh-process 基准，不另写训练/恢复实现：
+
+```bash
+python experiments/benchmarks/s3_training_io_matrix.py --model gpt2_xl \
+  --modes none serial queue async --seeds 41 42 43 --intervals 10 20 50 \
+  --chunks 4194304 --depths 4 --total-steps 110 \
+  --npu 7 --pci 0000:83:00.0 --output-root results/stage3-training-io/formal
+```
+
+阶段 4 故障/背压门禁：
+
+```bash
+python tests/hardware/stage4_fault_lifecycle.py --npu 7 --pci 0000:83:00.0 \
+  --output results/stage4-fault-lifecycle
+```
+
+上述真实 NPU/NVMe 命令均须套用第 3 节 root shell 模板。阶段 2 只有在回读
+SHA-256、原始时间线、depth=1 无重叠、depth>=2 有重叠全部成立时才返回 0；阶段 4
+只有所有注入点均显式失败且 fresh context 再写读成功时才返回 0。
+
 真实 NPU/NVMe 命令套用第 3 节 root 模板；`--allow-fewer-samples` 不得用于正式门禁。
 
 ```bash

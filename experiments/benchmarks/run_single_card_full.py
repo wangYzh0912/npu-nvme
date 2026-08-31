@@ -114,8 +114,48 @@ def phase_source(args, run_dir):
         keep_last_n=args.keep_last_n, slot_size_gb=args.slot_size_gb,
         spdk_shm_id=args.shm_id)
     try:
+        pending = None
+        pending_record = None
+
+        def finish_pending():
+            nonlocal pending, pending_record
+            if pending is None:
+                return
+            wait_started = time.perf_counter()
+            pending.wait(timeout=args.timeout)
+            pending_record["foreground_wait_seconds"] = (
+                time.perf_counter() - wait_started)
+            if pending.state.value != "PERSISTED":
+                raise RuntimeError(
+                    f"checkpoint did not persist: {pending.as_dict()}")
+            pending_record["request"] = pending.as_dict()
+            interval = pending_record.get("overlapped_training_interval")
+            if interval:
+                event_times = {event["state"]: event["monotonic_ns"]
+                               for event in pending.events}
+                io_start = event_times.get("DMA_COPYING")
+                io_end = event_times.get("PERSISTED")
+                if io_start is not None and io_end is not None:
+                    pending_record["training_io_overlap_ns"] = max(
+                        0, min(interval["end_monotonic_ns"], io_end) -
+                        max(interval["start_monotonic_ns"], io_start))
+            pending_record["persist_seconds"] = (
+                time.perf_counter() - pending_record.pop("started"))
+            pending_record["runtime_stats"] = ckpt.get_runtime_stats()
+            records.append(pending_record)
+            pending = None
+            pending_record = None
+
         for step in steps:
+            train_started = time.monotonic_ns()
             train_steps(ms, cell, previous + 1, step, args.seq_len)
+            train_ended = time.monotonic_ns()
+            if pending_record is not None:
+                pending_record["overlapped_training_interval"] = {
+                    "start_monotonic_ns": train_started,
+                    "end_monotonic_ns": train_ended,
+                }
+            finish_pending()
             controls = {
                 "global_step": np.asarray(optimizer.global_step.asnumpy()).copy(),
                 "loss_scale": np.float32(1.0),
@@ -125,18 +165,35 @@ def phase_source(args, run_dir):
                 "mindspore_rng": np.asarray(ms.get_rng_state().asnumpy()).copy(),
                 "data_cursor": {"epoch": 0, "sample": int(step)},
             }
+            checkpoint_state = digest_state(model, optimizer)
             started = time.perf_counter()
             handle = ckpt.save_state(
                 {"model": model, "optimizer": optimizer}, controls,
                 step=step, meta_path=str(run_dir / f"meta_{step:06d}.pkl"),
                 io_mode=args.mode)
-            handle.wait(timeout=args.timeout)
-            if handle.state.value != "PERSISTED":
-                raise RuntimeError(f"checkpoint did not persist: {handle.as_dict()}")
-            records.append({"step": step, "request": handle.as_dict(),
-                            "persist_seconds": time.perf_counter() - started,
-                            "state": digest_state(model, optimizer)})
+            pending = handle
+            pending_record = {
+                "step": step, "started": started,
+                "dispatch_seconds": time.perf_counter() - started,
+                "state": checkpoint_state,
+                "preceding_training_interval": {
+                    "start_monotonic_ns": train_started,
+                    "end_monotonic_ns": train_ended,
+                },
+            }
+            if args.mode == "serial":
+                finish_pending()
             previous = step
+        if previous < args.total_steps:
+            trailing_started = time.monotonic_ns()
+            train_steps(ms, cell, previous + 1, args.total_steps, args.seq_len)
+            trailing_ended = time.monotonic_ns()
+            if pending_record is not None:
+                pending_record["overlapped_training_interval"] = {
+                    "start_monotonic_ns": trailing_started,
+                    "end_monotonic_ns": trailing_ended,
+                }
+        finish_pending()
         (run_dir / "source.json").write_text(
             json.dumps({"status": "pass", "checkpoints": records}, indent=2,
                        default=str), encoding="utf-8")
@@ -277,6 +334,7 @@ def run_orchestrated(args, run_dir):
                 "generation": record["request"]["metadata_generation"],
                 "persist_seconds": record["persist_seconds"],
                 "checksum": record["request"]["checksum"],
+                "runtime_stats": record.get("runtime_stats", {}),
             }, sort_keys=True) + "\n")
     with (run_dir / "timeline.jsonl").open("w", encoding="utf-8") as timeline:
         for record in source["checkpoints"]:

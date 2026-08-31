@@ -42,6 +42,26 @@ class NPUNVMERequest(ctypes.Structure):
     pass
 
 
+class NPUNVMEStats(ctypes.Structure):
+    _fields_ = [
+        ("nvme_submit_count", ctypes.c_uint64),
+        ("nvme_complete_count", ctypes.c_uint64),
+        ("nvme_outstanding", ctypes.c_uint32),
+        ("nvme_outstanding_peak", ctypes.c_uint32),
+        ("dma_inflight", ctypes.c_uint32),
+        ("dma_inflight_peak", ctypes.c_uint32),
+        ("request_ring_depth", ctypes.c_uint32),
+        ("request_ring_peak", ctypes.c_uint32),
+        ("async_dma_submit_count", ctypes.c_uint64),
+        ("async_event_query_count", ctypes.c_uint64),
+        ("async_event_query_error_count", ctypes.c_uint64),
+        ("stream_sync_fallback_count", ctypes.c_uint64),
+        ("spdk_retry_count", ctypes.c_uint64),
+        ("completion_error_count", ctypes.c_uint64),
+        ("reactor_cpu_us", ctypes.c_uint64),
+    ]
+
+
 try:
     lib = ctypes.CDLL(_LIB_PATH)
 
@@ -108,6 +128,10 @@ try:
 
     lib.npu_nvme_get_total_blocks.argtypes = [ctypes.POINTER(NPUNVMEContext)]
     lib.npu_nvme_get_total_blocks.restype = ctypes.c_uint64
+    if hasattr(lib, "npu_nvme_get_stats"):
+        lib.npu_nvme_get_stats.argtypes = [ctypes.POINTER(NPUNVMEContext),
+                                           ctypes.POINTER(NPUNVMEStats)]
+        lib.npu_nvme_get_stats.restype = ctypes.c_int
 
     # -- Synchronous metadata I/O --
     lib.npu_nvme_sync_meta_io.argtypes = [
