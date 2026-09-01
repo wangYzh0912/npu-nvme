@@ -69,6 +69,23 @@ def train_steps(ms, cell, begin, end, seq_len):
     return losses, elapsed
 
 
+def continuation_oracle(source, baseline, target):
+    """Return the continuous source-process trajectory after ``target``.
+
+    Ascend GRAPH_MODE may choose slightly different floating-point reduction
+    orders when the same graph is compiled in an independent process.  The
+    source process continuing from the frozen state is therefore the semantic
+    no-restart oracle; the separate baseline remains the performance control.
+    """
+    source_losses = source.get("continuous_losses")
+    if source_losses is None:
+        return baseline["losses"][target:], "independent_process_baseline"
+    if len(source_losses) < target:
+        raise ValueError(
+            f"source loss trajectory has {len(source_losses)} steps, target={target}")
+    return source_losses[target:], "source_process_continuation"
+
+
 def build(args):
     import mindspore as ms
     from experiments.common import init_env, make_causal_lm_training
@@ -107,6 +124,7 @@ def phase_source(args, run_dir):
     steps = [int(item) for item in args.checkpoint_steps]
     previous = 0
     records = []
+    continuous_losses = []
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=args.npu,
         pipeline_depth=args.pipeline_depth, requested_chunk_size=args.chunk_size,
@@ -147,7 +165,9 @@ def phase_source(args, run_dir):
 
         for step in steps:
             train_started = time.monotonic_ns()
-            train_steps(ms, cell, previous + 1, step, args.seq_len)
+            interval_losses, _ = train_steps(
+                ms, cell, previous + 1, step, args.seq_len)
+            continuous_losses.extend(interval_losses)
             train_ended = time.monotonic_ns()
             for _handle, record in pending:
                 record.setdefault("overlapped_training_interval", {
@@ -195,7 +215,9 @@ def phase_source(args, run_dir):
             previous = step
         if previous < args.total_steps:
             trailing_started = time.monotonic_ns()
-            train_steps(ms, cell, previous + 1, args.total_steps, args.seq_len)
+            trailing_losses, _ = train_steps(
+                ms, cell, previous + 1, args.total_steps, args.seq_len)
+            continuous_losses.extend(trailing_losses)
             trailing_ended = time.monotonic_ns()
             for _handle, record in pending:
                 record.setdefault("overlapped_training_interval", {
@@ -206,9 +228,15 @@ def phase_source(args, run_dir):
             finish_one()
         if not records:
             raise RuntimeError("no checkpoint generation was accepted")
+        if len(continuous_losses) != args.total_steps:
+            raise RuntimeError(
+                f"continuous loss trajectory has {len(continuous_losses)} steps, "
+                f"expected {args.total_steps}")
         (run_dir / "source.json").write_text(
             json.dumps({"status": "pass", "checkpoints": records,
-                        "admission_events": admission_events}, indent=2,
+                        "admission_events": admission_events,
+                        "continuous_losses": continuous_losses,
+                        "continuous_final_state": digest_state(model, optimizer)}, indent=2,
                        default=str), encoding="utf-8")
     finally:
         ckpt.cleanup()
@@ -243,17 +271,24 @@ def phase_restore(args, run_dir):
             raise AssertionError("data cursor mismatch")
         losses, elapsed = train_steps(ms, cell, target + 1,
                                       args.total_steps, args.seq_len)
-        expected = np.asarray(baseline["losses"][target:], dtype=np.float64)
+        expected_losses, oracle = continuation_oracle(source, baseline, target)
+        expected = np.asarray(expected_losses, dtype=np.float64)
         actual = np.asarray(losses, dtype=np.float64)
         if expected.shape != actual.shape or not np.allclose(
                 expected, actual, rtol=args.loss_rtol, atol=args.loss_atol):
-            raise AssertionError("fresh continuation loss mismatch")
+            max_abs = (float(np.max(np.abs(expected - actual)))
+                       if expected.shape == actual.shape and expected.size else None)
+            raise AssertionError(
+                f"fresh continuation loss mismatch oracle={oracle} "
+                f"expected={expected.tolist()} actual={actual.tolist()} "
+                f"max_abs={max_abs}")
         result = {"status": "pass", "model": args.model, "mode": args.mode,
                   "seed": args.seed, "pci": args.pci, "npu": args.npu,
                   "request_id": target_record["request"]["request_id"],
                   "generation": target_record["request"]["metadata_generation"],
                   "checkpoint_step": target, "persisted": True,
                   "restore_verified": True, "loss_allclose": True,
+                  "continuation_oracle": oracle,
                   "loaded_state_byte_exact": True,
                   "state_after_restore": loaded_state,
                   "state_after_continuation": digest_state(model, optimizer),
@@ -334,9 +369,17 @@ def run_orchestrated(args, run_dir):
         failure = {"status": "fail", "phase": phase, "error": repr(error)}
         with (run_dir / "failures.jsonl").open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(failure, sort_keys=True) + "\n")
+        source_path = run_dir / "source.json"
+        source_persisted = False
+        if source_path.exists():
+            source_result = json.loads(source_path.read_text(encoding="utf-8"))
+            source_persisted = bool(source_result.get("checkpoints")) and all(
+                record.get("request", {}).get("state") == "PERSISTED"
+                for record in source_result.get("checkpoints", []))
         (run_dir / "result.json").write_text(
             json.dumps({**failure, "run_id": run_dir.name,
-                        "persisted": False, "restore_verified": False}, indent=2),
+                        "persisted": source_persisted,
+                        "restore_verified": False}, indent=2),
             encoding="utf-8")
         raise
     result = json.loads((run_dir / "restore.json").read_text())

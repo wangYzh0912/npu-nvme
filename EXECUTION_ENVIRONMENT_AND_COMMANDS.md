@@ -184,6 +184,11 @@ Arithmetic PMU issue ratio 的时间投影不是整颗 NPU Vector 利用率；`h
 单盘单卡 FULL 训练基准统一使用 `run_single_card_full.py`。它会依次启动连续训练
 基线、source 保存进程和 fresh restore 进程；source 只有在数据、flush 和 metadata
 均完成后才退出，restore 失败或续训 loss 不一致时返回非零退出码。
+独立 `none` 进程用于性能对照；恢复后的 loss 正确性以 source 进程从冻结点继续训练的
+轨迹为 oracle，避免把 Ascend GRAPH_MODE 在两个独立进程中重新编译产生的浮点归约差异
+误判为 checkpoint 损坏。加载后的 model+optimizer digest 仍必须与冻结态字节一致。
+若数据已经持久化但恢复或续训门禁失败，结果会保留 `persisted: true` 并以
+`restore_verified: false` 区分失败阶段。
 
 ```bash
 python experiments/benchmarks/run_single_card_full.py --dry-run
