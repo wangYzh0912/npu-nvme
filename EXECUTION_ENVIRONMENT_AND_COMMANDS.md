@@ -225,6 +225,24 @@ python experiments/benchmarks/s3_training_io_matrix.py --model gpt2_xl \
 ```bash
 python tests/hardware/stage4_fault_lifecycle.py --npu 7 --pci 0000:83:00.0 \
   --output results/stage4-fault-lifecycle
+python experiments/benchmarks/s4_control_matrix.py \
+  --dma-slots 1 2 4 --checkpoint-slots 1 2 4 \
+  --delays-ms 0 100 1000 5000 --intervals 1 5 10 \
+  --npu 7 --pci 0000:83:00.0 --output-root results/stage4-control/formal
+```
+
+阶段 2--4 长时间正式矩阵使用统一入口。入口拒绝 dirty worktree，并在任一阶段失败时
+立即返回非零；中断后以相同参数加 `--resume`，只复用 campaign 中已有结果文件且状态为
+`pass` 的样本：
+
+```bash
+python experiments/benchmarks/run_full_long_validation.py \
+  --output-root /tmp/npu-nvme-longrun-$(git rev-parse --short=12 HEAD) \
+  --index-path results/full-io-longrun-$(git rev-parse --short=12 HEAD).json
+# 中断恢复
+python experiments/benchmarks/run_full_long_validation.py --resume \
+  --output-root /tmp/npu-nvme-longrun-$(git rev-parse --short=12 HEAD) \
+  --index-path results/full-io-longrun-$(git rev-parse --short=12 HEAD).json
 ```
 
 上述真实 NPU/NVMe 命令均须套用第 3 节 root shell 模板。阶段 2 只有在回读

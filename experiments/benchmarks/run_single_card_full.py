@@ -102,7 +102,7 @@ def phase_baseline(args, run_dir):
 
 
 def phase_source(args, run_dir):
-    from direct_checkpoint import DirectCheckpoint
+    from direct_checkpoint import (CheckpointBusyError, DirectCheckpoint)
     ms, model, optimizer, cell = build(args)
     steps = [int(item) for item in args.checkpoint_steps]
     previous = 0
@@ -112,27 +112,28 @@ def phase_source(args, run_dir):
         pipeline_depth=args.pipeline_depth, requested_chunk_size=args.chunk_size,
         enable_profiling=True, profiling_dir=str(run_dir / "raw"),
         keep_last_n=args.keep_last_n, slot_size_gb=args.slot_size_gb,
-        spdk_shm_id=args.shm_id)
+        spdk_shm_id=args.shm_id, checkpoint_slots=args.checkpoint_slots,
+        admission=args.admission)
     try:
-        pending = None
-        pending_record = None
+        pending = []
+        admission_events = []
 
-        def finish_pending():
-            nonlocal pending, pending_record
-            if pending is None:
+        def finish_one():
+            if not pending:
                 return
+            handle, pending_record = pending.pop(0)
             wait_started = time.perf_counter()
-            pending.wait(timeout=args.timeout)
+            handle.wait(timeout=args.timeout)
             pending_record["foreground_wait_seconds"] = (
                 time.perf_counter() - wait_started)
-            if pending.state.value != "PERSISTED":
+            if handle.state.value != "PERSISTED":
                 raise RuntimeError(
-                    f"checkpoint did not persist: {pending.as_dict()}")
-            pending_record["request"] = pending.as_dict()
+                    f"checkpoint did not persist: {handle.as_dict()}")
+            pending_record["request"] = handle.as_dict()
             interval = pending_record.get("overlapped_training_interval")
             if interval:
                 event_times = {event["state"]: event["monotonic_ns"]
-                               for event in pending.events}
+                               for event in handle.events}
                 io_start = event_times.get("DMA_COPYING")
                 io_end = event_times.get("PERSISTED")
                 if io_start is not None and io_end is not None:
@@ -143,19 +144,19 @@ def phase_source(args, run_dir):
                 time.perf_counter() - pending_record.pop("started"))
             pending_record["runtime_stats"] = ckpt.get_runtime_stats()
             records.append(pending_record)
-            pending = None
-            pending_record = None
 
         for step in steps:
             train_started = time.monotonic_ns()
             train_steps(ms, cell, previous + 1, step, args.seq_len)
             train_ended = time.monotonic_ns()
-            if pending_record is not None:
-                pending_record["overlapped_training_interval"] = {
+            for _handle, record in pending:
+                record.setdefault("overlapped_training_interval", {
                     "start_monotonic_ns": train_started,
                     "end_monotonic_ns": train_ended,
-                }
-            finish_pending()
+                })
+            if args.mode == "serial":
+                while pending:
+                    finish_one()
             controls = {
                 "global_step": np.asarray(optimizer.global_step.asnumpy()).copy(),
                 "loss_scale": np.float32(1.0),
@@ -167,11 +168,17 @@ def phase_source(args, run_dir):
             }
             checkpoint_state = digest_state(model, optimizer)
             started = time.perf_counter()
-            handle = ckpt.save_state(
-                {"model": model, "optimizer": optimizer}, controls,
-                step=step, meta_path=str(run_dir / f"meta_{step:06d}.pkl"),
-                io_mode=args.mode)
-            pending = handle
+            try:
+                handle = ckpt.save_state(
+                    {"model": model, "optimizer": optimizer}, controls,
+                    step=step, meta_path=str(run_dir / f"meta_{step:06d}.pkl"),
+                    io_mode=args.mode, admission=args.admission)
+            except CheckpointBusyError as error:
+                admission_events.append({"step": step, "status": "BUSY",
+                                         "generation_created": False,
+                                         "error": str(error)})
+                previous = step
+                continue
             pending_record = {
                 "step": step, "started": started,
                 "dispatch_seconds": time.perf_counter() - started,
@@ -181,21 +188,27 @@ def phase_source(args, run_dir):
                     "end_monotonic_ns": train_ended,
                 },
             }
-            if args.mode == "serial":
-                finish_pending()
+            pending.append((handle, pending_record))
+            admission_events.append({"step": step, "status": "ACCEPTED",
+                                     "request_id": handle.request_id,
+                                     "generation": handle.generation})
             previous = step
         if previous < args.total_steps:
             trailing_started = time.monotonic_ns()
             train_steps(ms, cell, previous + 1, args.total_steps, args.seq_len)
             trailing_ended = time.monotonic_ns()
-            if pending_record is not None:
-                pending_record["overlapped_training_interval"] = {
+            for _handle, record in pending:
+                record.setdefault("overlapped_training_interval", {
                     "start_monotonic_ns": trailing_started,
                     "end_monotonic_ns": trailing_ended,
-                }
-        finish_pending()
+                })
+        while pending:
+            finish_one()
+        if not records:
+            raise RuntimeError("no checkpoint generation was accepted")
         (run_dir / "source.json").write_text(
-            json.dumps({"status": "pass", "checkpoints": records}, indent=2,
+            json.dumps({"status": "pass", "checkpoints": records,
+                        "admission_events": admission_events}, indent=2,
                        default=str), encoding="utf-8")
     finally:
         ckpt.cleanup()
@@ -308,6 +321,9 @@ def run_orchestrated(args, run_dir):
                         "--pipeline-depth", str(args.pipeline_depth),
                         "--keep-last-n", str(args.keep_last_n),
                         "--slot-size-gb", str(args.slot_size_gb),
+                        "--checkpoint-slots", str(args.checkpoint_slots),
+                        "--admission", args.admission,
+                        "--generation-delay-ms", str(args.generation_delay_ms),
                         "--shm-id", str(args.shm_id), "--timeout", str(args.timeout),
                         "--loss-rtol", str(args.loss_rtol),
                         "--loss-atol", str(args.loss_atol)]
@@ -346,6 +362,10 @@ def run_orchestrated(args, run_dir):
             }, sort_keys=True) + "\n")
         result.update({"run_id": run_dir.name, "samples": len(args.checkpoint_steps),
                    "failed_samples": 0,
+                   "accepted_generations": len(source["checkpoints"]),
+                   "busy_requests": sum(
+                       event.get("status") == "BUSY"
+                       for event in source.get("admission_events", [])),
                    "paths": {
                        "config": "config.json", "environment": "environment.json",
                        "commit": "commit.json", "samples": "samples.jsonl",
@@ -378,6 +398,9 @@ def main():
     parser.add_argument("--pipeline-depth", type=int, default=4)
     parser.add_argument("--keep-last-n", type=int, default=3)
     parser.add_argument("--slot-size-gb", type=int, default=10)
+    parser.add_argument("--checkpoint-slots", type=int, default=1)
+    parser.add_argument("--admission", choices=("block", "try"), default="block")
+    parser.add_argument("--generation-delay-ms", type=int, default=0)
     parser.add_argument("--shm-id", type=int, default=17041)
     parser.add_argument("--timeout", type=float, default=900.0)
     parser.add_argument("--loss-rtol", type=float, default=1e-5)
@@ -405,6 +428,11 @@ def main():
     # This branch is an acceptance harness for complete training state only.
     # Child baseline/source/restore processes inherit the explicit freeze.
     os.environ["NPU_NVME_FULL_ONLY"] = "1"
+    if args.generation_delay_ms:
+        os.environ["NPU_NVME_TEST_GENERATION_DELAY_MS"] = str(
+            args.generation_delay_ms)
+    else:
+        os.environ.pop("NPU_NVME_TEST_GENERATION_DELAY_MS", None)
     run_dir = Path(args.run_dir).resolve()
     run_dir.mkdir(parents=True, exist_ok=True)
     if args.phase == "orchestrate":

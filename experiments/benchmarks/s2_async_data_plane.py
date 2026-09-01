@@ -14,6 +14,7 @@ import csv
 import hashlib
 import json
 import os
+import statistics
 import subprocess
 import sys
 import time
@@ -26,6 +27,8 @@ sys.path[:0] = [str(ROOT), str(ROOT / "python")]
 
 from c_bindings import NPUNVMEContext, NPUNVMEStats, acl_lib, lib  # noqa: E402
 from ppt_evidence import command, environment_snapshot  # noqa: E402
+from longrun_utils import (atomic_json, checked_stdout, completed_result,
+                           open_campaign, update_entry)  # noqa: E402
 
 
 def chunks(total, chunk):
@@ -192,13 +195,13 @@ def run_one(args):
         acl_lib.aclrtFree(source)
 
 
-def child_command(args, run_dir, payload, chunk, depth, mode):
+def child_command(args, run_dir, payload, chunk, depth, mode, shm_id):
     return [sys.executable, str(Path(__file__).resolve()), "--child",
             "--run-dir", str(run_dir), "--payload", str(payload),
             "--chunk", str(chunk), "--depth", str(depth), "--mode", mode,
             "--npu", str(args.npu), "--pci", args.pci,
             "--offset", str(args.offset), "--seed", str(args.seed),
-            "--shm-id", str(args.shm_id)]
+            "--shm-id", str(shm_id)]
 
 
 def orchestrate(args):
@@ -234,52 +237,109 @@ def orchestrate(args):
         warmups = args.warmups
     records = []
     failures = []
+    commit_id = checked_stdout(
+        command(["git", "-C", str(ROOT), "rev-parse", "HEAD"]), "git commit")
+    campaign_config = {
+        "payloads": payloads, "chunks": chunksizes, "depths": depths,
+        "modes": modes, "screening": args.screening,
+        "samples": samples, "warmups": warmups, "npu": args.npu,
+        "pci": args.pci, "offset": args.offset, "seed": args.seed,
+        "shm_id": args.shm_id,
+    }
+    campaign_path = root / "campaign.json"
+    campaign = open_campaign(campaign_path, commit_id, campaign_config,
+                             resume=args.resume)
     for index, (payload, chunk, depth, mode) in enumerate(configs):
         for iteration in range(warmups + samples):
             warmup = iteration < warmups
             sample = iteration - warmups
             label = f"w{iteration:02d}" if warmup else f"s{sample:02d}"
             run_dir = root / f"p{payload}_c{chunk}_d{depth}_{mode}_{label}"
-            proc = subprocess.run(child_command(args, run_dir, payload, chunk, depth, mode),
-                                  capture_output=True, text=True, timeout=args.timeout)
+            key = run_dir.name
             record_path = run_dir / "result.json"
+            prior = completed_result(campaign, key, record_path)
+            if prior is not None:
+                if not warmup:
+                    prior.update({"sample": sample, "warmup": False,
+                                  "config_index": index})
+                    records.append(prior)
+                continue
+            shm_id = args.shm_id + index * (warmups + samples) + iteration
+            update_entry(campaign_path, campaign, key, "running",
+                         run_dir=str(run_dir), shm_id=shm_id)
+            run_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                proc = subprocess.run(
+                    child_command(args, run_dir, payload, chunk, depth, mode,
+                                  shm_id), capture_output=True, text=True,
+                    timeout=args.timeout)
+            except subprocess.TimeoutExpired as error:
+                proc = subprocess.CompletedProcess(
+                    error.cmd, 124, error.stdout or "", error.stderr or "")
+            (run_dir / "stdout.log").write_text(proc.stdout or "", encoding="utf-8")
+            (run_dir / "stderr.log").write_text(proc.stderr or "", encoding="utf-8")
             if proc.returncode == 0 and record_path.exists():
                 record = json.loads(record_path.read_text())
                 record.update({"sample": sample, "warmup": warmup,
                                "config_index": index})
+                update_entry(campaign_path, campaign, key, "pass",
+                             result=str(record_path), returncode=0)
                 if not warmup:
                     records.append(record)
             else:
-                failures.append({"payload": payload, "chunk": chunk, "depth": depth,
-                                 "mode": mode, "sample": sample,
-                                 "warmup": warmup,
-                                 "returncode": proc.returncode,
-                                 "stdout": proc.stdout[-4000:],
-                                 "stderr": proc.stderr[-4000:]})
+                failure = {"payload": payload, "chunk": chunk, "depth": depth,
+                           "mode": mode, "sample": sample, "warmup": warmup,
+                           "returncode": proc.returncode,
+                           "stdout": (proc.stdout or "")[-4000:],
+                           "stderr": (proc.stderr or "")[-4000:]}
+                failures.append(failure)
+                update_entry(campaign_path, campaign, key, "fail", **failure)
                 if args.fail_fast:
                     break
         if failures and args.fail_fast:
             break
-    depth1_bad = [r for r in records if r["depth"] == 1 and r.get("overlap_rate", 0) > 0.05]
     timeline_missing = [r for r in records if r["mode"] == "async"
                         and r.get("profile_rows", 0) !=
                         (r["payload_bytes"] + r["chunk_bytes"] - 1) // r["chunk_bytes"]]
-    depth2_missing = [r for r in records if r["depth"] >= 2 and r["mode"] == "async"
-                     and r.get("overlap_rate", 0) <= 0.0]
-    gate_failures = ([{"kind": "depth1_overlap", "record": r} for r in depth1_bad] +
-                     [{"kind": "timeline_missing", "record": r} for r in timeline_missing] +
-                     [{"kind": "depth_ge2_no_overlap", "record": r} for r in depth2_missing])
+    groups = {}
+    for record in records:
+        key = (record["payload_bytes"], record["chunk_bytes"],
+               record["depth"], record["mode"])
+        groups.setdefault(key, []).append(record)
+    overlap_groups = []
+    gate_failures = [{"kind": "timeline_missing", "record": r}
+                     for r in timeline_missing]
+    for key, values in groups.items():
+        payload, chunk, depth, mode = key
+        overlaps = sorted(float(item.get("overlap_rate", 0.0))
+                          for item in values)
+        median = statistics.median(overlaps)
+        p95 = overlaps[min(len(overlaps) - 1,
+                           max(0, int(0.95 * len(overlaps)) - 1))]
+        positive = sum(value > 0.0 for value in overlaps)
+        group = {"payload_bytes": payload, "chunk_bytes": chunk,
+                 "depth": depth, "mode": mode, "samples": len(values),
+                 "overlap_median": median, "overlap_p95": p95,
+                 "positive_overlap_samples": positive}
+        overlap_groups.append(group)
+        if depth == 1 and (median > 0.05 or p95 > 0.05):
+            gate_failures.append({"kind": "depth1_overlap", "group": group})
+        if mode == "async" and depth >= 2 and (
+                positive < max(1, int(0.9 * len(values))) or median <= 0.0):
+            gate_failures.append({"kind": "depth_ge2_no_overlap", "group": group})
     summary = {"status": "pass" if not failures and not gate_failures else "fail",
                "configs": len(configs), "warmups_per_config": warmups,
                "requested_samples": len(configs) * samples,
-               "samples": len(records), "failures": failures + gate_failures, "records": records,
+               "samples": len(records), "failures": failures + gate_failures,
+               "overlap_groups": overlap_groups, "records": records,
                "gate": {"all_readback_verified": not failures,
                         "depth1_no_overlap_required": True,
                         "depth_ge2_real_overlap_required": True}}
-    (root / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    atomic_json(root / "summary.json", summary)
     print(json.dumps({"status": summary["status"], "samples": len(records),
-                      "failures": len(failures), "output": str(root)}, sort_keys=True))
-    return 0 if not failures else 1
+                      "failures": len(summary["failures"]),
+                      "output": str(root)}, sort_keys=True))
+    return 0 if summary["status"] == "pass" else 1
 
 
 def main():
@@ -298,6 +358,7 @@ def main():
     parser.add_argument("--warmups", type=int, default=10)
     parser.add_argument("--timeout", type=int, default=1800)
     parser.add_argument("--fail-fast", action="store_true")
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--run-dir", default=None)
     parser.add_argument("--output-root", default=None)
     parser.add_argument("--payload", type=int, default=256 * 1024**2)

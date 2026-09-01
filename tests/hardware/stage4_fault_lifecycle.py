@@ -227,6 +227,7 @@ def main():
     parser.add_argument("--pci", default="0000:83:00.0")
     parser.add_argument("--npu", type=int, default=7)
     parser.add_argument("--depth", type=int, default=2)
+    parser.add_argument("--checkpoint-slots", type=int, default=1)
     parser.add_argument("--shm-id", type=int, default=18300)
     parser.add_argument("--output", type=Path, default=Path("/tmp/stage4-fault"))
     parser.add_argument("--timeout-bound", type=float, default=0.20)
