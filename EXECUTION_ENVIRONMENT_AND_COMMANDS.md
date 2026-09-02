@@ -308,3 +308,26 @@ git log -1 --oneline
 P2 残差超过 10% 时不得画精确百分比；P4 的 `throughput_overhead` 和 `step_overhead`
 不可互换；P5 RSS 含运行时基线；P6 PMU 投影不等于整机占用；短样本、单 seed、GPT-2
 只能报告趋势，不能替代 GPT-2 XL 多 seed 正式门禁。
+
+## 阶段 5/6 多卡入口
+
+阶段 5 先运行单 Reactor 协议和 rank 分区门禁；`--run-c2` 才会启动现有
+两 rank 真实训练态 coordinator。该 C2 路径是 Unix-socket host staging，
+结果中会显式标注 transport，不能作为共享 DMA slot 或吞吐结论。
+
+```bash
+python experiments/benchmarks/stage5_multirank_reactor.py --world-size 2
+python experiments/benchmarks/stage5_multirank_reactor.py --world-size 2 --run-c2 \
+  --c2-run-dir /tmp/stage5-c2 --shm-id 50100 --coordinator-npu 7
+python experiments/benchmarks/stage5_multirank_reactor.py --world-size 4
+```
+
+阶段 6 使用统一 `msrun` wrapper；只有子进程自身完成 FULL 保存、退出、fresh
+restore 和续训校验时才算 checkpoint 通过，launcher exit 仅表示训练进程退出码。
+
+```bash
+python experiments/benchmarks/run_hccl_full.py --world-size 2 --steps 2 \
+  --output /tmp/hccl-gpt2-2p --script experiments/benchmarks/gpt2_13b_dist.py --dry-run
+python experiments/benchmarks/run_hccl_full.py --world-size 4 --steps 2 \
+  --output /tmp/hccl-gpt2-4p --rank-table config/rank_table_4p.example.json
+```
