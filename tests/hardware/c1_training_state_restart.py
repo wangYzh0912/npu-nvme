@@ -47,7 +47,7 @@ def build_training(args):
     np.random.seed(args.seed)
     model, _dataset, optimizer = make_causal_lm_training(
         args.model, total_steps=1, device_id=args.npu, seq_len=args.seq_len,
-        dropout_rate=args.dropout_rate)
+        dropout_rate=args.dropout_rate, require_dataset=False)
     cell = ProbeTrainOneStepCell(
         model, optimizer, enable_probe=False, ckpt_interval=999999)
     # A fresh GRAPH_MODE model still owns lazy initializers.  Loading before

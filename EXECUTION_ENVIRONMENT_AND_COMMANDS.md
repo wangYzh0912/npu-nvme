@@ -330,4 +330,20 @@ python experiments/benchmarks/run_hccl_full.py --world-size 2 --steps 2 \
   --output /tmp/hccl-gpt2-2p --script experiments/benchmarks/gpt2_13b_dist.py --dry-run
 python experiments/benchmarks/run_hccl_full.py --world-size 4 --steps 2 \
   --output /tmp/hccl-gpt2-4p --rank-table config/rank_table_4p.example.json
+
+# FULL checkpoint acceptance: rank-local state, one coordinator commit,
+# source exit, fresh per-rank restore, and continuation verification.
+python experiments/benchmarks/run_hccl_full.py --c2-full --world-size 2 \
+  --master-port 8127 --steps 2 --output /tmp/hccl-full-gpt2-2p \
+  --rank-table /path/to/rank_table_2p.json -- \
+  --pci 0000:83:00.0 --coordinator-npu 7 --slot-size-gb 4 --shm-id 50120
+python experiments/benchmarks/run_hccl_full.py --c2-full --world-size 4 \
+  --master-port 8128 --steps 2 --output /tmp/hccl-full-gpt2-4p \
+  --rank-table /path/to/rank_table_4p.json -- \
+  --pci 0000:83:00.0 --coordinator-npu 7 --slot-size-gb 4 --shm-id 50140
 ```
+
+`--c2-full` 的 HCCL source 阶段为真实多 rank 训练；当前 fresh restore 因 SPDK
+primary 唯一所有者约束按 rank 串行执行，并在 standalone context 中续训校验。该结果不
+表示 restore 后已重新建立 HCCL。`--master-port` 会同时传入外层记录和内层 `msrun`，
+并行执行多个验收时必须为每组分配不同端口和 `--shm-id`。

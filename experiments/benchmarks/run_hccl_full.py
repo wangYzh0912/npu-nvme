@@ -49,11 +49,15 @@ def main():
         command += ["--run-dir", str(output),
                     "--world-size", str(args.world_size), "--hccl",
                     "--rank-devices", devices,
+                    "--master-port", str(args.master_port),
                     "--save-step", str(max(1, args.steps)),
                     "--continue-steps", "1"]
     else:
         command += ["--steps", str(args.steps), "--output", str(output)]
-    command += list(args.child_args)
+    child_args = list(args.child_args)
+    if child_args[:1] == ["--"]:
+        child_args.pop(0)
+    command += child_args
     env = os.environ.copy()
     if args.rank_table:
         env["RANK_TABLE_FILE"] = str(Path(args.rank_table).resolve())

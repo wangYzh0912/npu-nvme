@@ -61,7 +61,11 @@ def effective_rank_id(args):
 
 def effective_rank_device(args):
     if args.hccl:
-        return int(os.getenv("ASCEND_DEVICE_ID", os.getenv("DEVICE_ID", args.npu)))
+        configured = os.getenv("ASCEND_DEVICE_ID", os.getenv("DEVICE_ID"))
+        if configured is not None:
+            return int(configured)
+        rank_id = effective_rank_id(args)
+        return dict(rank_mapping(args))[rank_id]
     return args.npu
 
 
@@ -241,7 +245,7 @@ def rank_restore(args, rank_id, npu_id):
     try:
         controls = ckpt.load_state(
             {"model": model, "optimizer": optimizer}, step=args.save_step)
-        apply_control_state(ms, controls, args.save_step, args)
+        apply_control_state(ms, optimizer, controls, args.save_step, args)
         losses, _ = train_range(
             ms, cell, args.save_step + 1,
             args.save_step + args.continue_steps, args.seq_len)
@@ -405,7 +409,8 @@ def child_args(args, phase, rank_id=None, npu_id=None, include_hccl=None):
               "--continue-steps", str(args.continue_steps), "--loss-scale", str(args.loss_scale),
               "--dropout-rate", str(args.dropout_rate), "--pipeline-depth", str(args.pipeline_depth),
               "--slot-size-gb", str(args.slot_size_gb), "--shm-id", str(args.shm_id)]
-    result += ["--world-size", str(args.world_size), "--rank-devices",
+    result += ["--master-port", str(args.master_port),
+               "--world-size", str(args.world_size), "--rank-devices",
                ",".join(str(device) for _, device in rank_mapping(args))]
     if include_hccl is None:
         include_hccl = args.hccl
@@ -435,6 +440,7 @@ def main():
     parser.add_argument("--pipeline-depth", type=int, default=8)
     parser.add_argument("--slot-size-gb", type=int, default=10)
     parser.add_argument("--shm-id", type=int, default=94)
+    parser.add_argument("--master-port", type=int, default=8127)
     parser.add_argument("--world-size", type=int, choices=(2, 4), default=2)
     parser.add_argument("--rank-devices", default=None)
     parser.add_argument("--hccl", action="store_true")
@@ -467,8 +473,9 @@ def main():
         if args.hccl:
             command = ["msrun", f"--worker_num={args.world_size}",
                        f"--local_worker_num={args.world_size}",
-                       "--master_addr=127.0.0.1", "--master_port=8127",
-                       sys.executable, str(Path(__file__).resolve()),
+                       "--master_addr=127.0.0.1", f"--master_port={args.master_port}",
+                       "--join=True", "--log_dir=hccl_logs",
+                       str(Path(__file__).resolve()),
                        "--phase", "rank", "--run-dir", str(Path(args.run_dir).resolve()),
                        "--pci", args.pci, "--model", args.model,
                        "--seq-len", str(args.seq_len), "--seed", str(args.seed),

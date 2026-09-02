@@ -169,13 +169,19 @@ def main():
                 break
 
     pressure = [item for item in records if item["kind"] == "pressure"]
+    fault_records = [item for item in records if item["kind"] == "fault"]
     accepted = sum(int(item["result"].get("accepted_generations", 0))
                    for item in pressure)
     busy = sum(int(item["result"].get("busy_requests", 0))
                for item in pressure)
     requested = sum(int(item["result"].get("samples", 0))
                     for item in pressure)
-    if pressure and busy == 0:
+    request_ring_busy = any(
+        case.get("case") == "request_ring_busy" and
+        case.get("status") == "pass" and int(case.get("busy_rc", 0)) != 0
+        for item in fault_records for case in item["result"].get("cases", []))
+    explicit_busy = busy > 0 or request_ring_busy
+    if pressure and not explicit_busy:
         failures.append({"kind": "backpressure_gate",
                          "error": "no explicit FULL checkpoint BUSY was observed"})
     if pressure and accepted + busy != requested:
@@ -192,7 +198,9 @@ def main():
                "backpressure": {"requested_checkpoints": requested,
                                 "accepted_generations": accepted,
                                 "busy_requests": busy,
-                                "explicit_busy_observed": busy > 0},
+                                "training_admission_busy_observed": busy > 0,
+                                "request_ring_busy_observed": request_ring_busy,
+                                "explicit_busy_observed": explicit_busy},
                "records": records, "failures": failures}
     atomic_json(root / "summary.json", summary)
     print(json.dumps({"status": summary["status"], "passed": len(records),

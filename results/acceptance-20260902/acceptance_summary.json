@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-02",
+  "source_base_commit": "ec798bb38fb1ed3785a680a28bb68aeb8e8f55d5",
+  "scope": "FULL-only single-disk I/O, recovery, single-Reactor multi-rank, and HCCL save",
+  "status": "pass_with_documented_boundary",
+  "regression": {
+    "python_tests": {"passed": 99, "failed": 0},
+    "c_smoke": {
+      "reactor_v0_test": 0,
+      "reactor_v0_spdk_thread_test": 0,
+      "v2_smoke_test": 0
+    }
+  },
+  "stage1": {
+    "gpt2_serial": {"status": "pass", "generations": 3, "latest_generation": 1284, "strict_gate": true},
+    "gpt2_xl_serial": {"status": "pass", "generations": 3, "latest_generation": 1099, "strict_gate": true}
+  },
+  "stage2": {
+    "screening": {"status": "pass", "configs": 108, "samples": 324, "failures": 0},
+    "formal": {
+      "payload_bytes": 1484135432,
+      "chunk_bytes": 4194304,
+      "warmups_per_depth": 10,
+      "samples_per_depth": 30,
+      "depths": {
+        "2": {"status": "pass", "overlap_median": 0.994465420946282},
+        "4": {"status": "pass", "overlap_median": 0.9940463498934149},
+        "8": {"status": "pass", "overlap_median": 0.9948096480242534}
+      }
+    }
+  },
+  "stage3": {"status": "pass", "runs": 24, "failures": 0, "modes": ["none", "serial", "queue", "async"]},
+  "stage4": {
+    "fault_lifecycle_cases": 11,
+    "fault_lifecycle_status": "pass",
+    "pressure": {
+      "2_2": {"status": "pass", "configs": 6, "accepted_generations": 36},
+      "4_4": {"status": "pass", "configs": 6, "accepted_generations": 36},
+      "training_admission_busy_observed": false,
+      "request_ring_busy_observed": true
+    }
+  },
+  "stage5": {
+    "2_rank": {"status": "pass", "generation": 1206},
+    "4_rank": {"status": "pass", "generation": 1207}
+  },
+  "stage6": {
+    "2_rank_hccl": {"status": "pass", "generation": 1208},
+    "4_rank_hccl": {"status": "pass", "generation": 1209},
+    "restore_transport": "standalone-spdk-primary",
+    "hccl_rejoin_after_restore": false
+  },
+  "multi_reactor_decision": "deferred; no qualifying bottleneck evidence"
+}
