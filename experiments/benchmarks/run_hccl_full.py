@@ -27,17 +27,33 @@ def main():
     parser.add_argument("--master-port", type=int, default=8118)
     parser.add_argument("--checkpoint-summary", default="checkpoint_gate.json",
                         help="JSON summary emitted by the child FULL checkpoint runner")
+    parser.add_argument("--c2-full", action="store_true",
+                        help="run the rank-local FULL + single-coordinator gate")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("child_args", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
-    script = str(Path(args.script).resolve())
-    command = ["msrun", f"--worker_num={args.world_size}",
-               f"--local_worker_num={args.world_size}",
-               "--master_addr=127.0.0.1", f"--master_port={args.master_port}",
-               sys.executable, script, "--steps", str(args.steps),
-               "--output", str(output)] + list(args.child_args)
+    if args.c2_full:
+        script = str((Path(__file__).resolve().parents[2] /
+                      "tests/hardware/c2_multirank_state.py").resolve())
+        command = [sys.executable, script]
+    else:
+        script = str(Path(args.script).resolve())
+        command = ["msrun", f"--worker_num={args.world_size}",
+                   f"--local_worker_num={args.world_size}",
+                   "--master_addr=127.0.0.1", f"--master_port={args.master_port}",
+                   sys.executable, script]
+    if args.c2_full:
+        devices = "1,2" if args.world_size == 2 else "1,2,3,4"
+        command += ["--run-dir", str(output),
+                    "--world-size", str(args.world_size), "--hccl",
+                    "--rank-devices", devices,
+                    "--save-step", str(max(1, args.steps)),
+                    "--continue-steps", "1"]
+    else:
+        command += ["--steps", str(args.steps), "--output", str(output)]
+    command += list(args.child_args)
     env = os.environ.copy()
     if args.rank_table:
         env["RANK_TABLE_FILE"] = str(Path(args.rank_table).resolve())

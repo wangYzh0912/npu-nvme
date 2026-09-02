@@ -54,12 +54,13 @@ def main():
         raise ValueError("world size must be 2 or 4")
     result = protocol_gate(args.world_size, args.step, args.generation)
     if args.run_c2:
-        if args.world_size != 2:
-            raise ValueError("real C2 launcher currently supports world_size=2")
         command = [sys.executable, str(ROOT / "tests/hardware/c2_multirank_state.py"),
                    "--run-dir", args.c2_run_dir, "--pci", args.pci,
                    "--shm-id", str(args.shm_id),
-                   "--coordinator-npu", str(args.coordinator_npu)]
+                   "--coordinator-npu", str(args.coordinator_npu),
+                   "--world-size", str(args.world_size)]
+        devices = "1,2" if args.world_size == 2 else "1,2,3,4"
+        command += ["--rank-devices", devices]
         completed = subprocess.run(command, cwd=str(ROOT), check=False)
         result["c2_command"] = command
         result["c2_exit_code"] = completed.returncode
@@ -75,4 +76,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""C2: two real training ranks, single SPDK owner, and fresh restore.
+"""C2: 2/4 training ranks, single SPDK owner, and fresh restore.
 
 Ranks train a MindFormers model with a real Adam optimizer, freeze their
 local state into host chunks, and stream those chunks to one coordinator.
 The coordinator is the only process that opens 83.0.0.  A multi-rank
-generation is published only after both rank manifests and all payload
-checksums have arrived.  After commit, the original ranks run one continuation
+generation is published only after every rank manifest and payload checksum
+has arrived.  After commit, the original ranks run one continuation
 step and exit; fresh rank processes then load their own shard and compare that
 continuation loss.
 """
@@ -28,7 +28,8 @@ sys.path[:0] = [str(REPO_ROOT), str(REPO_ROOT / "python"),
                str(REPO_ROOT / "tests" / "hardware")]
 
 from c1_training_state_restart import (  # noqa: E402
-    apply_control_state, batch_for_step, build_training, iter_unique_parameters,
+    apply_control_state, batch_for_step, build_training as build_training_base,
+    iter_unique_parameters,
     state_digest, train_range, write_json,
 )
 from direct_checkpoint import DirectCheckpoint  # noqa: E402
@@ -39,7 +40,53 @@ from training_state import (TRAINING_STATE_SCHEMA_VERSION, encode_control_value)
 
 FRAME_LIMIT = 8 * 1024 * 1024
 DATA_CHUNK = 4 * 1024 * 1024
-RANKS = ((0, 1), (1, 2))
+DEFAULT_RANK_DEVICES = (1, 2, 3, 4)
+
+
+def rank_mapping(args):
+    configured = args.rank_devices
+    if configured is None:
+        configured = ",".join(str(item) for item in DEFAULT_RANK_DEVICES[:args.world_size])
+    devices = tuple(int(item) for item in configured.split(",") if item)
+    if len(devices) != args.world_size:
+        raise ValueError("--rank-devices must contain world_size device ids")
+    return tuple((rank, devices[rank]) for rank in range(args.world_size))
+
+
+def effective_rank_id(args):
+    if args.hccl:
+        return int(os.getenv("RANK_ID", os.getenv("OMPI_COMM_WORLD_RANK", args.rank_id)))
+    return args.rank_id
+
+
+def effective_rank_device(args):
+    if args.hccl:
+        return int(os.getenv("ASCEND_DEVICE_ID", os.getenv("DEVICE_ID", args.npu)))
+    return args.npu
+
+
+def build_training(args):
+    """Build the rank model, optionally joining the real HCCL process group."""
+    if not args.hccl:
+        return build_training_base(args)
+    import mindspore as ms
+    from mindspore import context
+    from mindspore.communication import get_group_size, init
+
+    device_id = effective_rank_device(args)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
+                        device_id=device_id)
+    init()
+    world = get_group_size()
+    if world != args.world_size:
+        raise RuntimeError(f"HCCL world size {world} != requested {args.world_size}")
+    context.set_auto_parallel_context(
+        device_num=world, parallel_mode="data_parallel",
+        gradients_mean=True, full_batch=False)
+    # Data-parallel ranks must start from identical parameter initialization;
+    # rank identity only selects the device/process, never the model seed.
+    ms.set_seed(args.seed)
+    return build_training_base(args)
 
 
 def shard_base(ckpt, rank_id, step, args):
@@ -52,7 +99,7 @@ def shard_base(ckpt, rank_id, step, args):
     base = ckpt.layout.full_end + 1024 * 1024 * 1024
     slot_index = rank_id * ckpt.keep_last_n + (step % ckpt.keep_last_n)
     offset = base + slot_index * ckpt.slot_bytes
-    end = base + 2 * ckpt.keep_last_n * ckpt.slot_bytes
+    end = base + args.world_size * ckpt.keep_last_n * ckpt.slot_bytes
     if end > ckpt.layout.delta_base:
         raise MemoryError("multi-rank correctness area overlaps Delta partition")
     return offset
@@ -145,6 +192,7 @@ def write_chunk(ckpt, absolute_offset, payload):
 
 
 def rank_train(args, rank_id, npu_id, socket_path):
+    args.rank_id, args.npu = rank_id, npu_id
     ms, model, optimizer, cell = build_training(args)
     losses, _ = train_range(ms, cell, 1, args.save_step, args.seq_len)
     fields, manifest = make_rank_payload(ms, model, optimizer, args.save_step, args)
@@ -187,7 +235,7 @@ def rank_restore(args, rank_id, npu_id):
     ms, model, optimizer, cell = build_training(args)
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=npu_id, pipeline_depth=args.pipeline_depth,
-        requested_chunk_size=DATA_CHUNK, rank_id=rank_id, world_size=2,
+        requested_chunk_size=DATA_CHUNK, rank_id=rank_id, world_size=args.world_size,
         keep_last_n=3, slot_size_gb=args.slot_size_gb, spdk_shm_id=args.shm_id,
         profiling_dir=str(Path(args.run_dir) / f"profiling_restore_{rank_id}"))
     try:
@@ -219,17 +267,17 @@ def coordinator(args):
         pass
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(socket_path)
-    server.listen(2)
+    server.listen(args.world_size)
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=args.coordinator_npu,
         pipeline_depth=args.pipeline_depth, requested_chunk_size=DATA_CHUNK,
-        rank_id=0, world_size=2, keep_last_n=3, slot_size_gb=args.slot_size_gb,
+        rank_id=0, world_size=args.world_size, keep_last_n=3, slot_size_gb=args.slot_size_gb,
         spdk_shm_id=args.shm_id, profiling_dir=str(Path(args.run_dir) / "profiling_coord"))
     connections, manifests = {}, {}
     try:
         with open(Path(args.run_dir) / "coordinator.ready", "w") as stream:
             stream.write("ready\n")
-        while len(manifests) < 2:
+        while len(manifests) < args.world_size:
             conn, _ = server.accept()
             header, _ = recv_frame(conn)
             if header.get("type") != "PREPARE":
@@ -298,14 +346,14 @@ def coordinator(args):
             if header.get("type") != "COMMIT_READY":
                 raise RuntimeError(f"rank {rank} did not reach COMMIT_READY")
             ready.add(rank)
-        if ready != {0, 1}:
+        if ready != set(range(args.world_size)):
             raise RuntimeError("not all ranks reached COMMIT_READY")
         next_generation = ckpt.metadata_generation + 1
         record = {
             "type": "MULTI_TRAINING_STATE_FULL",
             "schema_version": TRAINING_STATE_SCHEMA_VERSION,
             "state_step": args.save_step, "generation": next_generation,
-            "chunk_size": DATA_CHUNK, "world_size": 2, "ranks": rank_records,
+            "chunk_size": DATA_CHUNK, "world_size": args.world_size, "ranks": rank_records,
         }
         ckpt.meta_dict["checkpoints"][f"step_{args.save_step}"] = record
         ckpt._persist_metadata(next_generation)
@@ -318,7 +366,7 @@ def coordinator(args):
             conn.close()
         write_json(Path(args.run_dir) / "coordinator.json", {
             "status": "pass", "generation": next_generation,
-            "world_size": 2, "step": args.save_step,
+            "world_size": args.world_size, "step": args.save_step,
             "ranks": {rank: {"fields": len(manifest["fields"]),
                               "bytes": manifest["total_bytes"]}
                       for rank, manifest in manifests.items()},
@@ -337,16 +385,19 @@ def coordinator(args):
             pass
 
 
-def wait_file(path, timeout=180):
+def wait_file(path, timeout=180, process=None):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if Path(path).exists():
             return
+        if process is not None and process.poll() is not None:
+            raise RuntimeError(
+                f"child exited before creating {path}: rc={process.returncode}")
         time.sleep(0.2)
     raise TimeoutError(f"timed out waiting for {path}")
 
 
-def child_args(args, phase, rank_id=None, npu_id=None):
+def child_args(args, phase, rank_id=None, npu_id=None, include_hccl=None):
     result = [sys.executable, str(Path(__file__).resolve()), "--phase", phase,
               "--run-dir", str(Path(args.run_dir).resolve()), "--pci", args.pci,
               "--model", args.model, "--seq-len", str(args.seq_len),
@@ -354,6 +405,12 @@ def child_args(args, phase, rank_id=None, npu_id=None):
               "--continue-steps", str(args.continue_steps), "--loss-scale", str(args.loss_scale),
               "--dropout-rate", str(args.dropout_rate), "--pipeline-depth", str(args.pipeline_depth),
               "--slot-size-gb", str(args.slot_size_gb), "--shm-id", str(args.shm_id)]
+    result += ["--world-size", str(args.world_size), "--rank-devices",
+               ",".join(str(device) for _, device in rank_mapping(args))]
+    if include_hccl is None:
+        include_hccl = args.hccl
+    if include_hccl:
+        result.append("--hccl")
     if phase in ("rank", "restore"):
         result += ["--rank-id", str(rank_id), "--npu", str(npu_id)]
     else:
@@ -378,6 +435,9 @@ def main():
     parser.add_argument("--pipeline-depth", type=int, default=8)
     parser.add_argument("--slot-size-gb", type=int, default=10)
     parser.add_argument("--shm-id", type=int, default=94)
+    parser.add_argument("--world-size", type=int, choices=(2, 4), default=2)
+    parser.add_argument("--rank-devices", default=None)
+    parser.add_argument("--hccl", action="store_true")
     parser.add_argument("--coordinator-npu", type=int, default=7)
     parser.add_argument("--rank-id", type=int, default=0)
     parser.add_argument("--npu", type=int, default=1)
@@ -387,11 +447,11 @@ def main():
         coordinator(args)
         return
     if args.phase == "rank":
-        rank_train(args, args.rank_id, args.npu,
+        rank_train(args, effective_rank_id(args), effective_rank_device(args),
                    str(Path(args.run_dir) / "c2.sock"))
         return
     if args.phase == "restore":
-        rank_restore(args, args.rank_id, args.npu)
+        rank_restore(args, effective_rank_id(args), effective_rank_device(args))
         return
 
     for marker in ("coordinator.ready", "coordinator.json"):
@@ -403,30 +463,62 @@ def main():
         child_args(args, "coordinator"), cwd=args.run_dir)
     workers = []
     try:
-        wait_file(Path(args.run_dir) / "coordinator.ready")
-        for rank_id, npu_id in RANKS:
-            workers.append(subprocess.Popen(
-                child_args(args, "rank", rank_id, npu_id), cwd=args.run_dir))
-        for worker in workers:
-            if worker.wait() != 0:
-                raise RuntimeError("C2 rank training process failed")
+        wait_file(Path(args.run_dir) / "coordinator.ready", process=coordinator_proc)
+        if args.hccl:
+            command = ["msrun", f"--worker_num={args.world_size}",
+                       f"--local_worker_num={args.world_size}",
+                       "--master_addr=127.0.0.1", "--master_port=8127",
+                       sys.executable, str(Path(__file__).resolve()),
+                       "--phase", "rank", "--run-dir", str(Path(args.run_dir).resolve()),
+                       "--pci", args.pci, "--model", args.model,
+                       "--seq-len", str(args.seq_len), "--seed", str(args.seed),
+                       "--save-step", str(args.save_step),
+                       "--continue-steps", str(args.continue_steps),
+                       "--loss-scale", str(args.loss_scale),
+                       "--dropout-rate", str(args.dropout_rate),
+                       "--pipeline-depth", str(args.pipeline_depth),
+                       "--slot-size-gb", str(args.slot_size_gb),
+                       "--shm-id", str(args.shm_id), "--world-size", str(args.world_size),
+                       "--rank-devices",
+                       ",".join(str(device) for _, device in rank_mapping(args)),
+                       "--hccl"]
+            workers.append(subprocess.Popen(command, cwd=args.run_dir))
+            if workers[0].wait() != 0:
+                raise RuntimeError("C2 HCCL rank training process failed")
+        else:
+            for rank_id, npu_id in rank_mapping(args):
+                workers.append(subprocess.Popen(
+                    child_args(args, "rank", rank_id, npu_id), cwd=args.run_dir))
+            for worker in workers:
+                if worker.wait() != 0:
+                    raise RuntimeError("C2 rank training process failed")
         if coordinator_proc.wait() != 0:
             raise RuntimeError("C2 coordinator failed")
         # SPDK requires a single primary process per shared-memory instance;
         # restore ranks therefore run one at a time.  The payload commit above
         # remains genuinely multi-rank and is owned by one coordinator.
-        for rank_id, npu_id in RANKS:
+        for rank_id, npu_id in rank_mapping(args):
             worker = subprocess.Popen(
-                child_args(args, "restore", rank_id, npu_id), cwd=args.run_dir)
+                child_args(args, "restore", rank_id, npu_id, include_hccl=False),
+                cwd=args.run_dir)
             if worker.wait() != 0:
                 raise RuntimeError("C2 fresh restore process failed")
         write_json(Path(args.run_dir) / "result.json", {
-            "status": "pass", "gate": "C2", "world_size": 2,
+            "status": "pass", "gate": "C2", "world_size": args.world_size,
             "step": args.save_step, "model": args.model,
+            "source_training": "hccl" if args.hccl else "standalone",
+            "restore_transport": "standalone-spdk-primary",
             "rank_results": [json.loads((Path(args.run_dir) /
-                f"rank_{rank}_result.json").read_text()) for rank, _ in RANKS],
+                f"rank_{rank}_result.json").read_text()) for rank, _ in rank_mapping(args)],
         })
-        print("[C2] PASS two-rank training-state commit and fresh restore", flush=True)
+        write_json(Path(args.run_dir) / "checkpoint_gate.json", {
+            "status": "pass", "gate": "C2", "world_size": args.world_size,
+            "generation": json.loads((Path(args.run_dir) / "coordinator.json").read_text())["generation"],
+            "ranks": [{"rank": rank, "persisted": True, "fresh_restore": True,
+                       "continuation_verified": True}
+                      for rank, _ in rank_mapping(args)],
+        })
+        print(f"[C2] PASS {args.world_size}-rank training-state commit and fresh restore", flush=True)
     finally:
         for worker in workers:
             if worker.poll() is None:
