@@ -79,7 +79,7 @@ def main():
                      "checkpoint_gate": checkpoint_ok,
                      "checkpoint_error": checkpoint_error})
     (output / "launcher.json").write_text(json.dumps(snapshot, indent=2) + "\n")
-    raise SystemExit(completed.returncode)
+    raise SystemExit(0 if snapshot["status"] == "pass" else 1)
 
 
 if __name__ == "__main__":
