@@ -2,8 +2,8 @@
   "schema_version": 1,
   "date": "2026-09-02",
   "source_base_commit": "ec798bb38fb1ed3785a680a28bb68aeb8e8f55d5",
-  "scope": "FULL-only single-disk I/O, recovery, single-Reactor multi-rank, and HCCL save",
-  "status": "pass_with_documented_boundary",
+  "scope": "FULL-only single-disk I/O, recovery, single-Reactor multi-rank, and HCCL recovery",
+  "status": "pass",
   "regression": {
     "python_tests": {"passed": 99, "failed": 0},
     "c_smoke": {
@@ -46,10 +46,12 @@
     "4_rank": {"status": "pass", "generation": 1207}
   },
   "stage6": {
-    "2_rank_hccl": {"status": "pass", "generation": 1208},
-    "4_rank_hccl": {"status": "pass", "generation": 1209},
-    "restore_transport": "standalone-spdk-primary",
-    "hccl_rejoin_after_restore": false
+    "2_rank_hccl": {"status": "pass", "generation": 1287},
+    "4_rank_hccl": {"status": "pass", "generation": 1288},
+    "restore_transport": "single-spdk-owner-unix-stream",
+    "hccl_rejoin_after_restore": true,
+    "checkpoint_state_byte_exact": true,
+    "continuation_numeric_verified": true
   },
   "multi_reactor_decision": "deferred; no qualifying bottleneck evidence"
 }

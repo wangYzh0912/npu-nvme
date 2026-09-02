@@ -86,9 +86,11 @@ def main():
             ranks = summary.get("ranks", [])
             checkpoint_ok = (
                 summary.get("status") == "pass" and len(ranks) == args.world_size and
+                summary.get("continuation_context") == "hccl" and
                 all(item.get("persisted") is True and
                     item.get("fresh_restore") is True and
-                    item.get("continuation_verified") is True
+                    item.get("continuation_verified") is True and
+                    item.get("continuation_context") == "hccl"
                     for item in ranks))
             if not checkpoint_ok:
                 checkpoint_error = "checkpoint gate fields are incomplete"

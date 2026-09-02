@@ -343,7 +343,8 @@ python experiments/benchmarks/run_hccl_full.py --c2-full --world-size 4 \
   --pci 0000:83:00.0 --coordinator-npu 7 --slot-size-gb 4 --shm-id 50140
 ```
 
-`--c2-full` 的 HCCL source 阶段为真实多 rank 训练；当前 fresh restore 因 SPDK
-primary 唯一所有者约束按 rank 串行执行，并在 standalone context 中续训校验。该结果不
-表示 restore 后已重新建立 HCCL。`--master-port` 会同时传入外层记录和内层 `msrun`，
-并行执行多个验收时必须为每组分配不同端口和 `--shm-id`。
+`--c2-full` 的 source 和 fresh restore 阶段均为真实多 rank HCCL 训练。source 完全
+退出后，由唯一 SPDK owner 从 NVMe 读取各 rank shard，经 Unix socket 分发给 fresh
+rank；每个 rank 完成全字段 checksum 和 checkpoint-state digest 校验后，在新 HCCL
+group 中续训。`--master-port` 用于 source group，restore group 使用其下一个端口；
+并行执行多个验收时必须为每组预留连续两个端口并分配不同 `--shm-id`。

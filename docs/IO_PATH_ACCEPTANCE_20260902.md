@@ -35,7 +35,7 @@ versioned with the implementation.
 | Stage 4 pressure 2/2 | 6/6 delay/interval configs plus fault matrix passed | 36/36 accepted generations restored; no training admission BUSY |
 | Stage 4 pressure 4/4 | 6/6 delay/interval configs plus fault matrix passed | 36/36 accepted generations restored; no training admission BUSY |
 | Stage 5 single Reactor | 2-rank generation 1206 and 4-rank generation 1207 passed | every rank fresh-restored and continued |
-| Stage 6 HCCL | 2-rank generation 1208 and 4-rank generation 1209 passed | every rank fresh-restored and continuation loss matched |
+| Stage 6 HCCL | 2-rank generation 1287 and 4-rank generation 1288 passed | source exited; every rank fresh-restored, rejoined HCCL, and matched continuation loss |
 
 Stage 2 depth 1 correctly reported zero DMA/NVMe overlap. For depths 2 and
 higher, the screening and formal timelines reported positive overlap without a
@@ -48,17 +48,20 @@ request ring and observed `-EBUSY`; the summary records these as
 `training_admission_busy_observed=false` and
 `request_ring_busy_observed=true` instead of conflating them.
 
-## Multi-rank Boundary
+## Multi-rank Recovery
 
 Stage 5 and Stage 6 use rank-local FULL state sent to one SPDK-owning
 coordinator. Global metadata is published only after every rank has persisted.
-Stage 6 source training is a real HCCL data-parallel process group.
-
-Fresh restore currently runs one rank at a time because the SPDK shared-memory
-instance has one primary owner. It verifies each rank's model, optimizer,
-control state, and continuation loss in a fresh standalone process. Rejoining
-HCCL after restore is not part of this result and remains the next distributed
-recovery gate.
+Stage 6 source training is a real HCCL data-parallel process group. After all
+source processes exit, a fresh single-SPDK-owner restore coordinator reads the
+committed per-rank shards and streams them to fresh rank processes. Those ranks
+verify every field checksum, assign model and optimizer state, restore control
+state, require the checkpoint-state digest to match byte-for-byte, establish a
+new HCCL group, and continue training collectively. Both the 2-rank and 4-rank
+gates completed this sequence. Continued parameter bytes are recorded as an
+observation; the continuation gate is numerical loss equality because the two
+separately launched HCCL groups need not produce byte-identical updated
+parameters.
 
 ## Reusable Single-card Benchmark
 
@@ -82,6 +85,6 @@ process exits, and the fresh restore plus continuation gate succeeds.
 ## Decision
 
 The FULL single-card data/control path, single-Reactor multi-rank commit, and
-2/4-rank HCCL save path are accepted for this scope. There is no evidence that
-the single Reactor prevents the SSD from reaching its current calibrated
-limits, so multi-Reactor implementation remains deferred.
+2/4-rank HCCL save/fresh-restore/rejoin paths are accepted for this scope. There
+is no evidence that the single Reactor prevents the SSD from reaching its
+current calibrated limits, so multi-Reactor implementation remains deferred.
