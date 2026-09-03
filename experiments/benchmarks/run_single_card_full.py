@@ -86,6 +86,25 @@ def continuation_oracle(source, baseline, target):
     return source_losses[target:], "source_process_continuation"
 
 
+def request_timing(request):
+    """Derive request latency from the request's monotonic state transitions."""
+    event_times = {
+        event["state"]: int(event["monotonic_ns"])
+        for event in request.get("events", [])
+    }
+    persisted_ns = event_times.get("PERSISTED")
+    created_ns = event_times.get("CREATED")
+    api_enter_ns = request.get("api_enter_ns")
+    if persisted_ns is None or created_ns is None or api_enter_ns is None:
+        raise ValueError("request is missing API, CREATED, or PERSISTED timestamp")
+    if persisted_ns < created_ns or persisted_ns < int(api_enter_ns):
+        raise ValueError("request timestamps are not monotonic")
+    return {
+        "persist_seconds": (persisted_ns - int(api_enter_ns)) / 1e9,
+        "state_machine_seconds": (persisted_ns - created_ns) / 1e9,
+    }
+
+
 def build(args):
     import mindspore as ms
     from experiments.common import init_env, make_causal_lm_training
@@ -149,6 +168,7 @@ def phase_source(args, run_dir):
                 raise RuntimeError(
                     f"checkpoint did not persist: {handle.as_dict()}")
             pending_record["request"] = handle.as_dict()
+            timing = request_timing(pending_record["request"])
             interval = pending_record.get("overlapped_training_interval")
             if interval:
                 event_times = {event["state"]: event["monotonic_ns"]
@@ -159,8 +179,8 @@ def phase_source(args, run_dir):
                     pending_record["training_io_overlap_ns"] = max(
                         0, min(interval["end_monotonic_ns"], io_end) -
                         max(interval["start_monotonic_ns"], io_start))
-            pending_record["persist_seconds"] = (
-                time.perf_counter() - pending_record.pop("started"))
+            pending_record.pop("started")
+            pending_record.update(timing)
             pending_record["runtime_stats"] = ckpt.get_runtime_stats()
             records.append(pending_record)
 
@@ -468,6 +488,13 @@ def run_orchestrated(args, run_dir):
         non_checkpoint_step_seconds)
     result["checkpoint_latency_seconds"] = [
         record["persist_seconds"] for record in source["checkpoints"]]
+    result["checkpoint_state_machine_seconds"] = [
+        record["state_machine_seconds"] for record in source["checkpoints"]]
+    result["latency_semantics"] = {
+        "checkpoint_latency_seconds": "api_enter_to_persisted_event",
+        "checkpoint_state_machine_seconds": "created_to_persisted_event",
+        "foreground_wait_seconds": "host_wait_inside_finish_one",
+    }
     result["api_return_seconds"] = [
         max(0, record["request"]["api_return_ns"] -
             record["request"]["api_enter_ns"]) / 1e9
@@ -482,6 +509,9 @@ def run_orchestrated(args, run_dir):
                 "request_id": record["request"]["request_id"],
                 "generation": record["request"]["metadata_generation"],
                 "persist_seconds": record["persist_seconds"],
+                "state_machine_seconds": record["state_machine_seconds"],
+                "foreground_wait_seconds": record.get(
+                    "foreground_wait_seconds", 0.0),
                 "checksum": record["request"]["checksum"],
                 "runtime_stats": record.get("runtime_stats", {}),
             }, sort_keys=True) + "\n")
