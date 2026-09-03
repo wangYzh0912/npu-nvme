@@ -151,6 +151,11 @@ class CheckpointHandle:
         self.status = self.DISPATCHED
         self.state = CheckpointState.CREATED
         self.error = None
+        self.api_enter_ns = None
+        self.api_return_ns = None
+        self.freeze_wait_ns = 0
+        self.update_wait_ns = 0
+        self.update_deadline_missed = False
         self.events = []
         self._done = threading.Event()
         self._lock = threading.Lock()
@@ -215,6 +220,11 @@ class CheckpointHandle:
             "state": self.state.value,
             "status": self.status,
             "error": repr(self.error) if self.error is not None else None,
+            "api_enter_ns": self.api_enter_ns,
+            "api_return_ns": self.api_return_ns,
+            "freeze_wait_ns": self.freeze_wait_ns,
+            "update_wait_ns": self.update_wait_ns,
+            "update_deadline_missed": self.update_deadline_missed,
             "events": list(self.events),
         }
 
@@ -254,6 +264,28 @@ class CheckpointHandle:
 class DirectCheckpoint:
     _ms_warmed_up = False
 
+    @staticmethod
+    def live_async_capability():
+        """Describe whether direct live-HBM FULL capture is safe.
+
+        The current Reactor owns a bounded pool of reusable DMA buffers.  A
+        FULL request therefore cannot expose a single completion event for all
+        source reads when submit returns: later chunks are submitted only after
+        earlier buffers have completed NVMe I/O and become reusable.  Blocking
+        an optimizer update on the current request would require host polling
+        or a device-visible aggregate fence, neither of which is implemented.
+        """
+        return {
+            "supported": False,
+            "code": "BOUNDED_DMA_POOL_HAS_NO_DEVICE_AGGREGATE_FENCE",
+            "detail": (
+                "FULL live-HBM capture cannot bind all future chunk DMA "
+                "events to the optimizer stream before API return"),
+            "required": (
+                "device-visible aggregate fence, full host staging, or "
+                "parameter-group update fences"),
+        }
+
     def __init__(
         self, nvme_addr: str = "0000:83:00.0", npu_device_id: int = 0,
         pipeline_depth: int = 4, requested_chunk_size: int = 4 * 1024 * 1024,
@@ -262,7 +294,7 @@ class DirectCheckpoint:
         base_offset_bytes: int = 0, shard_span_bytes: int = None,
         spdk_shm_id: int = 1, keep_last_n: int = 3, slot_size_gb: int = 10,
         warmup_fn: callable = None, checkpoint_slots: int = 1,
-        admission: str = "block",
+        admission: str = "block", request_slots: int = None,
     ):
         self.ctx = ctypes.POINTER(NPUNVMEContext)()
         self.npu_device_id = npu_device_id
@@ -277,11 +309,17 @@ class DirectCheckpoint:
         self.keep_last_n = keep_last_n
         if int(checkpoint_slots) <= 0:
             raise ValueError("checkpoint_slots must be positive")
+        if request_slots is None:
+            request_slots = checkpoint_slots
+        if int(request_slots) <= 0:
+            raise ValueError("request_slots must be positive")
         if admission not in ("block", "try"):
             raise ValueError("admission must be block or try")
         self.checkpoint_slots = int(checkpoint_slots)
+        self.request_slots = int(request_slots)
         self.admission = admission
         self._slot_sem = threading.BoundedSemaphore(self.checkpoint_slots)
+        self._request_sem = threading.BoundedSemaphore(self.request_slots)
         self._admission_lock = threading.Lock()
         self._handles_lock = threading.Lock()
         self._active_handles = set()
@@ -360,12 +398,18 @@ class DirectCheckpoint:
             if self._queue_poisoned:
                 raise CheckpointQueuePoisonedError(
                     "checkpoint queue is poisoned; reopen the context")
-        acquired = self._slot_sem.acquire(blocking=(self.admission == "block"))
-        if not acquired:
+        blocking = self.admission == "block"
+        request_acquired = self._request_sem.acquire(blocking=blocking)
+        if not request_acquired:
             raise CheckpointBusyError("checkpoint admission is BUSY")
+        snapshot_acquired = self._slot_sem.acquire(blocking=blocking)
+        if not snapshot_acquired:
+            self._request_sem.release()
+            raise CheckpointBusyError("snapshot admission is BUSY")
         with self._admission_lock:
             if self._queue_poisoned:
                 self._slot_sem.release()
+                self._request_sem.release()
                 raise CheckpointQueuePoisonedError(
                     "checkpoint queue is poisoned; reopen the context")
 
@@ -376,6 +420,10 @@ class DirectCheckpoint:
                 self._handle_threads.pop(handle.request_id, None)
         try:
             self._slot_sem.release()
+        except ValueError:
+            pass
+        try:
+            self._request_sem.release()
         except ValueError:
             pass
 
@@ -1181,9 +1229,21 @@ class DirectCheckpoint:
 
     def save(self, model: ms.nn.Cell, step: int,
              meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True,
-             _prepared_params=None, _checkpoint_meta=None, io_mode="queue"):
-        if io_mode not in ("queue", "async", "serial"):
-            raise ValueError("io_mode must be queue, async, or serial")
+             _prepared_params=None, _checkpoint_meta=None, io_mode="queue",
+             timeout=None, _api_enter_ns=None):
+        if io_mode not in ("queue", "async", "serial", "frozen_async",
+                           "live_async"):
+            raise ValueError(
+                "io_mode must be serial, queue, async, frozen_async, or live_async")
+        requested_mode = io_mode
+        if requested_mode == "live_async":
+            capability = self.live_async_capability()
+            raise NotImplementedError(
+                f"live_async unsupported [{capability['code']}]: "
+                f"{capability['detail']}")
+        io_mode = "async" if requested_mode == "frozen_async" else requested_mode
+        api_enter_ns = (_api_enter_ns if _api_enter_ns is not None
+                        else time.monotonic_ns())
         if self._queue_poisoned:
             raise CheckpointQueuePoisonedError(
                 "checkpoint queue is poisoned; reopen the context")
@@ -1234,7 +1294,8 @@ class DirectCheckpoint:
         handle = CheckpointHandle(
             self, request_id, generation, step, rank_id=self.rank_id,
             snapshot_slot=snapshot_slot,
-            snapshot_generation=snapshot_generation)
+            snapshot_generation=snapshot_generation, timeout=timeout)
+        handle.api_enter_ns = api_enter_ns
         handle.transition(CheckpointState.SNAPSHOTTING)
         try:
             params = self._snapshot_params(params, generation)
@@ -1466,7 +1527,13 @@ class DirectCheckpoint:
         handle.transition(CheckpointState.QUEUED)
         self.io_thread.start()
 
+        if requested_mode == "frozen_async":
+            freeze_started_ns = time.monotonic_ns()
+            handle.wait(timeout=handle.timeout)
+            handle.freeze_wait_ns = time.monotonic_ns() - freeze_started_ns
+
         t_return = time.perf_counter()
+        handle.api_return_ns = time.monotonic_ns()
         print(f"[Timeline][Rank {self.rank_id}] Step {step} | Python save() "
               f"dispatched to background thread. "
               f"Layout cost: {T_Layout*1000:.2f}ms", flush=True)
@@ -1550,7 +1617,8 @@ class DirectCheckpoint:
     def save_state(self, components, control_state, step: int,
                    meta_path: str = "checkpoint_meta.pkl",
                    commit_meta: bool = True, verify_checksums: bool = True,
-                   io_mode: str = "queue", admission: str = None):
+                   io_mode: str = "queue", admission: str = None,
+                   timeout: float = None):
         """Freeze and persist a versioned complete training state.
 
         ``components`` maps namespaces such as ``model`` and ``optimizer`` to
@@ -1558,6 +1626,12 @@ class DirectCheckpoint:
         contains JSON-tagged Python/NumPy state and is returned by
         :meth:`load_state` for the caller to re-apply.
         """
+        if io_mode == "live_async":
+            capability = self.live_async_capability()
+            raise NotImplementedError(
+                f"live_async unsupported [{capability['code']}]: "
+                f"{capability['detail']}")
+        api_enter_ns = time.monotonic_ns()
         requested_admission = self.admission if admission is None else admission
         if requested_admission not in ("block", "try"):
             raise ValueError("admission must be block or try")
@@ -1566,7 +1640,8 @@ class DirectCheckpoint:
                 "checkpoint queue is poisoned; reopen the context")
         if requested_admission == "try":
             with self._handles_lock:
-                if len(self._active_handles) >= self.checkpoint_slots:
+                if len(self._active_handles) >= min(
+                        self.checkpoint_slots, self.request_slots):
                     raise CheckpointBusyError("checkpoint admission is BUSY")
         validate_state_names(components, control_state)
         if hasattr(ms.hal, "synchronize"):
@@ -1605,7 +1680,7 @@ class DirectCheckpoint:
             return self.save(
                 None, step=step, meta_path=meta_path, commit_meta=commit_meta,
                 _prepared_params=params, _checkpoint_meta=checkpoint_meta,
-                io_mode=io_mode)
+                io_mode=io_mode, timeout=timeout, _api_enter_ns=api_enter_ns)
         finally:
             self.admission = previous_admission
 

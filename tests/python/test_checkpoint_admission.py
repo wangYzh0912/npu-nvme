@@ -19,6 +19,9 @@ def manager(admission="try"):
     value.admission = admission
     value._queue_poisoned = False
     value._slot_sem = threading.BoundedSemaphore(1)
+    value._request_sem = threading.BoundedSemaphore(1)
+    value.checkpoint_slots = 1
+    value.request_slots = 1
     value._admission_lock = threading.Lock()
     value._handles_lock = threading.Lock()
     value._active_handles = set()
@@ -36,6 +39,14 @@ def manager(admission="try"):
 def test_try_admission_returns_explicit_busy():
     value = manager()
     value._admit_checkpoint()
+
+
+def test_snapshot_admission_returns_explicit_busy_and_releases_request():
+    value = manager()
+    assert value._slot_sem.acquire(blocking=False)
+    with pytest.raises(CheckpointBusyError, match="snapshot"):
+        value._admit_checkpoint()
+    assert value._request_sem.acquire(blocking=False)
     with pytest.raises(CheckpointBusyError):
         value._admit_checkpoint()
     value._release_checkpoint_slot()

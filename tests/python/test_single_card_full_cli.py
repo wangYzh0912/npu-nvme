@@ -32,6 +32,13 @@ class SingleCardFullCliTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("sorted", result.stderr)
 
+    def test_new_async_modes_are_valid_cli_values(self):
+        for mode in ("frozen_async", "live_async"):
+            result = self.run_cli("--dry-run", "--mode", mode,
+                                  "--checkpoint-steps", "2", "--total-steps", "2")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["mode"], mode)
+
 
 if __name__ == "__main__":
     unittest.main()

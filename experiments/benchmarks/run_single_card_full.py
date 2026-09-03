@@ -125,13 +125,14 @@ def phase_source(args, run_dir):
     previous = 0
     records = []
     continuous_losses = []
+    continuous_step_seconds = []
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=args.npu,
         pipeline_depth=args.pipeline_depth, requested_chunk_size=args.chunk_size,
         enable_profiling=True, profiling_dir=str(run_dir / "raw"),
         keep_last_n=args.keep_last_n, slot_size_gb=args.slot_size_gb,
         spdk_shm_id=args.shm_id, checkpoint_slots=args.checkpoint_slots,
-        admission=args.admission)
+        request_slots=args.request_slots, admission=args.admission)
     try:
         pending = []
         admission_events = []
@@ -165,9 +166,10 @@ def phase_source(args, run_dir):
 
         for step in steps:
             train_started = time.monotonic_ns()
-            interval_losses, _ = train_steps(
+            interval_losses, interval_elapsed = train_steps(
                 ms, cell, previous + 1, step, args.seq_len)
             continuous_losses.extend(interval_losses)
+            continuous_step_seconds.extend(interval_elapsed)
             train_ended = time.monotonic_ns()
             for _handle, record in pending:
                 record.setdefault("overlapped_training_interval", {
@@ -192,7 +194,8 @@ def phase_source(args, run_dir):
                 handle = ckpt.save_state(
                     {"model": model, "optimizer": optimizer}, controls,
                     step=step, meta_path=str(run_dir / f"meta_{step:06d}.pkl"),
-                    io_mode=args.mode, admission=args.admission)
+                    io_mode=args.mode, admission=args.admission,
+                    timeout=args.timeout)
             except CheckpointBusyError as error:
                 admission_events.append({"step": step, "status": "BUSY",
                                          "generation_created": False,
@@ -215,9 +218,10 @@ def phase_source(args, run_dir):
             previous = step
         if previous < args.total_steps:
             trailing_started = time.monotonic_ns()
-            trailing_losses, _ = train_steps(
+            trailing_losses, trailing_elapsed = train_steps(
                 ms, cell, previous + 1, args.total_steps, args.seq_len)
             continuous_losses.extend(trailing_losses)
+            continuous_step_seconds.extend(trailing_elapsed)
             trailing_ended = time.monotonic_ns()
             for _handle, record in pending:
                 record.setdefault("overlapped_training_interval", {
@@ -236,6 +240,7 @@ def phase_source(args, run_dir):
             json.dumps({"status": "pass", "checkpoints": records,
                         "admission_events": admission_events,
                         "continuous_losses": continuous_losses,
+                        "continuous_step_seconds": continuous_step_seconds,
                         "continuous_final_state": digest_state(model, optimizer)}, indent=2,
                        default=str), encoding="utf-8")
     finally:
@@ -299,6 +304,20 @@ def phase_restore(args, run_dir):
         ckpt.cleanup()
 
 
+def phase_capability(args, run_dir):
+    from direct_checkpoint import DirectCheckpoint
+    capability = DirectCheckpoint.live_async_capability()
+    result = {
+        "status": "pass" if capability["supported"] else "unsupported",
+        "mode": "live_async", "run_id": run_dir.name,
+        "persisted": False, "restore_verified": False,
+        "capability": capability,
+    }
+    (run_dir / "result.json").write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps(result, sort_keys=True))
+
+
 def run_orchestrated(args, run_dir):
     config = vars(args).copy()
     config.update({"experiment_id": "SINGLE_CARD_FULL",
@@ -320,8 +339,21 @@ def run_orchestrated(args, run_dir):
         "spdk": command(["git", "-C", str(ROOT / "third_party" / "spdk"),
                           "rev-parse", "HEAD"]),
     }, indent=2, sort_keys=True), encoding="utf-8")
-    for filename in ("samples.jsonl", "timeline.jsonl", "failures.jsonl"):
+    for filename in ("samples.jsonl", "timeline.jsonl", "events.jsonl",
+                     "failures.jsonl"):
         (run_dir / filename).touch()
+    if args.mode == "live_async":
+        completed = subprocess.run(
+            [sys.executable, str(Path(__file__).resolve()),
+             "--phase", "capability", "--run-dir", str(run_dir),
+             "--model", args.model, "--mode", args.mode,
+             "--npu", str(args.npu), "--pci", args.pci],
+            cwd=run_dir, check=False)
+        if completed.returncode != 0:
+            raise RuntimeError("live_async capability probe failed")
+        capability_result = json.loads((run_dir / "result.json").read_text())
+        if capability_result["status"] != "pass":
+            raise SystemExit(2)
     if args.mode == "none":
         subprocess.run([sys.executable, str(Path(__file__).resolve()),
                         "--phase", "baseline", "--run-dir", str(run_dir),
@@ -336,7 +368,9 @@ def run_orchestrated(args, run_dir):
                   "seed": args.seed, "pci": args.pci, "npu": args.npu,
                   "persisted": None, "restore_verified": None,
                   "state": baseline["state"], "run_id": run_dir.name,
-                  "samples": args.total_steps, "failed_samples": 0}
+                  "samples": args.total_steps, "failed_samples": 0,
+                  "performance": summarize_performance(
+                      baseline["step_seconds"], [], [])}
         validate_result_gate(result)
         (run_dir / "result.json").write_text(json.dumps(result, indent=2),
                                              encoding="utf-8")
@@ -357,6 +391,7 @@ def run_orchestrated(args, run_dir):
                         "--keep-last-n", str(args.keep_last_n),
                         "--slot-size-gb", str(args.slot_size_gb),
                         "--checkpoint-slots", str(args.checkpoint_slots),
+                        "--request-slots", str(args.request_slots),
                         "--admission", args.admission,
                         "--generation-delay-ms", str(args.generation_delay_ms),
                         "--shm-id", str(args.shm_id), "--timeout", str(args.timeout),
@@ -384,6 +419,24 @@ def run_orchestrated(args, run_dir):
         raise
     result = json.loads((run_dir / "restore.json").read_text())
     source = json.loads((run_dir / "source.json").read_text())
+    checkpoint_steps = {int(record["step"]) for record in source["checkpoints"]}
+    checkpoint_step_seconds = [
+        value for index, value in enumerate(source["continuous_step_seconds"], 1)
+        if index in checkpoint_steps]
+    non_checkpoint_step_seconds = [
+        value for index, value in enumerate(source["continuous_step_seconds"], 1)
+        if index not in checkpoint_steps]
+    result["performance"] = summarize_performance(
+        source["continuous_step_seconds"], checkpoint_step_seconds,
+        non_checkpoint_step_seconds)
+    result["checkpoint_latency_seconds"] = [
+        record["persist_seconds"] for record in source["checkpoints"]]
+    result["api_return_seconds"] = [
+        max(0, record["request"]["api_return_ns"] -
+            record["request"]["api_enter_ns"]) / 1e9
+        for record in source["checkpoints"]
+        if record["request"].get("api_enter_ns") is not None and
+        record["request"].get("api_return_ns") is not None]
     with (run_dir / "samples.jsonl").open("w", encoding="utf-8") as samples:
         for record in source["checkpoints"]:
             samples.write(json.dumps({
@@ -395,14 +448,26 @@ def run_orchestrated(args, run_dir):
                 "checksum": record["request"]["checksum"],
                 "runtime_stats": record.get("runtime_stats", {}),
             }, sort_keys=True) + "\n")
-    with (run_dir / "timeline.jsonl").open("w", encoding="utf-8") as timeline:
+    with (run_dir / "timeline.jsonl").open("w", encoding="utf-8") as timeline, \
+            (run_dir / "events.jsonl").open("w", encoding="utf-8") as events:
         for record in source["checkpoints"]:
-            timeline.write(json.dumps({
+            event_record = {
                 "run_id": run_dir.name,
+                "rank": 0,
                 "request_id": record["request"]["request_id"],
                 "checkpoint_step": record["step"],
+                "generation": record["request"]["metadata_generation"],
+                "api_enter_ns": record["request"].get("api_enter_ns"),
+                "api_return_ns": record["request"].get("api_return_ns"),
+                "freeze_wait_ns": record["request"].get("freeze_wait_ns", 0),
+                "update_wait_ns": record["request"].get("update_wait_ns", 0),
+                "update_deadline_missed": record["request"].get(
+                    "update_deadline_missed", False),
                 "events": record["request"]["events"],
-            }, sort_keys=True) + "\n")
+            }
+            encoded = json.dumps(event_record, sort_keys=True) + "\n"
+            timeline.write(encoded)
+            events.write(encoded)
         result.update({"run_id": run_dir.name, "samples": len(args.checkpoint_steps),
                    "failed_samples": 0,
                    "accepted_generations": len(source["checkpoints"]),
@@ -412,7 +477,8 @@ def run_orchestrated(args, run_dir):
                    "paths": {
                        "config": "config.json", "environment": "environment.json",
                        "commit": "commit.json", "samples": "samples.jsonl",
-                       "timeline": "timeline.jsonl", "failures": "failures.jsonl",
+                       "timeline": "timeline.jsonl", "events": "events.jsonl",
+                       "failures": "failures.jsonl",
                        "source": "source.json", "restore": "restore.json",
                        "raw": "raw/", "result": "result.json"}})
     validate_result_gate(result)
@@ -421,14 +487,30 @@ def run_orchestrated(args, run_dir):
     print(json.dumps(result, sort_keys=True))
 
 
+def summarize_performance(all_steps, checkpoint_steps, non_checkpoint_steps):
+    def distribution(values):
+        array = np.asarray(values, dtype=np.float64)
+        if not array.size:
+            return {"count": 0, "mean_seconds": None,
+                    "p95_seconds": None, "p99_seconds": None}
+        return {"count": int(array.size), "mean_seconds": float(array.mean()),
+                "p95_seconds": float(np.percentile(array, 95)),
+                "p99_seconds": float(np.percentile(array, 99))}
+    return {"all": distribution(all_steps),
+            "checkpoint": distribution(checkpoint_steps),
+            "non_checkpoint": distribution(non_checkpoint_steps)}
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phase", choices=("orchestrate", "baseline", "source", "restore"),
+    parser.add_argument("--phase", choices=("orchestrate", "baseline", "source",
+                                             "restore", "capability"),
                         default="orchestrate")
     parser.add_argument("--run-dir", default=str(ROOT / "results" / "single-card-full" /
                                                   time.strftime("run_%Y%m%d_%H%M%S")))
     parser.add_argument("--model", choices=("gpt2", "gpt2_xl"), default="gpt2")
-    parser.add_argument("--mode", choices=("none", "serial", "queue", "async"),
+    parser.add_argument("--mode", choices=("none", "serial", "queue", "async",
+                                            "frozen_async", "live_async"),
                         default="serial")
     parser.add_argument("--checkpoint-steps", nargs="+", type=int, default=None)
     parser.add_argument("--restore-step", type=int, default=None)
@@ -442,6 +524,7 @@ def main():
     parser.add_argument("--keep-last-n", type=int, default=3)
     parser.add_argument("--slot-size-gb", type=int, default=10)
     parser.add_argument("--checkpoint-slots", type=int, default=1)
+    parser.add_argument("--request-slots", type=int, default=None)
     parser.add_argument("--admission", choices=("block", "try"), default="block")
     parser.add_argument("--generation-delay-ms", type=int, default=0)
     parser.add_argument("--shm-id", type=int, default=17041)
@@ -452,6 +535,8 @@ def main():
                         help="use a short, explicitly non-formal run")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if args.request_slots is None:
+        args.request_slots = args.checkpoint_slots
     if args.checkpoint_steps is None:
         args.checkpoint_steps = [2, 5] if args.smoke else [10, 50, 100]
     if args.smoke and args.total_steps == 110:
@@ -484,8 +569,10 @@ def main():
         phase_baseline(args, run_dir)
     elif args.phase == "source":
         phase_source(args, run_dir)
-    else:
+    elif args.phase == "restore":
         phase_restore(args, run_dir)
+    else:
+        phase_capability(args, run_dir)
 
 
 if __name__ == "__main__":
