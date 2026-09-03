@@ -15,6 +15,7 @@ import ctypes
 import hashlib
 import json
 import os
+import signal
 import socket
 import struct
 import subprocess
@@ -44,6 +45,12 @@ from ppt_evidence import command as shell_command, environment_snapshot  # noqa:
 FRAME_LIMIT = 8 * 1024 * 1024
 DATA_CHUNK = 4 * 1024 * 1024
 DEFAULT_RANK_DEVICES = (1, 2, 3, 4)
+
+
+def socket_path_for(run_dir, channel):
+    """Return a short AF_UNIX path; Linux limits sun_path to 108 bytes."""
+    digest = hashlib.sha256(str(Path(run_dir).resolve()).encode()).hexdigest()[:16]
+    return f"/tmp/npu_nvme_c2_{digest}_{channel}.sock"
 
 
 def rank_mapping(args):
@@ -446,7 +453,7 @@ def rank_restore_hccl(args, rank_id, npu_id, socket_path):
 def restore_coordinator(args):
     """Read committed rank shards through one SPDK primary and stream them."""
     restore_step = selected_restore_step(args)
-    socket_path = str(Path(args.run_dir) / "c2_restore.sock")
+    socket_path = socket_path_for(args.run_dir, "restore")
     try:
         os.unlink(socket_path)
     except FileNotFoundError:
@@ -513,7 +520,7 @@ def restore_coordinator(args):
 
 
 def coordinator(args):
-    socket_path = str(Path(args.run_dir) / "c2.sock")
+    socket_path = socket_path_for(args.run_dir, "source")
     try:
         os.unlink(socket_path)
     except FileNotFoundError:
@@ -738,11 +745,92 @@ def hccl_worker_env(args):
     return env
 
 
+def start_child(command, *, cwd, env=None):
+    """Start a launcher in its own process group for complete cleanup."""
+    return subprocess.Popen(command, cwd=cwd, env=env, start_new_session=True)
+
+
+def stop_child(process, timeout=10):
+    if process is None or process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    try:
+        process.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait()
+
+
+def finalize_existing(args):
+    """Validate completed source/restore artifacts and publish the C2 gate."""
+    run_dir = Path(args.run_dir)
+    coordinator_result = json.loads((run_dir / "coordinator.json").read_text())
+    committed = coordinator_result.get("committed", [])
+    expected_steps = checkpoint_steps(args)
+    if (coordinator_result.get("status") != "pass" or
+            [int(item["step"]) for item in committed] != expected_steps):
+        raise ValueError("source coordinator did not commit the expected generations")
+    retained = [int(item["step"]) for item in committed[-args.keep_last_n:]]
+    restore_steps = retained if args.restore_retained else [selected_restore_step(args)]
+    generation_by_step = {int(item["step"]): int(item["generation"])
+                          for item in committed}
+    rank_results = []
+    for step in restore_steps:
+        for rank, _ in rank_mapping(args):
+            item = json.loads(rank_result_path(args, rank, step).read_text())
+            if (item.get("status") != "pass" or int(item.get("step", -1)) != step or
+                    int(item.get("rank", -1)) != rank or
+                    int(item.get("generation", -1)) != generation_by_step[step] or
+                    item.get("loaded_state_byte_exact") is not True or
+                    item.get("continuation_numeric_verified") is not True):
+                raise ValueError(f"invalid restore result for rank={rank} step={step}")
+            rank_results.append(item)
+    latest_step = restore_steps[-1]
+    common = {
+        "status": "pass", "world_size": args.world_size,
+        "restored_steps": restore_steps, "rank_results": rank_results,
+        "source_training_exit_code": 0, "source_coordinator_exit_code": 0,
+        "source_reused": True,
+    }
+    write_json(run_dir / "result.json", {
+        **common, "gate": "C2", "step": latest_step, "model": args.model,
+        "checkpoint_steps": expected_steps, "source_coordinator_pid": None,
+        "source_training": "hccl" if args.hccl else "standalone",
+        "restore_transport": ("single-spdk-owner-unix-stream" if args.hccl
+                              else "standalone-spdk-primary"),
+        "continuation_context": "hccl" if args.hccl else "standalone",
+    })
+    write_json(run_dir / "restore.json", {
+        **common, "fresh_process": True,
+        "all_rank_states_byte_exact": True,
+        "all_continuations_numeric_verified": True,
+    })
+    write_json(run_dir / "checkpoint_gate.json", {
+        "status": "pass", "gate": "C2", "world_size": args.world_size,
+        "generation": generation_by_step[latest_step], "step": latest_step,
+        "restored_steps": restore_steps,
+        "restore_transport": ("single-spdk-owner-unix-stream" if args.hccl
+                              else "standalone-spdk-primary"),
+        "continuation_context": "hccl" if args.hccl else "standalone",
+        "ranks": [{"rank": rank, "persisted": True, "fresh_restore": True,
+                   "continuation_verified": True,
+                   "continuation_context": ("hccl" if args.hccl else "standalone")}
+                  for rank, _ in rank_mapping(args)],
+    })
+    print(f"[C2] PASS finalized {args.world_size}-rank retained restore", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=("orchestrate", "coordinator", "rank",
                                              "restore", "restore_coordinator",
-                                             "restore_hccl"),
+                                             "restore_hccl", "finalize"),
                         default="orchestrate")
     parser.add_argument("--run-dir", default=str(REPO_ROOT / "results" / "next-correctness" /
                                                    time.strftime("c2_2rank_%Y%m%d_%H%M%S")))
@@ -798,7 +886,7 @@ def main():
         return
     if args.phase == "rank":
         rank_train(args, effective_rank_id(args), effective_rank_device(args),
-                   str(Path(args.run_dir) / "c2.sock"))
+                   socket_path_for(args.run_dir, "source"))
         return
     if args.phase == "restore":
         rank_restore(args, effective_rank_id(args), effective_rank_device(args))
@@ -806,7 +894,10 @@ def main():
     if args.phase == "restore_hccl":
         rank_restore_hccl(
             args, effective_rank_id(args), effective_rank_device(args),
-            str(Path(args.run_dir) / "c2_restore.sock"))
+            socket_path_for(args.run_dir, "restore"))
+        return
+    if args.phase == "finalize":
+        finalize_existing(args)
         return
 
     for marker in ("coordinator.ready", "coordinator.json",
@@ -815,7 +906,7 @@ def main():
             os.unlink(Path(args.run_dir) / marker)
         except FileNotFoundError:
             pass
-    coordinator_proc = subprocess.Popen(
+    coordinator_proc = start_child(
         child_args(args, "coordinator"), cwd=args.run_dir)
     source_coordinator_pid = coordinator_proc.pid
     workers = []
@@ -825,13 +916,13 @@ def main():
         if args.hccl:
             command = hccl_command(
                 args, "rank", "source_hccl_logs", args.master_port)
-            workers.append(subprocess.Popen(command, cwd=args.run_dir,
-                                            env=hccl_worker_env(args)))
+            workers.append(start_child(command, cwd=args.run_dir,
+                                       env=hccl_worker_env(args)))
             if workers[0].wait() != 0:
                 raise RuntimeError("C2 HCCL rank training process failed")
         else:
             for rank_id, npu_id in rank_mapping(args):
-                workers.append(subprocess.Popen(
+                workers.append(start_child(
                     child_args(args, "rank", rank_id, npu_id), cwd=args.run_dir))
             for worker in workers:
                 if worker.wait() != 0:
@@ -856,12 +947,12 @@ def main():
                 except FileNotFoundError:
                     pass
             if args.hccl:
-                restore_coordinator_proc = subprocess.Popen(
+                restore_coordinator_proc = start_child(
                     child_args(args, "restore_coordinator", include_hccl=False),
                     cwd=args.run_dir)
                 wait_file(Path(args.run_dir) / "restore_coordinator.ready",
                           process=restore_coordinator_proc)
-                worker = subprocess.Popen(
+                worker = start_child(
                     hccl_command(args, "restore_hccl",
                                  f"restore_hccl_logs_step_{restore_step}",
                                  args.master_port + 1 + restore_index),
@@ -875,7 +966,7 @@ def main():
                 # A standalone restore opens the SPDK primary itself and must run
                 # one rank at a time.
                 for rank_id, npu_id in rank_mapping(args):
-                    worker = subprocess.Popen(
+                    worker = start_child(
                         child_args(args, "restore", rank_id, npu_id,
                                    include_hccl=False), cwd=args.run_dir)
                     if worker.wait() != 0:
@@ -925,13 +1016,9 @@ def main():
         print(f"[C2] PASS {args.world_size}-rank training-state commit and fresh restore", flush=True)
     finally:
         for worker in workers:
-            if worker.poll() is None:
-                worker.terminate()
-        if coordinator_proc.poll() is None:
-            coordinator_proc.terminate()
-        if (restore_coordinator_proc is not None and
-                restore_coordinator_proc.poll() is None):
-            restore_coordinator_proc.terminate()
+            stop_child(worker)
+        stop_child(coordinator_proc)
+        stop_child(restore_coordinator_proc)
 
 
 if __name__ == "__main__":

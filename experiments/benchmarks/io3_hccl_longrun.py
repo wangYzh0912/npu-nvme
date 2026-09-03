@@ -12,6 +12,7 @@ import hashlib
 import itertools
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -27,6 +28,49 @@ def atomic_json(path, value):
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
     os.replace(temporary, path)
+
+
+def run_child(argv, *, cwd, env=None, timeout=None):
+    """Run one C2 campaign in an isolated process group.
+
+    ``msrun`` creates several grandchildren.  Killing only its immediate
+    process leaves workers holding the NPU and SPDK PCI lock, so campaign
+    interruption must terminate the complete group.
+    """
+    process = subprocess.Popen(argv, cwd=cwd, env=env, text=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               start_new_session=True)
+    try:
+        stdout, stderr = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            stdout, stderr = process.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            stdout, stderr = process.communicate()
+        return 124, stdout, stderr
+    except KeyboardInterrupt:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+        raise
+    return process.returncode, stdout, stderr
 
 
 def main():
@@ -82,8 +126,13 @@ def main():
         run_dir = root / key
         prior = campaign["entries"].get(key, {})
         result_path = run_dir / "result.json"
-        if (args.resume and prior.get("status") == "pass" and result_path.exists() and
+        if (args.resume and result_path.exists() and
                 json.loads(result_path.read_text()).get("status") == "pass"):
+            campaign["entries"].setdefault(key, {}).update({
+                "status": "pass", "returncode": 0, "run_dir": str(run_dir),
+                "resumed_from_result": True,
+            })
+            atomic_json(campaign_path, campaign)
             continue
         devices = args.rank_devices_2 if world == 2 else args.rank_devices_4
         argv = [sys.executable, str(C2), "--run-dir", str(run_dir),
@@ -105,12 +154,7 @@ def main():
             continue
         run_dir.mkdir(parents=True, exist_ok=True)
         started = time.time_ns()
-        try:
-            completed = subprocess.run(argv, cwd=ROOT, text=True, capture_output=True,
-                                       timeout=args.timeout, check=False)
-            rc, stdout, stderr = completed.returncode, completed.stdout, completed.stderr
-        except subprocess.TimeoutExpired as error:
-            rc, stdout, stderr = 124, error.stdout or "", error.stderr or ""
+        rc, stdout, stderr = run_child(argv, cwd=ROOT, timeout=args.timeout)
         (run_dir / "stdout.log").write_text(stdout)
         (run_dir / "stderr.log").write_text(stderr)
         status = "pass" if rc == 0 and result_path.exists() and json.loads(
