@@ -740,6 +740,11 @@ def hccl_command(args, phase, log_dir, master_port):
 def hccl_worker_env(args):
     """Expose the requested physical rank devices to msrun workers."""
     env = os.environ.copy()
+    # ``msrun`` launches workers by shebang lookup.  Preserve the exact
+    # interpreter used by the orchestrator instead of falling back to the
+    # system MindSpore installation, which may not contain HCCL/TE wheels.
+    python_bin = str(Path(sys.executable).resolve().parent)
+    env["PATH"] = python_bin + os.pathsep + env.get("PATH", "")
     env["ASCEND_RT_VISIBLE_DEVICES"] = ",".join(
         str(device) for _, device in rank_mapping(args))
     return env
@@ -765,6 +770,11 @@ def stop_child(process, timeout=10):
         except ProcessLookupError:
             pass
         process.wait()
+
+
+def _interrupt_on_term(signum, frame):
+    """Turn wrapper termination into a normal exception so finally runs."""
+    raise KeyboardInterrupt
 
 
 def finalize_existing(args):
@@ -827,6 +837,7 @@ def finalize_existing(args):
 
 
 def main():
+    signal.signal(signal.SIGTERM, _interrupt_on_term)
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=("orchestrate", "coordinator", "rank",
                                              "restore", "restore_coordinator",
