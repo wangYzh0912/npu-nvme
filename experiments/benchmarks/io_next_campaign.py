@@ -23,7 +23,7 @@ MIB = 1024 * 1024
 def matrix_command(args, output, model="gpt2", modes=("frozen_async",),
                    seeds=(41,), intervals=(10,), chunks=(4 * MIB,), depths=(4,),
                    snapshot_slots=(2,), request_slots=(2,), delays=(0,),
-                   total_steps=110):
+                   total_steps=110, restore_retained=False):
     return [
         sys.executable, str(MATRIX), "--model", model,
         "--modes", *modes, "--seeds", *map(str, seeds),
@@ -37,6 +37,7 @@ def matrix_command(args, output, model="gpt2", modes=("frozen_async",),
         "--pci", args.pci, "--shm-id", str(args.shm_id),
         "--timeout", str(args.timeout), "--output-root", str(output),
         *( ["--resume"] if args.resume else []),
+        *( ["--restore-retained"] if restore_retained else []),
     ]
 
 
@@ -92,6 +93,41 @@ def io1_specs(args, root):
     ]
 
 
+def io1_formal_specs(args, root, candidates):
+    base = root / "IO1_single_card_async"
+    selected = candidates[:3] or [{"chunk": 4 * MIB, "depth": 4}]
+    specs = []
+    for index, candidate in enumerate(selected):
+        specs.append((f"candidate{index}_gate100", matrix_command(
+            args, base / f"candidate{index}_gate100", modes=("frozen_async",),
+            seeds=(41,), intervals=(10,), chunks=(candidate["chunk"],),
+            depths=(candidate["depth"],), total_steps=110)))
+    for interval in (1, 10, 50):
+        total_steps = interval * 30 + 1
+        specs.append((f"formal_none_i{interval}", matrix_command(
+            args, base / f"formal_none_i{interval}", modes=("none",),
+            seeds=(41, 42, 43), intervals=(interval,), delays=(0,),
+            total_steps=total_steps)))
+        specs.append((f"formal_comparison_i{interval}", matrix_command(
+            args, base / f"formal_comparison_i{interval}",
+            modes=("serial", "queue"), seeds=(41, 42, 43),
+            intervals=(interval,), chunks=(4 * MIB,), depths=(4,), delays=(0,),
+            total_steps=total_steps)))
+        for index, candidate in enumerate(selected):
+            specs.append((f"formal_frozen_candidate{index}_i{interval}", matrix_command(
+                args, base / f"formal_frozen_candidate{index}_i{interval}",
+                modes=("frozen_async",), seeds=(41, 42, 43),
+                intervals=(interval,), chunks=(candidate["chunk"],),
+                depths=(candidate["depth"],), delays=(0,),
+                total_steps=total_steps)))
+    best = selected[0]
+    specs.append(("formal_slow_i10", matrix_command(
+        args, base / "formal_slow_i10", modes=("frozen_async",),
+        seeds=(41,), intervals=(10,), chunks=(best["chunk"],),
+        depths=(best["depth"],), delays=(5000,), total_steps=301)))
+    return specs
+
+
 def io2_specs(args, root, candidates):
     base = root / "IO2_gpt2xl"
     selected = candidates[0] if candidates else {"chunk": 4 * MIB, "depth": 4}
@@ -110,9 +146,39 @@ def io2_specs(args, root, candidates):
     ]
 
 
+def io2_formal_specs(args, root, candidates):
+    base = root / "IO2_gpt2xl"
+    selected = candidates[0] if candidates else {"chunk": 4 * MIB, "depth": 4}
+    chunk, depth = selected["chunk"], selected["depth"]
+    specs = []
+    for interval in (10, 50):
+        specs.append((f"formal_i{interval}", matrix_command(
+            args, base / f"formal_i{interval}", model="gpt2_xl",
+            modes=("none", "serial", "frozen_async", "live_async"),
+            seeds=(41, 42, 43), intervals=(interval,), chunks=(chunk,),
+            depths=(depth,), delays=(0,), total_steps=interval * 30 + 1)))
+    for interval in (1, 5):
+        specs.append((f"stress_i{interval}", matrix_command(
+            args, base / f"stress_i{interval}", model="gpt2_xl",
+            modes=("serial", "frozen_async"), seeds=(41,),
+            intervals=(interval,), chunks=(chunk,), depths=(depth,), delays=(0,),
+            total_steps=interval * 10 + 1)))
+    specs.append(("formal_slow_i10", matrix_command(
+        args, base / "formal_slow_i10", model="gpt2_xl",
+        modes=("frozen_async",), seeds=(41,), intervals=(10,),
+        chunks=(chunk,), depths=(depth,), delays=(5000,), total_steps=301)))
+    specs.append(("retained_restore_i10", matrix_command(
+        args, base / "retained_restore_i10", model="gpt2_xl",
+        modes=("frozen_async",), seeds=(41,), intervals=(10,),
+        chunks=(chunk,), depths=(depth,), delays=(0,), total_steps=31,
+        restore_retained=True)))
+    return specs
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phases", nargs="+", choices=("io1", "io2"),
+    parser.add_argument("--phases", nargs="+",
+                        choices=("io1", "io1_formal", "io2", "io2_formal"),
                         default=["io1", "io2"])
     parser.add_argument("--output-root", type=Path,
                         default=ROOT / "results" / "io-next-20260903")
@@ -145,8 +211,20 @@ def main():
         candidate_path = root / "IO1_single_card_async" / "candidates.json"
         candidates = (json.loads(candidate_path.read_text()).get("candidates", [])
                       if candidate_path.exists() else [])
+    if "io1_formal" in args.phases:
+        if not candidates:
+            raise RuntimeError("IO-1 formal requires completed screening candidates")
+        for name, command_line in io1_formal_specs(args, root, candidates):
+            records.append({"phase": name, **run_command(
+                command_line, root / f"{name}.log", args.dry_run)})
     if "io2" in args.phases:
         for name, command_line in io2_specs(args, root, candidates):
+            records.append({"phase": f"io2_{name}", **run_command(
+                command_line, root / f"io2_{name}.log", args.dry_run)})
+    if "io2_formal" in args.phases:
+        if not candidates:
+            raise RuntimeError("IO-2 formal requires completed IO-1 candidates")
+        for name, command_line in io2_formal_specs(args, root, candidates):
             records.append({"phase": f"io2_{name}", **run_command(
                 command_line, root / f"io2_{name}.log", args.dry_run)})
     result = {"status": "planned" if args.dry_run else "pass",

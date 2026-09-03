@@ -110,7 +110,7 @@ PYTHONPATH=.:python:/home/user7/.local/lib/python3.9/site-packages \
   python -m pytest -q tests/python
 ```
 
-当前基线约为 `79 passed`。C SPDK smoke test 用 root：
+当前基线为 `105 passed`（2026-09-04）。C SPDK smoke test 用 root：
 
 ```bash
 { cat .sudo_pw; printf '\n'; } | sudo -S -k bash -c '
@@ -206,6 +206,53 @@ python experiments/benchmarks/run_single_card_full.py --model gpt2_xl \
 协议和结果目录结构不变。`--dry-run` 不初始化硬件，`--smoke` 配置应由调用者显式
 缩短步数，不能作为正式门禁结果。
 
+## 11. IO-next 分阶段正式入口
+
+IO-1/IO-2 使用 `io_next_campaign.py`。筛选、100-step gate 和 30-checkpoint
+正式层分开启动，均支持 `--resume`。`live_async` 只有在完整 FULL HBM 读取能建立
+设备侧 update fence 时才允许执行；当前有界 DMA pool 没有聚合 device fence，入口会
+以退出码 2 和结构化 `UNSUPPORTED` 结果结束，禁止用 Host polling 代替。
+
+```bash
+python experiments/benchmarks/io_next_campaign.py --phases io1 \
+  --output-root results/io-next-20260903 --npu 2 --numa-node 4 --resume
+python experiments/benchmarks/io_next_campaign.py --phases io1_formal \
+  --output-root results/io-next-20260903 --npu 2 --numa-node 4 --resume
+python experiments/benchmarks/io_next_campaign.py --phases io2 \
+  --output-root results/io-next-20260903 --npu 2 --numa-node 4 --resume
+python experiments/benchmarks/io_next_campaign.py --phases io2_formal \
+  --output-root results/io-next-20260903 --npu 2 --numa-node 4 --resume
+```
+
+IO-3 的一个 child 是同一 source HCCL job 内的多次全局 checkpoint，不是独立短跑。
+`--restore-retained` 会在 source 和原 coordinator 都退出后，为每个保留 generation
+分别创建 fresh coordinator 和 fresh HCCL world。
+
+```bash
+python experiments/benchmarks/io3_hccl_longrun.py \
+  --world-sizes 2 4 --seeds 41 42 43 --intervals 10 50 \
+  --total-steps 500 --continue-steps 10 100 --keep-last-n 3 \
+  --restore-retained --resume
+```
+
+IO-4 的 B0/B1 分别是 Host→SPDK 和 HBM→异步 SPDK；B2/B3/B4 分别是
+Host→Unix→memory、HBM→Unix→memory、Host→Unix→单 Reactor→SPDK。
+B0-B3 不发布 checkpoint，B4 仅作 raw-path 诊断且显式记录
+`publishes_generation=false`；发布 generation 的端到端 B5 证据来自 IO-3，必须恢复。
+
+```bash
+python experiments/benchmarks/io4_bottleneck_campaign.py \
+  --paths B0 B1 B2 B3 B4 --producers 1 2 4 \
+  --chunks 1048576 4194304 16777216 --depths 2 4 8 \
+  --payloads 268435456 --numa-nodes 4 0 --samples 30 --warmups 10 --resume
+python experiments/benchmarks/io_next_report.py \
+  --root results/io-next-20260903
+```
+
+硬件命令必须在第 2 节环境初始化后运行；root shell 中应在 CANN 的现有
+`PYTHONPATH`/`LD_LIBRARY_PATH` 前追加本 worktree，不能覆盖 CANN 的 TBE 路径。
+完整 raw 目录默认被 Git 忽略，只提交配置、摘要、恢复结果、报告和 hash 索引。
+
 阶段 2 独立数据面（筛选默认 3 次，正式默认 10 次 warmup + 30 次计入样本）：
 
 ```bash
@@ -278,7 +325,7 @@ python experiments/benchmarks/p6_aux_injection.py --model gpt2 \
   --npu 7 --pci 0000:83:00.0 --output-root /tmp/npu-nvme-quick-trend-20260830/P6
 ```
 
-## 11. P8/P9 最小恢复
+## 12. P8/P9 最小恢复
 
 ```bash
 python experiments/benchmarks/p8_p9_incremental.py produce --model-name gpt2 \
@@ -294,7 +341,7 @@ python experiments/benchmarks/p8_p9_incremental.py recover \
 
 只有 fresh-process 哈希、NRMSE、loss 偏差和 generation 检查均通过，才可称为恢复正确。
 
-## 12. 结果和清理
+## 13. 结果和清理
 
 ```bash
 { cat .sudo_pw; printf '\n'; } | sudo -S -k chown -R user7:user7 \

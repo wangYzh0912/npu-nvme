@@ -38,6 +38,7 @@ from chunk_helpers import build_chunks_host, build_ctypes_arrays  # noqa: E402
 from c_bindings import lib  # noqa: E402
 from training_state import (TRAINING_STATE_SCHEMA_VERSION, decode_control_value,
                             encode_control_value)
+from ppt_evidence import command as shell_command, environment_snapshot  # noqa: E402
 
 
 FRAME_LIMIT = 8 * 1024 * 1024
@@ -69,6 +70,35 @@ def effective_rank_device(args):
         rank_id = effective_rank_id(args)
         return dict(rank_mapping(args))[rank_id]
     return args.npu
+
+
+def checkpoint_steps(args):
+    if args.checkpoint_steps:
+        steps = sorted(set(int(item) for item in args.checkpoint_steps))
+    elif args.checkpoint_interval:
+        steps = list(range(args.checkpoint_interval, args.total_steps + 1,
+                           args.checkpoint_interval))
+    else:
+        steps = [args.save_step]
+    if not steps or steps[0] <= 0:
+        raise ValueError("checkpoint steps must be positive")
+    if steps[-1] > args.total_steps:
+        raise ValueError("checkpoint step exceeds --total-steps")
+    return steps
+
+
+def selected_restore_step(args):
+    return int(args.restore_step or checkpoint_steps(args)[-1])
+
+
+def rank_expected_path(args, rank_id):
+    return Path(args.run_dir) / f"rank_{rank_id}_expected.json"
+
+
+def rank_result_path(args, rank_id, step=None):
+    if step is None and len(checkpoint_steps(args)) == 1:
+        return Path(args.run_dir) / f"rank_{rank_id}_result.json"
+    return Path(args.run_dir) / f"rank_{rank_id}_result_step_{step or selected_restore_step(args)}.json"
 
 
 def build_training(args):
@@ -197,6 +227,13 @@ def write_chunk(ckpt, absolute_offset, payload):
         raise RuntimeError(f"coordinator host write failed: {rc}")
 
 
+def append_event(args, event):
+    value = {"run_id": Path(args.run_dir).name,
+             "monotonic_ns": time.monotonic_ns(), **event}
+    with (Path(args.run_dir) / "events.jsonl").open("a") as stream:
+        stream.write(json.dumps(value, sort_keys=True) + "\n")
+
+
 def read_chunk(ckpt, absolute_offset, size):
     buffer = ctypes.create_string_buffer(size)
     ptrs = (ctypes.c_void_p * 1)(ctypes.addressof(buffer))
@@ -211,69 +248,107 @@ def read_chunk(ckpt, absolute_offset, size):
 def rank_train(args, rank_id, npu_id, socket_path):
     args.rank_id, args.npu = rank_id, npu_id
     ms, model, optimizer, cell = build_training(args)
-    losses, _ = train_range(ms, cell, 1, args.save_step, args.seq_len)
-    fields, manifest = make_rank_payload(ms, model, optimizer, args.save_step, args)
-    checkpoint_state = state_digest(model, optimizer)
+    save_steps = checkpoint_steps(args)
+    losses_by_step = {}
+    checkpoint_states = {}
+    all_losses = {}
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(socket_path)
     try:
-        send_frame(sock, {"type": "PREPARE", "rank": rank_id,
-                          "step": args.save_step, "manifest": manifest})
-        header, _ = recv_frame(sock)
-        if header.get("type") != "PREPARED_OK":
-            raise RuntimeError(f"rank {rank_id} prepare rejected: {header}")
-        for field in fields:
-            raw = field["payload"]
-            for offset in range(0, len(raw), DATA_CHUNK):
-                chunk = raw[offset:offset + DATA_CHUNK]
-                send_frame(sock, {"type": "DATA", "rank": rank_id,
-                                  "name": field["name"], "offset": offset}, chunk)
-        send_frame(sock, {"type": "DATA_DONE", "rank": rank_id})
-        header, _ = recv_frame(sock)
-        if header.get("type") != "DATA_OK":
-            raise RuntimeError(f"rank {rank_id} data rejected: {header}")
-        send_frame(sock, {"type": "COMMIT_READY", "rank": rank_id})
-        header, _ = recv_frame(sock)
-        if header.get("type") != "COMMIT":
-            raise RuntimeError(f"rank {rank_id} commit rejected: {header}")
-        send_frame(sock, {"type": "DONE", "rank": rank_id})
+        next_step = 1
+        for save_step in save_steps:
+            losses, _ = train_range(ms, cell, next_step, save_step, args.seq_len)
+            for offset, loss in enumerate(losses, start=next_step):
+                all_losses[offset] = loss
+            next_step = save_step + 1
+            snapshot_started = time.perf_counter_ns()
+            fields, manifest = make_rank_payload(ms, model, optimizer, save_step, args)
+            snapshot_ns = time.perf_counter_ns() - snapshot_started
+            checkpoint_states[str(save_step)] = state_digest(model, optimizer)
+            prepare_ns = time.monotonic_ns()
+            send_frame(sock, {"type": "PREPARE", "rank": rank_id,
+                              "step": save_step, "manifest": manifest,
+                              "prepare_monotonic_ns": prepare_ns})
+            header, _ = recv_frame(sock)
+            if header.get("type") != "PREPARED_OK":
+                raise RuntimeError(f"rank {rank_id} prepare rejected: {header}")
+            socket_send_ns = 0
+            for field in fields:
+                raw = field["payload"]
+                for offset in range(0, len(raw), DATA_CHUNK):
+                    chunk = raw[offset:offset + DATA_CHUNK]
+                    send_started = time.perf_counter_ns()
+                    send_frame(sock, {"type": "DATA", "rank": rank_id,
+                                      "name": field["name"], "offset": offset}, chunk)
+                    socket_send_ns += time.perf_counter_ns() - send_started
+            send_frame(sock, {"type": "DATA_DONE", "rank": rank_id})
+            header, _ = recv_frame(sock)
+            if header.get("type") != "DATA_OK":
+                raise RuntimeError(f"rank {rank_id} data rejected: {header}")
+            send_frame(sock, {"type": "COMMIT_READY", "rank": rank_id})
+            header, _ = recv_frame(sock)
+            if header.get("type") != "COMMIT":
+                raise RuntimeError(f"rank {rank_id} commit rejected: {header}")
+            losses_by_step[str(save_step)] = {
+                "generation": header["generation"],
+                "snapshot_ns": snapshot_ns,
+                "socket_send_ns": socket_send_ns,
+                "persist_latency_ns": time.monotonic_ns() - prepare_ns,
+                "payload_bytes": manifest["total_bytes"],
+            }
+            send_frame(sock, {"type": "DONE", "rank": rank_id})
+
+        final_step = max(args.total_steps, save_steps[-1]) + args.continue_steps
+        if next_step <= final_step:
+            losses, _ = train_range(ms, cell, next_step, final_step, args.seq_len)
+            for offset, loss in enumerate(losses, start=next_step):
+                all_losses[offset] = loss
     finally:
         sock.close()
-
-    continuation, _ = train_range(
-        ms, cell, args.save_step + 1, args.save_step + args.continue_steps,
-        args.seq_len)
-    write_json(Path(args.run_dir) / f"rank_{rank_id}_expected.json", {
-        "rank": rank_id, "losses": continuation,
-        "checkpoint_state": checkpoint_state,
+    for save_step in save_steps:
+        losses_by_step[str(save_step)].update({
+            "losses": [all_losses[step] for step in
+                       range(save_step + 1, save_step + args.continue_steps + 1)],
+            "checkpoint_state": checkpoint_states[str(save_step)],
+        })
+    latest = save_steps[-1]
+    write_json(rank_expected_path(args, rank_id), {
+        "rank": rank_id, "checkpoints": losses_by_step,
+        "losses": losses_by_step[str(latest)]["losses"],
+        "checkpoint_state": checkpoint_states[str(latest)],
         "continued_state": state_digest(model, optimizer),
-        "initial_losses": losses,
+        "initial_losses": [all_losses[step] for step in sorted(all_losses)
+                           if step <= args.total_steps],
+        "checkpoint_steps": save_steps,
     })
 
 
 def rank_restore(args, rank_id, npu_id):
+    restore_step = selected_restore_step(args)
     ms, model, optimizer, cell = build_training(args)
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=npu_id, pipeline_depth=args.pipeline_depth,
         requested_chunk_size=DATA_CHUNK, rank_id=rank_id, world_size=args.world_size,
-        keep_last_n=3, slot_size_gb=args.slot_size_gb, spdk_shm_id=args.shm_id,
+        keep_last_n=args.keep_last_n, slot_size_gb=args.slot_size_gb,
+        spdk_shm_id=args.shm_id,
         profiling_dir=str(Path(args.run_dir) / f"profiling_restore_{rank_id}"))
     try:
         controls = ckpt.load_state(
-            {"model": model, "optimizer": optimizer}, step=args.save_step)
-        apply_control_state(ms, optimizer, controls, args.save_step, args)
+            {"model": model, "optimizer": optimizer}, step=restore_step)
+        apply_control_state(ms, optimizer, controls, restore_step, args)
         losses, _ = train_range(
-            ms, cell, args.save_step + 1,
-            args.save_step + args.continue_steps, args.seq_len)
-        expected = json.loads((Path(args.run_dir) /
-                               f"rank_{rank_id}_expected.json").read_text())
-        if not np.allclose(losses, expected["losses"], rtol=1e-4, atol=1e-5):
+            ms, cell, restore_step + 1,
+            restore_step + args.continue_steps, args.seq_len)
+        expected = json.loads(rank_expected_path(args, rank_id).read_text())
+        checkpoint = expected.get("checkpoints", {}).get(
+            str(restore_step), expected)
+        if not np.allclose(losses, checkpoint["losses"], rtol=1e-4, atol=1e-5):
             raise AssertionError(
                 f"rank {rank_id} continuation loss mismatch: {losses} != "
-                f"{expected['losses']}")
-        write_json(Path(args.run_dir) / f"rank_{rank_id}_result.json", {
-            "status": "pass", "rank": rank_id, "losses": losses,
-            "expected_losses": expected["losses"]
+                f"{checkpoint['losses']}")
+        write_json(rank_result_path(args, rank_id, restore_step), {
+            "status": "pass", "rank": rank_id, "step": restore_step,
+            "losses": losses, "expected_losses": checkpoint["losses"]
         })
     finally:
         ckpt.cleanup()
@@ -282,12 +357,13 @@ def rank_restore(args, rank_id, npu_id):
 def rank_restore_hccl(args, rank_id, npu_id, socket_path):
     """Restore one shard through the single SPDK owner, then rejoin training."""
     args.rank_id, args.npu = rank_id, npu_id
+    restore_step = selected_restore_step(args)
     ms, model, optimizer, cell = build_training(args)
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(socket_path)
     try:
         send_frame(sock, {"type": "RESTORE_REQUEST", "rank": rank_id,
-                          "step": args.save_step})
+                          "step": restore_step})
         header, _ = recv_frame(sock)
         if header.get("type") != "RESTORE_MANIFEST":
             raise RuntimeError(f"rank {rank_id} restore rejected: {header}")
@@ -333,24 +409,26 @@ def rank_restore_hccl(args, rank_id, npu_id, socket_path):
             array = array.reshape(tuple(parameter.shape))
         ops.assign(parameter, ms.Tensor(array, dtype=parameter.dtype))
     ms.hal.synchronize()
-    expected = json.loads((Path(args.run_dir) /
-                           f"rank_{rank_id}_expected.json").read_text())
+    expected = json.loads(rank_expected_path(args, rank_id).read_text())
+    checkpoint = expected.get("checkpoints", {}).get(str(restore_step), expected)
     restored_state = state_digest(model, optimizer)
-    if restored_state != expected["checkpoint_state"]:
+    if restored_state != checkpoint["checkpoint_state"]:
         raise AssertionError(f"rank {rank_id} restored state digest mismatch")
-    apply_control_state(ms, optimizer, controls, args.save_step, args)
+    apply_control_state(ms, optimizer, controls, restore_step, args)
     losses, _ = train_range(
-        ms, cell, args.save_step + 1,
-        args.save_step + args.continue_steps, args.seq_len)
-    if not np.allclose(losses, expected["losses"], rtol=1e-4, atol=1e-5):
+        ms, cell, restore_step + 1,
+        restore_step + args.continue_steps, args.seq_len)
+    if not np.allclose(losses, checkpoint["losses"], rtol=1e-4, atol=1e-5):
         raise AssertionError(
             f"rank {rank_id} HCCL continuation mismatch: {losses} != "
-            f"{expected['losses']}")
+            f"{checkpoint['losses']}")
     continued_state = state_digest(model, optimizer)
-    write_json(Path(args.run_dir) / f"rank_{rank_id}_result.json", {
-        "status": "pass", "rank": rank_id, "losses": losses,
-        "expected_losses": expected["losses"],
+    write_json(rank_result_path(args, rank_id, restore_step), {
+        "status": "pass", "rank": rank_id, "step": restore_step,
+        "generation": checkpoint.get("generation"), "losses": losses,
+        "expected_losses": checkpoint["losses"],
         "checkpoint_state": restored_state,
+        "loaded_state_byte_exact": True,
         "continued_state": continued_state,
         "source_continued_state": expected["continued_state"],
         "continued_state_byte_exact": continued_state == expected["continued_state"],
@@ -362,6 +440,7 @@ def rank_restore_hccl(args, rank_id, npu_id, socket_path):
 
 def restore_coordinator(args):
     """Read committed rank shards through one SPDK primary and stream them."""
+    restore_step = selected_restore_step(args)
     socket_path = str(Path(args.run_dir) / "c2_restore.sock")
     try:
         os.unlink(socket_path)
@@ -373,13 +452,13 @@ def restore_coordinator(args):
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=args.coordinator_npu,
         pipeline_depth=args.pipeline_depth, requested_chunk_size=DATA_CHUNK,
-        rank_id=0, world_size=args.world_size, keep_last_n=3,
+        rank_id=0, world_size=args.world_size, keep_last_n=args.keep_last_n,
         slot_size_gb=args.slot_size_gb, spdk_shm_id=args.shm_id,
         profiling_dir=str(Path(args.run_dir) / "profiling_restore_coord"))
     served = set()
     try:
-        selected_step, record = ckpt._select_checkpoint_record(args.save_step)
-        if (selected_step != args.save_step or
+        selected_step, record = ckpt._select_checkpoint_record(restore_step)
+        if (selected_step != restore_step or
                 record.get("type") != "MULTI_TRAINING_STATE_FULL" or
                 int(record.get("world_size", -1)) != args.world_size):
             raise ValueError("committed multi-rank restore record is invalid")
@@ -391,7 +470,7 @@ def restore_coordinator(args):
                 header, _ = recv_frame(conn)
                 rank = int(header.get("rank", -1))
                 if (header.get("type") != "RESTORE_REQUEST" or rank in served or
-                        int(header.get("step", -1)) != args.save_step):
+                        int(header.get("step", -1)) != restore_step):
                     raise RuntimeError("invalid or duplicate restore request")
                 manifest = record.get("ranks", {}).get(str(rank))
                 if manifest is None:
@@ -412,8 +491,11 @@ def restore_coordinator(args):
                 served.add(rank)
             finally:
                 conn.close()
-        write_json(Path(args.run_dir) / "restore_coordinator.json", {
-            "status": "pass", "step": args.save_step,
+        output = (Path(args.run_dir) / "restore_coordinator.json" if
+                  len(checkpoint_steps(args)) == 1 else
+                  Path(args.run_dir) / f"restore_coordinator_step_{restore_step}.json")
+        write_json(output, {
+            "status": "pass", "step": restore_step,
             "generation": record.get("generation"), "served_ranks": sorted(served),
         })
     finally:
@@ -437,102 +519,144 @@ def coordinator(args):
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=args.coordinator_npu,
         pipeline_depth=args.pipeline_depth, requested_chunk_size=DATA_CHUNK,
-        rank_id=0, world_size=args.world_size, keep_last_n=3, slot_size_gb=args.slot_size_gb,
+        rank_id=0, world_size=args.world_size, keep_last_n=args.keep_last_n,
+        slot_size_gb=args.slot_size_gb,
         spdk_shm_id=args.shm_id, profiling_dir=str(Path(args.run_dir) / "profiling_coord"))
-    connections, manifests = {}, {}
+    connections = {}
+    committed = []
     try:
         with open(Path(args.run_dir) / "coordinator.ready", "w") as stream:
             stream.write("ready\n")
-        while len(manifests) < args.world_size:
-            conn, _ = server.accept()
-            header, _ = recv_frame(conn)
-            if header.get("type") != "PREPARE":
-                conn.close()
-                raise RuntimeError("first rank frame must be PREPARE")
-            rank = int(header["rank"])
-            if rank in manifests or int(header["step"]) != args.save_step:
-                raise RuntimeError("duplicate rank or step mismatch")
-            manifests[rank] = header["manifest"]
-            connections[rank] = conn
-        rank_records = {}
-        for rank in sorted(manifests):
-            manifest = manifests[rank]
-            base = shard_base(ckpt, rank, args.save_step, args)
-            cursor, records = 0, {}
-            for item in manifest["fields"]:
-                size = int(item["size"])
-                records[item["name"]] = {key: item[key] for key in
-                    ("shape", "dtype", "size", "sha256", "kind", "codec")
-                    if key in item}
-                records[item["name"]].update({"offset": base + cursor})
-                cursor += (size + 4095) & ~4095
-            rank_records[str(rank)] = {
-                "components": manifest["components"],
-                "control_names": manifest["control_names"],
-                "checksum": manifest["checksum"], "params": records,
-                "digest": manifest["digest"], "written_bytes": cursor,
+        for save_step in checkpoint_steps(args):
+            generation_started = time.monotonic_ns()
+            manifests = {}
+            prepare_times = {}
+            if not connections:
+                while len(manifests) < args.world_size:
+                    conn, _ = server.accept()
+                    header, _ = recv_frame(conn)
+                    rank = int(header.get("rank", -1))
+                    if (header.get("type") != "PREPARE" or rank in manifests or
+                            int(header.get("step", -1)) != save_step):
+                        conn.close()
+                        raise RuntimeError("invalid first PREPARE frame")
+                    manifests[rank] = header["manifest"]
+                    prepare_times[rank] = int(header.get("prepare_monotonic_ns", 0))
+                    connections[rank] = conn
+            else:
+                for rank, conn in connections.items():
+                    header, _ = recv_frame(conn)
+                    if (header.get("type") != "PREPARE" or
+                            int(header.get("rank", -1)) != rank or
+                            int(header.get("step", -1)) != save_step):
+                        raise RuntimeError("rank/checkpoint step mismatch")
+                    manifests[rank] = header["manifest"]
+                    prepare_times[rank] = int(header.get("prepare_monotonic_ns", 0))
+
+            rank_records = {}
+            for rank in sorted(manifests):
+                manifest = manifests[rank]
+                base = shard_base(ckpt, rank, save_step, args)
+                cursor, records = 0, {}
+                for item in manifest["fields"]:
+                    size = int(item["size"])
+                    records[item["name"]] = {key: item[key] for key in
+                        ("shape", "dtype", "size", "sha256", "kind", "codec")
+                        if key in item}
+                    records[item["name"]].update({"offset": base + cursor})
+                    cursor += (size + 4095) & ~4095
+                rank_records[str(rank)] = {
+                    "components": manifest["components"],
+                    "control_names": manifest["control_names"],
+                    "checksum": manifest["checksum"], "params": records,
+                    "digest": manifest["digest"], "written_bytes": cursor,
+                }
+                send_frame(connections[rank], {"type": "PREPARED_OK"})
+
+            receive_ns = 0
+            spdk_write_ns = 0
+            received_bytes = 0
+            for rank in sorted(connections):
+                conn, manifest = connections[rank], manifests[rank]
+                by_name = {item["name"]: item for item in manifest["fields"]}
+                received = {name: bytearray() for name in by_name}
+                receive_started = time.perf_counter_ns()
+                while True:
+                    header, payload = recv_frame(conn)
+                    if header.get("type") == "DATA_DONE":
+                        break
+                    if (header.get("type") != "DATA" or
+                            int(header["rank"]) != rank or
+                            header["name"] not in by_name):
+                        raise RuntimeError(f"invalid data frame from rank {rank}")
+                    item = by_name[header["name"]]
+                    offset = int(header["offset"])
+                    if offset != len(received[header["name"]]):
+                        raise RuntimeError("data chunks are missing or reordered")
+                    received[header["name"]].extend(payload)
+                    received_bytes += len(payload)
+                    if len(received[header["name"]]) > int(item["size"]):
+                        raise RuntimeError("field payload exceeds manifest size")
+                receive_ns += time.perf_counter_ns() - receive_started
+                base = shard_base(ckpt, rank, save_step, args)
+                cursor = 0
+                write_started = time.perf_counter_ns()
+                for item in manifest["fields"]:
+                    payload = bytes(received[item["name"]])
+                    if len(payload) != int(item["size"]):
+                        raise RuntimeError(f"field size mismatch: {item['name']}")
+                    if hashlib.sha256(payload).hexdigest() != item["sha256"]:
+                        raise RuntimeError(f"field checksum mismatch: {item['name']}")
+                    write_chunk(ckpt, base + cursor, payload)
+                    cursor += (len(payload) + 4095) & ~4095
+                spdk_write_ns += time.perf_counter_ns() - write_started
+                send_frame(conn, {"type": "DATA_OK"})
+
+            for rank, conn in connections.items():
+                header, _ = recv_frame(conn)
+                if (header.get("type") != "COMMIT_READY" or
+                        int(header.get("rank", -1)) != rank):
+                    raise RuntimeError(f"rank {rank} did not reach COMMIT_READY")
+            next_generation = ckpt.metadata_generation + 1
+            record = {
+                "type": "MULTI_TRAINING_STATE_FULL",
+                "schema_version": TRAINING_STATE_SCHEMA_VERSION,
+                "state_step": save_step, "generation": next_generation,
+                "chunk_size": DATA_CHUNK, "world_size": args.world_size,
+                "ranks": rank_records,
             }
-            send_frame(connections[rank], {"type": "PREPARED_OK"})
+            slot = save_step % args.keep_last_n
+            for key, prior in list(ckpt.meta_dict["checkpoints"].items()):
+                if (prior.get("type") == "MULTI_TRAINING_STATE_FULL" and
+                        int(prior.get("state_step", -1)) % args.keep_last_n == slot):
+                    del ckpt.meta_dict["checkpoints"][key]
+            ckpt.meta_dict["checkpoints"][f"step_{save_step}"] = record
+            ckpt._persist_metadata(next_generation)
+            valid_prepare = [value for value in prepare_times.values() if value]
+            committed.append({
+                "step": save_step, "generation": next_generation,
+                "received_bytes": received_bytes, "socket_receive_ns": receive_ns,
+                "spdk_write_ns": spdk_write_ns,
+                "rank_prepare_skew_ns": (max(valid_prepare) - min(valid_prepare)
+                                         if valid_prepare else None),
+                "global_commit_latency_ns": time.monotonic_ns() - generation_started,
+            })
+            append_event(args, {"event": "GLOBAL_COMMIT", "rank": None,
+                                **committed[-1]})
+            for conn in connections.values():
+                send_frame(conn, {"type": "COMMIT", "generation": next_generation})
+            for rank, conn in connections.items():
+                header, _ = recv_frame(conn)
+                if (header.get("type") != "DONE" or
+                        int(header.get("rank", -1)) != rank):
+                    raise RuntimeError(f"rank {rank} did not acknowledge commit")
 
-        for rank in sorted(connections):
-            conn, manifest = connections[rank], manifests[rank]
-            by_name = {item["name"]: item for item in manifest["fields"]}
-            received = {name: bytearray() for name in by_name}
-            while True:
-                header, payload = recv_frame(conn)
-                if header.get("type") == "DATA_DONE":
-                    break
-                if (header.get("type") != "DATA" or
-                        int(header["rank"]) != rank or
-                        header["name"] not in by_name):
-                    raise RuntimeError(f"invalid data frame from rank {rank}")
-                item = by_name[header["name"]]
-                offset = int(header["offset"])
-                if offset != len(received[header["name"]]):
-                    raise RuntimeError("data chunks are missing or reordered")
-                received[header["name"]].extend(payload)
-                expected_size = int(item["size"])
-                if len(received[header["name"]]) > expected_size:
-                    raise RuntimeError("field payload exceeds manifest size")
-            base = shard_base(ckpt, rank, args.save_step, args)
-            cursor = 0
-            for item in manifest["fields"]:
-                payload = bytes(received[item["name"]])
-                if len(payload) != int(item["size"]):
-                    raise RuntimeError(f"field size mismatch: {item['name']}")
-                if hashlib.sha256(payload).hexdigest() != item["sha256"]:
-                    raise RuntimeError(f"field checksum mismatch: {item['name']}")
-                write_chunk(ckpt, base + cursor, payload)
-                cursor += (len(payload) + 4095) & ~4095
-            send_frame(conn, {"type": "DATA_OK"})
-
-        ready = set()
-        for rank, conn in connections.items():
-            header, _ = recv_frame(conn)
-            if header.get("type") != "COMMIT_READY":
-                raise RuntimeError(f"rank {rank} did not reach COMMIT_READY")
-            ready.add(rank)
-        if ready != set(range(args.world_size)):
-            raise RuntimeError("not all ranks reached COMMIT_READY")
-        next_generation = ckpt.metadata_generation + 1
-        record = {
-            "type": "MULTI_TRAINING_STATE_FULL",
-            "schema_version": TRAINING_STATE_SCHEMA_VERSION,
-            "state_step": args.save_step, "generation": next_generation,
-            "chunk_size": DATA_CHUNK, "world_size": args.world_size, "ranks": rank_records,
-        }
-        ckpt.meta_dict["checkpoints"][f"step_{args.save_step}"] = record
-        ckpt._persist_metadata(next_generation)
         for conn in connections.values():
-            send_frame(conn, {"type": "COMMIT", "generation": next_generation})
-        for rank, conn in connections.items():
-            header, _ = recv_frame(conn)
-            if header.get("type") != "DONE":
-                raise RuntimeError(f"rank {rank} did not acknowledge commit")
             conn.close()
         write_json(Path(args.run_dir) / "coordinator.json", {
-            "status": "pass", "generation": next_generation,
-            "world_size": args.world_size, "step": args.save_step,
+            "status": "pass", "generation": committed[-1]["generation"],
+            "world_size": args.world_size, "step": committed[-1]["step"],
+            "committed": committed, "keep_last_n": args.keep_last_n,
             "ranks": {rank: {"fields": len(manifest["fields"]),
                               "bytes": manifest["total_bytes"]}
                       for rank, manifest in manifests.items()},
@@ -568,12 +692,18 @@ def child_args(args, phase, rank_id=None, npu_id=None, include_hccl=None):
               "--run-dir", str(Path(args.run_dir).resolve()), "--pci", args.pci,
               "--model", args.model, "--seq-len", str(args.seq_len),
               "--seed", str(args.seed), "--save-step", str(args.save_step),
+              "--total-steps", str(args.total_steps),
+              "--checkpoint-interval", str(args.checkpoint_interval),
+              "--keep-last-n", str(args.keep_last_n),
+              "--restore-step", str(args.restore_step or 0),
               "--continue-steps", str(args.continue_steps), "--loss-scale", str(args.loss_scale),
               "--dropout-rate", str(args.dropout_rate), "--pipeline-depth", str(args.pipeline_depth),
               "--slot-size-gb", str(args.slot_size_gb), "--shm-id", str(args.shm_id)]
     result += ["--master-port", str(args.master_port),
                "--world-size", str(args.world_size), "--rank-devices",
                ",".join(str(device) for _, device in rank_mapping(args))]
+    if args.checkpoint_steps:
+        result += ["--checkpoint-steps", *[str(item) for item in args.checkpoint_steps]]
     if include_hccl is None:
         include_hccl = args.hccl
     if include_hccl:
@@ -608,6 +738,12 @@ def main():
     parser.add_argument("--seq-len", type=int, default=129)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--save-step", type=int, default=2)
+    parser.add_argument("--total-steps", type=int, default=None)
+    parser.add_argument("--checkpoint-interval", type=int, default=0)
+    parser.add_argument("--checkpoint-steps", nargs="+", type=int, default=None)
+    parser.add_argument("--keep-last-n", type=int, default=3)
+    parser.add_argument("--restore-step", type=int, default=None)
+    parser.add_argument("--restore-retained", action="store_true")
     parser.add_argument("--continue-steps", type=int, default=1)
     parser.add_argument("--loss-scale", type=float, default=1.0)
     parser.add_argument("--dropout-rate", type=float, default=0.0)
@@ -622,7 +758,25 @@ def main():
     parser.add_argument("--rank-id", type=int, default=0)
     parser.add_argument("--npu", type=int, default=1)
     args = parser.parse_args()
+    if args.total_steps is None:
+        args.total_steps = args.save_step
+    if args.keep_last_n < 1:
+        raise ValueError("--keep-last-n must be positive")
     Path(args.run_dir).mkdir(parents=True, exist_ok=True)
+    if args.phase == "orchestrate":
+        write_json(Path(args.run_dir) / "config.json", {
+            **vars(args), "checkpoint_steps_resolved": checkpoint_steps(args),
+            "scope": "FULL-only", "reactor_count": 1,
+        })
+        write_json(Path(args.run_dir) / "environment.json", environment_snapshot(
+            pci=args.pci, npu=args.rank_devices or "auto", repo_root=REPO_ROOT,
+            npu_info=shell_command(["npu-smi", "info"])))
+        write_json(Path(args.run_dir) / "commit.json", {
+            "repo": shell_command(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"]),
+            "branch": shell_command(["git", "-C", str(REPO_ROOT), "branch", "--show-current"]),
+            "dirty": shell_command(["git", "-C", str(REPO_ROOT), "status", "--porcelain"]),
+        })
+        (Path(args.run_dir) / "events.jsonl").write_text("")
     if args.phase == "coordinator":
         coordinator(args)
         return
@@ -650,6 +804,7 @@ def main():
             pass
     coordinator_proc = subprocess.Popen(
         child_args(args, "coordinator"), cwd=args.run_dir)
+    source_coordinator_pid = coordinator_proc.pid
     workers = []
     restore_coordinator_proc = None
     try:
@@ -669,42 +824,80 @@ def main():
                     raise RuntimeError("C2 rank training process failed")
         if coordinator_proc.wait() != 0:
             raise RuntimeError("C2 coordinator failed")
-        if args.hccl:
-            restore_coordinator_proc = subprocess.Popen(
-                child_args(args, "restore_coordinator", include_hccl=False),
-                cwd=args.run_dir)
-            wait_file(Path(args.run_dir) / "restore_coordinator.ready",
-                      process=restore_coordinator_proc)
-            worker = subprocess.Popen(
-                hccl_command(args, "restore_hccl", "restore_hccl_logs",
-                             args.master_port + 1), cwd=args.run_dir)
-            workers.append(worker)
-            if worker.wait() != 0:
-                raise RuntimeError("C2 HCCL fresh restore process failed")
-            if restore_coordinator_proc.wait() != 0:
-                raise RuntimeError("C2 restore coordinator failed")
-        else:
-            # A standalone restore opens the SPDK primary itself and must run
-            # one rank at a time.
-            for rank_id, npu_id in rank_mapping(args):
+        source_coordinator_exit_code = coordinator_proc.returncode
+        source_training_exit_code = workers[0].returncode if args.hccl else 0
+        append_event(args, {"event": "SOURCE_PROCESSES_EXITED", "rank": None,
+                            "source_training_exit_code": source_training_exit_code,
+                            "source_coordinator_exit_code": source_coordinator_exit_code})
+        committed = json.loads((Path(args.run_dir) / "coordinator.json").read_text())["committed"]
+        retained = [item["step"] for item in committed[-args.keep_last_n:]]
+        restore_steps = retained if args.restore_retained else [selected_restore_step(args)]
+        rank_results = []
+        original_restore_step = args.restore_step
+        for restore_index, restore_step in enumerate(restore_steps):
+            args.restore_step = restore_step
+            for marker in ("restore_coordinator.ready", "restore_coordinator.json"):
+                try:
+                    os.unlink(Path(args.run_dir) / marker)
+                except FileNotFoundError:
+                    pass
+            if args.hccl:
+                restore_coordinator_proc = subprocess.Popen(
+                    child_args(args, "restore_coordinator", include_hccl=False),
+                    cwd=args.run_dir)
+                wait_file(Path(args.run_dir) / "restore_coordinator.ready",
+                          process=restore_coordinator_proc)
                 worker = subprocess.Popen(
-                    child_args(args, "restore", rank_id, npu_id,
-                               include_hccl=False), cwd=args.run_dir)
+                    hccl_command(args, "restore_hccl",
+                                 f"restore_hccl_logs_step_{restore_step}",
+                                 args.master_port + 1 + restore_index), cwd=args.run_dir)
+                workers.append(worker)
                 if worker.wait() != 0:
-                    raise RuntimeError("C2 fresh restore process failed")
+                    raise RuntimeError("C2 HCCL fresh restore process failed")
+                if restore_coordinator_proc.wait() != 0:
+                    raise RuntimeError("C2 restore coordinator failed")
+            else:
+                # A standalone restore opens the SPDK primary itself and must run
+                # one rank at a time.
+                for rank_id, npu_id in rank_mapping(args):
+                    worker = subprocess.Popen(
+                        child_args(args, "restore", rank_id, npu_id,
+                                   include_hccl=False), cwd=args.run_dir)
+                    if worker.wait() != 0:
+                        raise RuntimeError("C2 fresh restore process failed")
+            rank_results.extend(json.loads(rank_result_path(args, rank, restore_step).read_text())
+                                for rank, _ in rank_mapping(args))
+        args.restore_step = original_restore_step
+        restore_step = restore_steps[-1]
         write_json(Path(args.run_dir) / "result.json", {
             "status": "pass", "gate": "C2", "world_size": args.world_size,
-            "step": args.save_step, "model": args.model,
+            "step": restore_step, "model": args.model,
+            "checkpoint_steps": checkpoint_steps(args),
+            "restored_steps": restore_steps,
+            "source_training_exit_code": source_training_exit_code,
+            "source_coordinator_exit_code": source_coordinator_exit_code,
+            "source_coordinator_pid": source_coordinator_pid,
             "source_training": "hccl" if args.hccl else "standalone",
             "restore_transport": ("single-spdk-owner-unix-stream" if args.hccl
                                   else "standalone-spdk-primary"),
             "continuation_context": "hccl" if args.hccl else "standalone",
-            "rank_results": [json.loads((Path(args.run_dir) /
-                f"rank_{rank}_result.json").read_text()) for rank, _ in rank_mapping(args)],
+            "rank_results": rank_results,
+        })
+        write_json(Path(args.run_dir) / "restore.json", {
+            "status": "pass", "fresh_process": True,
+            "source_training_exit_code": source_training_exit_code,
+            "source_coordinator_exit_code": source_coordinator_exit_code,
+            "restored_steps": restore_steps, "rank_results": rank_results,
+            "all_rank_states_byte_exact": all(
+                item.get("loaded_state_byte_exact") is True for item in rank_results),
+            "all_continuations_numeric_verified": all(
+                item.get("continuation_numeric_verified", True) for item in rank_results),
         })
         write_json(Path(args.run_dir) / "checkpoint_gate.json", {
             "status": "pass", "gate": "C2", "world_size": args.world_size,
             "generation": json.loads((Path(args.run_dir) / "coordinator.json").read_text())["generation"],
+            "step": restore_step,
+            "restored_steps": restore_steps,
             "restore_transport": ("single-spdk-owner-unix-stream" if args.hccl
                                   else "standalone-spdk-primary"),
             "continuation_context": "hccl" if args.hccl else "standalone",

@@ -39,6 +39,13 @@ class SingleCardFullCliTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(json.loads(result.stdout)["mode"], mode)
 
+    def test_retained_restore_is_explicit_in_config(self):
+        result = self.run_cli("--dry-run", "--restore-retained",
+                              "--checkpoint-steps", "10", "20", "30",
+                              "--total-steps", "31")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)["restore_retained"])
+
 
 if __name__ == "__main__":
     unittest.main()

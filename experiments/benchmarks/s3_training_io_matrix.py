@@ -37,6 +37,7 @@ def main():
     parser.add_argument("--snapshot-slots", nargs="+", type=int, default=[1])
     parser.add_argument("--request-slots", nargs="+", type=int, default=[1])
     parser.add_argument("--generation-delays-ms", nargs="+", type=int, default=[0])
+    parser.add_argument("--restore-retained", action="store_true")
     parser.add_argument("--npu", type=int, default=2)
     parser.add_argument("--numa-node", type=int, default=4)
     parser.add_argument("--pci", default="0000:83:00.0")
@@ -62,6 +63,7 @@ def main():
         "snapshot_slots": args.snapshot_slots,
         "request_slots": args.request_slots,
         "generation_delays_ms": args.generation_delays_ms,
+        "restore_retained": args.restore_retained,
         "numa_node": args.numa_node,
         "shm_id": args.shm_id, "timeout": args.timeout,
     }
@@ -99,6 +101,8 @@ def main():
             "--shm-id", str(args.shm_id + config_index),
             "--timeout", str(args.timeout), "--run-dir", str(run_dir),
         ]
+        if args.restore_retained:
+            command_line.append("--restore-retained")
         dimensions = {
             "seed": seed, "interval": interval, "mode": mode, "chunk": chunk,
             "depth": depth, "snapshot_slots": snapshot_slots,

@@ -376,7 +376,7 @@ def run_orchestrated(args, run_dir):
                                              encoding="utf-8")
         print(json.dumps(result, sort_keys=True))
         return
-    phases = ("baseline", "source", "restore")
+    phases = ("baseline", "source")
     try:
         for phase in phases:
             command_line = [sys.executable, str(Path(__file__).resolve()),
@@ -397,9 +397,42 @@ def run_orchestrated(args, run_dir):
                         "--shm-id", str(args.shm_id), "--timeout", str(args.timeout),
                         "--loss-rtol", str(args.loss_rtol),
                         "--loss-atol", str(args.loss_atol)]
-            if args.restore_step is not None:
-                command_line.extend(("--restore-step", str(args.restore_step)))
             subprocess.run(command_line, cwd=run_dir, check=True)
+        source = json.loads((run_dir / "source.json").read_text())
+        if args.restore_step is not None:
+            restore_steps = [args.restore_step]
+        elif args.restore_retained:
+            restore_steps = [int(record["step"])
+                             for record in source["checkpoints"][-args.keep_last_n:]]
+        else:
+            restore_steps = [int(source["checkpoints"][-1]["step"])]
+        restore_results = []
+        for restore_step in restore_steps:
+            phase = "restore"
+            command_line = [sys.executable, str(Path(__file__).resolve()),
+                        "--phase", phase, "--run-dir", str(run_dir),
+                        "--model", args.model, "--mode", args.mode,
+                        "--checkpoint-steps", *[str(x) for x in args.checkpoint_steps],
+                        "--total-steps", str(args.total_steps),
+                        "--seq-len", str(args.seq_len), "--seed", str(args.seed),
+                        "--npu", str(args.npu), "--pci", args.pci,
+                        "--chunk-size", str(args.chunk_size),
+                        "--pipeline-depth", str(args.pipeline_depth),
+                        "--keep-last-n", str(args.keep_last_n),
+                        "--slot-size-gb", str(args.slot_size_gb),
+                        "--checkpoint-slots", str(args.checkpoint_slots),
+                        "--request-slots", str(args.request_slots),
+                        "--admission", args.admission,
+                        "--generation-delay-ms", str(args.generation_delay_ms),
+                        "--shm-id", str(args.shm_id), "--timeout", str(args.timeout),
+                        "--loss-rtol", str(args.loss_rtol),
+                        "--loss-atol", str(args.loss_atol),
+                        "--restore-step", str(restore_step)]
+            subprocess.run(command_line, cwd=run_dir, check=True)
+            restored = json.loads((run_dir / "restore.json").read_text())
+            (run_dir / f"restore_step_{restore_step:06d}.json").write_text(
+                json.dumps(restored, indent=2), encoding="utf-8")
+            restore_results.append(restored)
     except BaseException as error:
         failure = {"status": "fail", "phase": phase, "error": repr(error)}
         with (run_dir / "failures.jsonl").open("a", encoding="utf-8") as stream:
@@ -417,7 +450,11 @@ def run_orchestrated(args, run_dir):
                         "restore_verified": False}, indent=2),
             encoding="utf-8")
         raise
-    result = json.loads((run_dir / "restore.json").read_text())
+    result = restore_results[-1]
+    result["restored_steps"] = restore_steps
+    result["all_retained_restores_verified"] = all(
+        item.get("status") == "pass" and item.get("loaded_state_byte_exact") is True and
+        item.get("loss_allclose") is True for item in restore_results)
     source = json.loads((run_dir / "source.json").read_text())
     checkpoint_steps = {int(record["step"]) for record in source["checkpoints"]}
     checkpoint_step_seconds = [
@@ -514,6 +551,7 @@ def main():
                         default="serial")
     parser.add_argument("--checkpoint-steps", nargs="+", type=int, default=None)
     parser.add_argument("--restore-step", type=int, default=None)
+    parser.add_argument("--restore-retained", action="store_true")
     parser.add_argument("--total-steps", type=int, default=110)
     parser.add_argument("--seq-len", type=int, default=129)
     parser.add_argument("--seed", type=int, default=41)
