@@ -64,11 +64,16 @@ def effective_rank_id(args):
 
 def effective_rank_device(args):
     if args.hccl:
-        configured = os.getenv("ASCEND_DEVICE_ID", os.getenv("DEVICE_ID"))
-        if configured is not None:
-            return int(configured)
         rank_id = effective_rank_id(args)
-        return dict(rank_mapping(args))[rank_id]
+        # msrun exports DEVICE_ID/ASCEND_DEVICE_ID as a logical local rank.
+        # The experiment's explicit physical mapping is authoritative.
+        mapping = dict(rank_mapping(args))
+        if rank_id in mapping:
+            return mapping[rank_id]
+        configured = os.getenv("ASCEND_DEVICE_ID", os.getenv("DEVICE_ID"))
+        if configured is None:
+            raise ValueError(f"no physical NPU mapping for rank {rank_id}")
+        return int(configured)
     return args.npu
 
 
@@ -122,7 +127,7 @@ def build_training(args):
     # Data-parallel ranks must start from identical parameter initialization;
     # rank identity only selects the device/process, never the model seed.
     ms.set_seed(args.seed)
-    return build_training_base(args)
+    return build_training_base(args, initialized=True)
 
 
 def shard_base(ckpt, rank_id, step, args):
@@ -725,6 +730,14 @@ def hccl_command(args, phase, log_dir, master_port):
             "--join=True", f"--log_dir={log_dir}", *task]
 
 
+def hccl_worker_env(args):
+    """Expose the requested physical rank devices to msrun workers."""
+    env = os.environ.copy()
+    env["ASCEND_RT_VISIBLE_DEVICES"] = ",".join(
+        str(device) for _, device in rank_mapping(args))
+    return env
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=("orchestrate", "coordinator", "rank",
@@ -812,7 +825,8 @@ def main():
         if args.hccl:
             command = hccl_command(
                 args, "rank", "source_hccl_logs", args.master_port)
-            workers.append(subprocess.Popen(command, cwd=args.run_dir))
+            workers.append(subprocess.Popen(command, cwd=args.run_dir,
+                                            env=hccl_worker_env(args)))
             if workers[0].wait() != 0:
                 raise RuntimeError("C2 HCCL rank training process failed")
         else:
@@ -850,7 +864,8 @@ def main():
                 worker = subprocess.Popen(
                     hccl_command(args, "restore_hccl",
                                  f"restore_hccl_logs_step_{restore_step}",
-                                 args.master_port + 1 + restore_index), cwd=args.run_dir)
+                                 args.master_port + 1 + restore_index),
+                    cwd=args.run_dir, env=hccl_worker_env(args))
                 workers.append(worker)
                 if worker.wait() != 0:
                     raise RuntimeError("C2 HCCL fresh restore process failed")

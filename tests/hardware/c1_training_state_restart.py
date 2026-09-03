@@ -37,12 +37,13 @@ def write_json(path, value):
                           encoding="utf-8")
 
 
-def build_training(args):
+def build_training(args, initialized=False):
     import mindspore as ms
     from experiments.common import init_env, make_causal_lm_training
     from direct_checkpoint import ProbeTrainOneStepCell
 
-    init_env(device_id=args.npu, seed=args.seed)
+    if not initialized:
+        init_env(device_id=args.npu, seed=args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
     model, _dataset, optimizer = make_causal_lm_training(
