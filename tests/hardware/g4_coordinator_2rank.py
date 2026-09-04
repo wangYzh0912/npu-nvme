@@ -35,6 +35,16 @@ from c_bindings import lib  # noqa: E402
 FIELDS = ("weight", "optimizer", "rng", "data_cursor")
 
 
+def multirank_slot_base(ckpt, rank_id, step, keep_last_n=3):
+    """Use the declared multi-rank area rather than the single-rank FULL ring."""
+    base = ckpt.layout.full_end + 1024 * 1024 * 1024
+    slot_index = rank_id * keep_last_n + (step % keep_last_n)
+    end = base + 2 * keep_last_n * ckpt.slot_bytes
+    if end > ckpt.layout.delta_base:
+        raise MemoryError("G4 multi-rank area overlaps Delta partition")
+    return base + slot_index * ckpt.slot_bytes
+
+
 def send_msg(sock, message):
     raw = json.dumps(message, sort_keys=True).encode("utf-8")
     sock.sendall(struct.pack("!I", len(raw)) + raw)
@@ -117,7 +127,7 @@ def rank_worker(args):
 
 
 def write_rank_state(ckpt, rank_id, step, fields):
-    base = ckpt.layout.full_slot_offset(rank_id, step, ckpt.keep_last_n)
+    base = multirank_slot_base(ckpt, rank_id, step, ckpt.keep_last_n)
     buffers = []
     ptrs = []
     offsets = []
@@ -167,7 +177,10 @@ def read_rank_state(ckpt, rank_layout):
 
 
 def coordinator_phase(args, run_dir):
-    socket_path = os.path.join(run_dir, "g4.sock")
+    # Linux limits AF_UNIX addresses to 108 bytes; campaign run directories
+    # encode the full experiment key, so keep the rendezvous path short.
+    socket_path = "/tmp/npuio-g4-" + hashlib.sha256(
+        run_dir.encode("utf-8")).hexdigest()[:16] + ".sock"
     try:
         os.unlink(socket_path)
     except FileNotFoundError:
@@ -175,7 +188,7 @@ def coordinator_phase(args, run_dir):
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(socket_path)
     server.listen(2)
-    def collect_and_commit(ckpt, step, fail_after_prepare):
+    def collect_and_commit(ckpt, step, fail_after_prepare, fault_mode=None):
         connections = {}
         prepared = {}
         for _ in range(2):
@@ -231,6 +244,12 @@ def coordinator_phase(args, run_dir):
                 "data_cursor": True,
             }
 
+        if fault_mode == "coordinator_precommit" and step == 3:
+            # Simulate coordinator loss after all rank data is durable but
+            # before metadata publication.  The previous committed record must
+            # remain the only visible generation after restart.
+            os._exit(86)
+
         ckpt.meta_dict["checkpoints"][f"step_{step}"] = {
             "type": "MULTI_FULL",
             "generation": ckpt.metadata_generation + 1,
@@ -239,6 +258,12 @@ def coordinator_phase(args, run_dir):
             "ranks": rank_records,
         }
         ckpt._persist_metadata(ckpt.metadata_generation + 1)
+
+        if fault_mode == "after_commit" and step == 3:
+            # Metadata is durable; source processes are deliberately lost
+            # before COMMIT replies are delivered to model an abrupt crash
+            # immediately after global commit.
+            os._exit(87)
 
         for conn in connections.values():
             send_msg(conn, {"type": "COMMIT", "step": step})
@@ -265,15 +290,28 @@ def coordinator_phase(args, run_dir):
             raise RuntimeError("successful two-rank prepare/commit unexpectedly aborted")
         with open(os.path.join(run_dir, "round_2.done"), "w", encoding="utf-8") as stream:
             stream.write("done\n")
-        if collect_and_commit(ckpt, 3, True):
-            raise RuntimeError("failed rank incorrectly published step_3")
+        if args.fault_mode == "rank_partial":
+            if collect_and_commit(ckpt, 3, True):
+                raise RuntimeError("failed rank incorrectly published step_3")
+        elif args.fault_mode in ("coordinator_precommit", "after_commit"):
+            # The selected fault exits from collect_and_commit.  This branch is
+            # only reached if the injection unexpectedly returned normally.
+            if collect_and_commit(ckpt, 3, False, args.fault_mode):
+                raise RuntimeError("coordinator fault unexpectedly returned")
+        else:
+            if collect_and_commit(ckpt, 3, True):
+                raise RuntimeError("failed rank incorrectly published step_3")
         with open(os.path.join(run_dir, "round_3.done"), "w", encoding="utf-8") as stream:
             stream.write("done\n")
-        if "step_3" in ckpt.meta_dict.get("checkpoints", {}):
+        if args.fault_mode != "after_commit" and "step_3" in ckpt.meta_dict.get("checkpoints", {}):
             raise RuntimeError("step_3 appeared after rank failure")
+        if args.fault_mode == "after_commit" and "step_3" not in ckpt.meta_dict.get("checkpoints", {}):
+            raise RuntimeError("step_3 missing after post-commit crash")
         with open(os.path.join(run_dir, "g4_manifest.json"), "w", encoding="utf-8") as stream:
-            json.dump({"status": "pass", "step": 2, "world_size": 2,
-                       "failed_step": 3, "coordinator_npu": args.coordinator_npu},
+            json.dump({"status": "pass", "step": 3 if args.fault_mode == "after_commit" else 2,
+                       "world_size": 2, "fault_mode": args.fault_mode,
+                       "failed_step": 3 if args.fault_mode != "after_commit" else None,
+                       "coordinator_npu": args.coordinator_npu},
                       stream, indent=2, sort_keys=True)
         print("[G4/coordinator] PASS step_2 committed; step_3 aborted on rank1 failure",
               flush=True)
@@ -333,8 +371,10 @@ def verify_phase(args, run_dir):
         record = ckpt.meta_dict["checkpoints"].get("step_2")
         if not record or record.get("type") != "MULTI_FULL" or record.get("world_size") != 2:
             raise AssertionError("step_2 multi-rank commit is missing after restart")
-        if "step_3" in ckpt.meta_dict["checkpoints"]:
+        if manifest.get("fault_mode") != "after_commit" and "step_3" in ckpt.meta_dict["checkpoints"]:
             raise AssertionError("aborted step_3 was published")
+        if manifest.get("fault_mode") == "after_commit" and "step_3" not in ckpt.meta_dict["checkpoints"]:
+            raise AssertionError("post-commit step_3 is missing after restart")
         for rank_id in (0, 1):
             rank_record = record["ranks"][str(rank_id)]
             fields = read_rank_state(ckpt, rank_record["fields"])
@@ -359,6 +399,9 @@ def main():
     parser.add_argument("--step", type=int, default=2)
     parser.add_argument("--socket", default="")
     parser.add_argument("--fail-after-prepare", action="store_true")
+    parser.add_argument("--fault-mode", choices=("rank_partial", "coordinator_precommit",
+                                                  "after_commit"),
+                        default="rank_partial")
     parser.add_argument("--pci", default="0000:83:00.0")
     parser.add_argument("--shm-id", type=int, default=83)
     parser.add_argument("--run-dir", default=os.path.join(
@@ -380,7 +423,8 @@ def main():
     coordinator_cmd = [sys.executable, os.path.abspath(__file__),
                        "--phase", "coordinator", "--pci", args.pci,
                        "--coordinator-npu", str(args.coordinator_npu),
-                       "--shm-id", str(args.shm_id), "--run-dir", run_dir]
+                       "--shm-id", str(args.shm_id), "--run-dir", run_dir,
+                       "--fault-mode", args.fault_mode]
     verify_cmd = [sys.executable, os.path.abspath(__file__), "--phase", "verify",
                   "--pci", args.pci, "--coordinator-npu", str(args.coordinator_npu),
                   "--shm-id", str(args.shm_id), "--run-dir", run_dir]
@@ -393,19 +437,42 @@ def main():
     coordinator = subprocess.Popen(coordinator_cmd, cwd=run_dir)
     workers = []
     try:
-        socket_path = os.path.join(run_dir, "g4.sock")
+        socket_path = "/tmp/npuio-g4-" + hashlib.sha256(
+            run_dir.encode("utf-8")).hexdigest()[:16] + ".sock"
         wait_for_file(os.path.join(run_dir, "round_2.ready"))
         workers.extend(launch_pair(args, run_dir, socket_path, 2, False))
         wait_for_file(os.path.join(run_dir, "round_2.done"))
         stop_workers(workers)
         workers = []
-        workers.extend(launch_pair(args, run_dir, socket_path, 3, True))
-        wait_for_file(os.path.join(run_dir, "round_3.done"))
-        stop_workers(workers)
-        workers = []
-        coordinator.wait(timeout=30)
-        if coordinator.returncode != 0:
-            raise subprocess.CalledProcessError(coordinator.returncode, coordinator_cmd)
+        workers.extend(launch_pair(args, run_dir, socket_path, 3,
+                                    args.fault_mode == "rank_partial"))
+        if args.fault_mode == "rank_partial":
+            wait_for_file(os.path.join(run_dir, "round_3.done"))
+            stop_workers(workers)
+            workers = []
+            coordinator.wait(timeout=30)
+            if coordinator.returncode != 0:
+                raise subprocess.CalledProcessError(coordinator.returncode, coordinator_cmd)
+        else:
+            # Coordinator exits intentionally from the injected crash point.
+            try:
+                coordinator.wait(timeout=60)
+            finally:
+                stop_workers(workers)
+                workers = []
+            expected = 86 if args.fault_mode == "coordinator_precommit" else 87
+            if coordinator.returncode != expected:
+                raise subprocess.CalledProcessError(coordinator.returncode, coordinator_cmd)
+        # The coordinator's intentional _exit path cannot write its manifest;
+        # the parent records the injected scenario before running fresh verify.
+        manifest_path = os.path.join(run_dir, "g4_manifest.json")
+        if not os.path.exists(manifest_path):
+            with open(manifest_path, "w", encoding="utf-8") as stream:
+                json.dump({"status": "pass", "step": 3 if args.fault_mode == "after_commit" else 2,
+                           "world_size": 2, "fault_mode": args.fault_mode,
+                           "failed_step": 3 if args.fault_mode != "after_commit" else None,
+                           "coordinator_npu": args.coordinator_npu},
+                          stream, indent=2, sort_keys=True)
     finally:
         stop_workers(workers)
         if coordinator.poll() is None:
