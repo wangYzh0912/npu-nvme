@@ -133,11 +133,16 @@ def io2_specs(args, root, candidates):
     selected = candidates[0] if candidates else {"chunk": 4 * MIB, "depth": 4}
     chunk, depth = selected["chunk"], selected["depth"]
     return [
-        ("screen", matrix_command(
+        ("screen_i10", matrix_command(
             args, base / "screen", model="gpt2_xl",
             modes=("none", "serial", "queue", "frozen_async", "live_async"),
-            intervals=(10, 50), chunks=tuple(sorted({chunk, 4 * MIB})),
-            depths=tuple(sorted({depth, 4})), total_steps=160)),
+            intervals=(10,), chunks=tuple(sorted({chunk, 4 * MIB})),
+            depths=tuple(sorted({depth, 4})), total_steps=31)),
+        ("screen_i50", matrix_command(
+            args, base / "screen_i50", model="gpt2_xl",
+            modes=("none", "serial", "queue", "frozen_async", "live_async"),
+            intervals=(50,), chunks=tuple(sorted({chunk, 4 * MIB})),
+            depths=tuple(sorted({depth, 4})), total_steps=151)),
         ("gate100", matrix_command(
             args, base / "gate100", model="gpt2_xl",
             modes=("none", "serial", "frozen_async", "live_async"),
