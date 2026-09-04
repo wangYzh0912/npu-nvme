@@ -22,6 +22,35 @@ try:
         ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p,
         ctypes.c_size_t, ctypes.c_int]
     acl_lib.aclrtMemcpy.restype = ctypes.c_int
+    acl_lib.aclrtMemcpyAsync.argtypes = [
+        ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p,
+        ctypes.c_size_t, ctypes.c_int, ctypes.c_void_p]
+    acl_lib.aclrtMemcpyAsync.restype = ctypes.c_int
+    acl_lib.aclrtMallocHost.argtypes = [
+        ctypes.POINTER(ctypes.c_void_p), ctypes.c_size_t]
+    acl_lib.aclrtMallocHost.restype = ctypes.c_int
+    acl_lib.aclrtFreeHost.argtypes = [ctypes.c_void_p]
+    acl_lib.aclrtFreeHost.restype = ctypes.c_int
+    acl_lib.aclrtCreateStream.argtypes = [ctypes.POINTER(ctypes.c_void_p)]
+    acl_lib.aclrtCreateStream.restype = ctypes.c_int
+    acl_lib.aclrtDestroyStream.argtypes = [ctypes.c_void_p]
+    acl_lib.aclrtDestroyStream.restype = ctypes.c_int
+    acl_lib.aclrtCreateEvent.argtypes = [ctypes.POINTER(ctypes.c_void_p)]
+    acl_lib.aclrtCreateEvent.restype = ctypes.c_int
+    acl_lib.aclrtDestroyEvent.argtypes = [ctypes.c_void_p]
+    acl_lib.aclrtDestroyEvent.restype = ctypes.c_int
+    acl_lib.aclrtRecordEvent.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    acl_lib.aclrtRecordEvent.restype = ctypes.c_int
+    acl_lib.aclrtSynchronizeEvent.argtypes = [ctypes.c_void_p]
+    acl_lib.aclrtSynchronizeEvent.restype = ctypes.c_int
+    acl_lib.aclrtQueryEventStatus.argtypes = [
+        ctypes.c_void_p, ctypes.POINTER(ctypes.c_int)]
+    acl_lib.aclrtQueryEventStatus.restype = ctypes.c_int
+    acl_lib.aclrtStreamWaitEvent.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    acl_lib.aclrtStreamWaitEvent.restype = ctypes.c_int
+    acl_lib.aclrtEventElapsedTime.argtypes = [
+        ctypes.POINTER(ctypes.c_float), ctypes.c_void_p, ctypes.c_void_p]
+    acl_lib.aclrtEventElapsedTime.restype = ctypes.c_int
     _set_device = getattr(acl_lib, "aclrtSetDevice", None)
     if _set_device is not None:
         _set_device.argtypes = [ctypes.c_int]
@@ -112,6 +141,14 @@ try:
             ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
         ]
         lib.npu_nvme_submit_write_batch.restype = ctypes.c_int
+        lib.npu_nvme_submit_write_batch_host.argtypes = [
+            ctypes.POINTER(NPUNVMEContext),
+            ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64),
+            ctypes.POINTER(ctypes.c_size_t), ctypes.c_int,
+            ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+        ]
+        lib.npu_nvme_submit_write_batch_host.restype = ctypes.c_int
         lib.npu_nvme_poll_request.argtypes = [
             ctypes.POINTER(NPUNVMERequest), ctypes.POINTER(ctypes.c_int)]
         lib.npu_nvme_poll_request.restype = ctypes.c_int

@@ -62,6 +62,19 @@ int npu_nvme_submit_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                                 uint64_t *nvme_offsets, size_t *sizes,
                                 int num_items, NPUNVMERequest **out_request);
 
+/**
+ * @brief Submit a pinned Host-to-NVMe batch without waiting for completion.
+ *
+ * The Host buffers remain caller-owned and must stay valid until the request
+ * reaches a terminal state.  This is the persistence half of live FULL
+ * capture: ACL first fills generation-owned pinned staging, then the Reactor
+ * consumes that immutable staging without blocking the training thread.
+ */
+int npu_nvme_submit_write_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
+                                     uint64_t *nvme_offsets, size_t *sizes,
+                                     int num_items,
+                                     NPUNVMERequest **out_request);
+
 /** @brief Poll a submitted request; result is returned once done is true. */
 int npu_nvme_poll_request(NPUNVMERequest *request, int *done);
 

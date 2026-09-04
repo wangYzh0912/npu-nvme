@@ -91,3 +91,30 @@ class ProbeTrainOneStepCell(nn.Cell):
         loss = self.depend(loss, opt_res)
 
         return loss
+
+
+class LiveForwardBackwardCell(nn.Cell):
+    """Launch forward/backward separately so a DMA fence can precede update."""
+
+    def __init__(self, network, optimizer):
+        super().__init__(auto_prefix=False)
+        self.network = network
+        self.network.set_train(True)
+        self.network.set_grad()
+        self.loss_network = _CheckedScalarLossCell(self.network)
+        self.grad_fn = ops.value_and_grad(
+            self.loss_network, grad_position=None, weights=optimizer.parameters)
+
+    def construct(self, *inputs):
+        return self.grad_fn(*inputs)
+
+
+class LiveOptimizerCell(nn.Cell):
+    """Optimizer graph launched after Host inserts the device-side DMA wait."""
+
+    def __init__(self, optimizer):
+        super().__init__(auto_prefix=False)
+        self.optimizer = optimizer
+
+    def construct(self, *grads):
+        return self.optimizer(grads)

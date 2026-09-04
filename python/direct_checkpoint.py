@@ -156,6 +156,18 @@ class CheckpointHandle:
         self.freeze_wait_ns = 0
         self.update_wait_ns = 0
         self.update_deadline_missed = False
+        self.dma_submit_ns = None
+        self.dma_complete_ns = None
+        self.dma_chunks = []
+        self.update_fence_install_ns = None
+        self.update_fence_release_ns = None
+        self.snapshot_state_digest = None
+        self.training_dependency = None
+        self._live_event = None
+        self._live_pre_event = None
+        self._live_post_event = None
+        self._live_buffers = []
+        self._live_fence_consumed = False
         self.events = []
         self._done = threading.Event()
         self._lock = threading.Lock()
@@ -225,8 +237,63 @@ class CheckpointHandle:
             "freeze_wait_ns": self.freeze_wait_ns,
             "update_wait_ns": self.update_wait_ns,
             "update_deadline_missed": self.update_deadline_missed,
+            "dma_submit_ns": self.dma_submit_ns,
+            "dma_complete_ns": self.dma_complete_ns,
+            "dma_chunks": list(self.dma_chunks),
+            "update_fence_install_ns": self.update_fence_install_ns,
+            "update_fence_release_ns": self.update_fence_release_ns,
+            "training_dependency": self.training_dependency,
             "events": list(self.events),
         }
+
+    def install_update_fence(self, stream_ptr):
+        """Insert a device-side wait before the next optimizer launch."""
+        if not self._live_event:
+            return False
+        stream = ctypes.c_void_p(int(stream_ptr))
+        status = ctypes.c_int()
+        rc = acl_lib.aclrtQueryEventStatus(self._live_event,
+                                           ctypes.byref(status))
+        if rc != 0:
+            raise RuntimeError(f"aclrtQueryEventStatus(update fence) failed: {rc}")
+        self.update_deadline_missed = (status.value == 0)
+        pre = ctypes.c_void_p()
+        post = ctypes.c_void_p()
+        for event in (pre, post):
+            rc = acl_lib.aclrtCreateEvent(ctypes.byref(event))
+            if rc != 0:
+                raise RuntimeError(f"aclrtCreateEvent(update fence) failed: {rc}")
+        rc = acl_lib.aclrtRecordEvent(pre, stream)
+        if rc == 0:
+            rc = acl_lib.aclrtStreamWaitEvent(stream, self._live_event)
+        if rc == 0:
+            rc = acl_lib.aclrtRecordEvent(post, stream)
+        if rc != 0:
+            acl_lib.aclrtDestroyEvent(pre)
+            acl_lib.aclrtDestroyEvent(post)
+            raise RuntimeError(f"device update fence submission failed: {rc}")
+        self._live_pre_event = pre
+        self._live_post_event = post
+        self.update_fence_install_ns = time.monotonic_ns()
+        return True
+
+    def collect_update_wait(self):
+        """Collect device event-to-event wait after the optimizer step ends."""
+        if not self._live_post_event:
+            return 0
+        rc = acl_lib.aclrtSynchronizeEvent(self._live_post_event)
+        elapsed_ms = ctypes.c_float()
+        if rc == 0:
+            rc = acl_lib.aclrtEventElapsedTime(
+                ctypes.byref(elapsed_ms), self._live_pre_event,
+                self._live_post_event)
+        if rc != 0:
+            raise RuntimeError(f"update fence timing failed: {rc}")
+        self.update_wait_ns = max(0, int(elapsed_ms.value * 1_000_000))
+        self.update_fence_release_ns = time.monotonic_ns()
+        self._live_fence_consumed = True
+        self.owner._maybe_release_live(self)
+        return self.update_wait_ns
 
     def wait(self, timeout=None):
         """Wait for durable completion and raise the original failure."""
@@ -266,24 +333,17 @@ class DirectCheckpoint:
 
     @staticmethod
     def live_async_capability():
-        """Describe whether direct live-HBM FULL capture is safe.
-
-        The current Reactor owns a bounded pool of reusable DMA buffers.  A
-        FULL request therefore cannot expose a single completion event for all
-        source reads when submit returns: later chunks are submitted only after
-        earlier buffers have completed NVMe I/O and become reusable.  Blocking
-        an optimizer update on the current request would require host polling
-        or a device-visible aggregate fence, neither of which is implemented.
-        """
+        required = ("aclrtMallocHost", "aclrtMemcpyAsync", "aclrtCreateEvent",
+                    "aclrtRecordEvent", "aclrtStreamWaitEvent")
+        missing = [name for name in required
+                   if acl_lib is None or not hasattr(acl_lib, name)]
         return {
-            "supported": False,
-            "code": "BOUNDED_DMA_POOL_HAS_NO_DEVICE_AGGREGATE_FENCE",
-            "detail": (
-                "FULL live-HBM capture cannot bind all future chunk DMA "
-                "events to the optimizer stream before API return"),
-            "required": (
-                "device-visible aggregate fence, full host staging, or "
-                "parameter-group update fences"),
+            "supported": not missing,
+            "code": "SUPPORTED_GENERATION_PINNED_STAGING" if not missing else
+                    "MISSING_ACL_LIVE_FENCE_API",
+            "detail": ("generation-owned pinned staging and aggregate D2H event"
+                       if not missing else f"missing ACL symbols: {missing}"),
+            "required": "split forward/backward and optimizer launch",
         }
 
     def __init__(
@@ -383,6 +443,8 @@ class DirectCheckpoint:
         self._snapshot_generation = 0
         self._last_chunk_count = 0
         self._last_save_stats = {}
+        self._live_resource_lock = threading.Lock()
+        self._live_handles = set()
         atexit.register(self.close)
 
         # Set up ctypes signature for C-layer profiling
@@ -786,6 +848,13 @@ class DirectCheckpoint:
         except RuntimeError as error:
             io_error = error
         finally:
+            for handle in list(getattr(self, "_live_handles", ())):
+                if handle._live_post_event:
+                    try:
+                        handle.collect_update_wait()
+                    except Exception:
+                        pass
+                self._release_live_resources(handle)
             if getattr(self, '_spdk_initialized', False) and self.ctx:
                 lib.npu_nvme_cleanup(self.ctx)
                 self.ctx = None
@@ -947,6 +1016,139 @@ class DirectCheckpoint:
             if ptr is not None and ptr.value:
                 acl_lib.aclrtFree(ptr)
                 item["snapshot_dev_ptr"] = ctypes.c_void_p()
+
+    def _release_live_resources(self, handle):
+        with self._live_resource_lock:
+            resources = list(handle._live_buffers)
+            handle._live_buffers = []
+            self._live_handles.discard(handle)
+        for resource in resources:
+            events = [handle._live_pre_event, handle._live_post_event,
+                      resource.get("event"), resource.get("start_event")]
+            events.extend(chunk.get("event")
+                          for chunk in resource.get("dma_chunks", []))
+            seen_events = set()
+            for event in events:
+                if event and event.value:
+                    if int(event.value) in seen_events:
+                        continue
+                    seen_events.add(int(event.value))
+                    acl_lib.aclrtDestroyEvent(event)
+            stream = resource.get("stream")
+            if stream and stream.value:
+                acl_lib.aclrtDestroyStream(stream)
+            buffer_ptr = resource.get("buffer")
+            if buffer_ptr and buffer_ptr.value:
+                acl_lib.aclrtFreeHost(buffer_ptr)
+        handle._live_event = None
+        handle._live_pre_event = None
+        handle._live_post_event = None
+
+    def _maybe_release_live(self, handle):
+        if handle.done() and handle._live_fence_consumed:
+            self._release_live_resources(handle)
+
+    @staticmethod
+    def _align_live_offset(value, alignment=64):
+        return (int(value) + alignment - 1) // alignment * alignment
+
+    def _stage_live_params(self, params):
+        if acl_lib is None:
+            raise RuntimeError("ACL library is required for live staging")
+        rc = acl_lib.aclrtSetDevice(self.npu_device_id)
+        if rc != 0:
+            raise RuntimeError(f"aclrtSetDevice(live) failed: {rc}")
+        offsets = []
+        total = 0
+        for item in params:
+            total = self._align_live_offset(total)
+            offsets.append(total)
+            total += int(item["size"])
+        buffer_ptr = ctypes.c_void_p()
+        stream = ctypes.c_void_p()
+        event = ctypes.c_void_p()
+        start_event = ctypes.c_void_p()
+        dma_chunks = []
+        allocated = False
+        try:
+            rc = acl_lib.aclrtMallocHost(ctypes.byref(buffer_ptr), total)
+            if rc != 0 or not buffer_ptr.value:
+                raise MemoryError(f"aclrtMallocHost({total}) failed: {rc}")
+            allocated = True
+            rc = acl_lib.aclrtCreateStream(ctypes.byref(stream))
+            if rc != 0:
+                raise RuntimeError(f"aclrtCreateStream(live) failed: {rc}")
+            rc = acl_lib.aclrtCreateEvent(ctypes.byref(event))
+            if rc != 0:
+                raise RuntimeError(f"aclrtCreateEvent(live) failed: {rc}")
+            rc = acl_lib.aclrtCreateEvent(ctypes.byref(start_event))
+            if rc != 0:
+                raise RuntimeError(f"aclrtCreateEvent(live start) failed: {rc}")
+            rc = acl_lib.aclrtRecordEvent(start_event, stream)
+            if rc != 0:
+                raise RuntimeError(f"aclrtRecordEvent(live start) failed: {rc}")
+            dma_submit_ns = time.monotonic_ns()
+            staged = []
+            for item, offset in zip(params, offsets):
+                target = int(buffer_ptr.value) + offset
+                copy_item = dict(item)
+                array_type = ctypes.c_ubyte * int(item["size"])
+                array = np.ctypeslib.as_array(array_type.from_address(target))
+                if item["ptr"]:
+                    inner_offset = 0
+                    while inner_offset < int(item["size"]):
+                        take = min(self.chunk_size,
+                                   int(item["size"]) - inner_offset)
+                        submit_ns = time.monotonic_ns()
+                        rc = acl_lib.aclrtMemcpyAsync(
+                            ctypes.c_void_p(target + inner_offset), take,
+                            ctypes.c_void_p(item["ptr"] + inner_offset), take,
+                            2, stream)
+                        if rc != 0:
+                            raise RuntimeError(
+                                f"live D2H submit failed for {item['name']}: {rc}")
+                        chunk_event = ctypes.c_void_p()
+                        rc = acl_lib.aclrtCreateEvent(ctypes.byref(chunk_event))
+                        if rc == 0:
+                            rc = acl_lib.aclrtRecordEvent(chunk_event, stream)
+                        if rc != 0:
+                            if chunk_event.value:
+                                acl_lib.aclrtDestroyEvent(chunk_event)
+                            raise RuntimeError(
+                                f"live D2H chunk event failed for {item['name']}: {rc}")
+                        dma_chunks.append({
+                            "name": item["name"], "offset": inner_offset,
+                            "size": take, "submit_ns": submit_ns,
+                            "complete_ns": None, "event": chunk_event,
+                        })
+                        inner_offset += take
+                else:
+                    source = np.ascontiguousarray(item["np_arr"]).view(np.uint8).reshape(-1)
+                    np.copyto(array, source)
+                copy_item.update(ptr=target, np_arr=array,
+                                 placement="host_staging")
+                staged.append(copy_item)
+            rc = acl_lib.aclrtRecordEvent(event, stream)
+            if rc != 0:
+                raise RuntimeError(f"aclrtRecordEvent(live) failed: {rc}")
+            return staged, {"buffer": buffer_ptr, "stream": stream,
+                            "event": event, "start_event": start_event,
+                            "dma_chunks": dma_chunks, "bytes": total,
+                            "dma_submit_ns": dma_submit_ns}
+        except BaseException:
+            for chunk in dma_chunks:
+                chunk_event = chunk.get("event")
+                if chunk_event and chunk_event.value:
+                    acl_lib.aclrtDestroyEvent(chunk_event)
+            if start_event.value:
+                acl_lib.aclrtDestroyEvent(start_event)
+            if event.value:
+                acl_lib.aclrtDestroyEvent(event)
+            if stream.value:
+                acl_lib.aclrtDestroyStream(stream)
+            if allocated:
+                acl_lib.aclrtFreeHost(buffer_ptr)
+            raise
 
     # -- I/O synchronisation -------------------------------------------------
 
@@ -1230,18 +1432,16 @@ class DirectCheckpoint:
     def save(self, model: ms.nn.Cell, step: int,
              meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True,
              _prepared_params=None, _checkpoint_meta=None, io_mode="queue",
-             timeout=None, _api_enter_ns=None):
+             timeout=None, _api_enter_ns=None, _live_staging=None):
         if io_mode not in ("queue", "async", "serial", "frozen_async",
                            "live_async"):
             raise ValueError(
                 "io_mode must be serial, queue, async, frozen_async, or live_async")
         requested_mode = io_mode
-        if requested_mode == "live_async":
-            capability = self.live_async_capability()
-            raise NotImplementedError(
-                f"live_async unsupported [{capability['code']}]: "
-                f"{capability['detail']}")
-        io_mode = "async" if requested_mode == "frozen_async" else requested_mode
+        if requested_mode == "live_async" and _live_staging is None:
+            raise ValueError("live_async requires generation-owned staging")
+        io_mode = ("async" if requested_mode == "frozen_async" else
+                   "live_host" if requested_mode == "live_async" else requested_mode)
         api_enter_ns = (_api_enter_ns if _api_enter_ns is not None
                         else time.monotonic_ns())
         if self._queue_poisoned:
@@ -1284,12 +1484,13 @@ class DirectCheckpoint:
         # Freeze the graph before copying any parameter address.  A D2D copy
         # submitted while the optimizer is still running would otherwise
         # produce a mixed-step checkpoint.
-        if hasattr(ms.hal, "synchronize"):
-            ms.hal.synchronize()
-        elif hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
-            ms.runtime.synchronize()
-        elif acl_lib is not None and hasattr(acl_lib, "aclrtSynchronizeStream"):
-            acl_lib.aclrtSynchronizeStream(None)
+        if _live_staging is None:
+            if hasattr(ms.hal, "synchronize"):
+                ms.hal.synchronize()
+            elif hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
+                ms.runtime.synchronize()
+            elif acl_lib is not None and hasattr(acl_lib, "aclrtSynchronizeStream"):
+                acl_lib.aclrtSynchronizeStream(None)
         snapshot_slot = int(step) % int(self.keep_last_n)
         handle = CheckpointHandle(
             self, request_id, generation, step, rank_id=self.rank_id,
@@ -1297,20 +1498,41 @@ class DirectCheckpoint:
             snapshot_generation=snapshot_generation, timeout=timeout)
         handle.api_enter_ns = api_enter_ns
         handle.transition(CheckpointState.SNAPSHOTTING)
-        try:
-            params = self._snapshot_params(params, generation)
-        except BaseException as error:
-            handle._fail(error)
-            self._poison_checkpoint_queue(handle)
-            self._advance_io_sequence(io_sequence)
-            self._release_checkpoint_slot()
-            raise
-        handle.transition(CheckpointState.SNAPSHOT_READY)
-        checksum = hashlib.sha256()
-        for item in sorted(params, key=lambda value: value["name"]):
-            checksum.update(item["name"].encode("utf-8"))
-            checksum.update(str(item.get("sha256") or "").encode("ascii"))
-        handle.checksum = checksum.hexdigest()
+        if _live_staging is None:
+            try:
+                params = self._snapshot_params(params, generation)
+            except BaseException as error:
+                handle._fail(error)
+                self._poison_checkpoint_queue(handle)
+                self._advance_io_sequence(io_sequence)
+                self._release_checkpoint_slot()
+                raise
+        else:
+            try:
+                params, live_resource = self._stage_live_params(params)
+            except BaseException as error:
+                handle._fail(error)
+                self._poison_checkpoint_queue(handle)
+                self._advance_io_sequence(io_sequence)
+                self._release_checkpoint_slot()
+                raise
+            handle._live_event = live_resource["event"]
+            handle._live_buffers = [live_resource]
+            handle.dma_submit_ns = live_resource["dma_submit_ns"]
+            with self._live_resource_lock:
+                self._live_handles.add(handle)
+            _live_staging = live_resource
+            handle.transition(CheckpointState.SNAPSHOT_READY)
+            handle.transition(CheckpointState.QUEUED)
+            handle.transition(CheckpointState.DMA_COPYING)
+        if _live_staging is None:
+            handle.transition(CheckpointState.SNAPSHOT_READY)
+        if _live_staging is None:
+            checksum = hashlib.sha256()
+            for item in sorted(params, key=lambda value: value["name"]):
+                checksum.update(item["name"].encode("utf-8"))
+                checksum.update(str(item.get("sha256") or "").encode("ascii"))
+            handle.checksum = checksum.hexdigest()
 
         # -- T_Layout --
         try:
@@ -1348,7 +1570,11 @@ class DirectCheckpoint:
             handle._fail(error)
             self._poison_checkpoint_queue(handle)
             self._advance_io_sequence(io_sequence)
-            self._release_snapshot(params)
+            if _live_staging is None:
+                self._release_snapshot(params)
+            else:
+                handle._live_fence_consumed = True
+                self._release_live_resources(handle)
             self._release_checkpoint_slot()
             raise
 
@@ -1423,7 +1649,58 @@ class DirectCheckpoint:
                 self._io_mutex.acquire()
                 if self._queue_poisoned or handle.state == CheckpointState.CANCELLED:
                     return
-                handle.transition(CheckpointState.DMA_COPYING)
+                if _live_staging is not None:
+                    rc = acl_lib.aclrtSynchronizeEvent(_live_staging["event"])
+                    if rc != 0:
+                        raise RuntimeError(f"live D2H event failed (rc={rc})")
+                    handle.dma_complete_ns = time.monotonic_ns()
+                    dma_chunks = []
+                    for chunk in _live_staging.get("dma_chunks", []):
+                        elapsed_ms = ctypes.c_float()
+                        rc = acl_lib.aclrtEventElapsedTime(
+                            ctypes.byref(elapsed_ms),
+                            _live_staging["start_event"], chunk["event"])
+                        if rc != 0:
+                            raise RuntimeError(
+                                f"live D2H chunk timing failed (rc={rc})")
+                        complete_ns = (_live_staging["dma_submit_ns"] +
+                                       int(elapsed_ms.value * 1_000_000))
+                        dma_chunks.append({
+                            "name": chunk["name"], "offset": chunk["offset"],
+                            "size": chunk["size"],
+                            "submit_ns": chunk["submit_ns"],
+                            "complete_ns": complete_ns,
+                        })
+                    handle.dma_chunks = dma_chunks
+                    layout_by_name = {item["name"]: item for item in layout}
+                    state_digest = hashlib.sha256()
+                    fields = 0
+                    total_state_bytes = 0
+                    for item in params:
+                        view = item.get("np_arr")
+                        if view is not None:
+                            raw = np.ascontiguousarray(view).reshape(-1).tobytes()
+                            item["sha256"] = hashlib.sha256(raw).hexdigest()
+                            layout_by_name[item["name"]]["sha256"] = item["sha256"]
+                    for item in sorted(params, key=lambda value: value["name"]):
+                        if item.get("category") != "parameter":
+                            continue
+                        raw = np.ascontiguousarray(
+                            item["np_arr"]).reshape(-1).tobytes()
+                        state_digest.update(item["name"].encode())
+                        state_digest.update(raw)
+                        fields += 1
+                        total_state_bytes += int(item["size"])
+                    handle.snapshot_state_digest = {
+                        "sha256": state_digest.hexdigest(), "fields": fields,
+                        "bytes": total_state_bytes}
+                    checksum = hashlib.sha256()
+                    for item in sorted(params, key=lambda value: value["name"]):
+                        checksum.update(item["name"].encode("utf-8"))
+                        checksum.update(str(item.get("sha256") or "").encode("ascii"))
+                    handle.checksum = checksum.hexdigest()
+                if _live_staging is None:
+                    handle.transition(CheckpointState.DMA_COPYING)
                 t_spdk_start = time.perf_counter()
                 total_written = 0
 
@@ -1436,11 +1713,21 @@ class DirectCheckpoint:
                     if not hasattr(lib, "npu_nvme_write_batch_host"):
                         raise RuntimeError(
                             "C library missing npu_nvme_write_batch_host")
-                    rc = lib.npu_nvme_write_batch_host(
-                        self.ctx, c_ptrs_h, c_offs_h, c_sizes_h, n_host)
+                    if io_mode == "live_host":
+                        request = ctypes.POINTER(NPUNVMERequest)()
+                        rc = lib.npu_nvme_submit_write_batch_host(
+                            self.ctx, c_ptrs_h, c_offs_h, c_sizes_h, n_host,
+                            ctypes.byref(request))
+                        if rc == 0:
+                            try:
+                                rc = lib.npu_nvme_wait_request(request, 0)
+                            finally:
+                                lib.npu_nvme_release_request(request)
+                    else:
+                        rc = lib.npu_nvme_write_batch_host(
+                            self.ctx, c_ptrs_h, c_offs_h, c_sizes_h, n_host)
                     if rc != 0:
-                        raise RuntimeError(
-                            f"write_batch_host failed (rc={rc})")
+                        raise RuntimeError(f"write_batch_host failed (rc={rc})")
                     total_written += h_sz
 
                 handle.transition(CheckpointState.NVME_WRITING)
@@ -1499,7 +1786,10 @@ class DirectCheckpoint:
             finally:
                 if self._io_mutex.locked():
                     self._io_mutex.release()
-                self._release_snapshot(params)
+                if _live_staging is None:
+                    self._release_snapshot(params)
+                else:
+                    self._maybe_release_live(handle)
                 self._advance_io_sequence(io_sequence)
                 self._release_checkpoint_slot(handle)
 
@@ -1524,7 +1814,8 @@ class DirectCheckpoint:
                   c_ptrs_host, c_offs_host, c_sizes_host, num_host_val, host_sz_val))
         with self._handles_lock:
             self._handle_threads[request_id] = self.io_thread
-        handle.transition(CheckpointState.QUEUED)
+        if _live_staging is None:
+            handle.transition(CheckpointState.QUEUED)
         self.io_thread.start()
 
         if requested_mode == "frozen_async":
@@ -1626,11 +1917,6 @@ class DirectCheckpoint:
         contains JSON-tagged Python/NumPy state and is returned by
         :meth:`load_state` for the caller to re-apply.
         """
-        if io_mode == "live_async":
-            capability = self.live_async_capability()
-            raise NotImplementedError(
-                f"live_async unsupported [{capability['code']}]: "
-                f"{capability['detail']}")
         api_enter_ns = time.monotonic_ns()
         requested_admission = self.admission if admission is None else admission
         if requested_admission not in ("block", "try"):
@@ -1644,10 +1930,10 @@ class DirectCheckpoint:
                         self.checkpoint_slots, self.request_slots):
                     raise CheckpointBusyError("checkpoint admission is BUSY")
         validate_state_names(components, control_state)
-        if hasattr(ms.hal, "synchronize"):
+        if io_mode != "live_async" and hasattr(ms.hal, "synchronize"):
             ms.hal.synchronize()
         params = self._prepare_state_components(
-            components, with_checksums=verify_checksums)
+            components, with_checksums=(verify_checksums and io_mode != "live_async"))
         for name in sorted(control_state):
             payload, control_meta = encode_control_value(control_state[name])
             params.append({
@@ -1680,7 +1966,8 @@ class DirectCheckpoint:
             return self.save(
                 None, step=step, meta_path=meta_path, commit_meta=commit_meta,
                 _prepared_params=params, _checkpoint_meta=checkpoint_meta,
-                io_mode=io_mode, timeout=timeout, _api_enter_ns=api_enter_ns)
+                io_mode=io_mode, timeout=timeout, _api_enter_ns=api_enter_ns,
+                _live_staging=(True if io_mode == "live_async" else None))
         finally:
             self.admission = previous_admission
 

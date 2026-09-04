@@ -39,18 +39,19 @@ def digest_state(model, optimizer):
     fields = 0
     total = 0
     seen = set()
+    items = []
     for component, obj in (("model", model), ("optimizer", optimizer)):
         for name, parameter in obj.parameters_and_names():
             if id(parameter) in seen:
                 continue
             seen.add(id(parameter))
             array = np.ascontiguousarray(parameter.value().asnumpy())
-            digest.update(f"{component}/{name}".encode())
-            digest.update(array.dtype.str.encode())
-            digest.update(repr(array.shape).encode())
-            digest.update(array.tobytes())
-            fields += 1
-            total += int(array.nbytes)
+            items.append((f"{component}/{name}", array))
+    for name, array in sorted(items, key=lambda item: item[0]):
+        digest.update(name.encode())
+        digest.update(array.tobytes())
+        fields += 1
+        total += int(array.nbytes)
     return {"sha256": digest.hexdigest(), "fields": fields, "bytes": total}
 
 
@@ -65,6 +66,55 @@ def train_steps(ms, cell, begin, end, seq_len):
         if not np.isfinite(loss):
             raise FloatingPointError(f"non-finite loss at step {step}")
         losses.append(loss)
+        elapsed.append(time.perf_counter() - started)
+    return losses, elapsed
+
+
+def stream_pointer(stream):
+    """Extract the ACL stream from MindSpore's documented device capsule."""
+    import ctypes
+    capsule = stream.device_stream()
+    get_pointer = ctypes.pythonapi.PyCapsule_GetPointer
+    get_pointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
+    get_pointer.restype = ctypes.c_void_p
+    pointer = get_pointer(capsule, None)
+    if not pointer:
+        raise RuntimeError("MindSpore current stream has no device pointer")
+    return int(pointer)
+
+
+def train_live_steps(ms, cells, begin, end, seq_len, pending_handle=None):
+    """Overlap one generation's D2H with next-step forward/backward."""
+    forward_backward, optimizer_cell = cells
+    losses, elapsed = [], []
+    handle = pending_handle
+    for step in range(int(begin), int(end) + 1):
+        started = time.perf_counter()
+        fb_begin = time.monotonic_ns()
+        loss, grads = forward_backward(*batch_for_step(ms, step, seq_len))
+        fb_submitted = time.monotonic_ns()
+        if handle is not None:
+            handle.install_update_fence(
+                stream_pointer(ms.runtime.current_stream()))
+        update_submitted = time.monotonic_ns()
+        optimizer_cell(*grads)
+        step_done = ms.runtime.Event()
+        step_done.record(ms.runtime.current_stream())
+        step_done.synchronize()
+        update_complete = time.monotonic_ns()
+        if handle is not None:
+            handle.collect_update_wait()
+            handle.training_dependency = {
+                "forward_backward_begin_ns": fb_begin,
+                "forward_backward_submitted_ns": fb_submitted,
+                "optimizer_submitted_ns": update_submitted,
+                "optimizer_complete_ns": update_complete,
+            }
+            handle = None
+        value = float(np.asarray(loss.asnumpy()).reshape(()))
+        if not np.isfinite(value):
+            raise FloatingPointError(f"non-finite loss at step {step}")
+        losses.append(value)
         elapsed.append(time.perf_counter() - started)
     return losses, elapsed
 
@@ -109,16 +159,23 @@ def build(args):
     import mindspore as ms
     from experiments.common import init_env, make_causal_lm_training
     from direct_checkpoint import ProbeTrainOneStepCell
+    from training_cell import LiveForwardBackwardCell, LiveOptimizerCell
     init_env(device_id=args.npu, seed=args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
     model, _dataset, optimizer = make_causal_lm_training(
         args.model, total_steps=1, device_id=args.npu,
         seq_len=args.seq_len, dropout_rate=0.0, require_dataset=False)
-    cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=False,
-                                 ckpt_interval=999999)
+    if args.mode == "live_async":
+        cell = (LiveForwardBackwardCell(model, optimizer),
+                LiveOptimizerCell(optimizer))
+        _loss, _grads = cell[0](*batch_for_step(ms, 0, args.seq_len))
+        cell[1](*_grads)
+    else:
+        cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=False,
+                                     ckpt_interval=999999)
+        _ = cell(*batch_for_step(ms, 0, args.seq_len))
     # Allocate lazy parameters consistently in every process.
-    _ = cell(*batch_for_step(ms, 0, args.seq_len))
     ms.hal.synchronize()
     # The excluded compilation step updates optimizer state.  Every process
     # sees the same warmup state; reset only the logical counter so checkpoint
@@ -130,7 +187,8 @@ def build(args):
 
 def phase_baseline(args, run_dir):
     ms, model, optimizer, cell = build(args)
-    losses, elapsed = train_steps(ms, cell, 1, args.total_steps, args.seq_len)
+    trainer = train_live_steps if args.mode == "live_async" else train_steps
+    losses, elapsed = trainer(ms, cell, 1, args.total_steps, args.seq_len)
     payload = {"losses": losses, "step_seconds": elapsed,
                "state": digest_state(model, optimizer)}
     (run_dir / "baseline.json").write_text(json.dumps(payload, indent=2),
@@ -168,6 +226,10 @@ def phase_source(args, run_dir):
                 raise RuntimeError(
                     f"checkpoint did not persist: {handle.as_dict()}")
             pending_record["request"] = handle.as_dict()
+            if pending_record.get("state") is None:
+                pending_record["state"] = handle.snapshot_state_digest
+            if pending_record["state"] is None:
+                raise RuntimeError("live checkpoint has no stable state digest")
             timing = request_timing(pending_record["request"])
             interval = pending_record.get("overlapped_training_interval")
             if interval:
@@ -186,8 +248,14 @@ def phase_source(args, run_dir):
 
         for step in steps:
             train_started = time.monotonic_ns()
-            interval_losses, interval_elapsed = train_steps(
-                ms, cell, previous + 1, step, args.seq_len)
+            if args.mode == "live_async":
+                live_handle = pending[-1][0] if pending else None
+                interval_losses, interval_elapsed = train_live_steps(
+                    ms, cell, previous + 1, step, args.seq_len,
+                    pending_handle=live_handle)
+            else:
+                interval_losses, interval_elapsed = train_steps(
+                    ms, cell, previous + 1, step, args.seq_len)
             continuous_losses.extend(interval_losses)
             continuous_step_seconds.extend(interval_elapsed)
             train_ended = time.monotonic_ns()
@@ -208,7 +276,8 @@ def phase_source(args, run_dir):
                 "mindspore_rng": np.asarray(ms.get_rng_state().asnumpy()).copy(),
                 "data_cursor": {"epoch": 0, "sample": int(step)},
             }
-            checkpoint_state = digest_state(model, optimizer)
+            checkpoint_state = (None if args.mode == "live_async" else
+                                digest_state(model, optimizer))
             started = time.perf_counter()
             try:
                 handle = ckpt.save_state(
@@ -238,8 +307,13 @@ def phase_source(args, run_dir):
             previous = step
         if previous < args.total_steps:
             trailing_started = time.monotonic_ns()
-            trailing_losses, trailing_elapsed = train_steps(
-                ms, cell, previous + 1, args.total_steps, args.seq_len)
+            if args.mode == "live_async":
+                trailing_losses, trailing_elapsed = train_live_steps(
+                    ms, cell, previous + 1, args.total_steps, args.seq_len,
+                    pending_handle=pending[-1][0] if pending else None)
+            else:
+                trailing_losses, trailing_elapsed = train_steps(
+                    ms, cell, previous + 1, args.total_steps, args.seq_len)
             continuous_losses.extend(trailing_losses)
             continuous_step_seconds.extend(trailing_elapsed)
             trailing_ended = time.monotonic_ns()
@@ -294,8 +368,12 @@ def phase_restore(args, run_dir):
         restored = restore_training_controls(ms, optimizer, controls)
         if restored["data_cursor"] != {"epoch": 0, "sample": target}:
             raise AssertionError("data cursor mismatch")
-        losses, elapsed = train_steps(ms, cell, target + 1,
-                                      args.total_steps, args.seq_len)
+        if args.mode == "live_async":
+            losses, elapsed = train_live_steps(
+                ms, cell, target + 1, args.total_steps, args.seq_len)
+        else:
+            losses, elapsed = train_steps(ms, cell, target + 1,
+                                          args.total_steps, args.seq_len)
         expected_losses, oracle = continuation_oracle(source, baseline, target)
         expected = np.asarray(expected_losses, dtype=np.float64)
         actual = np.asarray(losses, dtype=np.float64)
@@ -530,6 +608,11 @@ def run_orchestrated(args, run_dir):
                 "update_wait_ns": record["request"].get("update_wait_ns", 0),
                 "update_deadline_missed": record["request"].get(
                     "update_deadline_missed", False),
+                "dma_submit_ns": record["request"].get("dma_submit_ns"),
+                "dma_complete_ns": record["request"].get("dma_complete_ns"),
+                "dma_chunks": record["request"].get("dma_chunks", []),
+                "training_dependency": record["request"].get(
+                    "training_dependency"),
                 "events": record["request"]["events"],
             }
             encoded = json.dumps(event_record, sort_keys=True) + "\n"

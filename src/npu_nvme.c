@@ -547,6 +547,14 @@ int npu_nvme_submit_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                                false, false, true, out_request);
 }
 
+int npu_nvme_submit_write_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
+                                     uint64_t *nvme_offsets, size_t *sizes,
+                                     int num_items,
+                                     NPUNVMERequest **out_request) {
+    return submit_write_common(ctx, host_ptrs, nvme_offsets, sizes, num_items,
+                               true, false, false, out_request);
+}
+
 int npu_nvme_poll_request(NPUNVMERequest *request, int *done) {
     if (!request || !done) return -EINVAL;
     *done = atomic_load_explicit(&request->done, memory_order_acquire);
