@@ -153,6 +153,7 @@ class CheckpointHandle:
         self.error = None
         self.api_enter_ns = None
         self.api_return_ns = None
+        self.admission_wait_ns = 0
         self.freeze_wait_ns = 0
         self.update_wait_ns = 0
         self.update_deadline_missed = False
@@ -234,6 +235,7 @@ class CheckpointHandle:
             "error": repr(self.error) if self.error is not None else None,
             "api_enter_ns": self.api_enter_ns,
             "api_return_ns": self.api_return_ns,
+            "admission_wait_ns": self.admission_wait_ns,
             "freeze_wait_ns": self.freeze_wait_ns,
             "update_wait_ns": self.update_wait_ns,
             "update_deadline_missed": self.update_deadline_missed,
@@ -1427,7 +1429,9 @@ class DirectCheckpoint:
         # terminal state.  Never overwrite/reuse those buffers implicitly.
         if self.checkpoint_slots == 1 and self.admission == "block":
             self.wait_for_io_completion()
+        admission_started_ns = time.monotonic_ns()
         self._admit_checkpoint()
+        admission_wait_ns = time.monotonic_ns() - admission_started_ns
         t_start = time.perf_counter()
 
         # -- T_Prep --
@@ -1473,6 +1477,7 @@ class DirectCheckpoint:
             snapshot_slot=snapshot_slot,
             snapshot_generation=snapshot_generation, timeout=timeout)
         handle.api_enter_ns = api_enter_ns
+        handle.admission_wait_ns = admission_wait_ns
         handle.transition(CheckpointState.SNAPSHOTTING)
         if _live_staging is None:
             try:

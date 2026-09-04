@@ -605,6 +605,8 @@ def run_orchestrated(args, run_dir):
                 "api_enter_ns": record["request"].get("api_enter_ns"),
                 "api_return_ns": record["request"].get("api_return_ns"),
                 "freeze_wait_ns": record["request"].get("freeze_wait_ns", 0),
+                "admission_wait_ns": record["request"].get(
+                    "admission_wait_ns", 0),
                 "update_wait_ns": record["request"].get("update_wait_ns", 0),
                 "update_deadline_missed": record["request"].get(
                     "update_deadline_missed", False),
