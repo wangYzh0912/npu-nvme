@@ -1,0 +1,48 @@
+{
+  "block_size": 65536,
+  "block_sizes": [
+    65536,
+    262144
+  ],
+  "experiment": "I1_REAL",
+  "max_age": 50,
+  "max_age_steps": 50,
+  "model": "gpt2_xl",
+  "no_optimizer": false,
+  "npu": 1,
+  "numeric_only": false,
+  "oracle": "S2 persisted-reference replacement",
+  "output_root": "results/incremental-observation-20260904/INC3_tensor_change_coverage/XL_seed42_formal",
+  "pci": "0000:83:00.0",
+  "reference_semantics": [
+    "adjacent",
+    "persisted"
+  ],
+  "run_id": "I1_REAL_20260905_000356_7abc3d95",
+  "sample_every": 1,
+  "sample_windows": "1-20,51-70,101-120",
+  "score_accumulation": "float32_block_float64_global",
+  "score_dtype": "float32",
+  "score_reference_concurrency": 4,
+  "score_workers": 3,
+  "seed": 42,
+  "seq_len": 129,
+  "small_threshold": 10000,
+  "state": "weights+adam_m_v+global_step",
+  "state_categories": [
+    "model",
+    "adam_m",
+    "adam_v",
+    "optimizer_other",
+    "small",
+    "control"
+  ],
+  "steps": 120,
+  "top_k_percent": 20.0,
+  "top_k_percents": [
+    5.0,
+    10.0,
+    20.0
+  ],
+  "train_mr": "/home/user7/npu-nvme/dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025.mindrecord"
+}

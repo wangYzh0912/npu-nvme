@@ -1,0 +1,77 @@
+{
+  "config": {
+    "adjacent_coarse_aggregation": "aligned_from_smallest_block_size",
+    "block_size": 65536,
+    "block_sizes": [
+      65536,
+      262144
+    ],
+    "experiment": "I1_REAL",
+    "max_age": 50,
+    "max_age_steps": 50,
+    "model": "gpt2_xl",
+    "no_optimizer": false,
+    "npu": 1,
+    "numeric_only": false,
+    "oracle": "S2 persisted-reference replacement",
+    "output_root": "results/incremental-observation-20260904/INC3_tensor_change_coverage/XL_seed42_formal_final_v2",
+    "pci": "0000:83:00.0",
+    "persisted_scoring": "direct_per_block_size_independent_ack_reference",
+    "reference_semantics": [
+      "adjacent",
+      "persisted"
+    ],
+    "relative_l2_auxiliary": "not_collected_to_avoid_redundant_full_state_scan",
+    "run_id": "I1_REAL_20260905_014637_91a34e87",
+    "sample_every": 1,
+    "sample_windows": "1-20,51-70,101-120",
+    "score_accumulation": "float32_block_float64_global",
+    "score_dtype": "float32",
+    "score_full_state_passes_per_sample": 3,
+    "score_workers": 4,
+    "seed": 42,
+    "seq_len": 129,
+    "small_threshold": 10000,
+    "state": "weights+adam_m_v+global_step",
+    "state_categories": [
+      "model",
+      "adam_m",
+      "adam_v",
+      "optimizer_other",
+      "small",
+      "control"
+    ],
+    "steps": 120,
+    "top_k_percent": 20.0,
+    "top_k_percents": [
+      5.0,
+      10.0,
+      20.0
+    ],
+    "train_mr": "/home/user7/npu-nvme/dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025.mindrecord"
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "I1_REAL_20260905_014637_91a34e87",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 60,
+  "status": "pass",
+  "summary": {
+    "final_frame_bytes": 2109563063,
+    "final_generation": {
+      "262144": 60,
+      "65536": 60
+    },
+    "manifest_digests": {
+      "262144": "49c137f6bd73cc6c493b2933440921dfa32577220353132666d92e84b9df6d14",
+      "65536": "6d9b3f6262f5d7fe2cf97f18ac0babd29b50188b94d0a7f3779a5e23370d4f18"
+    },
+    "samples": 60,
+    "steps": 120
+  }
+}

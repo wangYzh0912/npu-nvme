@@ -16,6 +16,7 @@ import copy
 import hashlib
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
@@ -108,28 +109,42 @@ def build_block_manifest(params: Mapping[str, np.ndarray],
 
 def score_manifest_blocks(current: Mapping[str, np.ndarray],
                           reference: Mapping[str, np.ndarray],
-                          manifest: Mapping) -> List[dict]:
+                          manifest: Mapping,
+                          score_dtype=np.float64,
+                          workers: int = 1,
+                          compute_current_l2: bool = True) -> List[dict]:
     """Score manifest blocks with one FP64 conversion per parameter.
 
     The original real-trajectory collector converted the same parameter
     slice twice for every block.  At GPT-2 XL scale that made a two-step
     correctness smoke spend minutes in Python and grow to ~80 GiB RSS.  This
-    implementation retains FP64 norm accumulation while grouping contiguous
-    parameter-local blocks into vectorized reductions.
+    implementation groups contiguous parameter-local blocks into vectorized
+    reductions.  The default FP64 oracle retains FP64 accumulation.  Large
+    real-training observations may request ``score_dtype=np.float32``; both
+    the temporary and per-block reduction then remain FP32, while callers can
+    still aggregate the much smaller vector of block scores in FP64.
     """
     grouped: Dict[str, List[dict]] = {}
     for item in manifest["blocks"]:
         grouped.setdefault(item["name"], []).append(item)
-    output = []
-    for name, items in grouped.items():
+    if workers <= 0:
+        raise ValueError("workers must be positive")
+    normalized_score_dtype = np.dtype(score_dtype)
+    accumulation_dtype = (
+        np.float32 if normalized_score_dtype == np.dtype(np.float32)
+        else np.float64)
+
+    def score_parameter(group):
+        name, items = group
         if name not in current or name not in reference:
             raise ValueError(f"manifest parameter missing from state: {name}")
         a = np.asarray(current[name]).reshape(-1)
         b = np.asarray(reference[name]).reshape(-1)
         if a.shape != b.shape:
             raise ValueError(f"state shape mismatch: {name}")
-        diff = np.subtract(a, b, dtype=np.float64)
-        current64 = a.astype(np.float64, copy=False)
+        diff = np.subtract(a, b, dtype=normalized_score_dtype)
+        current_values = (a.astype(normalized_score_dtype, copy=False)
+                          if compute_current_l2 else None)
         block_size = int(manifest["block_size"])
         full_count = diff.size // block_size
         full_scores = np.empty(0, dtype=np.float64)
@@ -139,13 +154,17 @@ def score_manifest_blocks(current: Mapping[str, np.ndarray],
         if full_count:
             full = diff[:full_count * block_size].reshape(full_count,
                                                           block_size)
-            full_scores = np.sqrt(np.einsum("ij,ij->i", full, full))
+            full_scores = np.sqrt(np.einsum(
+                "ij,ij->i", full, full, dtype=accumulation_dtype))
             full_nonzero = np.count_nonzero(full, axis=1)
             full_max_abs = np.max(np.abs(full), axis=1)
-            current_full = current64[:full_count * block_size].reshape(
-                full_count, block_size)
-            full_current_l2 = np.sqrt(np.einsum(
-                "ij,ij->i", current_full, current_full))
+            if compute_current_l2:
+                current_full = current_values[
+                    :full_count * block_size].reshape(full_count, block_size)
+                full_current_l2 = np.sqrt(np.einsum(
+                    "ij,ij->i", current_full, current_full,
+                    dtype=accumulation_dtype))
+        parameter_output = []
         for item in items:
             block_idx = int(item["block_idx"])
             count = int(item["element_count"])
@@ -153,19 +172,40 @@ def score_manifest_blocks(current: Mapping[str, np.ndarray],
                 score = float(full_scores[block_idx])
                 nonzero = int(full_nonzero[block_idx])
                 max_abs = float(full_max_abs[block_idx])
-                current_l2 = float(full_current_l2[block_idx])
+                current_l2 = (float(full_current_l2[block_idx])
+                              if compute_current_l2 else None)
             else:
                 start = int(item["element_offset"])
                 tail = diff[start:start + count]
                 score = float(np.linalg.norm(tail))
                 nonzero = int(np.count_nonzero(tail))
                 max_abs = float(np.max(np.abs(tail), initial=0.0))
-                current_l2 = float(np.linalg.norm(
-                    current64[start:start + count]))
-            output.append({**item, "score": score, "nonzero": nonzero,
-                           "max_abs": max_abs, "current_l2": current_l2,
-                           "relative_l2": score / max(current_l2, 1e-30)})
-        del diff, current64
+                current_l2 = (float(np.linalg.norm(
+                    current_values[start:start + count]))
+                              if compute_current_l2 else None)
+            parameter_output.append({
+                **item, "score": score, "nonzero": nonzero,
+                "max_abs": max_abs, "current_l2": current_l2,
+                "relative_l2": (score / max(current_l2, 1e-30)
+                                if current_l2 is not None else None),
+            })
+        del diff
+        return parameter_output
+
+    groups = list(grouped.items())
+    if workers == 1:
+        scored_groups = map(score_parameter, groups)
+    else:
+        executor = ThreadPoolExecutor(max_workers=workers,
+                                      thread_name_prefix="s2-score")
+        scored_groups = executor.map(score_parameter, groups)
+    output = []
+    try:
+        for parameter_output in scored_groups:
+            output.extend(parameter_output)
+    finally:
+        if workers != 1:
+            executor.shutdown(wait=True)
     output.sort(key=lambda item: (-item["score"], int(item["block_id"])))
     return output
 

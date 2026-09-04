@@ -63,6 +63,16 @@ class S2DeltaOracleTests(unittest.TestCase):
                 by_id[item["block_id"]]["relative_l2"],
                 float(np.linalg.norm(diff)) / max(current_l2, 1e-30))
 
+        score_only = score_manifest_blocks(
+            current, self.initial, manifest, score_dtype=np.float32,
+            workers=2, compute_current_l2=False)
+        by_id_score_only = {item["block_id"]: item for item in score_only}
+        for block_id, item in by_id_score_only.items():
+            self.assertAlmostEqual(item["score"], by_id[block_id]["score"],
+                                   places=5)
+            self.assertIsNone(item["current_l2"])
+            self.assertIsNone(item["relative_l2"])
+
     def test_lightweight_topk_advance_matches_materialized_frame(self):
         manifest = build_block_manifest(self.initial, block_size=4,
                                         small_threshold=4)

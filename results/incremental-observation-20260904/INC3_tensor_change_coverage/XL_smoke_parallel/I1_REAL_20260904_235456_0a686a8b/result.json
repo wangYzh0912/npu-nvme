@@ -1,0 +1,74 @@
+{
+  "config": {
+    "block_size": 65536,
+    "block_sizes": [
+      65536,
+      262144
+    ],
+    "experiment": "I1_REAL",
+    "max_age": 50,
+    "max_age_steps": 50,
+    "model": "gpt2_xl",
+    "no_optimizer": false,
+    "npu": 2,
+    "numeric_only": false,
+    "oracle": "S2 persisted-reference replacement",
+    "output_root": "results/incremental-observation-20260904/INC3_tensor_change_coverage/XL_smoke_parallel",
+    "pci": "0000:83:00.0",
+    "reference_semantics": [
+      "adjacent",
+      "persisted"
+    ],
+    "run_id": "I1_REAL_20260904_235456_0a686a8b",
+    "sample_every": 1,
+    "sample_windows": "1-1",
+    "score_accumulation": "float32_block_float64_global",
+    "score_dtype": "float32",
+    "score_reference_concurrency": 4,
+    "score_workers": 8,
+    "seed": 41,
+    "seq_len": 129,
+    "small_threshold": 10000,
+    "state": "weights+adam_m_v+global_step",
+    "state_categories": [
+      "model",
+      "adam_m",
+      "adam_v",
+      "optimizer_other",
+      "small",
+      "control"
+    ],
+    "steps": 1,
+    "top_k_percent": 20.0,
+    "top_k_percents": [
+      5.0,
+      10.0,
+      20.0
+    ],
+    "train_mr": "/home/user7/npu-nvme/dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025.mindrecord"
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "I1_REAL_20260904_235456_0a686a8b",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 1,
+  "status": "pass",
+  "summary": {
+    "final_frame_bytes": 1901031910,
+    "final_generation": {
+      "262144": 1,
+      "65536": 1
+    },
+    "manifest_digests": {
+      "262144": "49c137f6bd73cc6c493b2933440921dfa32577220353132666d92e84b9df6d14",
+      "65536": "6d9b3f6262f5d7fe2cf97f18ac0babd29b50188b94d0a7f3779a5e23370d4f18"
+    },
+    "samples": 1,
+    "steps": 1
+  }
+}

@@ -78,6 +78,40 @@ def parse_hbm_csv(csv_dir):
             "write_mb_s": float(row.get("Write(MB/s)", 0) or 0),
             "source": str(files[0])}
 
+
+def parse_device_marker_tasks(csv_dir):
+    """Collect exported task rows that mention the graph-side marker.
+
+    CANN releases use different task-time CSV headers.  Preserve only the
+    timing/name fields from matching rows so the result remains portable.
+    A match proves that the marker reached the device timeline; it does not
+    prove that the device and host clocks share an epoch.
+    """
+    matches = []
+    files = sorted(Path(csv_dir).rglob("*.csv"))
+    for path in files:
+        try:
+            with path.open(newline="") as stream:
+                reader = csv.DictReader(stream)
+                fields = reader.fieldnames or []
+                for row in reader:
+                    text = " ".join(str(row.get(key, "")) for key in fields)
+                    lowered = text.lower()
+                    if "step_counter" not in lowered and "assignadd" not in lowered:
+                        continue
+                    timing = {
+                        key: row[key] for key in fields
+                        if key in row and ("time" in key.lower() or
+                                           "cycle" in key.lower() or
+                                           "name" in key.lower() or
+                                           "type" in key.lower())
+                    }
+                    matches.append({"file": str(path), "row": timing})
+        except (OSError, UnicodeError):
+            continue
+    return {"matches": matches, "count": len(matches),
+            "files_scanned": len(files)}
+
 def extract_op_statistic(by_core, total_time_us):
     result = {}
     for core_type, data in by_core.items():
@@ -159,7 +193,8 @@ def run_V1(device_id=1):
 
 
 def _real_training_child(model_name, device_id, seed, warmups, steps,
-                         ready_file, go_file, output_file):
+                         ready_file, go_file, output_file, seq_len=1025,
+                         train_mr=None):
     """Compile once, wait for profiler attach, then run real steady steps."""
     from experiments.common import init_env, make_causal_lm_training, warmup_model
     from direct_checkpoint import ProbeTrainOneStepCell
@@ -167,8 +202,11 @@ def _real_training_child(model_name, device_id, seed, warmups, steps,
     init_env(device_id=device_id, seed=seed)
     model, dataset, optimizer = make_causal_lm_training(
         model_name=model_name, total_steps=warmups + steps + 2,
-        device_id=device_id, seq_len=1025)
-    cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=False,
+        device_id=device_id, seq_len=seq_len, train_mr=train_mr)
+    # Keep a graph-side AssignAdd marker in every formal step.  No host
+    # listener consumes it during PMU collection; it is only used to check
+    # whether the exported device timeline contains a per-step marker.
+    cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=True,
                                  ckpt_interval=9999)
     warmup_model(model, optimizer, dataset, cell=cell)
     iterator = dataset.create_tuple_iterator()
@@ -182,6 +220,9 @@ def _real_training_child(model_name, device_id, seed, warmups, steps,
         if not np.isfinite(value):
             raise FloatingPointError(f"non-finite warmup loss: {value}")
         warmup_times.append((time.perf_counter_ns() - start) / 1e6)
+    # The excluded materialisation step and the PMU warmup steps must not
+    # shift formal marker values.
+    cell.step_counter.set_data(ms.Tensor([0], dtype=ms.int32))
     Path(ready_file).write_text(json.dumps({
         "model": model_name, "seed": seed, "device": device_id,
         "warmups": warmups, "warmup_step_ms": warmup_times,
@@ -199,17 +240,29 @@ def _real_training_child(model_name, device_id, seed, warmups, steps,
         elapsed_ms = (time.perf_counter_ns() - start) / 1e6
         if not np.isfinite(value):
             raise FloatingPointError(f"non-finite profile loss: {value}")
+        marker_value = int(np.asarray(cell.step_counter.asnumpy()).reshape(()))
         samples.append({"step": index + 1, "loss": value,
                         "step_ms": elapsed_ms,
-                        "monotonic_ns": time.monotonic_ns()})
+                        "monotonic_ns": time.monotonic_ns(),
+                        "device_marker_value": marker_value})
     Path(output_file).write_text(json.dumps({
         "model": model_name, "seed": seed, "device": device_id,
         "warmups": warmups, "steps": steps, "samples": samples,
+        "device_marker": {
+            "enabled": True,
+            "graph_node": "AssignAdd(step_counter)",
+            "formal_values": [item["device_marker_value"] for item in samples],
+            "expected_values": list(range(1, steps + 1)),
+            "sequence_valid": [item["device_marker_value"] for item in samples]
+            == list(range(1, steps + 1)),
+            "host_timestamp_semantics":
+                "sampled after stream synchronization; not a device common-clock timestamp",
+        },
     }, indent=2) + "\n")
 
 
 def run_real_pmu(model_name, device_id, seed, metric_group, output_dir,
-                 warmups=10, steps=30):
+                 warmups=10, steps=30, seq_len=1025, train_mr=None):
     """Run a real MindSpore training process and parse this run's msprof CSV."""
     run_dir = Path(output_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -218,11 +271,35 @@ def run_real_pmu(model_name, device_id, seed, metric_group, output_dir,
     child_result = run_dir / "child_result.json"
     profile_dir = run_dir / "msprof"
     profile_dir.mkdir()
+    repo_status = subprocess.run(["git", "-C", REPO, "status", "--porcelain"],
+                                 capture_output=True, text=True, check=False)
+    repo_commit = subprocess.run(["git", "-C", REPO, "rev-parse", "HEAD"],
+                                 capture_output=True, text=True, check=False)
+    (run_dir / "config.json").write_text(json.dumps({
+        "experiment": "INC1_real_training_pmu",
+        "model": model_name, "seed": seed, "device": device_id,
+        "metric_group": metric_group, "warmups": warmups,
+        "steps": steps, "seq_len": seq_len, "train_mr": train_mr,
+        "marker": "device-side AssignAdd(step_counter)",
+        "run_id": run_dir.name,
+    }, indent=2, sort_keys=True) + "\n")
+    (run_dir / "environment.json").write_text(json.dumps({
+        "repo": {"path": REPO, "commit": repo_commit.stdout.strip(),
+                 "dirty": bool(repo_status.stdout.strip())},
+        "hardware": {"device": device_id, "pci": "0000:83:00.0",
+                     "npu_smi": subprocess.run(["npu-smi", "info"],
+                         capture_output=True, text=True, check=False).stdout},
+        "software": {"python": sys.version, "cann": "/usr/local/Ascend/ascend-toolkit"},
+    }, indent=2, sort_keys=True) + "\n")
+    (run_dir / "events.jsonl").write_text("", encoding="utf-8")
     child_cmd = [sys.executable, __file__, "--train-child",
                  "--model", model_name, "--device-id", str(device_id),
                  "--seed", str(seed), "--warmups", str(warmups),
                  "--steps", str(steps), "--ready-file", str(ready),
-                 "--go-file", str(go), "--child-output", str(child_result)]
+                 "--go-file", str(go), "--child-output", str(child_result),
+                 "--seq-len", str(seq_len)]
+    if train_mr:
+        child_cmd.extend(["--train-mr", str(train_mr)])
     proc = subprocess.Popen(child_cmd, cwd=REPO,
                             stdout=(run_dir / "child.stdout").open("w"),
                             stderr=subprocess.STDOUT,
@@ -289,6 +366,11 @@ def run_real_pmu(model_name, device_id, seed, metric_group, output_dir,
         raise RuntimeError(
             f"msprof produced no CSV for this RUN_ID; export_rc={export_proc.returncode}")
     child = json.loads(child_result.read_text())
+    marker_tasks = parse_device_marker_tasks(profile_dir)
+    with (run_dir / "events.jsonl").open("a", encoding="utf-8") as stream:
+        for sample in child.get("samples", []):
+            stream.write(json.dumps({"event": "step_complete", **sample},
+                                    sort_keys=True) + "\n")
     # Keep the PROF_* tree and the CSV evidence used for the result, but drop
     # multi-hundred-MB timeline/sqlite intermediates.  A three-seed XL matrix
     # otherwise exhausts the experiment filesystem before the summary can be
@@ -303,12 +385,22 @@ def run_real_pmu(model_name, device_id, seed, metric_group, output_dir,
     total_us = sum(item["total_time_us"] for item in parsed.values())
     return {"model": model_name, "seed": seed, "device": device_id,
             "metric_group": metric_group, "warmups": warmups, "steps": steps,
+            "seq_len": seq_len,
+            "train_mr": train_mr,
             "step_stats_ms": _stats([item["step_ms"] for item in child["samples"]]),
             "loss_first": child["samples"][0]["loss"],
             "loss_last": child["samples"][-1]["loss"],
             "pmu_total_time_us": total_us,
             "pmu_by_core": parsed,
             "hbm": parse_hbm_csv(profile_dir),
+            "device_marker": {
+                **child.get("device_marker", {}),
+                "task_timeline": marker_tasks,
+                # Device task timestamps are device-relative on the supported
+                # CANN export and are not mapped to the host monotonic epoch.
+                "common_clock_alignment": False,
+                "idle_window_inference_allowed": False,
+            },
             "profile_command": profile_cmd,
             "export_command": export_cmd,
             "export_returncode": export_proc.returncode,
@@ -428,6 +520,8 @@ def main():
     parser.add_argument("--seeds", type=str, default="41,42,43")
     parser.add_argument("--warmups", type=int, default=10)
     parser.add_argument("--steps", type=int, default=30)
+    parser.add_argument("--seq-len", type=int, default=1025)
+    parser.add_argument("--train-mr", default=None)
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--train-child", action="store_true")
     parser.add_argument("--ready-file", default=None)
@@ -439,7 +533,8 @@ def main():
             raise ValueError("train-child requires model, ready/go/output files")
         _real_training_child(args.model, args.device_id, args.seed,
                              args.warmups, args.steps, args.ready_file,
-                             args.go_file, args.child_output)
+                             args.go_file, args.child_output, args.seq_len,
+                             args.train_mr)
         return
 
     output_dir = Path(args.output_dir or
@@ -459,7 +554,8 @@ def main():
                 try:
                     result = run_real_pmu(model_name, args.device_id, seed,
                                           metric, run_dir, args.warmups,
-                                          args.steps)
+                                          args.steps, args.seq_len,
+                                          args.train_mr)
                     result["status"] = "pass"
                 except BaseException as error:
                     result = {"status": "fail", "model": model_name,

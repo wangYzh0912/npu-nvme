@@ -1,0 +1,68 @@
+{
+  "config": {
+    "auxiliary_location": "MindSpore graph before optimizer via Depend",
+    "block_size": 65536,
+    "compute_repeats": 4,
+    "experiment": "INC2_graph_edge_load",
+    "formal_policy": "20 warmup + 50 formal; no step-internal host synchronization",
+    "invalid_prototype_excluded": "experiments/benchmarks/p6_aux_injection.py",
+    "mode": "incremental_chain",
+    "model": "gpt2",
+    "npu": 2,
+    "output_root": "results/incremental-observation-20260904/INC2_graph_edge_load/formal_seed41",
+    "pci": "0000:83:00.0",
+    "run_id": "INC2_gpt2_incremental_chain_seed41_20260904_200344_2420986",
+    "seed": 41,
+    "seq_len": 129,
+    "steps": 50,
+    "top_k": 128,
+    "train_mr": "/home/user7/npu-nvme/dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025.mindrecord",
+    "warmups": 20
+  },
+  "paths": {
+    "config": "config.json",
+    "environment": "environment.json",
+    "events": "events.jsonl",
+    "result": "result.json"
+  },
+  "run_id": "INC2_gpt2_incremental_chain_seed41_20260904_200344_2420986",
+  "samples": 50,
+  "status": "pass",
+  "summary": {
+    "device_timing_limit": "No per-step device duration is claimed; synchronize was once after formal loop.",
+    "formal_steps": 50,
+    "graph_edge": {
+      "block_size_elements": 65536,
+      "checksum_participates_in_depend": true,
+      "host_worker": false,
+      "mode": "incremental_chain",
+      "optimizer_precedes_auxiliary": false,
+      "step_internal_ms_hal_synchronize": false,
+      "top_k_blocks": 128
+    },
+    "host_submit_ms": {
+      "ci95": [
+        48.499482910114885,
+        49.628989689885124
+      ],
+      "ci95_method": "student-t(df=49)",
+      "max": 59.262948,
+      "mean": 49.064236300000005,
+      "median": 48.4180095,
+      "min": 47.506011,
+      "n": 50,
+      "p95": 52.2341602,
+      "p99": 57.15292616999999,
+      "p99_status": "reported",
+      "stdev": 1.987190846640474
+    },
+    "loss_first": 9.622871398925781,
+    "loss_last": 8.711160659790039,
+    "mode": "incremental_chain",
+    "model": "gpt2",
+    "post_loop_device_sync_ms": 0.11922,
+    "seed": 41,
+    "wallclock_ms": 38504.484893,
+    "warmups": 20
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "config": {
+    "auxiliary_location": "MindSpore graph before optimizer via Depend",
+    "block_size": 65536,
+    "compute_repeats": 4,
+    "experiment": "INC2_graph_edge_load",
+    "formal_policy": "20 warmup + 50 formal; no step-internal host synchronization",
+    "invalid_prototype_excluded": "experiments/benchmarks/p6_aux_injection.py",
+    "mode": "baseline",
+    "model": "gpt2",
+    "npu": 2,
+    "output_root": "results/incremental-observation-20260904/INC2_graph_edge_load/smoke",
+    "pci": "0000:83:00.0",
+    "run_id": "INC2_gpt2_baseline_seed41_20260904_195357_2392854",
+    "seed": 41,
+    "seq_len": 129,
+    "steps": 2,
+    "top_k": 128,
+    "train_mr": "/home/user7/npu-nvme/dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025.mindrecord",
+    "warmups": 2
+  },
+  "error": "RuntimeError(\"Unsupported statement 'Import'.\\nMore details please refer to syntax support at https://www.mindspore.cn\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/pipeline/jit/ps/parse/parse.cc:980 ParseStatement\\n\\n----------------------------------------------------\\n- The Traceback of Net Construct Code:\\n----------------------------------------------------\\n# 0 In file /home/user7/npu-nvme-io-path-v1/experiments/benchmarks/inc2_graph_edge_load.py:133, 20~35\\n        auxiliary = self._auxiliary()\\n                    ^~~~~~~~~~~~~~~\\n (See file '/home/user7/npu-nvme-io-path-v1/rank_0/om/analyze_fail.ir' for more details. Get instructions about `analyze_fail.ir` at https://www.mindspore.cn/search?inputValue=analyze_fail.ir)\")",
+  "paths": {
+    "config": "config.json",
+    "environment": "environment.json",
+    "events": "events.jsonl",
+    "result": "result.json"
+  },
+  "run_id": "INC2_gpt2_baseline_seed41_20260904_195357_2392854",
+  "samples": 0,
+  "status": "fail",
+  "summary": {
+    "formal_steps_completed": 0,
+    "mode": "baseline",
+    "model": "gpt2",
+    "seed": 41
+  }
+}

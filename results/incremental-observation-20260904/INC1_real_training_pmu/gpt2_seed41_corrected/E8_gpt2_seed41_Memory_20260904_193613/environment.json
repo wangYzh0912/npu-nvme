@@ -1,0 +1,31 @@
+{
+  "captured_at": "2026-09-05T03:05:29+0800",
+  "device": 2,
+  "export_command": [
+    "/usr/local/Ascend/ascend-toolkit/latest/bin/msprof",
+    "--export=on",
+    "--output=results/incremental-observation-20260904/INC1_real_training_pmu/gpt2_seed41_corrected/E8_gpt2_seed41_Memory_20260904_193613/msprof",
+    "--type=text",
+    "--summary-format=csv"
+  ],
+  "profile_command": [
+    "/usr/local/Ascend/ascend-toolkit/latest/bin/msprof",
+    "--dynamic=on",
+    "--pid=2341820",
+    "--output=results/incremental-observation-20260904/INC1_real_training_pmu/gpt2_seed41_corrected/E8_gpt2_seed41_Memory_20260904_193613/msprof",
+    "--ascendcl=on",
+    "--task-time=on",
+    "--runtime-api=on",
+    "--ai-core=on",
+    "--aic-mode=task-based",
+    "--aic-metrics=Memory",
+    "--sys-hardware-mem=on",
+    "--sys-hardware-mem-freq=10",
+    "--sys-pid-profiling=on",
+    "--host-sys-pid=2341820"
+  ],
+  "repo_branch": "exp/incremental-observation-20260904",
+  "repo_commit": "dc02cea06d4be14f9d34b9db0f4fc0395beeafea",
+  "repo_status": "M experiments/benchmarks/s2_real_trajectory.py\n M experiments/microbench/vector_engine_profile.py\n M python/s2_delta.py\n M tests/python/test_s2_delta.py\n?? docs/INC_MINIMAL_RESULTS_20260904.md\n?? experiments/benchmarks/inc2_graph_edge_load.py\n?? experiments/benchmarks/summarize_inc_minimal.py\n?? results/incremental-observation-20260904/",
+  "snapshot_semantics": "post-run reconstructed; not run-time evidence"
+}
