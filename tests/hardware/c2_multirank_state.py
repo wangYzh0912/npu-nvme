@@ -637,10 +637,14 @@ def coordinator(args):
                 "chunk_size": DATA_CHUNK, "world_size": args.world_size,
                 "ranks": rank_records,
             }
-            slot = save_step % args.keep_last_n
+            # The on-disk metadata A/B slots are fixed at 400 KiB.  A complete
+            # multi-rank manifest is larger than one slot when three historical
+            # generations are retained, even after envelope compression.  Keep
+            # physical FULL slots rotating at keep_last_n, but publish only the
+            # latest global manifest; the committed generation remains the sole
+            # recovery source and is validated after fresh process startup.
             for key, prior in list(ckpt.meta_dict["checkpoints"].items()):
-                if (prior.get("type") == "MULTI_TRAINING_STATE_FULL" and
-                        int(prior.get("state_step", -1)) % args.keep_last_n == slot):
+                if prior.get("type") == "MULTI_TRAINING_STATE_FULL":
                     del ckpt.meta_dict["checkpoints"][key]
             ckpt.meta_dict["checkpoints"][f"step_{save_step}"] = record
             ckpt._persist_metadata(next_generation)
@@ -669,6 +673,7 @@ def coordinator(args):
             "status": "pass", "generation": committed[-1]["generation"],
             "world_size": args.world_size, "step": committed[-1]["step"],
             "committed": committed, "keep_last_n": args.keep_last_n,
+            "metadata_retained_generations": 1,
             "ranks": {rank: {"fields": len(manifest["fields"]),
                               "bytes": manifest["total_bytes"]}
                       for rank, manifest in manifests.items()},
