@@ -1,0 +1,61 @@
+{
+  "commit": {
+    "argv": [
+      "git",
+      "-C",
+      "/home/user7/npu-nvme-io-path-v1",
+      "rev-parse",
+      "HEAD"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "96cce9929e3a2646044ab1ac7fb0a1f7dee2aaad\n"
+  },
+  "config_digest": "b047252b9baa332b4a8109377da1458db5596538633bf1e7b590c4f151f6ed07",
+  "entries": {
+    "gpt2_w2_seed41_i20_c10": {
+      "command": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme-io-path-v1/tests/hardware/c2_multirank_state.py",
+        "--run-dir",
+        "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO3_hccl_longrun/w2_seed41/gpt2_w2_seed41_i20_c10",
+        "--model",
+        "gpt2",
+        "--world-size",
+        "2",
+        "--hccl",
+        "--rank-devices",
+        "2,3",
+        "--coordinator-npu",
+        "7",
+        "--seed",
+        "41",
+        "--total-steps",
+        "200",
+        "--checkpoint-interval",
+        "20",
+        "--continue-steps",
+        "10",
+        "--keep-last-n",
+        "3",
+        "--pci",
+        "0000:83:00.0",
+        "--shm-id",
+        "20269700",
+        "--master-port",
+        "8500",
+        "--restore-retained"
+      ],
+      "finished_unix_ns": 1788517056880112001,
+      "returncode": 1,
+      "run_dir": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO3_hccl_longrun/w2_seed41/gpt2_w2_seed41_i20_c10",
+      "started_unix_ns": 1788516929403244592,
+      "status": "fail"
+    }
+  },
+  "failures": [
+    "gpt2_w2_seed41_i20_c10"
+  ],
+  "finished_unix_ns": 1788517056880894894,
+  "status": "fail"
+}

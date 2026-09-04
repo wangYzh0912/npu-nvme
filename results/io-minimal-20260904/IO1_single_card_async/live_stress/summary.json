@@ -1,0 +1,165 @@
+{
+  "failures": [],
+  "live_async_supported": true,
+  "records": [
+    {
+      "chunk": 4194304,
+      "depth": 4,
+      "generation_delay_ms": 1000,
+      "interval": 1,
+      "mode": "live_async",
+      "request_slots": 2,
+      "result": {
+        "accepted_generations": 20,
+        "all_retained_restores_verified": true,
+        "api_return_seconds": [
+          0.106144584,
+          0.21756423,
+          4.460403743,
+          4.573069267,
+          4.575997268,
+          4.601656098,
+          4.536544984,
+          4.575990497,
+          4.565133305,
+          4.582142712,
+          4.588550806,
+          4.556182521,
+          4.511987737,
+          4.598877937,
+          5.059130479,
+          4.447872076,
+          4.538739712,
+          4.590457314,
+          4.503328333,
+          4.557805207
+        ],
+        "busy_requests": 0,
+        "checkpoint_latency_seconds": [
+          4.721840893,
+          9.135495768,
+          13.465373094,
+          13.601341068,
+          13.578007366,
+          13.5660543,
+          13.52768044,
+          13.573368038,
+          13.585973517,
+          13.578624259,
+          13.506865718,
+          13.523178922,
+          13.48698955,
+          13.955731585,
+          13.899146594,
+          13.432077905,
+          13.496781759,
+          13.50483368,
+          13.394346777,
+          13.343412409
+        ],
+        "checkpoint_state_machine_seconds": [
+          4.648009925,
+          8.992407109,
+          9.06612015,
+          9.138262892,
+          9.063352998,
+          9.028362722,
+          9.100605875,
+          9.05846396,
+          9.084851242,
+          9.061421131,
+          8.976117418,
+          9.03061492,
+          9.03815725,
+          9.413560069,
+          9.436931591,
+          9.049473884,
+          9.018372683,
+          8.976178578,
+          9.003168943,
+          8.845633687
+        ],
+        "checkpoint_step": 20,
+        "continuation_losses": [
+          10.862632751464844
+        ],
+        "continuation_oracle": "source_process_continuation",
+        "failed_samples": 0,
+        "generation": 3754,
+        "latency_semantics": {
+          "checkpoint_latency_seconds": "api_enter_to_persisted_event",
+          "checkpoint_state_machine_seconds": "created_to_persisted_event",
+          "foreground_wait_seconds": "host_wait_inside_finish_one"
+        },
+        "loaded_state_byte_exact": true,
+        "loss_allclose": true,
+        "mode": "live_async",
+        "model": "gpt2",
+        "npu": 2,
+        "paths": {
+          "commit": "commit.json",
+          "config": "config.json",
+          "environment": "environment.json",
+          "events": "events.jsonl",
+          "failures": "failures.jsonl",
+          "raw": "raw/",
+          "restore": "restore.json",
+          "result": "result.json",
+          "samples": "samples.jsonl",
+          "source": "source.json",
+          "timeline": "timeline.jsonl"
+        },
+        "pci": "0000:83:00.0",
+        "performance": {
+          "all": {
+            "count": 21,
+            "mean_seconds": 0.07050050542290721,
+            "p95_seconds": 0.07990047242492437,
+            "p99_seconds": 0.1276115303859115
+          },
+          "checkpoint": {
+            "count": 20,
+            "mean_seconds": 0.07075654140207917,
+            "p95_seconds": 0.08288241354748611,
+            "p99_seconds": 0.12820791861042372
+          },
+          "non_checkpoint": {
+            "count": 1,
+            "mean_seconds": 0.06537978583946824,
+            "p95_seconds": 0.06537978583946824,
+            "p99_seconds": 0.06537978583946824
+          }
+        },
+        "persisted": true,
+        "request_id": "rank0-pid2139113-request20",
+        "restore_verified": true,
+        "restored_steps": [
+          18,
+          19,
+          20
+        ],
+        "run_id": "gpt2_seed41_i1_live_async_c4194304_d4_ss2_rs2_delay1000",
+        "samples": 20,
+        "seed": 41,
+        "state_after_continuation": {
+          "bytes": 1485020168,
+          "fields": 590,
+          "sha256": "91d68fee49b4a301952ccfa02ea2d0814192440eb39cc71efd972476c0013f0a"
+        },
+        "state_after_restore": {
+          "bytes": 1485020168,
+          "fields": 590,
+          "sha256": "d2a3eec4786d4817b64882f6574951d5a676239f02a5e74a37af09b127769181"
+        },
+        "status": "pass",
+        "step_seconds": [
+          0.07241077395156026
+        ]
+      },
+      "seed": 41,
+      "snapshot_slots": 2
+    }
+  ],
+  "status": "pass",
+  "unsupported": []
+}

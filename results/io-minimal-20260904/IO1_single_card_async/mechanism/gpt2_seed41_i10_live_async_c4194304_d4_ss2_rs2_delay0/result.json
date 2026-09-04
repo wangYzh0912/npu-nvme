@@ -1,0 +1,117 @@
+{
+  "status": "pass",
+  "model": "gpt2",
+  "mode": "live_async",
+  "seed": 41,
+  "pci": "0000:83:00.0",
+  "npu": 2,
+  "request_id": "rank0-pid1998784-request10",
+  "generation": 3604,
+  "checkpoint_step": 100,
+  "persisted": true,
+  "restore_verified": true,
+  "loss_allclose": true,
+  "continuation_oracle": "source_process_continuation",
+  "loaded_state_byte_exact": true,
+  "state_after_restore": {
+    "sha256": "dfd207823db48dd5ffeaa041d205be0960885bfcf62b9b3d882e7479db02d9cf",
+    "fields": 590,
+    "bytes": 1485020168
+  },
+  "state_after_continuation": {
+    "sha256": "09824f540d24da53eda71e5e7ddec0ec5477e6a0be82a96914f57f9935c3138f",
+    "fields": 590,
+    "bytes": 1485020168
+  },
+  "continuation_losses": [
+    10.833909034729004
+  ],
+  "step_seconds": [
+    0.0691042491234839
+  ],
+  "restored_steps": [
+    80,
+    90,
+    100
+  ],
+  "all_retained_restores_verified": true,
+  "performance": {
+    "all": {
+      "count": 101,
+      "mean_seconds": 0.06591409918769162,
+      "p95_seconds": 0.11053981073200703,
+      "p99_seconds": 0.1165375942364335
+    },
+    "checkpoint": {
+      "count": 10,
+      "mean_seconds": 0.06700472515076399,
+      "p95_seconds": 0.09216318619437511,
+      "p99_seconds": 0.11166271262802184
+    },
+    "non_checkpoint": {
+      "count": 91,
+      "mean_seconds": 0.06579425018076059,
+      "p95_seconds": 0.10979551286436617,
+      "p99_seconds": 0.11569658387452363
+    }
+  },
+  "checkpoint_latency_seconds": [
+    3.992267691,
+    6.906733942,
+    9.781354847,
+    10.304302916,
+    10.400892552,
+    10.320396809,
+    10.373290134,
+    10.28492333,
+    10.069786282,
+    9.715645282
+  ],
+  "checkpoint_state_machine_seconds": [
+    3.922304799,
+    6.760786603,
+    7.345298361,
+    7.340112252,
+    7.363712673,
+    7.364712117,
+    7.329018538,
+    7.327531763,
+    7.079855527,
+    6.759303628
+  ],
+  "latency_semantics": {
+    "checkpoint_latency_seconds": "api_enter_to_persisted_event",
+    "checkpoint_state_machine_seconds": "created_to_persisted_event",
+    "foreground_wait_seconds": "host_wait_inside_finish_one"
+  },
+  "api_return_seconds": [
+    0.13357289,
+    0.290765213,
+    2.567536798,
+    3.092046842,
+    3.170135237,
+    3.084291773,
+    3.17613966,
+    3.091727511,
+    3.115946056,
+    3.088860191
+  ],
+  "run_id": "gpt2_seed41_i10_live_async_c4194304_d4_ss2_rs2_delay0",
+  "samples": 10,
+  "failed_samples": 0,
+  "accepted_generations": 10,
+  "busy_requests": 0,
+  "paths": {
+    "config": "config.json",
+    "environment": "environment.json",
+    "commit": "commit.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl",
+    "events": "events.jsonl",
+    "failures": "failures.jsonl",
+    "source": "source.json",
+    "restore": "restore.json",
+    "raw": "raw/",
+    "result": "result.json"
+  }
+}

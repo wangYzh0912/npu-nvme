@@ -1,0 +1,1318 @@
+{
+  "status": "pass",
+  "checkpoints": [
+    {
+      "step": 10,
+      "dispatch_seconds": 3.0164665281772614,
+      "state": {
+        "sha256": "ae18316469664c83d1f1ddcd18ea6e6a34b8da2a1a820a917141006fe2a20dad",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445409023808537,
+        "end_monotonic_ns": 2445409448682224
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445416413676783,
+        "end_monotonic_ns": 2445416844171881
+      },
+      "foreground_wait_seconds": 0.885325541254133,
+      "request": {
+        "request_id": "rank0-pid1966426-request1",
+        "checkpoint_step": 10,
+        "generation": 3575,
+        "snapshot_generation": 1,
+        "metadata_generation": 3575,
+        "rank_id": 0,
+        "snapshot_slot": 1,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "8e92f2a22b3067a920970497d67aedfde3ad7e41e3d6929366efaccd5eb7a8d7",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445413397410476,
+        "api_return_ns": 2445416413141301,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445416034233064
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445416034259304
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445416404357787
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445416412808269
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445416413038220
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445417625603647
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445417625615367
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445417626707711
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445417729415492
+          }
+        ]
+      },
+      "training_io_overlap_ns": 430495098,
+      "persist_seconds": 4.332005016,
+      "state_machine_seconds": 1.695182428,
+      "runtime_stats": {
+        "nvme_submit_count": 849,
+        "nvme_complete_count": 849,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 107209
+      }
+    },
+    {
+      "step": 20,
+      "dispatch_seconds": 3.01120731793344,
+      "state": {
+        "sha256": "00ca8c715ab2d5a4119805f1cc53140cca40219e8a39e790bbfae9f733f9712c",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445416413676783,
+        "end_monotonic_ns": 2445416844171881
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445423672885309,
+        "end_monotonic_ns": 2445424105773016
+      },
+      "foreground_wait_seconds": 0.8598715118132532,
+      "request": {
+        "request_id": "rank0-pid1966426-request2",
+        "checkpoint_step": 20,
+        "generation": 3576,
+        "snapshot_generation": 2,
+        "metadata_generation": 3576,
+        "rank_id": 0,
+        "snapshot_slot": 2,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "84ee57ac0b361614980e0bd294d3703b8f7973bb1fc38767766dfb70e313e83a",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445420661836872,
+        "api_return_ns": 2445423672313877,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445423295079786
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445423295096436
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445423663868024
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445423671967345
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445423672190756
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445424880413126
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445424880427846
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445424882266053
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445424965606368
+          }
+        ]
+      },
+      "training_io_overlap_ns": 432887707,
+      "persist_seconds": 4.303769496,
+      "state_machine_seconds": 1.670526582,
+      "runtime_stats": {
+        "nvme_submit_count": 1698,
+        "nvme_complete_count": 1698,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 207159
+      }
+    },
+    {
+      "step": 30,
+      "dispatch_seconds": 3.0383891938254237,
+      "state": {
+        "sha256": "b8c21baf7e91e3b72607a9f09676bce801c9c74144842e91bb1b72fff4665a07",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445423672885309,
+        "end_monotonic_ns": 2445424105773016
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445430939961156,
+        "end_monotonic_ns": 2445431369850391
+      },
+      "foreground_wait_seconds": 0.8482008962891996,
+      "request": {
+        "request_id": "rank0-pid1966426-request3",
+        "checkpoint_step": 30,
+        "generation": 3577,
+        "snapshot_generation": 3,
+        "metadata_generation": 3577,
+        "rank_id": 0,
+        "snapshot_slot": 0,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "9b27eca8e68372d8da04ce1286e04ef8d3dc20ce9323b842c6d52e7cb4ab118e",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445427901730533,
+        "api_return_ns": 2445430939343363,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445430536431853
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445430536449113
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445430931813004
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445430939025122
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445430939213563
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445432150630585
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445432150641215
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445432152579513
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445432218014608
+          }
+        ]
+      },
+      "training_io_overlap_ns": 429889235,
+      "persist_seconds": 4.316284075,
+      "state_machine_seconds": 1.681582755,
+      "runtime_stats": {
+        "nvme_submit_count": 2547,
+        "nvme_complete_count": 2547,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 307243
+      }
+    },
+    {
+      "step": 40,
+      "dispatch_seconds": 3.0216721878387034,
+      "state": {
+        "sha256": "a4735f65b50661ce8cbf95e0b9e960b3ed7c324e6b5c8e2441bf3b97c7f247a8",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445430939961156,
+        "end_monotonic_ns": 2445431369850391
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445438177467627,
+        "end_monotonic_ns": 2445438610032713
+      },
+      "foreground_wait_seconds": 0.8318072129040956,
+      "request": {
+        "request_id": "rank0-pid1966426-request4",
+        "checkpoint_step": 40,
+        "generation": 3578,
+        "snapshot_generation": 4,
+        "metadata_generation": 3578,
+        "rank_id": 0,
+        "snapshot_slot": 1,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "edb907c2d133e4afc9a2c18f1b87dd9bd8321a65817113025395b85a6e7287ba",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445435155956690,
+        "api_return_ns": 2445438176899385,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445437800984490
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445437801001460
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445438168388372
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445438176580504
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445438176780135
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445439395133724
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445439395147804
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445439397044121
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445439441803906
+          }
+        ]
+      },
+      "training_io_overlap_ns": 432565086,
+      "persist_seconds": 4.285847216,
+      "state_machine_seconds": 1.640819416,
+      "runtime_stats": {
+        "nvme_submit_count": 3396,
+        "nvme_complete_count": 3396,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 409347
+      }
+    },
+    {
+      "step": 50,
+      "dispatch_seconds": 3.0145618808455765,
+      "state": {
+        "sha256": "c6216e452c18eee6d7ecccf0369716a0195a544855ee63b76634583692154d7e",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445438177467627,
+        "end_monotonic_ns": 2445438610032713
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445445395997655,
+        "end_monotonic_ns": 2445445826680264
+      },
+      "foreground_wait_seconds": 0.8243982633575797,
+      "request": {
+        "request_id": "rank0-pid1966426-request5",
+        "checkpoint_step": 50,
+        "generation": 3579,
+        "snapshot_generation": 5,
+        "metadata_generation": 3579,
+        "rank_id": 0,
+        "snapshot_slot": 2,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "d202274c8a58dc68f99bdb38d234efae99f0aaae02161cdbedb1e8eb485e078f",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445442381593755,
+        "api_return_ns": 2445445395413983,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445445016311265
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445445016328695
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445445387428391
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445445394941101
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445445395157492
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445446604220744
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445446604231535
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445446605955251
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445446651045987
+          }
+        ]
+      },
+      "training_io_overlap_ns": 430682609,
+      "persist_seconds": 4.269452232,
+      "state_machine_seconds": 1.634734722,
+      "runtime_stats": {
+        "nvme_submit_count": 4245,
+        "nvme_complete_count": 4245,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 509194
+      }
+    },
+    {
+      "step": 60,
+      "dispatch_seconds": 3.0168962287716568,
+      "state": {
+        "sha256": "079f0c0c0009f2f9fc11fcc9725cd74918611dd6d9167988ed3d2799891b2441",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445445395997655,
+        "end_monotonic_ns": 2445445826680264
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445452600897249,
+        "end_monotonic_ns": 2445453031055916
+      },
+      "foreground_wait_seconds": 0.8307857876643538,
+      "request": {
+        "request_id": "rank0-pid1966426-request6",
+        "checkpoint_step": 60,
+        "generation": 3580,
+        "snapshot_generation": 6,
+        "metadata_generation": 3580,
+        "rank_id": 0,
+        "snapshot_slot": 0,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "8ddd2e1b54f782e42d4d2e631517ec2c640cbc3b1bc85d877514e5926dc140b1",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445449584905493,
+        "api_return_ns": 2445452600273417,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445452223671389
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445452223689179
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445452592608587
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445452599939246
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445452600142316
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445453815136182
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445453815150022
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445453817062320
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445453861802814
+          }
+        ]
+      },
+      "training_io_overlap_ns": 430158667,
+      "persist_seconds": 4.276897321,
+      "state_machine_seconds": 1.638131425,
+      "runtime_stats": {
+        "nvme_submit_count": 5094,
+        "nvme_complete_count": 5094,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 608867
+      }
+    },
+    {
+      "step": 70,
+      "dispatch_seconds": 3.030282891355455,
+      "state": {
+        "sha256": "7d582b8e06641566687501f50b85eee292ad29573818b4974951232a41cdf2bd",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445452600897249,
+        "end_monotonic_ns": 2445453031055916
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445459822913950,
+        "end_monotonic_ns": 2445460254972005
+      },
+      "foreground_wait_seconds": 0.838044345844537,
+      "request": {
+        "request_id": "rank0-pid1966426-request7",
+        "checkpoint_step": 70,
+        "generation": 3581,
+        "snapshot_generation": 7,
+        "metadata_generation": 3581,
+        "rank_id": 0,
+        "snapshot_slot": 1,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "a5a11e4d01131056ad963ae43618ed8670482bf1c53fb5326c7461f561db5ea9",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445456792792549,
+        "api_return_ns": 2445459822307078,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445459437697459
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445459437714799
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445459814713459
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445459821991857
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445459822178058
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445461044837654
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445461044852214
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445461046795931
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445461092981901
+          }
+        ]
+      },
+      "training_io_overlap_ns": 432058055,
+      "persist_seconds": 4.300189352,
+      "state_machine_seconds": 1.655284442,
+      "runtime_stats": {
+        "nvme_submit_count": 5943,
+        "nvme_complete_count": 5943,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 708628
+      }
+    },
+    {
+      "step": 80,
+      "dispatch_seconds": 3.037820772267878,
+      "state": {
+        "sha256": "7ce4a35deddd17e02b9fee840e9ccb0e83cac40a1b0c6b14f2463f3f2fae043c",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445459822913950,
+        "end_monotonic_ns": 2445460254972005
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445467061065355,
+        "end_monotonic_ns": 2445467491785013
+      },
+      "foreground_wait_seconds": 0.8229952678084373,
+      "request": {
+        "request_id": "rank0-pid1966426-request8",
+        "checkpoint_step": 80,
+        "generation": 3582,
+        "snapshot_generation": 8,
+        "metadata_generation": 3582,
+        "rank_id": 0,
+        "snapshot_slot": 2,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "2c6f8f05b1380737dcf43841083d0e4fb20b0eda3297a1e7de5ba19ad97cc30d",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445464023405484,
+        "api_return_ns": 2445467060441762,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445466685472301
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445466685489711
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445467052794642
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445467060122781
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445467060319732
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445468266135432
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445468266149662
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445468268129730
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445468314746791
+          }
+        ]
+      },
+      "training_io_overlap_ns": 430719658,
+      "persist_seconds": 4.291341307,
+      "state_machine_seconds": 1.62927449,
+      "runtime_stats": {
+        "nvme_submit_count": 6792,
+        "nvme_complete_count": 6792,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 808491
+      }
+    },
+    {
+      "step": 90,
+      "dispatch_seconds": 3.0385952652432024,
+      "state": {
+        "sha256": "71ca24ddee8bbf34a4c3e79534bcbf8dc1a12752a6c91763f0678a35963c59bf",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445467061065355,
+        "end_monotonic_ns": 2445467491785013
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445474294851902,
+        "end_monotonic_ns": 2445474727515508
+      },
+      "foreground_wait_seconds": 0.8377975360490382,
+      "request": {
+        "request_id": "rank0-pid1966426-request9",
+        "checkpoint_step": 90,
+        "generation": 3583,
+        "snapshot_generation": 9,
+        "metadata_generation": 3583,
+        "rank_id": 0,
+        "snapshot_slot": 0,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "035fa6d5ac767e988b86d06d77601016e70905ed2d93a7aa120f8cd6af1e3fb8",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445471256414958,
+        "api_return_ns": 2445474294229919,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445473891799490
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445473891817311
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445474286568479
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445474293912198
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445474294110449
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445475515530150
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445475515541780
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445475517605318
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445475565275544
+          }
+        ]
+      },
+      "training_io_overlap_ns": 432663606,
+      "persist_seconds": 4.308860586,
+      "state_machine_seconds": 1.673476054,
+      "runtime_stats": {
+        "nvme_submit_count": 7641,
+        "nvme_complete_count": 7641,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 908809
+      }
+    },
+    {
+      "step": 100,
+      "dispatch_seconds": 3.0133245256729424,
+      "state": {
+        "sha256": "c10f826dde686ae8c423a5dd36e2a6b2c8f1b302b4136826dcbaf01f75aa854a",
+        "fields": 590,
+        "bytes": 1485020168
+      },
+      "preceding_training_interval": {
+        "start_monotonic_ns": 2445474294851902,
+        "end_monotonic_ns": 2445474727515508
+      },
+      "overlapped_training_interval": {
+        "start_monotonic_ns": 2445481505644689,
+        "end_monotonic_ns": 2445481552061730
+      },
+      "foreground_wait_seconds": 1.203179260250181,
+      "request": {
+        "request_id": "rank0-pid1966426-request10",
+        "checkpoint_step": 100,
+        "generation": 3584,
+        "snapshot_generation": 10,
+        "metadata_generation": 3584,
+        "rank_id": 0,
+        "snapshot_slot": 1,
+        "dma_slot": null,
+        "acl_event": "c-layer-per-dma-slot",
+        "nvme_completion": "all-data-completions-observed",
+        "checksum": "97a52f865bcbff9550873a343a7babd7b144a8112d156b1388b23c1a40de6ffb",
+        "timeout": 3600.0,
+        "state": "PERSISTED",
+        "status": "PERSISTED",
+        "error": null,
+        "api_enter_ns": 2445478492477644,
+        "api_return_ns": 2445481505013387,
+        "freeze_wait_ns": 0,
+        "update_wait_ns": 0,
+        "update_deadline_missed": false,
+        "dma_submit_ns": null,
+        "dma_complete_ns": null,
+        "dma_chunks": [],
+        "update_fence_install_ns": null,
+        "update_fence_release_ns": null,
+        "training_dependency": null,
+        "events": [
+          {
+            "state": "CREATED",
+            "monotonic_ns": 2445481127744796
+          },
+          {
+            "state": "SNAPSHOTTING",
+            "monotonic_ns": 2445481127762466
+          },
+          {
+            "state": "SNAPSHOT_READY",
+            "monotonic_ns": 2445481497350697
+          },
+          {
+            "state": "QUEUED",
+            "monotonic_ns": 2445481504716065
+          },
+          {
+            "state": "DMA_COPYING",
+            "monotonic_ns": 2445481504892756
+          },
+          {
+            "state": "NVME_WRITING",
+            "monotonic_ns": 2445482707511484
+          },
+          {
+            "state": "FLUSHING",
+            "monotonic_ns": 2445482707522644
+          },
+          {
+            "state": "METADATA_COMMITTING",
+            "monotonic_ns": 2445482709484162
+          },
+          {
+            "state": "PERSISTED",
+            "monotonic_ns": 2445482755202860
+          }
+        ]
+      },
+      "training_io_overlap_ns": 46417041,
+      "persist_seconds": 4.262725216,
+      "state_machine_seconds": 1.627458064,
+      "runtime_stats": {
+        "nvme_submit_count": 8490,
+        "nvme_complete_count": 8490,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 4,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 4,
+        "request_ring_depth": 0,
+        "request_ring_peak": 1,
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 1007156
+      }
+    }
+  ],
+  "admission_events": [
+    {
+      "step": 10,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request1",
+      "generation": 3575
+    },
+    {
+      "step": 20,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request2",
+      "generation": 3576
+    },
+    {
+      "step": 30,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request3",
+      "generation": 3577
+    },
+    {
+      "step": 40,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request4",
+      "generation": 3578
+    },
+    {
+      "step": 50,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request5",
+      "generation": 3579
+    },
+    {
+      "step": 60,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request6",
+      "generation": 3580
+    },
+    {
+      "step": 70,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request7",
+      "generation": 3581
+    },
+    {
+      "step": 80,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request8",
+      "generation": 3582
+    },
+    {
+      "step": 90,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request9",
+      "generation": 3583
+    },
+    {
+      "step": 100,
+      "status": "ACCEPTED",
+      "request_id": "rank0-pid1966426-request10",
+      "generation": 3584
+    }
+  ],
+  "continuous_losses": [
+    10.835579872131348,
+    10.850872039794922,
+    10.85014533996582,
+    10.876251220703125,
+    10.873220443725586,
+    10.878211975097656,
+    10.880349159240723,
+    10.861899375915527,
+    10.89140510559082,
+    10.851921081542969,
+    10.853585243225098,
+    10.861102104187012,
+    10.883589744567871,
+    10.884004592895508,
+    10.854272842407227,
+    10.88735294342041,
+    10.914348602294922,
+    10.927618026733398,
+    10.902440071105957,
+    10.88037395477295,
+    10.862632751464844,
+    10.896368026733398,
+    10.906146049499512,
+    10.854364395141602,
+    10.892741203308105,
+    10.898021697998047,
+    10.837629318237305,
+    10.875858306884766,
+    10.908950805664062,
+    10.887133598327637,
+    10.91064167022705,
+    10.875310897827148,
+    10.868080139160156,
+    10.817256927490234,
+    10.827291488647461,
+    10.829612731933594,
+    10.836250305175781,
+    10.821900367736816,
+    10.822368621826172,
+    10.80864429473877,
+    10.834390640258789,
+    10.823532104492188,
+    10.80825138092041,
+    10.825668334960938,
+    10.850914001464844,
+    10.847890853881836,
+    10.832904815673828,
+    10.856443405151367,
+    10.839322090148926,
+    10.82475471496582,
+    10.838563919067383,
+    10.844882011413574,
+    10.844372749328613,
+    10.857610702514648,
+    10.846537590026855,
+    10.87299633026123,
+    10.816865921020508,
+    10.885844230651855,
+    10.842426300048828,
+    10.87085247039795,
+    10.862342834472656,
+    10.85122299194336,
+    10.896099090576172,
+    10.818973541259766,
+    10.887575149536133,
+    10.863628387451172,
+    10.877245903015137,
+    10.869133949279785,
+    10.82564640045166,
+    10.892891883850098,
+    10.895511627197266,
+    10.848971366882324,
+    10.822639465332031,
+    10.831535339355469,
+    10.823304176330566,
+    10.828581809997559,
+    10.824935913085938,
+    10.782110214233398,
+    10.794829368591309,
+    10.805357933044434,
+    10.818092346191406,
+    10.803679466247559,
+    10.791311264038086,
+    10.7916259765625,
+    10.784662246704102,
+    10.814708709716797,
+    10.797935485839844,
+    10.823623657226562,
+    10.822776794433594,
+    10.80375862121582,
+    10.823339462280273,
+    10.80786418914795,
+    10.826848983764648,
+    10.804051399230957,
+    10.814607620239258,
+    10.81666374206543,
+    10.840326309204102,
+    10.822956085205078,
+    10.831164360046387,
+    10.846875190734863,
+    10.833852767944336
+  ],
+  "continuous_step_seconds": [
+    0.04580689920112491,
+    0.043322619050741196,
+    0.0424101147800684,
+    0.04214117396622896,
+    0.042252474930137396,
+    0.042123553808778524,
+    0.041698372922837734,
+    0.04175058286637068,
+    0.04166860179975629,
+    0.04166739201173186,
+    0.04624674981459975,
+    0.04411099199205637,
+    0.04379145102575421,
+    0.04272841569036245,
+    0.0424395059235394,
+    0.04231792502105236,
+    0.042175664100795984,
+    0.04224869515746832,
+    0.042110003996640444,
+    0.04229748481884599,
+    0.04644658090546727,
+    0.04435780318453908,
+    0.0434215790592134,
+    0.042788307182490826,
+    0.042749656829982996,
+    0.042669236194342375,
+    0.04275580681860447,
+    0.04252477502450347,
+    0.04251242568716407,
+    0.04263340635225177,
+    0.04624383011832833,
+    0.04431593278422952,
+    0.04289974691346288,
+    0.04249229608103633,
+    0.04226770391687751,
+    0.04207154409959912,
+    0.042832016944885254,
+    0.042202324606478214,
+    0.04225057503208518,
+    0.04228492407128215,
+    0.0462956209667027,
+    0.04427531221881509,
+    0.04349728999659419,
+    0.04301288817077875,
+    0.04284440679475665,
+    0.04266793606802821,
+    0.04237932525575161,
+    0.04263959592208266,
+    0.04220964480191469,
+    0.042713135946542025,
+    0.046226069796830416,
+    0.0441889320500195,
+    0.04329263884574175,
+    0.042758396826684475,
+    0.04255630634725094,
+    0.04247307498008013,
+    0.04227725509554148,
+    0.04238340491428971,
+    0.04201803356409073,
+    0.04246006580069661,
+    0.04621790116652846,
+    0.04512412520125508,
+    0.043343218974769115,
+    0.04248959617689252,
+    0.04236498475074768,
+    0.04230247484520078,
+    0.04213457368314266,
+    0.04226123495027423,
+    0.04205636400729418,
+    0.041833162773400545,
+    0.04650422092527151,
+    0.044429793022572994,
+    0.043407049030065536,
+    0.042806706856936216,
+    0.04268276644870639,
+    0.0428854082711041,
+    0.042521505150943995,
+    0.0423530051484704,
+    0.04219014523550868,
+    0.04224719479680061,
+    0.046178499702364206,
+    0.044299372006207705,
+    0.04327651904895902,
+    0.042904766742140055,
+    0.04267508676275611,
+    0.04249185509979725,
+    0.04229118488729,
+    0.04224594496190548,
+    0.04209276381880045,
+    0.042231883853673935,
+    0.04648505104705691,
+    0.044225252233445644,
+    0.04341112868860364,
+    0.042739227414131165,
+    0.04274282697588205,
+    0.042337764985859394,
+    0.043059648014605045,
+    0.04309573816135526,
+    0.04235357465222478,
+    0.04217952396720648,
+    0.046399940736591816
+  ],
+  "continuous_final_state": {
+    "sha256": "ec4686bb9157546cb0b57dee49b564d4f6196036fb47b7688c08333929ede15c",
+    "fields": 590,
+    "bytes": 1485020168
+  }
+}

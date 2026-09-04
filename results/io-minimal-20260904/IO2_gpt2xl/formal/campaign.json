@@ -1,0 +1,96 @@
+{
+  "commit": "96cce9929e3a2646044ab1ac7fb0a1f7dee2aaad",
+  "config": {
+    "chunks": [
+      4194304
+    ],
+    "depths": [
+      4
+    ],
+    "generation_delays_ms": [
+      0
+    ],
+    "intervals": [
+      10
+    ],
+    "model": "gpt2_xl",
+    "modes": [
+      "none",
+      "frozen_async",
+      "live_async"
+    ],
+    "npu": 2,
+    "numa_node": 4,
+    "pci": "0000:83:00.0",
+    "request_slots": [
+      2
+    ],
+    "restore_retained": true,
+    "seeds": [
+      41,
+      42,
+      43
+    ],
+    "seq_len": 129,
+    "shm_id": 20269600,
+    "snapshot_slots": [
+      2
+    ],
+    "timeout": 7200.0,
+    "total_steps": 121
+  },
+  "config_digest": "f2ad868ee8e0bfc540f8542ddfd2b8f99ba2779805d2f487248f8963714c6d87",
+  "created_unix_ns": 1788513877039145161,
+  "entries": {
+    "gpt2_xl_seed41_i10_frozen_async_c4194304_d4_ss2_rs2_delay0": {
+      "result": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed41_i10_frozen_async_c4194304_d4_ss2_rs2_delay0/result.json",
+      "returncode": 0,
+      "run_dir": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed41_i10_frozen_async_c4194304_d4_ss2_rs2_delay0",
+      "shm_id": 20269601,
+      "status": "pass",
+      "updated_unix_ns": 1788515568342306776
+    },
+    "gpt2_xl_seed41_i10_live_async_c4194304_d4_ss2_rs2_delay0": {
+      "chunk": 4194304,
+      "depth": 4,
+      "error": "FULL restore gate failed",
+      "generation_delay_ms": 0,
+      "interval": 10,
+      "mode": "live_async",
+      "request_slots": 2,
+      "returncode": 1,
+      "run_dir": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed41_i10_live_async_c4194304_d4_ss2_rs2_delay0",
+      "seed": 41,
+      "shm_id": 20269602,
+      "snapshot_slots": 2,
+      "status": "fail",
+      "stderr": "elMode.AUTO_PARALLEL)\n[WARNING] ME(2188191:281473529151520,MainProcess):2026-09-04-18:03:10.148.208 [mindspore/common/parameter.py:851] This interface may be deleted in the future.\n[WARNING] ME(2188191:281473529151520,MainProcess):2026-09-04-18:04:57.144.967 [mindspore/hal/stream.py:272] WARN_DEPRECATED: The usage of mindspore.hal.synchronize() is deprecated. Please use mindspore.runtime.synchronize()\nEAL: '-c <coremask>' option is deprecated, and will be removed in a future release\nEAL: \tUse '-l <corelist>' or '--lcores=<corelist>' option instead\n[Diag] after spdk_env_init: rte_lcore_count=1 rte_socket_count=8 spdk_core_count=1\n[Diag] reactor: rings w=0x2000008fd600 r=0x2000008fd080 m=0x2000008fcb80 pollers s=0xfffaf0015c10 w=0xfffaf000b090 r=0xfffaf00107f0 m=0xfffaf0011b50\n[NPU-NVMe] Found matching controller at 0000:83:00.0\n[ERROR] COMMON(2188191,ffffa9b80020,python):2026-09-04-18:04:57.947.430 [mindspore/ccsrc/pybind_api/ir/tensor_py.cc:730] DataPtr] Tensor device address is null\nTraceback (most recent call last):\n  File \"/home/user7/npu-nvme-io-path-v1/experiments/benchmarks/run_single_card_full.py\", line 732, in <module>\n    raise SystemExit(main())\n  File \"/home/user7/npu-nvme-io-path-v1/experiments/benchmarks/run_single_card_full.py\", line 726, in main\n    phase_restore(args, run_dir)\n  File \"/home/user7/npu-nvme-io-path-v1/experiments/benchmarks/run_single_card_full.py\", line 384, in phase_restore\n    raise AssertionError(\nAssertionError: fresh continuation loss mismatch oracle=source_process_continuation expected=[10.993062973022461, 10.965991973876953, 10.99191665649414, 10.962385177612305, 10.945500373840332, 10.931617736816406, 10.89709758758545, 10.927153587341309, 10.896493911743164, 10.930206298828125, 10.924686431884766, 10.972346305847168, 10.978620529174805, 10.918517112731934, 10.970463752746582, 10.933576583862305, 10.825345993041992, 10.804709434509277, 10.778421401977539, 10.788516998291016, 10.800108909606934] actual=[10.993062973022461, 10.965991973876953, 10.99191665649414, 10.962385177612305, 10.945500373840332, 10.931602478027344, 10.897087097167969, 10.926643371582031, 10.896390914916992, 10.931739807128906, 10.926207542419434, 10.973106384277344, 10.979996681213379, 10.920010566711426, 10.971872329711914, 10.934245109558105, 10.82664680480957, 10.8059720993042, 10.77927017211914, 10.789264678955078, 10.801311492919922] max_abs=0.00153350830078125\nTraceback (most recent call last):\n  File \"/home/user7/npu-nvme-io-path-v1/experiments/benchmarks/run_single_card_full.py\", line 732, in <module>\n    raise SystemExit(main())\n  File \"/home/user7/npu-nvme-io-path-v1/experiments/benchmarks/run_single_card_full.py\", line 720, in main\n    run_orchestrated(args, run_dir)\n  File \"/home/user7/npu-nvme-io-path-v1/experiments/benchmarks/run_single_card_full.py\", line 529, in run_orchestrated\n    subprocess.run(command_line, cwd=run_dir, check=True)\n  File \"/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/subprocess.py\", line 528, in run\n    raise CalledProcessError(retcode, process.args,\nsubprocess.CalledProcessError: Command '['/home/user7/miniconda3/envs/ms_2.5/bin/python', '/home/user7/npu-nvme-io-path-v1/experiments/benchmarks/run_single_card_full.py', '--phase', 'restore', '--run-dir', '/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed41_i10_live_async_c4194304_d4_ss2_rs2_delay0', '--model', 'gpt2_xl', '--mode', 'live_async', '--checkpoint-steps', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100', '110', '120', '--total-steps', '121', '--seq-len', '129', '--seed', '41', '--npu', '2', '--pci', '0000:83:00.0', '--chunk-size', '4194304', '--pipeline-depth', '4', '--keep-last-n', '3', '--slot-size-gb', '10', '--checkpoint-slots', '2', '--request-slots', '2', '--admission', 'block', '--generation-delay-ms', '0', '--shm-id', '20269602', '--timeout', '7200.0', '--loss-rtol', '1e-05', '--loss-atol', '1e-06', '--restore-step', '100']' returned non-zero exit status 1.\n",
+      "stdout": " Layout: 434.92ms | SPDK(H/W): 2367.95ms | Meta: 172.82ms\n[DirectCkpt][Rank 0] Background Safe Write: 9367.59 MB | BW: 207.96 MB/s\n======================================================\n\n[DirectCkpt] Rank 0 saving step 90 to offset 0.00 GB ...\n[Timeline][Rank 0] Step 90 | Python save() dispatched to background thread. Layout cost: 511.29ms\n[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).\n\n======================================================\n[Timeline][Rank 0] Step 80 | Background SPDK Flush ENDED at 2452012.591s\n[Breakdown][Rank 0] Prep: 0.00ms | Layout: 509.71ms | SPDK(H/W): 2302.28ms | Meta: 661.09ms\n[DirectCkpt][Rank 0] Background Safe Write: 9367.59 MB | BW: 209.51 MB/s\n======================================================\n\n[DirectCkpt] Rank 0 saving step 100 to offset 10.00 GB ...\n[Timeline][Rank 0] Step 100 | Python save() dispatched to background thread. Layout cost: 501.66ms\n[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).\n\n======================================================\n[Timeline][Rank 0] Step 90 | Background SPDK Flush ENDED at 2452036.358s\n[Breakdown][Rank 0] Prep: 0.00ms | Layout: 511.29ms | SPDK(H/W): 2368.39ms | Meta: 175.34ms\n[DirectCkpt][Rank 0] Background Safe Write: 9367.59 MB | BW: 205.79 MB/s\n======================================================\n\n[DirectCkpt] Rank 0 saving step 110 to offset 20.00 GB ...\n[Timeline][Rank 0] Step 110 | Python save() dispatched to background thread. Layout cost: 434.32ms\n[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).\n\n======================================================\n[Timeline][Rank 0] Step 100 | Background SPDK Flush ENDED at 2452059.317s\n[Breakdown][Rank 0] Prep: 0.00ms | Layout: 501.66ms | SPDK(H/W): 2306.28ms | Meta: 176.54ms\n[DirectCkpt][Rank 0] Background Safe Write: 9367.59 MB | BW: 205.05 MB/s\n======================================================\n\n[DirectCkpt] Rank 0 saving step 120 to offset 0.00 GB ...\n[Timeline][Rank 0] Step 120 | Python save() dispatched to background thread. Layout cost: 511.40ms\n[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).\n\n======================================================\n[Timeline][Rank 0] Step 110 | Background SPDK Flush ENDED at 2452081.662s\n[Breakdown][Rank 0] Prep: 0.00ms | Layout: 434.32ms | SPDK(H/W): 2357.27ms | Meta: 176.26ms\n[DirectCkpt][Rank 0] Background Safe Write: 9367.59 MB | BW: 212.22 MB/s\n======================================================\n\n[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).\n\n======================================================\n[Timeline][Rank 0] Step 120 | Background SPDK Flush ENDED at 2452102.745s\n[Breakdown][Rank 0] Prep: 0.00ms | Layout: 511.40ms | SPDK(H/W): 2316.96ms | Meta: 174.56ms\n[DirectCkpt][Rank 0] Background Safe Write: 9367.59 MB | BW: 220.97 MB/s\n======================================================\n\n[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 0.000s\n[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528\n[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 4\n[Init] Initialisation complete.\n[Common] Building gpt2_xl model...\n2026-09-04 18:03:35,119 - mindformers[mindformers/models/modeling_utils.py:1502] - INFO - model built, but weights is unloaded, since the config has no checkpoint_name_or_path attribute or checkpoint_name_or_path is None.\n2026-09-04 18:03:38,988 - mindformers[mindformers/models/auto/auto_factory.py:362] - INFO - model built successfully!\n.[DirectCheckpoint] loading so from /home/user7/npu-nvme-io-path-v1/build_out/lib/libnpu_nvme.so\n[DirectCheckpoint] init ok. chunk=4.00MB (effective=4.00MB), rank=0/1\n[Rank 0] FileSystem Mounted. V2 generation=3778 Active Slot: A\n[Rank 0] FileSystem Mounted. V2 generation=3778 Active Slot: A\n[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528\n[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 4\n[Init] Initialisation complete.\n",
+      "updated_unix_ns": 1788516364535247703
+    },
+    "gpt2_xl_seed41_i10_none_c4194304_d4_ss2_rs2_delay0": {
+      "result": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed41_i10_none_c4194304_d4_ss2_rs2_delay0/result.json",
+      "returncode": 0,
+      "run_dir": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed41_i10_none_c4194304_d4_ss2_rs2_delay0",
+      "shm_id": 20269600,
+      "status": "pass",
+      "updated_unix_ns": 1788514050397832907
+    },
+    "gpt2_xl_seed42_i10_frozen_async_c4194304_d4_ss2_rs2_delay0": {
+      "run_dir": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed42_i10_frozen_async_c4194304_d4_ss2_rs2_delay0",
+      "shm_id": 20269604,
+      "status": "running",
+      "updated_unix_ns": 1788516535929755851
+    },
+    "gpt2_xl_seed42_i10_none_c4194304_d4_ss2_rs2_delay0": {
+      "result": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed42_i10_none_c4194304_d4_ss2_rs2_delay0/result.json",
+      "returncode": 0,
+      "run_dir": "/home/user7/npu-nvme-io-path-v1/results/io-minimal-20260904/IO2_gpt2xl/formal/gpt2_xl_seed42_i10_none_c4194304_d4_ss2_rs2_delay0",
+      "shm_id": 20269603,
+      "status": "pass",
+      "updated_unix_ns": 1788516535928733006
+    }
+  },
+  "schema_version": 1,
+  "updated_unix_ns": 1788516535929756851
+}
