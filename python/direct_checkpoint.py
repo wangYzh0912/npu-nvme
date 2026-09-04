@@ -1024,9 +1024,7 @@ class DirectCheckpoint:
             self._live_handles.discard(handle)
         for resource in resources:
             events = [handle._live_pre_event, handle._live_post_event,
-                      resource.get("event"), resource.get("start_event")]
-            events.extend(chunk.get("event")
-                          for chunk in resource.get("dma_chunks", []))
+                      resource.get("event")]
             seen_events = set()
             for event in events:
                 if event and event.value:
@@ -1067,7 +1065,6 @@ class DirectCheckpoint:
         buffer_ptr = ctypes.c_void_p()
         stream = ctypes.c_void_p()
         event = ctypes.c_void_p()
-        start_event = ctypes.c_void_p()
         dma_chunks = []
         allocated = False
         try:
@@ -1081,12 +1078,6 @@ class DirectCheckpoint:
             rc = acl_lib.aclrtCreateEvent(ctypes.byref(event))
             if rc != 0:
                 raise RuntimeError(f"aclrtCreateEvent(live) failed: {rc}")
-            rc = acl_lib.aclrtCreateEvent(ctypes.byref(start_event))
-            if rc != 0:
-                raise RuntimeError(f"aclrtCreateEvent(live start) failed: {rc}")
-            rc = acl_lib.aclrtRecordEvent(start_event, stream)
-            if rc != 0:
-                raise RuntimeError(f"aclrtRecordEvent(live start) failed: {rc}")
             dma_submit_ns = time.monotonic_ns()
             staged = []
             for item, offset in zip(params, offsets):
@@ -1107,19 +1098,11 @@ class DirectCheckpoint:
                         if rc != 0:
                             raise RuntimeError(
                                 f"live D2H submit failed for {item['name']}: {rc}")
-                        chunk_event = ctypes.c_void_p()
-                        rc = acl_lib.aclrtCreateEvent(ctypes.byref(chunk_event))
-                        if rc == 0:
-                            rc = acl_lib.aclrtRecordEvent(chunk_event, stream)
-                        if rc != 0:
-                            if chunk_event.value:
-                                acl_lib.aclrtDestroyEvent(chunk_event)
-                            raise RuntimeError(
-                                f"live D2H chunk event failed for {item['name']}: {rc}")
                         dma_chunks.append({
                             "name": item["name"], "offset": inner_offset,
                             "size": take, "submit_ns": submit_ns,
-                            "complete_ns": None, "event": chunk_event,
+                            "complete_ns": None,
+                            "completion_event_scope": "generation",
                         })
                         inner_offset += take
                 else:
@@ -1132,16 +1115,9 @@ class DirectCheckpoint:
             if rc != 0:
                 raise RuntimeError(f"aclrtRecordEvent(live) failed: {rc}")
             return staged, {"buffer": buffer_ptr, "stream": stream,
-                            "event": event, "start_event": start_event,
-                            "dma_chunks": dma_chunks, "bytes": total,
+                            "event": event, "dma_chunks": dma_chunks, "bytes": total,
                             "dma_submit_ns": dma_submit_ns}
         except BaseException:
-            for chunk in dma_chunks:
-                chunk_event = chunk.get("event")
-                if chunk_event and chunk_event.value:
-                    acl_lib.aclrtDestroyEvent(chunk_event)
-            if start_event.value:
-                acl_lib.aclrtDestroyEvent(start_event)
             if event.value:
                 acl_lib.aclrtDestroyEvent(event)
             if stream.value:
@@ -1656,20 +1632,12 @@ class DirectCheckpoint:
                     handle.dma_complete_ns = time.monotonic_ns()
                     dma_chunks = []
                     for chunk in _live_staging.get("dma_chunks", []):
-                        elapsed_ms = ctypes.c_float()
-                        rc = acl_lib.aclrtEventElapsedTime(
-                            ctypes.byref(elapsed_ms),
-                            _live_staging["start_event"], chunk["event"])
-                        if rc != 0:
-                            raise RuntimeError(
-                                f"live D2H chunk timing failed (rc={rc})")
-                        complete_ns = (_live_staging["dma_submit_ns"] +
-                                       int(elapsed_ms.value * 1_000_000))
                         dma_chunks.append({
                             "name": chunk["name"], "offset": chunk["offset"],
                             "size": chunk["size"],
                             "submit_ns": chunk["submit_ns"],
-                            "complete_ns": complete_ns,
+                            "complete_ns": handle.dma_complete_ns,
+                            "completion_event_scope": "generation",
                         })
                     handle.dma_chunks = dma_chunks
                     layout_by_name = {item["name"]: item for item in layout}
