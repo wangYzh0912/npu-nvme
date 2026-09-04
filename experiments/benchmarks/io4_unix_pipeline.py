@@ -244,7 +244,10 @@ def coordinator(args):
     run_dir.mkdir(parents=True, exist_ok=True)
     raw = run_dir / "raw"
     raw.mkdir(exist_ok=True)
-    socket_path = str(run_dir / "pipeline.sock")
+    # AF_UNIX.sun_path is limited to 108 bytes on Linux.  Campaign run
+    # directories intentionally contain the full parameter key, so keep the
+    # rendezvous socket in /tmp and derive a collision-resistant short name.
+    socket_path = f"/tmp/npuio4-{hashlib.sha256(str(run_dir).encode()).hexdigest()[:16]}.sock"
     try:
         os.unlink(socket_path)
     except FileNotFoundError:
