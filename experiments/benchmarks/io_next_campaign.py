@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import signal
 import statistics
 import subprocess
 import sys
@@ -68,10 +70,27 @@ def run_command(command_line, log, dry_run):
         return {"status": "planned", "command": command_line}
     log.parent.mkdir(parents=True, exist_ok=True)
     with log.open("a", encoding="utf-8") as stream:
-        completed = subprocess.run(command_line, cwd=ROOT, stdout=stream,
-                                   stderr=subprocess.STDOUT, check=False)
-    if completed.returncode:
-        raise RuntimeError(f"campaign command failed rc={completed.returncode}: {command_line}")
+        process = subprocess.Popen(command_line, cwd=ROOT, stdout=stream,
+                                   stderr=subprocess.STDOUT,
+                                   start_new_session=True)
+        try:
+            returncode = process.wait()
+        except BaseException:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+            raise
+    if returncode:
+        raise RuntimeError(f"campaign command failed rc={returncode}: {command_line}")
     return {"status": "pass", "command": command_line}
 
 
@@ -132,23 +151,23 @@ def io2_specs(args, root, candidates):
     base = root / "IO2_gpt2xl"
     selected = candidates[0] if candidates else {"chunk": 4 * MIB, "depth": 4}
     chunk, depth = selected["chunk"], selected["depth"]
-    return [
-        ("screen_i10", matrix_command(
-            args, base / "screen", model="gpt2_xl",
-            modes=("none", "serial", "queue", "frozen_async", "live_async"),
-            intervals=(10,), chunks=tuple(sorted({chunk, 4 * MIB})),
-            depths=tuple(sorted({depth, 4})), total_steps=31)),
-        ("screen_i50", matrix_command(
-            args, base / "screen_i50", model="gpt2_xl",
-            modes=("none", "serial", "queue", "frozen_async", "live_async"),
-            intervals=(50,), chunks=tuple(sorted({chunk, 4 * MIB})),
-            depths=tuple(sorted({depth, 4})), total_steps=151)),
-        ("gate100", matrix_command(
-            args, base / "gate100", model="gpt2_xl",
-            modes=("none", "serial", "frozen_async", "live_async"),
-            seeds=(41, 42, 43), intervals=(10, 50), chunks=(chunk,),
-            depths=(depth,), delays=(0, 5000), total_steps=110)),
-    ]
+    specs = [("screen_capability", matrix_command(
+        args, base / "screen_capability", model="gpt2_xl",
+        modes=("live_async",), intervals=(10,), chunks=(chunk,),
+        depths=(depth,), total_steps=31))]
+    for interval, total_steps in ((10, 31), (50, 151)):
+        specs.extend([
+            (f"screen_oracle_i{interval}", matrix_command(
+                args, base / f"screen_oracle_i{interval}", model="gpt2_xl",
+                modes=("none", "serial"), intervals=(interval,),
+                chunks=(4 * MIB,), depths=(4,), total_steps=total_steps)),
+            (f"screen_pipeline_i{interval}", matrix_command(
+                args, base / f"screen_pipeline_i{interval}", model="gpt2_xl",
+                modes=("queue", "frozen_async"), intervals=(interval,),
+                chunks=tuple(sorted({chunk, 4 * MIB})),
+                depths=tuple(sorted({depth, 4})), total_steps=total_steps)),
+        ])
+    return specs
 
 
 def io2_formal_specs(args, root, candidates):
