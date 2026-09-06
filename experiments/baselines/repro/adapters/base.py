@@ -142,6 +142,7 @@ class MechanismOnlyAdapter(DurableFileAdapter):
                              bytes=snapshot.total_bytes)
             owner, descriptor = SharedSnapshot.from_snapshot(snapshot,
                                                                prefix=self.name)
+            del snapshot
             self.events.emit("ipc_ready", int(generation), request_id,
                              shm=descriptor["name"], bytes=descriptor["size"])
             # Keep the owner alive through the synchronous durable writer so
