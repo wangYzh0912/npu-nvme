@@ -25,8 +25,14 @@ a fresh restore process, checks bytes and controls, then compares continuation
 losses to the source oracle.
 
 The current hardware record is in `results/baseline-gpt2-repro-20260906`.
-The framework reference and no-checkpoint baseline passed; DataStates and
-PCcheck are build-blocked by their locked CUDA/x86 sources, ByteCheckpoint and
-FastPersist lack their dedicated CPU worker environments, and the native raw
-adapter is blocked by SPDK unable to attach the `uio_pci_generic`-bound
-`0000:83:00.0` device (`PA IOVA` probe failure).
+The framework reference and no-checkpoint baseline passed. DataStates and
+PCcheck are represented by an explicit `mechanism-only` downgrade because
+their locked sources require CUDA/x86 components. ByteCheckpoint and
+FastPersist have isolated CPU worker import probes (the versions are locked in
+`worker_environment.lock.json`), but their planners/serializers are not yet
+connected to the MindSpore state bridge; their measured runs therefore use the
+common shared-memory Host bridge and durable writer. These runs validate the
+shared capture, persistence, checksum and fresh-restore mechanisms, not the
+upstream CUDA backend performance. The native raw adapter remains blocked by
+SPDK being unable to attach the `uio_pci_generic`-bound `0000:83:00.0` device
+(`PA IOVA` probe failure).
