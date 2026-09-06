@@ -9,26 +9,26 @@ each run's `environment.json`.
 | `none` | trend measured | none | not applicable |
 | `mindspore_sync` | 30-step trend measured | `/models` XFS filesystem | fresh process, byte exact, loss oracle pass |
 | `ours` | build failed | raw SPDK requested | SPDK probe failed before generation |
-| `datastates_acl` | mechanism-only G2 passed | common Host bridge on `/models` | locked source requires CUDA/nvcc/liburing; upstream ACL core not invoked |
-| `pccheck_acl` | mechanism-only G2 passed | common Host bridge on `/models` | locked source is CUDA/x86 (`clwb/sfence`); ARM writer not invoked |
-| `bytecheckpoint_host` | mechanism-only G2 passed | common Host bridge on `/models` | CPU torch 2.5.1 import probe passes; planner/engine is not connected to MindSpore |
-| `fastpersist_host` | mechanism-only G2 passed | common Host bridge on `/models` | CPU torch 2.6.0/AIO worker is prepared; FastFileWriter serializer is not connected |
+| `datastates_acl` | NPU semantic port G3/G4 pass | real ACL D2H -> pinned Host -> durable XFS | tier ordering, bounded pool and source/persist split preserved |
+| `pccheck_acl` | NPU semantic port G3/G4 pass | real ACL D2H -> bounded slots -> 4 MiB writer -> durable XFS | bounded writer/backpressure; XFS fsync/atomic publish replaces CLWB/SFENCE |
+| `bytecheckpoint_host` | Host-adapted semantic port G3/G4 pass | ACL -> POSIX shared memory -> ByteCheckpoint CPU worker | model/optimizer planners, official extra-state workflow, shared 3-component counter |
+| `fastpersist_host` | Host-adapted semantic port G3/G4 pass | ACL -> POSIX shared memory -> FastFileWriter/AIO | patched legacy storage-list hook; CPU byte-view Utils substitution; GDS disabled |
 
-The completed 30-step mechanism-only runs produced ten generations and passed
-fresh-process byte-exact restore plus the three-step loss oracle:
+The completed semantic-port 30-step runs each produced ten generations and
+passed fresh-process byte-exact restore plus the three-step loss oracle:
 
 | Adapter | Wall time (s) | Generations | Restore |
 |---|---:|---:|---|
-| `datastates_acl` | 81.09 | 10 | pass |
-| `pccheck_acl` | 82.26 | 10 | pass |
-| `bytecheckpoint_host` | 83.35 | 10 | pass |
-| `fastpersist_host` | 82.37 | 10 | pass |
+| `datastates_acl` | 42.85 | 10 | byte exact; 3/3 loss pass |
+| `pccheck_acl` | 42.20 | 10 | byte exact; 3/3 loss pass |
+| `bytecheckpoint_host` | 62.48 | 10 | byte exact; 3/3 loss pass |
+| `fastpersist_host` | 45.93 | 10 | byte exact; 3/3 loss pass |
 
-These are Host-file mechanism measurements, not CUDA artifact performance
-claims. Shared-memory bridge events (`ipc_begin`/`ipc_ready`/`ipc_receive`),
-durable writer events and every request checksum are retained in each run's
-`events.jsonl`. The common Host path is intentionally slower than the framework
-reference because it exercises an explicit bridge copy.
+These are semantic-port Host-file measurements, not CUDA artifact performance
+claims. Shared-memory bridge events, worker hook evidence, durable writer
+events and every request checksum are retained in each run's `events.jsonl`.
+The common Host path is intentionally slower than the framework reference
+because it exercises an explicit bridge copy.
 
 The successful formal framework reference wrote ten 1.485 GB generations on
 the `/models` test filesystem (about 14 GB), took 66.74 s for 30 formal steps,
@@ -38,12 +38,18 @@ continuation losses matched the source oracle exactly under the configured
 27.59 s and is retained only as a training wall-clock baseline.
 
 Raw JSON, event timelines, state schema, fixture hashes, failure records and
-restore logs are kept beside each run. Mechanism-only runs deliberately
-exercise the common synchronous `asnumpy()` NPU capture, shared-memory bridge,
-durable Host writer and fresh-process restore, but do not claim the
-corresponding CUDA planner or serializer. `_data_ptr()` is used only for alias
-identification in this runner; it is not an ACL asynchronous DMA submission.
-The two early smoke runs are retained as historical diagnostics;
-formal records include `storage_backend` and `kind` so they cannot be mixed
-into a performance comparison accidentally. Worker versions and probe status
-are locked in `experiments/baselines/repro/worker_environment.lock.json`.
+restore logs are kept beside each run. The formal ACL schema contains 590
+device tensor fields (196 model and 394 optimizer) plus one Host control
+payload. All model and optimizer fields are copied from real NPU addresses
+with `aclrtMemcpy`; no
+formal tensor field falls back to `asnumpy()`. The source-release and durable
+ACK timestamps remain separate (roughly 2.9 s DataStates, 3.0 s PCcheck, 10.0 s
+ByteCheckpoint and 5.5 s FastPersist on this host), so API return is not
+mislabelled as persistence. Earlier mechanism-only runs remain historical
+downgrade probes and are excluded from formal comparison.
+Early smoke and failed dependency probes are retained as historical diagnostics.
+`summary.json` has a separate `formal_semantic_ports` table that requires 30
+steps, ten `PERSISTED` generations, fresh byte-exact restore and the strict loss
+oracle, so those records cannot be mixed into the formal comparison. Worker
+versions, memlock requirements and probe status are locked in
+`experiments/baselines/repro/worker_environment.lock.json`.

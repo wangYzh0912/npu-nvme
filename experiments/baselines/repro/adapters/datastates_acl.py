@@ -1,19 +1,30 @@
 from pathlib import Path
 
-from .base import MechanismOnlyAdapter
+from .acl_semantic import ACLSemanticAdapter
 
 
-class DataStatesAclAdapter(MechanismOnlyAdapter):
+class DataStatesAclAdapter(ACLSemanticAdapter):
     name = "datastates_acl"
-    kind = "mechanism-only"
+    kind = "npu-semantic-port"
     upstream_name = "DataStates-LLM"
-    degradation_reason = ("locked checkout hard-requires CUDA/nvcc and liburing; "
-                          "ACL C ABI was not available")
+    upstream_core_invoked = False
+    mechanisms_preserved = (
+        "device-tier to pinned-host-tier to file-tier pipeline",
+        "region queue and bounded Host memory pool",
+        "separate source-release and persistence completion",
+    )
+    platform_substitutions = (
+        "CUDA runtime -> ACL runtime",
+        "upstream file tier -> durable XFS writer",
+    )
 
     @classmethod
     def preflight(cls, config):
         root = Path(config.get("upstream_root", "")) / "datastates-llm"
         status = super().preflight(config)
         status.update({"source": str(root),
-                       "attempt": "CMake configure failed: nvcc not found"})
+                       "source_exists": root.is_dir(),
+                       "implementation": "semantic tier port using upstream tier ordering",
+                       "upstream_patch_required": True,
+                       "status": "ready" if root.is_dir() else "dependency_blocked"})
         return status

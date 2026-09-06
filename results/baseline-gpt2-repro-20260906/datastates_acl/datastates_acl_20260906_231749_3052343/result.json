@@ -1,0 +1,179 @@
+{
+  "adapter": "datastates_acl",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2643869567128081,
+      "request_id": "datastates_acl-000001",
+      "sha256": "3fd9b8fb9bfc773eb54eafd07b719ecc2a384ebff06d8f7717650fb42265e457",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 8,
+      "submit_ns": 2643866569165146,
+      "timestamps_ns": {
+        "CREATED": 2643866608579742,
+        "DMA_COPYING": 2643866609809536,
+        "FLUSHING": 2643867665668742,
+        "METADATA_COMMITTING": 2643868284335758,
+        "NVME_WRITING": 2643866705383434,
+        "PERSISTED": 2643869567128081,
+        "QUEUED": 2643866609700516,
+        "SNAPSHOTTING": 2643866609422215,
+        "SNAPSHOT_READY": 2643866609569575,
+        "admitted": 2643866608618312,
+        "data_completed": 2643869566957770,
+        "input_buffer_released": 2643869566751979,
+        "source_released": 2643866694456711
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 2643866609422215,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 2643866609569575,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 17130
+          },
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 2643866609700516,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 2643866609809536,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 2643866705383434,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 2643867665668742,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 2643868284335758,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "sha256": "3fd9b8fb9bfc773eb54eafd07b719ecc2a384ebff06d8f7717650fb42265e457"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 2643869567128081,
+          "request_id": "datastates_acl-000001"
+        }
+      ]
+    }
+  ],
+  "formal_steps": 3,
+  "fresh_restore_required": true,
+  "kind": "npu-semantic-port",
+  "mechanisms_preserved": [
+    "device-tier to pinned-host-tier to file-tier pipeline",
+    "region queue and bounded Host memory pool",
+    "separate source-release and persistence completion"
+  ],
+  "model": "gpt2",
+  "platform_substitutions": [
+    "CUDA runtime -> ACL runtime",
+    "upstream file tier -> durable XFS writer"
+  ],
+  "port_class": "npu-semantic-port",
+  "restore": {
+    "adapter": "datastates_acl",
+    "byte_exact": true,
+    "checkpoint_step": 8,
+    "controls": {
+      "data_cursor": "{'epoch': 0, 'next_step': 9, 'sample': 8}",
+      "global_step": "[8]",
+      "loss_scale": "1.0"
+    },
+    "generation": 1,
+    "loss_deviation": [
+      0.0
+    ],
+    "restored_losses": [
+      10.87883186340332
+    ],
+    "source_oracle_losses": [
+      10.87883186340332
+    ],
+    "status": "pass"
+  },
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.87883186340332,
+      "step": 9,
+      "step_begin_ns": 2643869876364814,
+      "step_end_ns": 2643869931480742
+    }
+  ],
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.868734359741211,
+      "step": 6,
+      "step_begin_ns": 2643840579371550,
+      "step_end_ns": 2643866475756106
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.88557243347168,
+      "step": 7,
+      "step_begin_ns": 2643866475792776,
+      "step_end_ns": 2643866523924577
+    },
+    {
+      "formal_step": 3,
+      "loss": 10.84721565246582,
+      "step": 8,
+      "step_begin_ns": 2643866523948857,
+      "step_end_ns": 2643866569156236
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 29.352164952,
+  "upstream_core_invoked": false
+}

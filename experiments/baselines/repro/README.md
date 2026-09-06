@@ -25,16 +25,16 @@ a fresh restore process, checks bytes and controls, then compares continuation
 losses to the source oracle.
 
 The current hardware record is in `results/baseline-gpt2-repro-20260906`.
-The framework reference and no-checkpoint baseline passed. DataStates and
-PCcheck are represented by an explicit `mechanism-only` downgrade because
-their locked sources require CUDA/x86 components. ByteCheckpoint and
-FastPersist have isolated CPU worker import probes (the versions are locked in
-`worker_environment.lock.json`), but their planners/serializers are not yet
-connected to the MindSpore state bridge; their measured runs therefore use the
-common shared-memory Host bridge and durable writer. The common runner obtains
-bytes with synchronous MindSpore `asnumpy()`; `_data_ptr()` is used for alias
-identification, not for an ACL asynchronous DMA submission. These runs
-validate shared capture, persistence, checksum and fresh-restore semantics,
-not the upstream CUDA backend performance. The native raw adapter remains blocked by
+The framework reference and no-checkpoint baseline passed. The four current
+ports preserve the paper mechanisms while making platform substitutions
+explicit: DataStates and PCcheck use real ACL `_data_ptr()` D2H into bounded
+pinned-Host slots and durable XFS; ByteCheckpoint uses its DDP planners,
+official extra-state workflow, shared three-component completion counter, and
+async local writer in an isolated CPU worker; FastPersist
+uses its patched legacy serializer, FastFileWriter, AIO and double buffer in a
+CPU worker. They are labelled `NPU semantic port` or `host-adapted semantic
+port`, not unmodified CUDA artifacts. All four completed 30-step/10-generation
+G3/G4 runs with source-process exit, fresh-process byte-exact restore and
+strict three-step continuation loss checks. The raw adapter remains blocked by
 SPDK being unable to attach the `uio_pci_generic`-bound `0000:83:00.0` device
 (`PA IOVA` probe failure).

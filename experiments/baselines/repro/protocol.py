@@ -9,6 +9,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from python.full_checkpoint_protocol import CheckpointState, require_transition
+
 
 TERMINAL = frozenset({"persisted", "failed"})
 
@@ -52,6 +54,9 @@ class Handle:
         self.failed = False
         self.error = None
         self.sha256 = None
+        self.state = CheckpointState.CREATED
+        self.transitions = []
+        self.timestamps_ns = {CheckpointState.CREATED.value: time.monotonic_ns()}
         self._condition = threading.Condition()
 
     def mark(self, state, **detail):
@@ -69,8 +74,28 @@ class Handle:
                 setattr(self, state, True)
                 if "sha256" in detail:
                     self.sha256 = detail["sha256"]
-            self.events.emit(state, self.generation, self.request_id, **detail)
+            row = self.events.emit(state, self.generation, self.request_id, **detail)
+            self.timestamps_ns[state] = row["monotonic_ns"]
             self._condition.notify_all()
+
+    def transition(self, state, **detail):
+        target = CheckpointState(state)
+        with self._condition:
+            require_transition(self.state, target)
+            self.state = target
+            row = self.events.emit(target.value, self.generation,
+                                   self.request_id, **detail)
+            self.transitions.append(row)
+            self.timestamps_ns[target.value] = row["monotonic_ns"]
+            if target == CheckpointState.PERSISTED:
+                self.persisted = True
+                self.sha256 = detail.get("sha256", self.sha256)
+            elif target in (CheckpointState.FAILED, CheckpointState.CANCELLED,
+                            CheckpointState.TIMED_OUT):
+                self.failed = True
+                self.error = detail.get("error")
+            self._condition.notify_all()
+        return self
 
     def _wait(self, field, timeout):
         deadline = time.monotonic() + float(timeout)
@@ -108,6 +133,9 @@ class Handle:
             "failed": self.failed,
             "error": self.error,
             "sha256": self.sha256,
+            "state": self.state.value,
+            "transitions": list(self.transitions),
+            "timestamps_ns": dict(self.timestamps_ns),
         }
 
 

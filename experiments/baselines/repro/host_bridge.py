@@ -46,6 +46,32 @@ class SharedSnapshot:
         }
         return owner, descriptor
 
+    @classmethod
+    def empty_from_metadata(cls, schema, controls_metadata,
+                            prefix="npu_nvme_restore"):
+        fields = []
+        offset = 0
+        for field in sorted(schema["fields"], key=lambda item: item["name"]):
+            if field["name"] == "controls/state":
+                continue
+            fields.append({"name": field["name"], "dtype": field["dtype"],
+                           "shape": field["shape"], "offset": offset,
+                           "nbytes": int(field["nbytes"])})
+            offset += int(field["nbytes"])
+        control_field = next(field for field in schema["fields"]
+                             if field["name"] == "controls/state")
+        total = offset + int(control_field["nbytes"])
+        name = f"{prefix}_{os.getpid()}_{uuid.uuid4().hex[:12]}"
+        owner = cls(name, total, create=True)
+        descriptor = {
+            "name": owner.name, "size": total, "fields": fields,
+            "controls": {"offset": offset,
+                         "nbytes": int(control_field["nbytes"]),
+                         "metadata": controls_metadata},
+            "schema": schema,
+        }
+        return owner, descriptor
+
     def close(self, unlink=False):
         if not self.closed:
             self.shm.close()

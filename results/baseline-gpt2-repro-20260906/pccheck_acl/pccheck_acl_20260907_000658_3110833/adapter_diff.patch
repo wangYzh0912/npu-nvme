@@ -1,0 +1,10 @@
+# Adapter: pccheck_acl
+# Port class: npu-semantic-port
+# Locked upstream core invoked: False
+# Mechanisms preserved:
+# - bounded concurrent checkpoint slots
+# - background chunk writer and explicit slot backpressure
+# - generation publish after durable data completion
+# Platform substitutions:
+# - CUDA capture -> ACL capture
+# - x86 CLWB/SFENCE persistence -> XFS fsync and atomic rename

@@ -1,0 +1,1268 @@
+{
+  "adapter": "datastates_acl",
+  "checkpoint_count": 10,
+  "checkpoints": [
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646559493053836,
+      "request_id": "datastates_acl-000001",
+      "sha256": "f22033dccd44c1d739dbaecf5cc6ece74a911e993138b2fea53994b1ff3bc817",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 8,
+      "submit_ns": 2646555963548183,
+      "timestamps_ns": {
+        "CREATED": 2646556006433941,
+        "DMA_COPYING": 2646556007827197,
+        "FLUSHING": 2646557299199608,
+        "METADATA_COMMITTING": 2646558035537594,
+        "NVME_WRITING": 2646556119411924,
+        "PERSISTED": 2646559493053836,
+        "QUEUED": 2646556007711946,
+        "SNAPSHOTTING": 2646556007430945,
+        "SNAPSHOT_READY": 2646556007569756,
+        "admitted": 2646556006491961,
+        "data_completed": 2646559492905756,
+        "input_buffer_released": 2646559492699455,
+        "source_released": 2646556107951129
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 2646556007430945,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 2646556007569756,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 24230
+          },
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 2646556007711946,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 2646556007827197,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 2646556119411924,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 2646557299199608,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 2646558035537594,
+          "request_id": "datastates_acl-000001"
+        },
+        {
+          "detail": {
+            "sha256": "f22033dccd44c1d739dbaecf5cc6ece74a911e993138b2fea53994b1ff3bc817"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 2646559493053836,
+          "request_id": "datastates_acl-000001"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 2,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646559699749746,
+      "request_id": "datastates_acl-000002",
+      "sha256": "a36b11fbfeb133ef4778007635c7850f373f7b285fe48283660c0f62c3664b79",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 11,
+      "submit_ns": 2646556274717843,
+      "timestamps_ns": {
+        "CREATED": 2646556275712046,
+        "DMA_COPYING": 2646556276395269,
+        "FLUSHING": 2646557551215026,
+        "METADATA_COMMITTING": 2646558243989631,
+        "NVME_WRITING": 2646556437698171,
+        "PERSISTED": 2646559699749746,
+        "QUEUED": 2646556276290219,
+        "SNAPSHOTTING": 2646556276042498,
+        "SNAPSHOT_READY": 2646556276165458,
+        "admitted": 2646556275737417,
+        "data_completed": 2646559699621316,
+        "input_buffer_released": 2646559699416515,
+        "source_released": 2646556426597958
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 2,
+          "monotonic_ns": 2646556276042498,
+          "request_id": "datastates_acl-000002"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 2,
+          "monotonic_ns": 2646556276165458,
+          "request_id": "datastates_acl-000002"
+        },
+        {
+          "detail": {
+            "slot_id": 1,
+            "slot_wait_ns": 16250
+          },
+          "event": "QUEUED",
+          "generation": 2,
+          "monotonic_ns": 2646556276290219,
+          "request_id": "datastates_acl-000002"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "DMA_COPYING",
+          "generation": 2,
+          "monotonic_ns": 2646556276395269,
+          "request_id": "datastates_acl-000002"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "NVME_WRITING",
+          "generation": 2,
+          "monotonic_ns": 2646556437698171,
+          "request_id": "datastates_acl-000002"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 2,
+          "monotonic_ns": 2646557551215026,
+          "request_id": "datastates_acl-000002"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 2,
+          "monotonic_ns": 2646558243989631,
+          "request_id": "datastates_acl-000002"
+        },
+        {
+          "detail": {
+            "sha256": "a36b11fbfeb133ef4778007635c7850f373f7b285fe48283660c0f62c3664b79"
+          },
+          "event": "PERSISTED",
+          "generation": 2,
+          "monotonic_ns": 2646559699749746,
+          "request_id": "datastates_acl-000002"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 3,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646562799651436,
+      "request_id": "datastates_acl-000003",
+      "sha256": "03bfaf6e562a0de212858e2635b6e1190b777a245ae9dbe07d7bd02b34abcde0",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 14,
+      "submit_ns": 2646556600558980,
+      "timestamps_ns": {
+        "CREATED": 2646556601570754,
+        "DMA_COPYING": 2646559494212391,
+        "FLUSHING": 2646560780076031,
+        "METADATA_COMMITTING": 2646561405586052,
+        "NVME_WRITING": 2646559647225601,
+        "PERSISTED": 2646562799651436,
+        "QUEUED": 2646559493555208,
+        "SNAPSHOTTING": 2646556601888815,
+        "SNAPSHOT_READY": 2646556602001645,
+        "admitted": 2646556601595624,
+        "data_completed": 2646562799500085,
+        "input_buffer_released": 2646562799264204,
+        "source_released": 2646559636670379
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 3,
+          "monotonic_ns": 2646556601888815,
+          "request_id": "datastates_acl-000003"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 3,
+          "monotonic_ns": 2646556602001645,
+          "request_id": "datastates_acl-000003"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 2891437102
+          },
+          "event": "QUEUED",
+          "generation": 3,
+          "monotonic_ns": 2646559493555208,
+          "request_id": "datastates_acl-000003"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 3,
+          "monotonic_ns": 2646559494212391,
+          "request_id": "datastates_acl-000003"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 3,
+          "monotonic_ns": 2646559647225601,
+          "request_id": "datastates_acl-000003"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 3,
+          "monotonic_ns": 2646560780076031,
+          "request_id": "datastates_acl-000003"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 3,
+          "monotonic_ns": 2646561405586052,
+          "request_id": "datastates_acl-000003"
+        },
+        {
+          "detail": {
+            "sha256": "03bfaf6e562a0de212858e2635b6e1190b777a245ae9dbe07d7bd02b34abcde0"
+          },
+          "event": "PERSISTED",
+          "generation": 3,
+          "monotonic_ns": 2646562799651436,
+          "request_id": "datastates_acl-000003"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 4,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646563074305602,
+      "request_id": "datastates_acl-000004",
+      "sha256": "90e8fd4ee530dc78adf790e35407f27b561973df9504d4e146da871941ab49fd",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 17,
+      "submit_ns": 2646559808068471,
+      "timestamps_ns": {
+        "CREATED": 2646559809211955,
+        "DMA_COPYING": 2646559809883708,
+        "FLUSHING": 2646561028117293,
+        "METADATA_COMMITTING": 2646561640254432,
+        "NVME_WRITING": 2646559970988299,
+        "PERSISTED": 2646563074305602,
+        "QUEUED": 2646559809777298,
+        "SNAPSHOTTING": 2646559809529927,
+        "SNAPSHOT_READY": 2646559809650447,
+        "admitted": 2646559809238026,
+        "data_completed": 2646563074177942,
+        "input_buffer_released": 2646563073967011,
+        "source_released": 2646559960139087
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 4,
+          "monotonic_ns": 2646559809529927,
+          "request_id": "datastates_acl-000004"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 4,
+          "monotonic_ns": 2646559809650447,
+          "request_id": "datastates_acl-000004"
+        },
+        {
+          "detail": {
+            "slot_id": 1,
+            "slot_wait_ns": 19140
+          },
+          "event": "QUEUED",
+          "generation": 4,
+          "monotonic_ns": 2646559809777298,
+          "request_id": "datastates_acl-000004"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "DMA_COPYING",
+          "generation": 4,
+          "monotonic_ns": 2646559809883708,
+          "request_id": "datastates_acl-000004"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "NVME_WRITING",
+          "generation": 4,
+          "monotonic_ns": 2646559970988299,
+          "request_id": "datastates_acl-000004"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 4,
+          "monotonic_ns": 2646561028117293,
+          "request_id": "datastates_acl-000004"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 4,
+          "monotonic_ns": 2646561640254432,
+          "request_id": "datastates_acl-000004"
+        },
+        {
+          "detail": {
+            "sha256": "90e8fd4ee530dc78adf790e35407f27b561973df9504d4e146da871941ab49fd"
+          },
+          "event": "PERSISTED",
+          "generation": 4,
+          "monotonic_ns": 2646563074305602,
+          "request_id": "datastates_acl-000004"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 5,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646566136475274,
+      "request_id": "datastates_acl-000005",
+      "sha256": "e2965b6aec3d7e2f11521992f62f97c3422e732b5f9e4f5c64e796f082f63ad9",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 20,
+      "submit_ns": 2646560136945010,
+      "timestamps_ns": {
+        "CREATED": 2646560139625370,
+        "DMA_COPYING": 2646562800889321,
+        "FLUSHING": 2646564100719735,
+        "METADATA_COMMITTING": 2646564705536536,
+        "NVME_WRITING": 2646562973702548,
+        "PERSISTED": 2646566136475274,
+        "QUEUED": 2646562800231708,
+        "SNAPSHOTTING": 2646560141886179,
+        "SNAPSHOT_READY": 2646560142024930,
+        "admitted": 2646560139652291,
+        "data_completed": 2646566136325803,
+        "input_buffer_released": 2646566136083063,
+        "source_released": 2646562962273013
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 5,
+          "monotonic_ns": 2646560141886179,
+          "request_id": "datastates_acl-000005"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 5,
+          "monotonic_ns": 2646560142024930,
+          "request_id": "datastates_acl-000005"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 2658086288
+          },
+          "event": "QUEUED",
+          "generation": 5,
+          "monotonic_ns": 2646562800231708,
+          "request_id": "datastates_acl-000005"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 5,
+          "monotonic_ns": 2646562800889321,
+          "request_id": "datastates_acl-000005"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 5,
+          "monotonic_ns": 2646562973702548,
+          "request_id": "datastates_acl-000005"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 5,
+          "monotonic_ns": 2646564100719735,
+          "request_id": "datastates_acl-000005"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 5,
+          "monotonic_ns": 2646564705536536,
+          "request_id": "datastates_acl-000005"
+        },
+        {
+          "detail": {
+            "sha256": "e2965b6aec3d7e2f11521992f62f97c3422e732b5f9e4f5c64e796f082f63ad9"
+          },
+          "event": "PERSISTED",
+          "generation": 5,
+          "monotonic_ns": 2646566136475274,
+          "request_id": "datastates_acl-000005"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 6,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646566367240878,
+      "request_id": "datastates_acl-000006",
+      "sha256": "1ec300d140170ebb40d2638a4f8809be31a238884c998a326672aa519b1bd891",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 23,
+      "submit_ns": 2646563145215610,
+      "timestamps_ns": {
+        "CREATED": 2646563147660080,
+        "DMA_COPYING": 2646563148429143,
+        "FLUSHING": 2646564358403835,
+        "METADATA_COMMITTING": 2646564947915976,
+        "NVME_WRITING": 2646563303827222,
+        "PERSISTED": 2646566367240878,
+        "QUEUED": 2646563148320562,
+        "SNAPSHOTTING": 2646563147978221,
+        "SNAPSHOT_READY": 2646563148187362,
+        "admitted": 2646563147686380,
+        "data_completed": 2646566367098918,
+        "input_buffer_released": 2646566366434165,
+        "source_released": 2646563292991310
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 6,
+          "monotonic_ns": 2646563147978221,
+          "request_id": "datastates_acl-000006"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 6,
+          "monotonic_ns": 2646563148187362,
+          "request_id": "datastates_acl-000006"
+        },
+        {
+          "detail": {
+            "slot_id": 1,
+            "slot_wait_ns": 19150
+          },
+          "event": "QUEUED",
+          "generation": 6,
+          "monotonic_ns": 2646563148320562,
+          "request_id": "datastates_acl-000006"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "DMA_COPYING",
+          "generation": 6,
+          "monotonic_ns": 2646563148429143,
+          "request_id": "datastates_acl-000006"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "NVME_WRITING",
+          "generation": 6,
+          "monotonic_ns": 2646563303827222,
+          "request_id": "datastates_acl-000006"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 6,
+          "monotonic_ns": 2646564358403835,
+          "request_id": "datastates_acl-000006"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 6,
+          "monotonic_ns": 2646564947915976,
+          "request_id": "datastates_acl-000006"
+        },
+        {
+          "detail": {
+            "sha256": "1ec300d140170ebb40d2638a4f8809be31a238884c998a326672aa519b1bd891"
+          },
+          "event": "PERSISTED",
+          "generation": 6,
+          "monotonic_ns": 2646566367240878,
+          "request_id": "datastates_acl-000006"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 7,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646569480199789,
+      "request_id": "datastates_acl-000007",
+      "sha256": "7c24442a3fd0ef8e5587ac25ff59053bb88310a03ac284faf10450109e4e7cfa",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 26,
+      "submit_ns": 2646563477713813,
+      "timestamps_ns": {
+        "CREATED": 2646563479177899,
+        "DMA_COPYING": 2646566137777539,
+        "FLUSHING": 2646567438698208,
+        "METADATA_COMMITTING": 2646568033981231,
+        "NVME_WRITING": 2646566303000297,
+        "PERSISTED": 2646569480199789,
+        "QUEUED": 2646566137455038,
+        "SNAPSHOTTING": 2646563479502251,
+        "SNAPSHOT_READY": 2646563479674761,
+        "admitted": 2646563479204949,
+        "data_completed": 2646569480070429,
+        "input_buffer_released": 2646569479856448,
+        "source_released": 2646566291752433
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 7,
+          "monotonic_ns": 2646563479502251,
+          "request_id": "datastates_acl-000007"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 7,
+          "monotonic_ns": 2646563479674761,
+          "request_id": "datastates_acl-000007"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 2655241907
+          },
+          "event": "QUEUED",
+          "generation": 7,
+          "monotonic_ns": 2646566137455038,
+          "request_id": "datastates_acl-000007"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 7,
+          "monotonic_ns": 2646566137777539,
+          "request_id": "datastates_acl-000007"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 7,
+          "monotonic_ns": 2646566303000297,
+          "request_id": "datastates_acl-000007"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 7,
+          "monotonic_ns": 2646567438698208,
+          "request_id": "datastates_acl-000007"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 7,
+          "monotonic_ns": 2646568033981231,
+          "request_id": "datastates_acl-000007"
+        },
+        {
+          "detail": {
+            "sha256": "7c24442a3fd0ef8e5587ac25ff59053bb88310a03ac284faf10450109e4e7cfa"
+          },
+          "event": "PERSISTED",
+          "generation": 7,
+          "monotonic_ns": 2646569480199789,
+          "request_id": "datastates_acl-000007"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 8,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646569757285205,
+      "request_id": "datastates_acl-000008",
+      "sha256": "02d0ee70e3f360a13f706f5e4c41512d484b07f261b49a84b6394a67afcdee0d",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 29,
+      "submit_ns": 2646566473447475,
+      "timestamps_ns": {
+        "CREATED": 2646566475047981,
+        "DMA_COPYING": 2646566475727344,
+        "FLUSHING": 2646567694098139,
+        "METADATA_COMMITTING": 2646568302750664,
+        "NVME_WRITING": 2646566631537354,
+        "PERSISTED": 2646569757285205,
+        "QUEUED": 2646566475621233,
+        "SNAPSHOTTING": 2646566475370542,
+        "SNAPSHOT_READY": 2646566475491373,
+        "admitted": 2646566475074761,
+        "data_completed": 2646569757133285,
+        "input_buffer_released": 2646569754266413,
+        "source_released": 2646566620651872
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 8,
+          "monotonic_ns": 2646566475370542,
+          "request_id": "datastates_acl-000008"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 8,
+          "monotonic_ns": 2646566475491373,
+          "request_id": "datastates_acl-000008"
+        },
+        {
+          "detail": {
+            "slot_id": 1,
+            "slot_wait_ns": 19850
+          },
+          "event": "QUEUED",
+          "generation": 8,
+          "monotonic_ns": 2646566475621233,
+          "request_id": "datastates_acl-000008"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "DMA_COPYING",
+          "generation": 8,
+          "monotonic_ns": 2646566475727344,
+          "request_id": "datastates_acl-000008"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "NVME_WRITING",
+          "generation": 8,
+          "monotonic_ns": 2646566631537354,
+          "request_id": "datastates_acl-000008"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 8,
+          "monotonic_ns": 2646567694098139,
+          "request_id": "datastates_acl-000008"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 8,
+          "monotonic_ns": 2646568302750664,
+          "request_id": "datastates_acl-000008"
+        },
+        {
+          "detail": {
+            "sha256": "02d0ee70e3f360a13f706f5e4c41512d484b07f261b49a84b6394a67afcdee0d"
+          },
+          "event": "PERSISTED",
+          "generation": 8,
+          "monotonic_ns": 2646569757285205,
+          "request_id": "datastates_acl-000008"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 9,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646572748823420,
+      "request_id": "datastates_acl-000009",
+      "sha256": "bb34ac0f41bc8a3176c9669edaa5f0fcf6eb78e25194e8d4efd24b3879b48e5c",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 32,
+      "submit_ns": 2646566795166136,
+      "timestamps_ns": {
+        "CREATED": 2646566796280800,
+        "DMA_COPYING": 2646569480916402,
+        "FLUSHING": 2646570779777573,
+        "METADATA_COMMITTING": 2646571377566116,
+        "NVME_WRITING": 2646569644310952,
+        "PERSISTED": 2646572748823420,
+        "QUEUED": 2646569480676361,
+        "SNAPSHOTTING": 2646566800035375,
+        "SNAPSHOT_READY": 2646566800226086,
+        "admitted": 2646566796307460,
+        "data_completed": 2646572748653819,
+        "input_buffer_released": 2646572748426878,
+        "source_released": 2646569633604080
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 9,
+          "monotonic_ns": 2646566800035375,
+          "request_id": "datastates_acl-000009"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 9,
+          "monotonic_ns": 2646566800226086,
+          "request_id": "datastates_acl-000009"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 2680320115
+          },
+          "event": "QUEUED",
+          "generation": 9,
+          "monotonic_ns": 2646569480676361,
+          "request_id": "datastates_acl-000009"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 9,
+          "monotonic_ns": 2646569480916402,
+          "request_id": "datastates_acl-000009"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 9,
+          "monotonic_ns": 2646569644310952,
+          "request_id": "datastates_acl-000009"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 9,
+          "monotonic_ns": 2646570779777573,
+          "request_id": "datastates_acl-000009"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 9,
+          "monotonic_ns": 2646571377566116,
+          "request_id": "datastates_acl-000009"
+        },
+        {
+          "detail": {
+            "sha256": "bb34ac0f41bc8a3176c9669edaa5f0fcf6eb78e25194e8d4efd24b3879b48e5c"
+          },
+          "event": "PERSISTED",
+          "generation": 9,
+          "monotonic_ns": 2646572748823420,
+          "request_id": "datastates_acl-000009"
+        }
+      ]
+    },
+    {
+      "adapter": "datastates_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 10,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2646573065128980,
+      "request_id": "datastates_acl-000010",
+      "sha256": "585d2aa393bcbd6bd20bff0bf2b3c1755e061249bf8228540aac443b84244090",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 35,
+      "submit_ns": 2646569805181003,
+      "timestamps_ns": {
+        "CREATED": 2646569806448068,
+        "DMA_COPYING": 2646569807121571,
+        "FLUSHING": 2646571037295402,
+        "METADATA_COMMITTING": 2646571688993296,
+        "NVME_WRITING": 2646569968190482,
+        "PERSISTED": 2646573065128980,
+        "QUEUED": 2646569807015940,
+        "SNAPSHOTTING": 2646569806770999,
+        "SNAPSHOT_READY": 2646569806889460,
+        "admitted": 2646569806472978,
+        "data_completed": 2646573064959409,
+        "input_buffer_released": 2646573064766028,
+        "source_released": 2646569957179839
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 10,
+          "monotonic_ns": 2646569806770999,
+          "request_id": "datastates_acl-000010"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 10,
+          "monotonic_ns": 2646569806889460,
+          "request_id": "datastates_acl-000010"
+        },
+        {
+          "detail": {
+            "slot_id": 1,
+            "slot_wait_ns": 18570
+          },
+          "event": "QUEUED",
+          "generation": 10,
+          "monotonic_ns": 2646569807015940,
+          "request_id": "datastates_acl-000010"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "DMA_COPYING",
+          "generation": 10,
+          "monotonic_ns": 2646569807121571,
+          "request_id": "datastates_acl-000010"
+        },
+        {
+          "detail": {
+            "slot_id": 1
+          },
+          "event": "NVME_WRITING",
+          "generation": 10,
+          "monotonic_ns": 2646569968190482,
+          "request_id": "datastates_acl-000010"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 10,
+          "monotonic_ns": 2646571037295402,
+          "request_id": "datastates_acl-000010"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 10,
+          "monotonic_ns": 2646571688993296,
+          "request_id": "datastates_acl-000010"
+        },
+        {
+          "detail": {
+            "sha256": "585d2aa393bcbd6bd20bff0bf2b3c1755e061249bf8228540aac443b84244090"
+          },
+          "event": "PERSISTED",
+          "generation": 10,
+          "monotonic_ns": 2646573065128980,
+          "request_id": "datastates_acl-000010"
+        }
+      ]
+    }
+  ],
+  "formal_steps": 30,
+  "fresh_restore_required": true,
+  "kind": "npu-semantic-port",
+  "mechanisms_preserved": [
+    "device-tier to pinned-host-tier to file-tier pipeline",
+    "region queue and bounded Host memory pool",
+    "separate source-release and persistence completion"
+  ],
+  "model": "gpt2",
+  "platform_substitutions": [
+    "CUDA runtime -> ACL runtime",
+    "upstream file tier -> durable XFS writer"
+  ],
+  "port_class": "npu-semantic-port",
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.826495170593262,
+      "step": 36,
+      "step_begin_ns": 2646573370381246,
+      "step_end_ns": 2646573427586710
+    },
+    {
+      "loss": 10.842885971069336,
+      "step": 37,
+      "step_begin_ns": 2646573427666301,
+      "step_end_ns": 2646573472724207
+    },
+    {
+      "loss": 10.857515335083008,
+      "step": 38,
+      "step_begin_ns": 2646573472789127,
+      "step_end_ns": 2646573516366528
+    }
+  ],
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.868734359741211,
+      "step": 6,
+      "step_begin_ns": 2646528771744979,
+      "step_end_ns": 2646555861716074
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.88557243347168,
+      "step": 7,
+      "step_begin_ns": 2646555861768404,
+      "step_end_ns": 2646555918689457
+    },
+    {
+      "formal_step": 3,
+      "loss": 10.84721565246582,
+      "step": 8,
+      "step_begin_ns": 2646555918711397,
+      "step_end_ns": 2646555963535863
+    },
+    {
+      "formal_step": 4,
+      "loss": 10.87883186340332,
+      "step": 9,
+      "step_begin_ns": 2646556119990786,
+      "step_end_ns": 2646556172541462
+    },
+    {
+      "formal_step": 5,
+      "loss": 10.845147132873535,
+      "step": 10,
+      "step_begin_ns": 2646556172571642,
+      "step_end_ns": 2646556222863659
+    },
+    {
+      "formal_step": 6,
+      "loss": 10.859260559082031,
+      "step": 11,
+      "step_begin_ns": 2646556222894209,
+      "step_end_ns": 2646556274706163
+    },
+    {
+      "formal_step": 7,
+      "loss": 10.871929168701172,
+      "step": 12,
+      "step_begin_ns": 2646556438218423,
+      "step_end_ns": 2646556492591457
+    },
+    {
+      "formal_step": 8,
+      "loss": 10.89255142211914,
+      "step": 13,
+      "step_begin_ns": 2646556492623267,
+      "step_end_ns": 2646556550667944
+    },
+    {
+      "formal_step": 9,
+      "loss": 10.871400833129883,
+      "step": 14,
+      "step_begin_ns": 2646556550702894,
+      "step_end_ns": 2646556600548650
+    },
+    {
+      "formal_step": 10,
+      "loss": 10.842477798461914,
+      "step": 15,
+      "step_begin_ns": 2646559647119020,
+      "step_end_ns": 2646559704933427
+    },
+    {
+      "formal_step": 11,
+      "loss": 10.8748779296875,
+      "step": 16,
+      "step_begin_ns": 2646559704963117,
+      "step_end_ns": 2646559755873486
+    },
+    {
+      "formal_step": 12,
+      "loss": 10.898293495178223,
+      "step": 17,
+      "step_begin_ns": 2646559755905067,
+      "step_end_ns": 2646559808056881
+    },
+    {
+      "formal_step": 13,
+      "loss": 10.914029121398926,
+      "step": 18,
+      "step_begin_ns": 2646559970894459,
+      "step_end_ns": 2646560025160162
+    },
+    {
+      "formal_step": 14,
+      "loss": 10.90008544921875,
+      "step": 19,
+      "step_begin_ns": 2646560025192592,
+      "step_end_ns": 2646560078768172
+    },
+    {
+      "formal_step": 15,
+      "loss": 10.881633758544922,
+      "step": 20,
+      "step_begin_ns": 2646560078798352,
+      "step_end_ns": 2646560136933380
+    },
+    {
+      "formal_step": 16,
+      "loss": 10.857807159423828,
+      "step": 21,
+      "step_begin_ns": 2646562973586458,
+      "step_end_ns": 2646563043713492
+    },
+    {
+      "formal_step": 17,
+      "loss": 10.892155647277832,
+      "step": 22,
+      "step_begin_ns": 2646563043748083,
+      "step_end_ns": 2646563094542062
+    },
+    {
+      "formal_step": 18,
+      "loss": 10.89659309387207,
+      "step": 23,
+      "step_begin_ns": 2646563094569612,
+      "step_end_ns": 2646563145203620
+    },
+    {
+      "formal_step": 19,
+      "loss": 10.854412078857422,
+      "step": 24,
+      "step_begin_ns": 2646563303734002,
+      "step_end_ns": 2646563362773253
+    },
+    {
+      "formal_step": 20,
+      "loss": 10.869161605834961,
+      "step": 25,
+      "step_begin_ns": 2646563362804243,
+      "step_end_ns": 2646563422189966
+    },
+    {
+      "formal_step": 21,
+      "loss": 10.843393325805664,
+      "step": 26,
+      "step_begin_ns": 2646563422225226,
+      "step_end_ns": 2646563477701123
+    },
+    {
+      "formal_step": 22,
+      "loss": 10.826690673828125,
+      "step": 27,
+      "step_begin_ns": 2646566302891436,
+      "step_end_ns": 2646566368220842
+    },
+    {
+      "formal_step": 23,
+      "loss": 10.846250534057617,
+      "step": 28,
+      "step_begin_ns": 2646566368250112,
+      "step_end_ns": 2646566420721008
+    },
+    {
+      "formal_step": 24,
+      "loss": 10.825822830200195,
+      "step": 29,
+      "step_begin_ns": 2646566420751628,
+      "step_end_ns": 2646566473437415
+    },
+    {
+      "formal_step": 25,
+      "loss": 10.848661422729492,
+      "step": 30,
+      "step_begin_ns": 2646566631446224,
+      "step_end_ns": 2646566687349513
+    },
+    {
+      "formal_step": 26,
+      "loss": 10.836799621582031,
+      "step": 31,
+      "step_begin_ns": 2646566687380623,
+      "step_end_ns": 2646566741465755
+    },
+    {
+      "formal_step": 27,
+      "loss": 10.832310676574707,
+      "step": 32,
+      "step_begin_ns": 2646566741498725,
+      "step_end_ns": 2646566795153876
+    },
+    {
+      "formal_step": 28,
+      "loss": 10.809287071228027,
+      "step": 33,
+      "step_begin_ns": 2646569644229472,
+      "step_end_ns": 2646569697891162
+    },
+    {
+      "formal_step": 29,
+      "loss": 10.863239288330078,
+      "step": 34,
+      "step_begin_ns": 2646569697922703,
+      "step_end_ns": 2646569752466666
+    },
+    {
+      "formal_step": 30,
+      "loss": 10.851821899414062,
+      "step": 35,
+      "step_begin_ns": 2646569752497866,
+      "step_end_ns": 2646569805169833
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 44.744705149,
+  "upstream_core_invoked": false
+}

@@ -179,8 +179,12 @@ def probe_worker(python, code, timeout=30):
     if not python:
         return {"status": "missing", "reason": "worker Python is not configured"}
     try:
+        env = os.environ.copy()
+        user_site = "/home/user7/.local/lib/python3.9/site-packages"
+        if Path(user_site).exists():
+            env["PYTHONPATH"] = user_site + os.pathsep + env.get("PYTHONPATH", "")
         proc = subprocess.run([str(python), "-c", code], capture_output=True,
-                              text=True, check=False, timeout=timeout)
+                              text=True, check=False, timeout=timeout, env=env)
     except Exception as error:
         return {"status": "error", "reason": repr(error)}
     result = {"status": "ready" if proc.returncode == 0 else "failed",

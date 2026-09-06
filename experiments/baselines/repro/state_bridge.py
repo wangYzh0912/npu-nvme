@@ -152,7 +152,8 @@ def apply_snapshot(ms, snapshot, components, optimizer):
     return restore_training_controls(ms, optimizer, controls)
 
 
-def save_raw_snapshot(snapshot, generation_dir):
+def save_raw_snapshot(snapshot, generation_dir, phase_callback=None,
+                      extra_metadata=None, chunk_bytes=None):
     generation_dir = Path(generation_dir)
     generation_dir.mkdir(parents=True, exist_ok=True)
     data_tmp = generation_dir / "data.bin.tmp"
@@ -161,22 +162,35 @@ def save_raw_snapshot(snapshot, generation_dir):
     with data_tmp.open("wb", buffering=0) as stream:
         offset = 0
         for name in sorted(snapshot.arrays):
-            raw = snapshot.arrays[name].tobytes()
-            stream.write(raw)
-            offsets[name] = [offset, len(raw)]
-            offset += len(raw)
-        control_raw = snapshot.controls_payload.tobytes()
+            raw = memoryview(np.ascontiguousarray(
+                snapshot.arrays[name])).cast("B")
+            length = len(raw)
+            stride = int(chunk_bytes or length or 1)
+            for begin in range(0, length, stride):
+                stream.write(raw[begin:begin + stride])
+            offsets[name] = [offset, length]
+            offset += length
+        control_raw = memoryview(np.ascontiguousarray(
+            snapshot.controls_payload)).cast("B")
+        control_length = len(control_raw)
         stream.write(control_raw)
-        offsets["controls/state"] = [offset, len(control_raw)]
+        offsets["controls/state"] = [offset, control_length]
+        if phase_callback:
+            phase_callback("flush_begin")
         stream.flush()
         os.fsync(stream.fileno())
+    if phase_callback:
+        phase_callback("metadata_begin")
     metadata = {
         "format": FORMAT,
         "schema": snapshot.schema,
         "offsets": offsets,
         "controls_metadata": snapshot.controls_metadata,
         "sha256": snapshot.digest(),
+        "write_chunk_bytes": int(chunk_bytes) if chunk_bytes else None,
     }
+    if extra_metadata:
+        metadata.update(extra_metadata)
     with metadata_tmp.open("w", encoding="utf-8") as stream:
         json.dump(metadata, stream, sort_keys=True)
         stream.flush()
@@ -187,11 +201,14 @@ def save_raw_snapshot(snapshot, generation_dir):
     return metadata
 
 
-def load_raw_snapshot(generation_dir):
+def load_raw_snapshot(generation_dir, expected_generation=None):
     generation_dir = Path(generation_dir)
     metadata = json.loads((generation_dir / "metadata.json").read_text())
     if metadata.get("format") != FORMAT:
         raise ValueError("unsupported snapshot format")
+    if expected_generation is not None and int(metadata.get(
+            "generation", -1)) != int(expected_generation):
+        raise ValueError("checkpoint generation mismatch")
     raw = (generation_dir / "data.bin").read_bytes()
     arrays = {}
     by_name = {field["name"]: field for field in metadata["schema"]["fields"]}

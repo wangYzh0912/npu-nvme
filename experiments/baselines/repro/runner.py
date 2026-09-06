@@ -110,13 +110,20 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
                  "control_state": control_state, "step": logical_step},
                 control_state)
             adapter.wait_source_release(handle, config["timeout_seconds"])
-            adapter.wait_persisted(handle, config["timeout_seconds"])
-            checkpoints.append({**handle.as_dict(), "step": logical_step,
-                                "submit_ns": request_started,
-                                "persisted_ns": time.monotonic_ns()})
+            checkpoints.append({"handle": handle, "step": logical_step,
+                                "submit_ns": request_started})
     if adapter_name != "none":
         adapter.drain(config["timeout_seconds"])
         adapter.close()
+        materialized = []
+        for item in checkpoints:
+            checkpoint = item["handle"].as_dict()
+            checkpoint.update({"step": item["step"],
+                               "submit_ns": item["submit_ns"]})
+            checkpoint["persisted_ns"] = checkpoint["timestamps_ns"].get(
+                "PERSISTED", checkpoint["timestamps_ns"].get("persisted"))
+            materialized.append(checkpoint)
+        checkpoints = materialized
     # Continue from the last committed state in the source process for oracle.
     oracle = []
     final_step = warmup_steps + int(config["formal_steps"])
@@ -134,6 +141,13 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
     result = {
         "status": "trend_measured", "adapter": adapter_name,
         "kind": AdapterClass.kind, "model": config["model"],
+        "port_class": getattr(AdapterClass, "kind", None),
+        "upstream_core_invoked": getattr(AdapterClass,
+                                           "upstream_core_invoked", None),
+        "mechanisms_preserved": list(getattr(
+            AdapterClass, "mechanisms_preserved", ())),
+        "platform_substitutions": list(getattr(
+            AdapterClass, "platform_substitutions", ())),
         "seed": int(config["seed"]), "formal_steps": int(config["formal_steps"]),
         "checkpoint_count": len(checkpoints), "checkpoints": checkpoints,
         "steps": records, "source_oracle": oracle,

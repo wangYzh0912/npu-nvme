@@ -5,8 +5,11 @@ import numpy as np
 
 from experiments.baselines.repro.host_bridge import (
     SharedSnapshot, snapshot_from_descriptor, snapshot_view_from_descriptor)
+from experiments.baselines.repro.cli import (adapter_evidence,
+                                             is_formal_semantic_port)
 from experiments.baselines.repro.protocol import EventLog, Handle
 from experiments.baselines.repro.state_bridge import Snapshot, load_raw_snapshot, save_raw_snapshot
+from python.full_checkpoint_protocol import CheckpointState
 
 
 def _snapshot():
@@ -41,6 +44,17 @@ def test_shared_snapshot_descriptor_roundtrip():
         owner.close(unlink=True)
 
 
+def test_chunked_raw_snapshot_roundtrip(tmp_path):
+    original = _snapshot()
+    metadata = save_raw_snapshot(
+        original, tmp_path / "generation", chunk_bytes=5,
+        extra_metadata={"generation": 3})
+    restored = load_raw_snapshot(
+        tmp_path / "generation", expected_generation=3)
+    assert metadata["write_chunk_bytes"] == 5
+    assert restored.digest() == original.digest()
+
+
 def test_shared_snapshot_view_roundtrip_without_copy():
     original = _snapshot()
     owner, descriptor = SharedSnapshot.from_snapshot(original, prefix="repro_view")
@@ -66,3 +80,46 @@ def test_handle_requires_durable_terminal_state(tmp_path):
     assert [row["event"] for row in rows] == [
         "admitted", "source_released", "input_buffer_released", "data_completed", "persisted"
     ]
+
+
+def test_handle_records_full_state_machine_timestamps(tmp_path):
+    events = EventLog(tmp_path / "events.jsonl")
+    handle = Handle("test", 7, "req-7", events)
+    for state in (
+            CheckpointState.SNAPSHOTTING,
+            CheckpointState.SNAPSHOT_READY,
+            CheckpointState.QUEUED,
+            CheckpointState.DMA_COPYING,
+            CheckpointState.NVME_WRITING,
+            CheckpointState.FLUSHING,
+            CheckpointState.METADATA_COMMITTING,
+            CheckpointState.PERSISTED):
+        handle.transition(state, sha256="abc" if state == CheckpointState.PERSISTED else None)
+    record = handle.as_dict()
+    assert record["state"] == "PERSISTED"
+    assert record["sha256"] == "abc"
+    assert record["timestamps_ns"]["CREATED"] <= record["timestamps_ns"]["PERSISTED"]
+
+
+def test_formal_semantic_port_gate_requires_restore_and_terminal_generations():
+    row = {
+        "status": "trend_measured",
+        "kind": "npu-semantic-port",
+        "formal_steps": 30,
+        "checkpoint_count": 10,
+        "restore": {"status": "pass"},
+        "checkpoints": [{"state": "PERSISTED"} for _ in range(10)],
+    }
+    assert is_formal_semantic_port(row)
+    row["checkpoints"][-1]["state"] = "FAILED"
+    assert not is_formal_semantic_port(row)
+
+
+def test_adapter_evidence_discloses_port_substitutions():
+    evidence = adapter_evidence("fastpersist_host")
+    assert "Locked upstream core invoked: True" in evidence
+    assert "FastFileWriter and AIO" in evidence
+    assert "GDS disabled" in evidence
+    bytecheckpoint = adapter_evidence("bytecheckpoint_host")
+    assert "three-component CKPTCounter" in bytecheckpoint
+    assert "extra_state workflow" in bytecheckpoint

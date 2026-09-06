@@ -2,54 +2,81 @@
   "adapters": {
     "bytecheckpoint_host": {
       "adapter": "bytecheckpoint_host",
-      "capture": "common MindSpore synchronous asnumpy capture; _data_ptr only used for alias detection",
-      "degradation": "mechanism-only",
-      "fallback_reason": "common Host bridge used; BC planner/engine not invoked",
-      "kind": "mechanism-only",
-      "reason": "CPU worker is available, but the upstream planner is not yet connected to the MindSpore state bridge",
+      "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
+      "kind": "host-adapted-semantic-port",
+      "mechanisms_preserved": [
+        "DDPSavePlanner/DDPLoadPlanner state-dict planning",
+        "store/load engine and asynchronous local storage queue",
+        "metadata publication after component completion"
+      ],
+      "platform_substitutions": [
+        "PyTorch model extraction -> common ACL FULL capture and shared memory",
+        "CUDA pinned D2H -> ACL pinned D2H"
+      ],
+      "port_class": "host-adapted-semantic-port",
       "source": "/home/user7/npu-nvme-baseline-upstreams/ByteCheckpoint",
+      "source_exists": true,
       "status": "ready",
-      "upstream": "ByteCheckpoint",
-      "upstream_integration": "not_attempted",
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": true,
+      "upstream_integration": "DDP planner/store/load worker",
       "worker": "/home/user7/npu-nvme-baseline-envs/bytecheckpoint/bin/python",
       "worker_status": {
         "returncode": 0,
         "status": "ready",
-        "stdout": "[2026-09-06 15:01:56][WARNING][memory_pool.py:69][memory_pool][pid:3017263] - Failed loading CUDA runtime: Torch not compiled with CUDA enabled\ntorch=2.5.1"
-      },
-      "writer": "common durable Host file writer"
+        "stdout": "[2026-09-07 00:55:57][WARNING][memory_pool.py:69][memory_pool][pid:3140312] - Failed loading CUDA runtime: Torch not compiled with CUDA enabled\ntorch=2.5.1"
+      }
     },
     "datastates_acl": {
       "adapter": "datastates_acl",
-      "attempt": "CMake configure failed: nvcc not found",
-      "capture": "common MindSpore synchronous asnumpy capture; _data_ptr only used for alias detection",
-      "degradation": "mechanism-only",
-      "kind": "mechanism-only",
-      "reason": "locked checkout hard-requires CUDA/nvcc and liburing; ACL C ABI was not available",
+      "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
+      "implementation": "semantic tier port using upstream tier ordering",
+      "kind": "npu-semantic-port",
+      "mechanisms_preserved": [
+        "device-tier to pinned-host-tier to file-tier pipeline",
+        "region queue and bounded Host memory pool",
+        "separate source-release and persistence completion"
+      ],
+      "platform_substitutions": [
+        "CUDA runtime -> ACL runtime",
+        "upstream file tier -> durable XFS writer"
+      ],
+      "port_class": "npu-semantic-port",
       "source": "/home/user7/npu-nvme-baseline-upstreams/datastates-llm",
+      "source_exists": true,
       "status": "ready",
-      "upstream": "DataStates-LLM",
-      "writer": "common durable Host file writer"
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": false,
+      "upstream_patch_required": true
     },
     "fastpersist_host": {
       "adapter": "fastpersist_host",
-      "capture": "common MindSpore synchronous asnumpy capture; _data_ptr only used for alias detection",
+      "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
       "deepspeed": "/home/user7/npu-nvme-baseline-upstreams/DeepSpeed",
-      "degradation": "mechanism-only",
-      "fallback_reason": "common Host bridge used; FastFileWriter not invoked",
-      "kind": "mechanism-only",
-      "reason": "CPU worker and AIO extensions are available, but the upstream legacy serializer is not yet connected to the MindSpore state bridge",
+      "kind": "host-adapted-semantic-port",
+      "mechanisms_preserved": [
+        "patched PyTorch legacy serialization storage-list hook",
+        "DeepNVMe FastFileWriter and AIO",
+        "64 MiB double-buffered drain before durable completion"
+      ],
+      "platform_substitutions": [
+        "PyTorch model extraction -> common ACL FULL capture and shared memory",
+        "CUDA pinned memory -> DeepNVMe CPU locked memory",
+        "GDS disabled; Host AIO retained"
+      ],
+      "port_class": "host-adapted-semantic-port",
       "source": "/home/user7/npu-nvme-baseline-upstreams/DeepSpeedExamples",
+      "source_exists": true,
       "status": "ready",
-      "upstream": "FastPersist/DeepNVMe",
-      "upstream_integration": "not_attempted",
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": true,
+      "upstream_integration": "patched serializer+FastFileWriter+AIO",
       "worker": "/home/user7/npu-nvme-baseline-envs/fastpersist/bin/python",
       "worker_status": {
         "returncode": 0,
         "status": "ready",
-        "stdout": "[2026-09-06 15:01:59,379] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\n[2026-09-06 15:02:01,885] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\nbuilders=available\ntorch=2.6.0+cpu,deepspeed=0.19.6+32110a95"
-      },
-      "writer": "common durable Host file writer"
+        "stdout": "[2026-09-07 00:56:00,296] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\n[2026-09-07 00:56:02,771] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\nbuilders=available\ntorch=2.6.0+cpu,deepspeed=0.19.6+32110a95"
+      }
     },
     "mindspore_sync": {
       "adapter": "mindspore_sync",
@@ -72,15 +99,26 @@
     },
     "pccheck_acl": {
       "adapter": "pccheck_acl",
-      "capture": "common MindSpore synchronous asnumpy capture; _data_ptr only used for alias detection",
-      "degradation": "mechanism-only",
-      "kind": "mechanism-only",
-      "note": "Host state writer exercises protocol only",
-      "reason": "locked checkout is CUDA/x86, uses clwb/sfence and the expected main.cpp is absent",
+      "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
+      "implementation": "semantic N-slot port of PCcheck writer",
+      "kind": "npu-semantic-port",
+      "max_async": 2,
+      "mechanisms_preserved": [
+        "bounded concurrent checkpoint slots",
+        "background chunk writer and explicit slot backpressure",
+        "generation publish after durable data completion"
+      ],
+      "platform_substitutions": [
+        "CUDA capture -> ACL capture",
+        "x86 CLWB/SFENCE persistence -> XFS fsync and atomic rename"
+      ],
+      "port_class": "npu-semantic-port",
       "source": "/home/user7/npu-nvme-baseline-upstreams/pccheck",
+      "source_exists": true,
       "status": "ready",
-      "upstream": "PCcheck",
-      "writer": "common durable Host file writer"
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": false,
+      "upstream_patch_required": true
     }
   },
   "config": {
@@ -121,8 +159,8 @@
     "worker_python_fastpersist": "/home/user7/npu-nvme-baseline-envs/fastpersist/bin/python"
   },
   "environment": {
-    "git_head": "2e79fc7b0352ee825cc25a98c1c25ca554a2ac41",
-    "git_status": " M experiments/baselines/repro/README.md\n M experiments/baselines/repro/adapters/base.py\n M results/baseline-gpt2-repro-20260906/REPORT.md\n",
+    "git_head": "cd981d57acbb4b7c5746cde04347d67123495cae",
+    "git_status": "M  experiments/baselines/repro/README.md\nA  experiments/baselines/repro/acl_capture.py\nA  experiments/baselines/repro/adapters/acl_semantic.py\nM  experiments/baselines/repro/adapters/base.py\nM  experiments/baselines/repro/adapters/bytecheckpoint_host.py\nM  experiments/baselines/repro/adapters/datastates_acl.py\nM  experiments/baselines/repro/adapters/fastpersist_host.py\nM  experiments/baselines/repro/adapters/pccheck_acl.py\nA  experiments/baselines/repro/adapters/worker_semantic.py\nM  experiments/baselines/repro/cli.py\nM  experiments/baselines/repro/host_bridge.py\nM  experiments/baselines/repro/protocol.py\nM  experiments/baselines/repro/runner.py\nM  experiments/baselines/repro/state_bridge.py\nM  experiments/baselines/repro/worker_environment.lock.json\nA  experiments/baselines/repro/workers/__init__.py\nA  experiments/baselines/repro/workers/bytecheckpoint_worker.py\nA  experiments/baselines/repro/workers/common.py\nA  experiments/baselines/repro/workers/fastpersist_worker.py\nM  results/baseline-gpt2-repro-20260906/REPORT.md\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233701_3070194/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233701_3070194/config.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233701_3070194/environment.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233701_3070194/events.jsonl\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233701_3070194/failure.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233701_3070194/state_schema.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233701_3070194/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233701_3070194/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/config.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/environment.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/events.jsonl\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/restore.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/result.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/source.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/state_schema.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_233923_3073701/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/config.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/environment.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/events.jsonl\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/restore.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/result.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/source.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/state_schema.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260907_000955_3117232/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231504_3051659/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231504_3051659/config.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231504_3051659/environment.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231504_3051659/failure.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231504_3051659/state_schema.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231504_3051659/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231504_3051659/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/config.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/environment.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/events.jsonl\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/restore.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/result.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/source.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/state_schema.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_231749_3052343/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/config.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/environment.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/events.jsonl\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/restore.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/result.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/source.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/state_schema.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260907_000237_3104174/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234151_3080254/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234151_3080254/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234151_3080254/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234151_3080254/events.jsonl\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234151_3080254/failure.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234151_3080254/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234151_3080254/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234151_3080254/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234445_3084089/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234445_3084089/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234445_3084089/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234445_3084089/failure.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234445_3084089/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234445_3084089/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234445_3084089/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234633_3084859/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234633_3084859/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234633_3084859/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234633_3084859/failure.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234633_3084859/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234633_3084859/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234633_3084859/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234722_3085173/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234722_3085173/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234722_3085173/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234722_3085173/failure.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234722_3085173/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234722_3085173/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234722_3085173/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234841_3085694/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234841_3085694/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234841_3085694/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234841_3085694/events.jsonl\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234841_3085694/failure.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234841_3085694/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234841_3085694/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_234841_3085694/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235147_3089777/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235147_3089777/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235147_3089777/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235147_3089777/events.jsonl\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235147_3089777/failure.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235147_3089777/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235147_3089777/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235147_3089777/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235452_3093565/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235452_3093565/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235452_3093565/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235452_3093565/events.jsonl\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235452_3093565/failure.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235452_3093565/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235452_3093565/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235452_3093565/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/events.jsonl\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/restore.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/result.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/source.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_235948_3097638/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/config.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/environment.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/events.jsonl\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/restore.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/result.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/source.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/state_schema.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260907_001358_3123997/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/config.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/environment.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/events.jsonl\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/restore.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/result.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/source.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/state_schema.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_232034_3058947/worker_environment.lock.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/adapter_diff.patch\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/config.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/environment.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/events.jsonl\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/restore.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/result.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/source.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/state_schema.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/upstream.lock.json\nA  results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260907_000658_3110833/worker_environment.lock.json\nM  results/baseline-gpt2-repro-20260906/preflight/preflight.json\nM  results/baseline-gpt2-repro-20260906/summary.json\nM  tests/python/test_baseline_repro.py\n",
     "hardware": {
       "findmnt": {
         "args": [
@@ -155,6 +193,6 @@
     "platform": "Linux-5.10.0-60.18.0.50.oe2203.aarch64-aarch64-with-glibc2.38",
     "python": "3.9.25 (main, Nov  3 2025, 22:33:42) \n[GCC 11.2.0]",
     "repo_commit": "f3c086157d2ce65d8b686cd938874b1b3541ec5d",
-    "timestamp": "2026-09-06T15:01:53+0800"
+    "timestamp": "2026-09-07T00:55:54+0800"
   }
 }

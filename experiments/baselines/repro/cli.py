@@ -84,7 +84,40 @@ def preflight(config, selected):
     return output
 
 
+def adapter_evidence(name):
+    adapter = ADAPTERS[name]
+    lines = [
+        f"# Adapter: {name}",
+        f"# Port class: {adapter.kind}",
+        f"# Locked upstream core invoked: {getattr(adapter, 'upstream_core_invoked', None)}",
+        "# Mechanisms preserved:",
+    ]
+    lines.extend(f"# - {item}" for item in getattr(
+        adapter, "mechanisms_preserved", ()))
+    lines.append("# Platform substitutions:")
+    lines.extend(f"# - {item}" for item in getattr(
+        adapter, "platform_substitutions", ()))
+    return "\n".join(lines) + "\n"
+
+
+def is_formal_semantic_port(row):
+    checkpoints = row.get("checkpoints", ())
+    return (
+        row.get("status") == "trend_measured"
+        and row.get("kind") in {
+            "npu-semantic-port", "host-adapted-semantic-port"}
+        and int(row.get("formal_steps") or 0) == 30
+        and int(row.get("checkpoint_count") or 0) == 10
+        and (row.get("restore") or {}).get("status") == "pass"
+        and len(checkpoints) == 10
+        and all(checkpoint.get("state") == "PERSISTED"
+                for checkpoint in checkpoints)
+    )
+
+
 def run_one(config, name, mode="run"):
+    if name not in ADAPTERS:
+        raise ValueError(f"unknown adapter: {name}")
     stamp = time.strftime("%Y%m%d_%H%M%S")
     run_dir = Path(config["results_root"]) / name / f"{name}_{stamp}_{os.getpid()}"
     run_dir.mkdir(parents=True, exist_ok=False)
@@ -100,13 +133,10 @@ def run_one(config, name, mode="run"):
     if schema_path.exists():
         shutil.copy2(schema_path, run_dir / "state_schema.json")
     (run_dir / "adapter_diff.patch").write_text(
-        f"# Adapter: {name}\n# Source-faithful changes and blockers are recorded by the adapter.\n",
-        encoding="utf-8")
+        adapter_evidence(name), encoding="utf-8")
     (run_dir / "stdout.log").touch()
     (run_dir / "stderr.log").touch()
     try:
-        if name not in ADAPTERS:
-            raise ValueError(f"unknown adapter: {name}")
         status = ADAPTERS[name].preflight(config)
         if status.get("status") != "ready":
             failure_status = status.get("status", "not_attempted")
@@ -115,9 +145,28 @@ def run_one(config, name, mode="run"):
             write_json(run_dir / "failure.json", failure)
             return failure
         if mode == "run":
-            result = train_run(config, name, run_dir)
-            # Restoration is a separate interpreter so the source model,
-            # ACL context and adapter worker are genuinely gone first.
+            # Both phases run outside this coordinator.  The restore process
+            # is not started until the source interpreter has fully exited.
+            source_cmd = [sys.executable, "-m",
+                          "experiments.baselines.repro.cli", "source",
+                          "--config", str(run_dir / "config.json"),
+                          "--adapter", name, "--run-dir", str(run_dir)]
+            source_proc = subprocess.run(
+                source_cmd, capture_output=True, text=True, check=False)
+            (run_dir / "stdout.log").write_text(
+                source_proc.stdout, encoding="utf-8")
+            (run_dir / "stderr.log").write_text(
+                source_proc.stderr, encoding="utf-8")
+            source_path = run_dir / "source.json"
+            if source_proc.returncode or not source_path.exists():
+                failure = {
+                    "status": "roundtrip_failed", "adapter": name,
+                    "stage": "source", "returncode": source_proc.returncode,
+                    "error": "source subprocess did not complete",
+                }
+                write_json(run_dir / "failure.json", failure)
+                return failure
+            result = json.loads(source_path.read_text(encoding="utf-8"))
             if name == "none":
                 result["restore"] = {"status": "not_applicable",
                                       "reason": "training baseline has no checkpoint"}
@@ -159,7 +208,8 @@ def run_one(config, name, mode="run"):
 def main(argv=None):
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
-    for command_name in ("preflight", "prepare", "smoke", "run", "restore", "suite", "summarize"):
+    for command_name in ("preflight", "prepare", "smoke", "run", "source",
+                         "restore", "suite", "summarize"):
         cmd = sub.add_parser(command_name)
         cmd.add_argument("--config", required=True)
         cmd.add_argument("--all", action="store_true")
@@ -233,6 +283,18 @@ def main(argv=None):
         result = run_one(config, args.adapter)
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0 if result.get("status") == "trend_measured" else 1
+    if args.command == "source":
+        if not args.adapter or not args.run_dir:
+            parser.error("source requires --adapter and --run-dir")
+        try:
+            result = train_run(config, args.adapter, args.run_dir)
+        except Exception as error:
+            write_json(Path(args.run_dir) / "failure.json",
+                       {"status": "roundtrip_failed", "adapter": args.adapter,
+                        "stage": "source", "error": repr(error)})
+            raise
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0 if result.get("status") == "trend_measured" else 1
     if args.command == "restore":
         if not args.adapter or not args.run_dir:
             parser.error("restore requires --adapter and --run-dir")
@@ -250,7 +312,7 @@ def main(argv=None):
     if args.command == "summarize":
         root = Path(config["results_root"])
         summary = {"config": config, "runs": []}
-        for path in root.glob("*/**/result.json"):
+        for path in sorted(root.glob("*/**/result.json")):
             row = json.loads(path.read_text())
             row["result_path"] = str(path)
             # Older smoke records predate the explicit storage_backend field;
@@ -272,6 +334,34 @@ def main(argv=None):
             if (not row.get("legacy_unclassified") and
                 (row.get("adapter") != "ours" or
                  row.get("storage_backend") == "raw_spdk"))
+        ]
+        latest_formal = {}
+        for row in summary["runs"]:
+            if not is_formal_semantic_port(row):
+                continue
+            adapter = row["adapter"]
+            current = latest_formal.get(adapter)
+            if current is None or row["result_path"] > current["result_path"]:
+                latest_formal[adapter] = row
+        summary["formal_semantic_ports"] = [
+            {
+                "adapter": row["adapter"],
+                "kind": row["kind"],
+                "upstream_core_invoked": row.get("upstream_core_invoked"),
+                "formal_steps": row["formal_steps"],
+                "checkpoint_count": row["checkpoint_count"],
+                "total_wall_seconds": row.get("total_wall_seconds"),
+                "state_bytes": row.get("state_bytes"),
+                "fresh_restore": row["restore"]["status"],
+                "byte_exact": row["restore"].get("byte_exact"),
+                "max_loss_deviation": max(
+                    row["restore"].get("loss_deviation", [0.0])),
+                "mechanisms_preserved": row.get("mechanisms_preserved", []),
+                "platform_substitutions": row.get("platform_substitutions", []),
+                "result_path": row["result_path"],
+            }
+            for row in sorted(latest_formal.values(),
+                              key=lambda item: item["adapter"])
         ]
         write_json(root / "summary.json", summary)
         print(json.dumps(summary, indent=2, sort_keys=True))
