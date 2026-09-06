@@ -3,7 +3,8 @@ from pathlib import Path
 
 import numpy as np
 
-from experiments.baselines.repro.host_bridge import SharedSnapshot, snapshot_from_descriptor
+from experiments.baselines.repro.host_bridge import (
+    SharedSnapshot, snapshot_from_descriptor, snapshot_view_from_descriptor)
 from experiments.baselines.repro.protocol import EventLog, Handle
 from experiments.baselines.repro.state_bridge import Snapshot, load_raw_snapshot, save_raw_snapshot
 
@@ -36,6 +37,18 @@ def test_shared_snapshot_descriptor_roundtrip():
     try:
         restored = snapshot_from_descriptor(descriptor)
         assert restored.digest() == original.digest()
+    finally:
+        owner.close(unlink=True)
+
+
+def test_shared_snapshot_view_roundtrip_without_copy():
+    original = _snapshot()
+    owner, descriptor = SharedSnapshot.from_snapshot(original, prefix="repro_view")
+    try:
+        viewed = snapshot_view_from_descriptor(owner, descriptor)
+        assert viewed.digest() == original.digest()
+        assert viewed.arrays["model/w"].base is not None
+        del viewed
     finally:
         owner.close(unlink=True)
 

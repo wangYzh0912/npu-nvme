@@ -38,6 +38,42 @@
   },
   "matrix": [
     {
+      "adapter": "fastpersist_host",
+      "checkpoint_count": 1,
+      "formal_steps": 3,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_135648_2961087/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
+      "adapter": "fastpersist_host",
+      "checkpoint_count": 10,
+      "formal_steps": 30,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_143425_3005964/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
+      "adapter": "pccheck_acl",
+      "checkpoint_count": 10,
+      "formal_steps": 30,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_142803_2992581/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
+      "adapter": "pccheck_acl",
+      "checkpoint_count": 1,
+      "formal_steps": 3,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_135310_2948376/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
       "adapter": "mindspore_sync",
       "checkpoint_count": 2,
       "formal_steps": 10,
@@ -65,6 +101,51 @@
       "storage_backend": "filesystem"
     },
     {
+      "adapter": "datastates_acl",
+      "checkpoint_count": 10,
+      "formal_steps": 30,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_142112_2975876/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
+      "adapter": "datastates_acl",
+      "checkpoint_count": 1,
+      "formal_steps": 3,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_135122_2942076/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
+      "adapter": "datastates_acl",
+      "checkpoint_count": 10,
+      "formal_steps": 30,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_142428_2982550/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "checkpoint_count": 10,
+      "formal_steps": 30,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_143104_2999280/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "checkpoint_count": 1,
+      "formal_steps": 3,
+      "fresh_restore": "pass",
+      "result_path": "results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_135458_2954657/result.json",
+      "status": "trend_measured",
+      "storage_backend": "filesystem"
+    },
+    {
       "adapter": "none",
       "checkpoint_count": 0,
       "formal_steps": 30,
@@ -75,6 +156,545 @@
     }
   ],
   "runs": [
+    {
+      "adapter": "fastpersist_host",
+      "checkpoint_count": 1,
+      "checkpoints": [
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2610212459898895,
+          "request_id": "fastpersist_host-000001",
+          "sha256": "d84c31dd10fbbdd2b031e750f15ec307ffb4eace4ba08f28e18522514082ba59",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2610206225262234
+        }
+      ],
+      "formal_steps": 3,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "fastpersist_host",
+        "byte_exact": true,
+        "checkpoint_step": 8,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 9, 'sample': 8}",
+          "global_step": "[8]",
+          "loss_scale": "1.0"
+        },
+        "generation": 1,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.87883186340332,
+          10.845147132873535,
+          10.859260559082031
+        ],
+        "source_oracle_losses": [
+          10.87883186340332,
+          10.845147132873535,
+          10.859260559082031
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_135648_2961087/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2610212460168126,
+          "step_end_ns": 2610212521095279
+        },
+        {
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2610212521177529,
+          "step_end_ns": 2610212566523672
+        },
+        {
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2610212566591382,
+          "step_end_ns": 2610212610775971
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2610179701624929,
+          "step_end_ns": 2610206131523026
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2610206131548646,
+          "step_end_ns": 2610206179096818
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2610206179119658,
+          "step_end_ns": 2610206225253954
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 32.909208652
+    },
+    {
+      "adapter": "fastpersist_host",
+      "checkpoint_count": 10,
+      "checkpoints": [
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612474149269335,
+          "request_id": "fastpersist_host-000001",
+          "sha256": "6450cbb0857c01ac8deeccc44663203770759dbc15b26d3f28441c25aa0f9c8b",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2612468662955901
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 2,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612479704590335,
+          "request_id": "fastpersist_host-000002",
+          "sha256": "539c5eddb9a6d2a8c6c10ddd3683c0376a7b33204fab933dc0a17bd3e227ee42",
+          "source_released": true,
+          "step": 11,
+          "submit_ns": 2612474305626456
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 3,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612485355936364,
+          "request_id": "fastpersist_host-000003",
+          "sha256": "3d27d5b51d2d3ddc5780e1fef92daf33bff7b19efb1c5bdc32a2eb6ad421bd9f",
+          "source_released": true,
+          "step": 14,
+          "submit_ns": 2612479855150014
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 4,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612490955905125,
+          "request_id": "fastpersist_host-000004",
+          "sha256": "a93b988205be868580adb7fe9aed9066e03233651f26100fdc8a7dbd9004cef0",
+          "source_released": true,
+          "step": 17,
+          "submit_ns": 2612485504077673
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 5,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612496650599060,
+          "request_id": "fastpersist_host-000005",
+          "sha256": "40fd54f9c94df1e9168c9da5b8befafa0ce343e05bd5eccf8a2f7c16fdb1f955",
+          "source_released": true,
+          "step": 20,
+          "submit_ns": 2612491111442663
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 6,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612502287922495,
+          "request_id": "fastpersist_host-000006",
+          "sha256": "1042df2a44e338c359c1b8b24163aa0f1559236acc1df200344fd925bf46541f",
+          "source_released": true,
+          "step": 23,
+          "submit_ns": 2612496806086798
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 7,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612507898665728,
+          "request_id": "fastpersist_host-000007",
+          "sha256": "0b3ca56f0d6cfdb447998a52191598e12aef2665dcd10622d2a77fa76ba52c53",
+          "source_released": true,
+          "step": 26,
+          "submit_ns": 2612502443156302
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 8,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612513435073555,
+          "request_id": "fastpersist_host-000008",
+          "sha256": "16e34e363237e9c586cb75249c05d353fbedd17a7956ab570fe9cf2da5e8d6e8",
+          "source_released": true,
+          "step": 29,
+          "submit_ns": 2612508049097696
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 9,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612518988433987,
+          "request_id": "fastpersist_host-000009",
+          "sha256": "e93da9f8faa6da63219d08a4c800db1e6a4b0cc09b0cbd82530eafa1ec7af8e8",
+          "source_released": true,
+          "step": 32,
+          "submit_ns": 2612513582419081
+        },
+        {
+          "adapter": "fastpersist_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 10,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612524562688540,
+          "request_id": "fastpersist_host-000010",
+          "sha256": "13162839471828410a6c901da58067a90277bd40c86c169be8342791ccdab91a",
+          "source_released": true,
+          "step": 35,
+          "submit_ns": 2612519143063512
+        }
+      ],
+      "formal_steps": 30,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "fastpersist_host",
+        "byte_exact": true,
+        "checkpoint_step": 35,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+          "global_step": "[35]",
+          "loss_scale": "1.0"
+        },
+        "generation": 10,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.82647705078125,
+          10.842897415161133,
+          10.857519149780273
+        ],
+        "source_oracle_losses": [
+          10.82647705078125,
+          10.842897415161133,
+          10.857519149780273
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_143425_3005964/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.82647705078125,
+          "step": 36,
+          "step_begin_ns": 2612524563011771,
+          "step_end_ns": 2612524625127520
+        },
+        {
+          "loss": 10.842897415161133,
+          "step": 37,
+          "step_begin_ns": 2612524625208290,
+          "step_end_ns": 2612524670728855
+        },
+        {
+          "loss": 10.857519149780273,
+          "step": 38,
+          "step_begin_ns": 2612524670798605,
+          "step_end_ns": 2612524715182836
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2612442341205107,
+          "step_end_ns": 2612468569257661
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2612468569283831,
+          "step_end_ns": 2612468617301465
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2612468617323335,
+          "step_end_ns": 2612468662943281
+        },
+        {
+          "formal_step": 4,
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2612474149313235,
+          "step_end_ns": 2612474212948790
+        },
+        {
+          "formal_step": 5,
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2612474212974540,
+          "step_end_ns": 2612474259829760
+        },
+        {
+          "formal_step": 6,
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2612474259851190,
+          "step_end_ns": 2612474305618636
+        },
+        {
+          "formal_step": 7,
+          "loss": 10.871929168701172,
+          "step": 12,
+          "step_begin_ns": 2612479704617985,
+          "step_end_ns": 2612479763506711
+        },
+        {
+          "formal_step": 8,
+          "loss": 10.89255142211914,
+          "step": 13,
+          "step_begin_ns": 2612479763531591,
+          "step_end_ns": 2612479809873540
+        },
+        {
+          "formal_step": 9,
+          "loss": 10.871400833129883,
+          "step": 14,
+          "step_begin_ns": 2612479809893280,
+          "step_end_ns": 2612479855141964
+        },
+        {
+          "formal_step": 10,
+          "loss": 10.842477798461914,
+          "step": 15,
+          "step_begin_ns": 2612485355976404,
+          "step_end_ns": 2612485411854829
+        },
+        {
+          "formal_step": 11,
+          "loss": 10.8748779296875,
+          "step": 16,
+          "step_begin_ns": 2612485411879199,
+          "step_end_ns": 2612485458457338
+        },
+        {
+          "formal_step": 12,
+          "loss": 10.898293495178223,
+          "step": 17,
+          "step_begin_ns": 2612485458476568,
+          "step_end_ns": 2612485504069423
+        },
+        {
+          "formal_step": 13,
+          "loss": 10.914029121398926,
+          "step": 18,
+          "step_begin_ns": 2612490955945765,
+          "step_end_ns": 2612491019141598
+        },
+        {
+          "formal_step": 14,
+          "loss": 10.90008544921875,
+          "step": 19,
+          "step_begin_ns": 2612491019168478,
+          "step_end_ns": 2612491065756857
+        },
+        {
+          "formal_step": 15,
+          "loss": 10.881633758544922,
+          "step": 20,
+          "step_begin_ns": 2612491065776957,
+          "step_end_ns": 2612491111435073
+        },
+        {
+          "formal_step": 16,
+          "loss": 10.857807159423828,
+          "step": 21,
+          "step_begin_ns": 2612496650639791,
+          "step_end_ns": 2612496714260575
+        },
+        {
+          "formal_step": 17,
+          "loss": 10.892155647277832,
+          "step": 22,
+          "step_begin_ns": 2612496714287865,
+          "step_end_ns": 2612496760857194
+        },
+        {
+          "formal_step": 18,
+          "loss": 10.89659309387207,
+          "step": 23,
+          "step_begin_ns": 2612496760876484,
+          "step_end_ns": 2612496806078248
+        },
+        {
+          "formal_step": 19,
+          "loss": 10.854413032531738,
+          "step": 24,
+          "step_begin_ns": 2612502287967136,
+          "step_end_ns": 2612502351547220
+        },
+        {
+          "formal_step": 20,
+          "loss": 10.869168281555176,
+          "step": 25,
+          "step_begin_ns": 2612502351574670,
+          "step_end_ns": 2612502397953758
+        },
+        {
+          "formal_step": 21,
+          "loss": 10.843427658081055,
+          "step": 26,
+          "step_begin_ns": 2612502397973118,
+          "step_end_ns": 2612502443148722
+        },
+        {
+          "formal_step": 22,
+          "loss": 10.826715469360352,
+          "step": 27,
+          "step_begin_ns": 2612507898694208,
+          "step_end_ns": 2612507957645255
+        },
+        {
+          "formal_step": 23,
+          "loss": 10.84626579284668,
+          "step": 28,
+          "step_begin_ns": 2612507957668215,
+          "step_end_ns": 2612508003916313
+        },
+        {
+          "formal_step": 24,
+          "loss": 10.82583999633789,
+          "step": 29,
+          "step_begin_ns": 2612508003935463,
+          "step_end_ns": 2612508049090726
+        },
+        {
+          "formal_step": 25,
+          "loss": 10.848681449890137,
+          "step": 30,
+          "step_begin_ns": 2612513435108845,
+          "step_end_ns": 2612513490687809
+        },
+        {
+          "formal_step": 26,
+          "loss": 10.836827278137207,
+          "step": 31,
+          "step_begin_ns": 2612513490709429,
+          "step_end_ns": 2612513537116627
+        },
+        {
+          "formal_step": 27,
+          "loss": 10.832322120666504,
+          "step": 32,
+          "step_begin_ns": 2612513537135567,
+          "step_end_ns": 2612513582410681
+        },
+        {
+          "formal_step": 28,
+          "loss": 10.809300422668457,
+          "step": 33,
+          "step_begin_ns": 2612518988467627,
+          "step_end_ns": 2612519051206979
+        },
+        {
+          "formal_step": 29,
+          "loss": 10.863237380981445,
+          "step": 34,
+          "step_begin_ns": 2612519051230879,
+          "step_end_ns": 2612519097668667
+        },
+        {
+          "formal_step": 30,
+          "loss": 10.851823806762695,
+          "step": 35,
+          "step_begin_ns": 2612519097688497,
+          "step_end_ns": 2612519143056242
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 82.37404309
+    },
     {
       "adapter": "ours",
       "checkpoint_count": 2,
@@ -240,6 +860,545 @@
         }
       ],
       "total_wall_seconds": 40.706276192
+    },
+    {
+      "adapter": "pccheck_acl",
+      "checkpoint_count": 10,
+      "checkpoints": [
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612085216410239,
+          "request_id": "pccheck_acl-000001",
+          "sha256": "1c99fe7856f4f68bcf991e73845a4770fd2856c0faca41f611c9c6c249209351",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2612079720720419
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 2,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612090801622474,
+          "request_id": "pccheck_acl-000002",
+          "sha256": "25b7f3861bf5e5260631240c138db60e9af2021362e0ecd72449298b6e247966",
+          "source_released": true,
+          "step": 11,
+          "submit_ns": 2612085373889065
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 3,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612096414992257,
+          "request_id": "pccheck_acl-000003",
+          "sha256": "b09b0d0e5016dd694856e4a6e41a6b5a64850843817f87294631dd9c44b254e2",
+          "source_released": true,
+          "step": 14,
+          "submit_ns": 2612090955033584
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 4,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612102028385240,
+          "request_id": "pccheck_acl-000004",
+          "sha256": "01491937c30b6bec677669822b114b066f2e7a374fa2c6ac85a9d2b427043294",
+          "source_released": true,
+          "step": 17,
+          "submit_ns": 2612096567612173
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 5,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612107580564727,
+          "request_id": "pccheck_acl-000005",
+          "sha256": "b66562d3d29be44564fedab90d53bc10d1330c6d49b7424a774623c032cf3dda",
+          "source_released": true,
+          "step": 20,
+          "submit_ns": 2612102176706870
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 6,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612113124752524,
+          "request_id": "pccheck_acl-000006",
+          "sha256": "ad5bb8cd3332e99bce3c1bd24810a6caf9d756fe54ac25425cfc2809a7c0b17e",
+          "source_released": true,
+          "step": 23,
+          "submit_ns": 2612107734296258
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 7,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612118685958676,
+          "request_id": "pccheck_acl-000007",
+          "sha256": "271706b8b38b22bd2627c52a1c8a19db0681808fc71badafc8da290015f90189",
+          "source_released": true,
+          "step": 26,
+          "submit_ns": 2612113273508026
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 8,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612124335977700,
+          "request_id": "pccheck_acl-000008",
+          "sha256": "bafb8dcfe2760f563b9e82696a99cd8d837d1f655254b08a265cd38b31f986fb",
+          "source_released": true,
+          "step": 29,
+          "submit_ns": 2612118839597287
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 9,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612129913972157,
+          "request_id": "pccheck_acl-000009",
+          "sha256": "24db5d0ab176b2d3b41623b2029dc5043923836517d4ad8f01c7ce48442b1cce",
+          "source_released": true,
+          "step": 32,
+          "submit_ns": 2612124489744251
+        },
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 10,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612135532025938,
+          "request_id": "pccheck_acl-000010",
+          "sha256": "9db7dffc3965740bd2fc22274426e2e4abf94e2f0d3936d0606d43504b0bee0c",
+          "source_released": true,
+          "step": 35,
+          "submit_ns": 2612130067357266
+        }
+      ],
+      "formal_steps": 30,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "pccheck_acl",
+        "byte_exact": true,
+        "checkpoint_step": 35,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+          "global_step": "[35]",
+          "loss_scale": "1.0"
+        },
+        "generation": 10,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.82651138305664,
+          10.84287166595459,
+          10.857537269592285
+        ],
+        "source_oracle_losses": [
+          10.82651138305664,
+          10.84287166595459,
+          10.857537269592285
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_142803_2992581/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.82651138305664,
+          "step": 36,
+          "step_begin_ns": 2612135532353699,
+          "step_end_ns": 2612135589968030
+        },
+        {
+          "loss": 10.84287166595459,
+          "step": 37,
+          "step_begin_ns": 2612135590051281,
+          "step_end_ns": 2612135634480761
+        },
+        {
+          "loss": 10.857537269592285,
+          "step": 38,
+          "step_begin_ns": 2612135634558252,
+          "step_end_ns": 2612135677926768
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2612053417983738,
+          "step_end_ns": 2612079630050420
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2612079630077790,
+          "step_end_ns": 2612079676154488
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2612079676178718,
+          "step_end_ns": 2612079720710839
+        },
+        {
+          "formal_step": 4,
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2612085216450349,
+          "step_end_ns": 2612085280108294
+        },
+        {
+          "formal_step": 5,
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2612085280143994,
+          "step_end_ns": 2612085327195545
+        },
+        {
+          "formal_step": 6,
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2612085327223895,
+          "step_end_ns": 2612085373876335
+        },
+        {
+          "formal_step": 7,
+          "loss": 10.871929168701172,
+          "step": 12,
+          "step_begin_ns": 2612090801662084,
+          "step_end_ns": 2612090865410899
+        },
+        {
+          "formal_step": 8,
+          "loss": 10.89255142211914,
+          "step": 13,
+          "step_begin_ns": 2612090865441889,
+          "step_end_ns": 2612090910957944
+        },
+        {
+          "formal_step": 9,
+          "loss": 10.871400833129883,
+          "step": 14,
+          "step_begin_ns": 2612090910977874,
+          "step_end_ns": 2612090955024604
+        },
+        {
+          "formal_step": 10,
+          "loss": 10.842477798461914,
+          "step": 15,
+          "step_begin_ns": 2612096415039267,
+          "step_end_ns": 2612096478216300
+        },
+        {
+          "formal_step": 11,
+          "loss": 10.8748779296875,
+          "step": 16,
+          "step_begin_ns": 2612096478242750,
+          "step_end_ns": 2612096523641334
+        },
+        {
+          "formal_step": 12,
+          "loss": 10.898293495178223,
+          "step": 17,
+          "step_begin_ns": 2612096523660834,
+          "step_end_ns": 2612096567604513
+        },
+        {
+          "formal_step": 13,
+          "loss": 10.914029121398926,
+          "step": 18,
+          "step_begin_ns": 2612102028414750,
+          "step_end_ns": 2612102086914635
+        },
+        {
+          "formal_step": 14,
+          "loss": 10.90008544921875,
+          "step": 19,
+          "step_begin_ns": 2612102086940525,
+          "step_end_ns": 2612102132241939
+        },
+        {
+          "formal_step": 15,
+          "loss": 10.881633758544922,
+          "step": 20,
+          "step_begin_ns": 2612102132262929,
+          "step_end_ns": 2612102176697300
+        },
+        {
+          "formal_step": 16,
+          "loss": 10.857807159423828,
+          "step": 21,
+          "step_begin_ns": 2612107580606357,
+          "step_end_ns": 2612107643938271
+        },
+        {
+          "formal_step": 17,
+          "loss": 10.892155647277832,
+          "step": 22,
+          "step_begin_ns": 2612107643965021,
+          "step_end_ns": 2612107689599306
+        },
+        {
+          "formal_step": 18,
+          "loss": 10.89659309387207,
+          "step": 23,
+          "step_begin_ns": 2612107689621316,
+          "step_end_ns": 2612107734286308
+        },
+        {
+          "formal_step": 19,
+          "loss": 10.854413032531738,
+          "step": 24,
+          "step_begin_ns": 2612113124779614,
+          "step_end_ns": 2612113183673550
+        },
+        {
+          "formal_step": 20,
+          "loss": 10.869168281555176,
+          "step": 25,
+          "step_begin_ns": 2612113183698561,
+          "step_end_ns": 2612113229065965
+        },
+        {
+          "formal_step": 21,
+          "loss": 10.843427658081055,
+          "step": 26,
+          "step_begin_ns": 2612113229087255,
+          "step_end_ns": 2612113273499916
+        },
+        {
+          "formal_step": 22,
+          "loss": 10.826715469360352,
+          "step": 27,
+          "step_begin_ns": 2612118686002496,
+          "step_end_ns": 2612118749207659
+        },
+        {
+          "formal_step": 23,
+          "loss": 10.84626579284668,
+          "step": 28,
+          "step_begin_ns": 2612118749236369,
+          "step_end_ns": 2612118794975075
+        },
+        {
+          "formal_step": 24,
+          "loss": 10.82583999633789,
+          "step": 29,
+          "step_begin_ns": 2612118794997475,
+          "step_end_ns": 2612118839588727
+        },
+        {
+          "formal_step": 25,
+          "loss": 10.84866714477539,
+          "step": 30,
+          "step_begin_ns": 2612124336034960,
+          "step_end_ns": 2612124399143253
+        },
+        {
+          "formal_step": 26,
+          "loss": 10.836835861206055,
+          "step": 31,
+          "step_begin_ns": 2612124399172923,
+          "step_end_ns": 2612124444905489
+        },
+        {
+          "formal_step": 27,
+          "loss": 10.832338333129883,
+          "step": 32,
+          "step_begin_ns": 2612124444927689,
+          "step_end_ns": 2612124489735781
+        },
+        {
+          "formal_step": 28,
+          "loss": 10.809296607971191,
+          "step": 33,
+          "step_begin_ns": 2612129914014797,
+          "step_end_ns": 2612129977146630
+        },
+        {
+          "formal_step": 29,
+          "loss": 10.86323070526123,
+          "step": 34,
+          "step_begin_ns": 2612129977172900,
+          "step_end_ns": 2612130022738945
+        },
+        {
+          "formal_step": 30,
+          "loss": 10.851835250854492,
+          "step": 35,
+          "step_begin_ns": 2612130022760525,
+          "step_end_ns": 2612130067348896
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 82.260009972
+    },
+    {
+      "adapter": "pccheck_acl",
+      "checkpoint_count": 1,
+      "checkpoints": [
+        {
+          "adapter": "pccheck_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2609992678891913,
+          "request_id": "pccheck_acl-000001",
+          "sha256": "d740374516fe18b5215a4c377ed611c6cc911a95161aa8dc8e7a537093725368",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2609986485047138
+        }
+      ],
+      "formal_steps": 3,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "pccheck_acl",
+        "byte_exact": true,
+        "checkpoint_step": 8,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 9, 'sample': 8}",
+          "global_step": "[8]",
+          "loss_scale": "1.0"
+        },
+        "generation": 1,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.87883186340332,
+          10.845147132873535,
+          10.859260559082031
+        ],
+        "source_oracle_losses": [
+          10.87883186340332,
+          10.845147132873535,
+          10.859260559082031
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_135310_2948376/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2609992679148834,
+          "step_end_ns": 2609992731455254
+        },
+        {
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2609992731526944,
+          "step_end_ns": 2609992776205945
+        },
+        {
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2609992776272045,
+          "step_end_ns": 2609992819812691
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2609960600473133,
+          "step_end_ns": 2609986392015803
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2609986392039933,
+          "step_end_ns": 2609986439840935
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2609986439860955,
+          "step_end_ns": 2609986485039688
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 32.219400509
     },
     {
       "adapter": "mindspore_sync",
@@ -1006,6 +2165,1520 @@
         }
       ],
       "total_wall_seconds": 66.742306548
+    },
+    {
+      "adapter": "datastates_acl",
+      "checkpoint_count": 10,
+      "checkpoints": [
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611675350403647,
+          "request_id": "datastates_acl-000001",
+          "sha256": "81ed9ddfc83c8c52848980074fa0fbea39d76332606615c5a2f27d9ac513f8f3",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2611669200456332
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 2,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611681556255468,
+          "request_id": "datastates_acl-000002",
+          "sha256": "654d9f9d7c5c164ab87061fa36f14160bac3b23b7aefd7405bf5972821c5e496",
+          "source_released": true,
+          "step": 11,
+          "submit_ns": 2611675505001992
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 3,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611687808179356,
+          "request_id": "datastates_acl-000003",
+          "sha256": "7fcb1e88a9bc832644e67f64b96ea0c502905379612c77bb43eea722e8e8b7db",
+          "source_released": true,
+          "step": 14,
+          "submit_ns": 2611681714299726
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 4,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611694145711843,
+          "request_id": "datastates_acl-000004",
+          "sha256": "e15709e527365b6b6b2671324e01c7cb2f465c8fe54711087c7ba4b9d059dc3a",
+          "source_released": true,
+          "step": 17,
+          "submit_ns": 2611688032688570
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 5,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611700436624351,
+          "request_id": "datastates_acl-000005",
+          "sha256": "6f2619ecbf8b313a0823b8a300cece961f69a1ae0dd4a555f1adda07d04a9b1b",
+          "source_released": true,
+          "step": 20,
+          "submit_ns": 2611694296926335
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 6,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611706705058323,
+          "request_id": "datastates_acl-000006",
+          "sha256": "226d360e85c71c5eee2571852d361965a2e04caa7b274d6f44effa569048de94",
+          "source_released": true,
+          "step": 23,
+          "submit_ns": 2611700628218158
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 7,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611712990949561,
+          "request_id": "datastates_acl-000007",
+          "sha256": "d000de55afee241bc9585148d687c8d5ca482ee286ae2b556db824211d0dccac",
+          "source_released": true,
+          "step": 26,
+          "submit_ns": 2611706884460963
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 8,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611719177948140,
+          "request_id": "datastates_acl-000008",
+          "sha256": "e2841a219ccdbcdd6674cdb4e2ddc09e53563fcc1f72f79dbb23df13a199a41c",
+          "source_released": true,
+          "step": 29,
+          "submit_ns": 2611713141785381
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 9,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611725340240223,
+          "request_id": "datastates_acl-000009",
+          "sha256": "34a6c291f9311c0569610a524b1c6bdf319cc624756b54108543918bdfa8bf63",
+          "source_released": true,
+          "step": 32,
+          "submit_ns": 2611719321636082
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 10,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611731508670220,
+          "request_id": "datastates_acl-000010",
+          "sha256": "5c2e3f8c83e381142193193264f86a7226f1fd0d2571a1d96e5c60f5bfdcc04c",
+          "source_released": true,
+          "step": 35,
+          "submit_ns": 2611725485086660
+        }
+      ],
+      "formal_steps": 30,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "datastates_acl",
+        "byte_exact": true,
+        "checkpoint_step": 35,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+          "global_step": "[35]",
+          "loss_scale": "1.0"
+        },
+        "generation": 10,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.82651138305664,
+          10.84287166595459,
+          10.857537269592285
+        ],
+        "source_oracle_losses": [
+          10.82651138305664,
+          10.84287166595459,
+          10.857537269592285
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_142112_2975876/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.82651138305664,
+          "step": 36,
+          "step_begin_ns": 2611731508992871,
+          "step_end_ns": 2611731562200756
+        },
+        {
+          "loss": 10.84287166595459,
+          "step": 37,
+          "step_begin_ns": 2611731562271516,
+          "step_end_ns": 2611731605273782
+        },
+        {
+          "loss": 10.857537269592285,
+          "step": 38,
+          "step_begin_ns": 2611731605339312,
+          "step_end_ns": 2611731647553444
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2611642302918683,
+          "step_end_ns": 2611669099007902
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2611669099061042,
+          "step_end_ns": 2611669156063291
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2611669156087171,
+          "step_end_ns": 2611669200447902
+        },
+        {
+          "formal_step": 4,
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2611675350443848,
+          "step_end_ns": 2611675412065785
+        },
+        {
+          "formal_step": 5,
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2611675412091255,
+          "step_end_ns": 2611675458880045
+        },
+        {
+          "formal_step": 6,
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2611675458903105,
+          "step_end_ns": 2611675504993442
+        },
+        {
+          "formal_step": 7,
+          "loss": 10.871929168701172,
+          "step": 12,
+          "step_begin_ns": 2611681556298709,
+          "step_end_ns": 2611681621147058
+        },
+        {
+          "formal_step": 8,
+          "loss": 10.89255142211914,
+          "step": 13,
+          "step_begin_ns": 2611681621174358,
+          "step_end_ns": 2611681668169369
+        },
+        {
+          "formal_step": 9,
+          "loss": 10.871400833129883,
+          "step": 14,
+          "step_begin_ns": 2611681668189199,
+          "step_end_ns": 2611681714290516
+        },
+        {
+          "formal_step": 10,
+          "loss": 10.842477798461914,
+          "step": 15,
+          "step_begin_ns": 2611687808221906,
+          "step_end_ns": 2611687938601418
+        },
+        {
+          "formal_step": 11,
+          "loss": 10.8748779296875,
+          "step": 16,
+          "step_begin_ns": 2611687938631418,
+          "step_end_ns": 2611687986836603
+        },
+        {
+          "formal_step": 12,
+          "loss": 10.898293495178223,
+          "step": 17,
+          "step_begin_ns": 2611687986857613,
+          "step_end_ns": 2611688032681010
+        },
+        {
+          "formal_step": 13,
+          "loss": 10.914029121398926,
+          "step": 18,
+          "step_begin_ns": 2611694145752524,
+          "step_end_ns": 2611694207815132
+        },
+        {
+          "formal_step": 14,
+          "loss": 10.90008544921875,
+          "step": 19,
+          "step_begin_ns": 2611694207841342,
+          "step_end_ns": 2611694252926136
+        },
+        {
+          "formal_step": 15,
+          "loss": 10.881633758544922,
+          "step": 20,
+          "step_begin_ns": 2611694252949376,
+          "step_end_ns": 2611694296917535
+        },
+        {
+          "formal_step": 16,
+          "loss": 10.857807159423828,
+          "step": 21,
+          "step_begin_ns": 2611700436656182,
+          "step_end_ns": 2611700538613754
+        },
+        {
+          "formal_step": 17,
+          "loss": 10.892155647277832,
+          "step": 22,
+          "step_begin_ns": 2611700538641664,
+          "step_end_ns": 2611700584012828
+        },
+        {
+          "formal_step": 18,
+          "loss": 10.89659309387207,
+          "step": 23,
+          "step_begin_ns": 2611700584035758,
+          "step_end_ns": 2611700628209818
+        },
+        {
+          "formal_step": 19,
+          "loss": 10.854413032531738,
+          "step": 24,
+          "step_begin_ns": 2611706705090063,
+          "step_end_ns": 2611706794647217
+        },
+        {
+          "formal_step": 20,
+          "loss": 10.869168281555176,
+          "step": 25,
+          "step_begin_ns": 2611706794677047,
+          "step_end_ns": 2611706840519234
+        },
+        {
+          "formal_step": 21,
+          "loss": 10.843427658081055,
+          "step": 26,
+          "step_begin_ns": 2611706840541814,
+          "step_end_ns": 2611706884452093
+        },
+        {
+          "formal_step": 22,
+          "loss": 10.826715469360352,
+          "step": 27,
+          "step_begin_ns": 2611712990986242,
+          "step_end_ns": 2611713053336201
+        },
+        {
+          "formal_step": 23,
+          "loss": 10.84626579284668,
+          "step": 28,
+          "step_begin_ns": 2611713053363591,
+          "step_end_ns": 2611713097963893
+        },
+        {
+          "formal_step": 24,
+          "loss": 10.82583999633789,
+          "step": 29,
+          "step_begin_ns": 2611713097985433,
+          "step_end_ns": 2611713141776381
+        },
+        {
+          "formal_step": 25,
+          "loss": 10.84866714477539,
+          "step": 30,
+          "step_begin_ns": 2611719177987650,
+          "step_end_ns": 2611719233413593
+        },
+        {
+          "formal_step": 26,
+          "loss": 10.836835861206055,
+          "step": 31,
+          "step_begin_ns": 2611719233442413,
+          "step_end_ns": 2611719278075405
+        },
+        {
+          "formal_step": 27,
+          "loss": 10.832338333129883,
+          "step": 32,
+          "step_begin_ns": 2611719278099105,
+          "step_end_ns": 2611719321627202
+        },
+        {
+          "formal_step": 28,
+          "loss": 10.809296607971191,
+          "step": 33,
+          "step_begin_ns": 2611725340269213,
+          "step_end_ns": 2611725397201862
+        },
+        {
+          "formal_step": 29,
+          "loss": 10.86323070526123,
+          "step": 34,
+          "step_begin_ns": 2611725397226182,
+          "step_end_ns": 2611725441525603
+        },
+        {
+          "formal_step": 30,
+          "loss": 10.851835250854492,
+          "step": 35,
+          "step_begin_ns": 2611725441547873,
+          "step_end_ns": 2611725485077410
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 89.344702211
+    },
+    {
+      "adapter": "datastates_acl",
+      "checkpoint_count": 1,
+      "checkpoints": [
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2609885002837836,
+          "request_id": "datastates_acl-000001",
+          "sha256": "6b07ce430eed19039e3c8a8c546a7ab906834720e756142017e6cde49c24dee1",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2609878868648428
+        }
+      ],
+      "formal_steps": 3,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "datastates_acl",
+        "byte_exact": true,
+        "checkpoint_step": 8,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 9, 'sample': 8}",
+          "global_step": "[8]",
+          "loss_scale": "1.0"
+        },
+        "generation": 1,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.87883186340332,
+          10.845147132873535,
+          10.859260559082031
+        ],
+        "source_oracle_losses": [
+          10.87883186340332,
+          10.845147132873535,
+          10.859260559082031
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_135122_2942076/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2609885003078757,
+          "step_end_ns": 2609885049857165
+        },
+        {
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2609885049928876,
+          "step_end_ns": 2609885093098900
+        },
+        {
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2609885093162571,
+          "step_end_ns": 2609885134824600
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2609852513035685,
+          "step_end_ns": 2609878769721181
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2609878769763941,
+          "step_end_ns": 2609878824718081
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2609878824741371,
+          "step_end_ns": 2609878868635588
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 32.621859905
+    },
+    {
+      "adapter": "datastates_acl",
+      "checkpoint_count": 10,
+      "checkpoints": [
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611870199041480,
+          "request_id": "datastates_acl-000001",
+          "sha256": "5fe4878072ba8805e0d593f1f8e3dcc2106cfd22b638d32123d063024101181a",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2611864820560900
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 2,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611875766284796,
+          "request_id": "datastates_acl-000002",
+          "sha256": "f72567567c96eef30684db4156fa052d5c90351a94e0f7f701315ae8229aa076",
+          "source_released": true,
+          "step": 11,
+          "submit_ns": 2611870344139188
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 3,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611881234201959,
+          "request_id": "datastates_acl-000003",
+          "sha256": "def832db5b60630916251e4830a21a445860257454962175d25e1b289c1053b3",
+          "source_released": true,
+          "step": 14,
+          "submit_ns": 2611875910438840
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 4,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611886711364828,
+          "request_id": "datastates_acl-000004",
+          "sha256": "fb6fc4402b7bc4509f40705c8d6e7388d4f00af48476df8c7187d3365536ae5f",
+          "source_released": true,
+          "step": 17,
+          "submit_ns": 2611881388435462
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 5,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611892175234436,
+          "request_id": "datastates_acl-000005",
+          "sha256": "115079fa041fdc8a86d5c985d42ade85f4ea9bd6589e405a588c1493967d58d6",
+          "source_released": true,
+          "step": 20,
+          "submit_ns": 2611886861664926
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 6,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611897654198412,
+          "request_id": "datastates_acl-000006",
+          "sha256": "916492fec0c4829409525e24f5b7654d617630d0530a45dda5fdb8d57058b9bc",
+          "source_released": true,
+          "step": 23,
+          "submit_ns": 2611892320558255
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 7,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611903165667183,
+          "request_id": "datastates_acl-000007",
+          "sha256": "e8fdac63d79bd72966ddd8e6322865c588f3110b17194379e905c68da7b34565",
+          "source_released": true,
+          "step": 26,
+          "submit_ns": 2611897803194775
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 8,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611908740232027,
+          "request_id": "datastates_acl-000008",
+          "sha256": "c735ba7c7b340d6aa87bb629ecc88beed6c1b5a2016fc70eee367612a7a9f619",
+          "source_released": true,
+          "step": 29,
+          "submit_ns": 2611903312754909
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 9,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611914273769243,
+          "request_id": "datastates_acl-000009",
+          "sha256": "f16ebdb4724b243ec7829459bbebfae88858fe0ec63806f5269b5ab050b9a993",
+          "source_released": true,
+          "step": 32,
+          "submit_ns": 2611908891531869
+        },
+        {
+          "adapter": "datastates_acl",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 10,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2611919805239651,
+          "request_id": "datastates_acl-000010",
+          "sha256": "5296c2d7c5ad0bd7998ea65aa278c75622da7a288d088082740ef4e1eca6a4ed",
+          "source_released": true,
+          "step": 35,
+          "submit_ns": 2611914426707931
+        }
+      ],
+      "formal_steps": 30,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "datastates_acl",
+        "byte_exact": true,
+        "checkpoint_step": 35,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+          "global_step": "[35]",
+          "loss_scale": "1.0"
+        },
+        "generation": 10,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.826495170593262,
+          10.842885971069336,
+          10.857515335083008
+        ],
+        "source_oracle_losses": [
+          10.826495170593262,
+          10.842885971069336,
+          10.857515335083008
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_142428_2982550/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.826495170593262,
+          "step": 36,
+          "step_begin_ns": 2611919805551252,
+          "step_end_ns": 2611919859619630
+        },
+        {
+          "loss": 10.842885971069336,
+          "step": 37,
+          "step_begin_ns": 2611919859706170,
+          "step_end_ns": 2611919904558593
+        },
+        {
+          "loss": 10.857515335083008,
+          "step": 38,
+          "step_begin_ns": 2611919904629203,
+          "step_end_ns": 2611919948346301
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2611838853911931,
+          "step_end_ns": 2611864728535647
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2611864728561287,
+          "step_end_ns": 2611864775718358
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2611864775739498,
+          "step_end_ns": 2611864820552230
+        },
+        {
+          "formal_step": 4,
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2611870199066790,
+          "step_end_ns": 2611870253641980
+        },
+        {
+          "formal_step": 5,
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2611870253666330,
+          "step_end_ns": 2611870299318836
+        },
+        {
+          "formal_step": 6,
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2611870299340916,
+          "step_end_ns": 2611870344131098
+        },
+        {
+          "formal_step": 7,
+          "loss": 10.871929168701172,
+          "step": 12,
+          "step_begin_ns": 2611875766326036,
+          "step_end_ns": 2611875820634664
+        },
+        {
+          "formal_step": 8,
+          "loss": 10.89255142211914,
+          "step": 13,
+          "step_begin_ns": 2611875820662005,
+          "step_end_ns": 2611875865967579
+        },
+        {
+          "formal_step": 9,
+          "loss": 10.871400833129883,
+          "step": 14,
+          "step_begin_ns": 2611875865989029,
+          "step_end_ns": 2611875910430580
+        },
+        {
+          "formal_step": 10,
+          "loss": 10.842477798461914,
+          "step": 15,
+          "step_begin_ns": 2611881234239209,
+          "step_end_ns": 2611881297509572
+        },
+        {
+          "formal_step": 11,
+          "loss": 10.8748779296875,
+          "step": 16,
+          "step_begin_ns": 2611881297536733,
+          "step_end_ns": 2611881343587100
+        },
+        {
+          "formal_step": 12,
+          "loss": 10.898293495178223,
+          "step": 17,
+          "step_begin_ns": 2611881343608770,
+          "step_end_ns": 2611881388427072
+        },
+        {
+          "formal_step": 13,
+          "loss": 10.914029121398926,
+          "step": 18,
+          "step_begin_ns": 2611886711391568,
+          "step_end_ns": 2611886769335841
+        },
+        {
+          "formal_step": 14,
+          "loss": 10.90008544921875,
+          "step": 19,
+          "step_begin_ns": 2611886769361331,
+          "step_end_ns": 2611886815141357
+        },
+        {
+          "formal_step": 15,
+          "loss": 10.881633758544922,
+          "step": 20,
+          "step_begin_ns": 2611886815163797,
+          "step_end_ns": 2611886861656136
+        },
+        {
+          "formal_step": 16,
+          "loss": 10.857807159423828,
+          "step": 21,
+          "step_begin_ns": 2611892175271486,
+          "step_end_ns": 2611892229608205
+        },
+        {
+          "formal_step": 17,
+          "loss": 10.892155647277832,
+          "step": 22,
+          "step_begin_ns": 2611892229636205,
+          "step_end_ns": 2611892275703052
+        },
+        {
+          "formal_step": 18,
+          "loss": 10.89659309387207,
+          "step": 23,
+          "step_begin_ns": 2611892275724183,
+          "step_end_ns": 2611892320550645
+        },
+        {
+          "formal_step": 19,
+          "loss": 10.854412078857422,
+          "step": 24,
+          "step_begin_ns": 2611897654226282,
+          "step_end_ns": 2611897712495206
+        },
+        {
+          "formal_step": 20,
+          "loss": 10.869161605834961,
+          "step": 25,
+          "step_begin_ns": 2611897712519876,
+          "step_end_ns": 2611897758302853
+        },
+        {
+          "formal_step": 21,
+          "loss": 10.843393325805664,
+          "step": 26,
+          "step_begin_ns": 2611897758324453,
+          "step_end_ns": 2611897803186805
+        },
+        {
+          "formal_step": 22,
+          "loss": 10.826690673828125,
+          "step": 27,
+          "step_begin_ns": 2611903165705403,
+          "step_end_ns": 2611903221681729
+        },
+        {
+          "formal_step": 23,
+          "loss": 10.846250534057617,
+          "step": 28,
+          "step_begin_ns": 2611903221706489,
+          "step_end_ns": 2611903267663315
+        },
+        {
+          "formal_step": 24,
+          "loss": 10.825822830200195,
+          "step": 29,
+          "step_begin_ns": 2611903267683915,
+          "step_end_ns": 2611903312746899
+        },
+        {
+          "formal_step": 25,
+          "loss": 10.848661422729492,
+          "step": 30,
+          "step_begin_ns": 2611908740260657,
+          "step_end_ns": 2611908798962143
+        },
+        {
+          "formal_step": 26,
+          "loss": 10.836799621582031,
+          "step": 31,
+          "step_begin_ns": 2611908798985993,
+          "step_end_ns": 2611908844810329
+        },
+        {
+          "formal_step": 27,
+          "loss": 10.832310676574707,
+          "step": 32,
+          "step_begin_ns": 2611908844834439,
+          "step_end_ns": 2611908891520999
+        },
+        {
+          "formal_step": 28,
+          "loss": 10.809287071228027,
+          "step": 33,
+          "step_begin_ns": 2611914273809933,
+          "step_end_ns": 2611914335642211
+        },
+        {
+          "formal_step": 29,
+          "loss": 10.863239288330078,
+          "step": 34,
+          "step_begin_ns": 2611914335670621,
+          "step_end_ns": 2611914381681678
+        },
+        {
+          "formal_step": 30,
+          "loss": 10.851821899414062,
+          "step": 35,
+          "step_begin_ns": 2611914381704068,
+          "step_end_ns": 2611914426699071
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 81.09450074
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "checkpoint_count": 10,
+      "checkpoints": [
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612271526458832,
+          "request_id": "bytecheckpoint_host-000001",
+          "sha256": "4f5ecfafdb8e9410bbc106ebcbdeaf1ede2976d5e636a788e0bcba7cd1fe0bd1",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2612265898561893
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 2,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612277143528659,
+          "request_id": "bytecheckpoint_host-000002",
+          "sha256": "15f3e65f21ae1655098f4925c58603dd097fc323b7add021ef9cf33026dea1ff",
+          "source_released": true,
+          "step": 11,
+          "submit_ns": 2612271679886322
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 3,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612282740496779,
+          "request_id": "bytecheckpoint_host-000003",
+          "sha256": "22c6a5cec9cc8b7a7d4f6d85888e8d2ee1b6128a814737b1c4c387a09fe6a8e2",
+          "source_released": true,
+          "step": 14,
+          "submit_ns": 2612277288612597
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 4,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612288297719885,
+          "request_id": "bytecheckpoint_host-000004",
+          "sha256": "7cd0e3c6d3a0fb32a12c0f004978000e688516076d875783a04f36731b1c1997",
+          "source_released": true,
+          "step": 17,
+          "submit_ns": 2612282889839703
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 5,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612293840075685,
+          "request_id": "bytecheckpoint_host-000005",
+          "sha256": "dd617204822250ec08aae2398e0164611dcc7a00208b5408f8fe9f9b2b530274",
+          "source_released": true,
+          "step": 20,
+          "submit_ns": 2612288441749549
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 6,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612299591259148,
+          "request_id": "bytecheckpoint_host-000006",
+          "sha256": "2b241f6d0d61b86117df882284aa1f6dd8186d58e76472b4a1bb089ea8ad1976",
+          "source_released": true,
+          "step": 23,
+          "submit_ns": 2612293979910483
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 7,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612305174417145,
+          "request_id": "bytecheckpoint_host-000007",
+          "sha256": "d9b48b8fdb55cfe68762a29b5127524216880c0d6330af042c58737848075916",
+          "source_released": true,
+          "step": 26,
+          "submit_ns": 2612299742469469
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 8,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612310740542616,
+          "request_id": "bytecheckpoint_host-000008",
+          "sha256": "4f134be5ed75eb4e14d3c89f422b00b58454bb7d219fd8394391aac1ffbcc527",
+          "source_released": true,
+          "step": 29,
+          "submit_ns": 2612305326540330
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 9,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612316360518404,
+          "request_id": "bytecheckpoint_host-000009",
+          "sha256": "393f1c7ebbf1745526db768aee3a0924b5c7b8fbf0e8d87088dde4291c1f3f49",
+          "source_released": true,
+          "step": 32,
+          "submit_ns": 2612310888950936
+        },
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 10,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2612321954770023,
+          "request_id": "bytecheckpoint_host-000010",
+          "sha256": "886b358021f382150c3baa61cfa36f8f0eea8ab4cc78049ce19c331ee71b0c61",
+          "source_released": true,
+          "step": 35,
+          "submit_ns": 2612316508929465
+        }
+      ],
+      "formal_steps": 30,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "bytecheckpoint_host",
+        "byte_exact": true,
+        "checkpoint_step": 35,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+          "global_step": "[35]",
+          "loss_scale": "1.0"
+        },
+        "generation": 10,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.82651138305664,
+          10.842906951904297,
+          10.857531547546387
+        ],
+        "source_oracle_losses": [
+          10.82651138305664,
+          10.842906951904297,
+          10.857531547546387
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_143104_2999280/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.82651138305664,
+          "step": 36,
+          "step_begin_ns": 2612321955069844,
+          "step_end_ns": 2612322008618010
+        },
+        {
+          "loss": 10.842906951904297,
+          "step": 37,
+          "step_begin_ns": 2612322008696981,
+          "step_end_ns": 2612322052930161
+        },
+        {
+          "loss": 10.857531547546387,
+          "step": 38,
+          "step_begin_ns": 2612322052996131,
+          "step_end_ns": 2612322096265877
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2612238745577443,
+          "step_end_ns": 2612265808143595
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2612265808170176,
+          "step_end_ns": 2612265853927991
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2612265853952812,
+          "step_end_ns": 2612265898551713
+        },
+        {
+          "formal_step": 4,
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2612271526493042,
+          "step_end_ns": 2612271589487864
+        },
+        {
+          "formal_step": 5,
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2612271589514224,
+          "step_end_ns": 2612271635162690
+        },
+        {
+          "formal_step": 6,
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2612271635183650,
+          "step_end_ns": 2612271679877992
+        },
+        {
+          "formal_step": 7,
+          "loss": 10.871929168701172,
+          "step": 12,
+          "step_begin_ns": 2612277143567659,
+          "step_end_ns": 2612277198099369
+        },
+        {
+          "formal_step": 8,
+          "loss": 10.89255142211914,
+          "step": 13,
+          "step_begin_ns": 2612277198126249,
+          "step_end_ns": 2612277243736874
+        },
+        {
+          "formal_step": 9,
+          "loss": 10.871400833129883,
+          "step": 14,
+          "step_begin_ns": 2612277243759914,
+          "step_end_ns": 2612277288603887
+        },
+        {
+          "formal_step": 10,
+          "loss": 10.842477798461914,
+          "step": 15,
+          "step_begin_ns": 2612282740522089,
+          "step_end_ns": 2612282798900163
+        },
+        {
+          "formal_step": 11,
+          "loss": 10.8748779296875,
+          "step": 16,
+          "step_begin_ns": 2612282798922383,
+          "step_end_ns": 2612282844699429
+        },
+        {
+          "formal_step": 12,
+          "loss": 10.898293495178223,
+          "step": 17,
+          "step_begin_ns": 2612282844722549,
+          "step_end_ns": 2612282889831333
+        },
+        {
+          "formal_step": 13,
+          "loss": 10.914029121398926,
+          "step": 18,
+          "step_begin_ns": 2612288297752586,
+          "step_end_ns": 2612288352139965
+        },
+        {
+          "formal_step": 14,
+          "loss": 10.90008544921875,
+          "step": 19,
+          "step_begin_ns": 2612288352169025,
+          "step_end_ns": 2612288397504139
+        },
+        {
+          "formal_step": 15,
+          "loss": 10.881633758544922,
+          "step": 20,
+          "step_begin_ns": 2612288397523659,
+          "step_end_ns": 2612288441741739
+        },
+        {
+          "formal_step": 16,
+          "loss": 10.857807159423828,
+          "step": 21,
+          "step_begin_ns": 2612293840101635,
+          "step_end_ns": 2612293890574629
+        },
+        {
+          "formal_step": 17,
+          "loss": 10.892155647277832,
+          "step": 22,
+          "step_begin_ns": 2612293890598840,
+          "step_end_ns": 2612293935762353
+        },
+        {
+          "formal_step": 18,
+          "loss": 10.89659309387207,
+          "step": 23,
+          "step_begin_ns": 2612293935784273,
+          "step_end_ns": 2612293979902013
+        },
+        {
+          "formal_step": 19,
+          "loss": 10.854413032531738,
+          "step": 24,
+          "step_begin_ns": 2612299591297738,
+          "step_end_ns": 2612299652619834
+        },
+        {
+          "formal_step": 20,
+          "loss": 10.869168281555176,
+          "step": 25,
+          "step_begin_ns": 2612299652648994,
+          "step_end_ns": 2612299698021498
+        },
+        {
+          "formal_step": 21,
+          "loss": 10.843427658081055,
+          "step": 26,
+          "step_begin_ns": 2612299698043089,
+          "step_end_ns": 2612299742461549
+        },
+        {
+          "formal_step": 22,
+          "loss": 10.826715469360352,
+          "step": 27,
+          "step_begin_ns": 2612305174455575,
+          "step_end_ns": 2612305236601344
+        },
+        {
+          "formal_step": 23,
+          "loss": 10.84626579284668,
+          "step": 28,
+          "step_begin_ns": 2612305236627564,
+          "step_end_ns": 2612305282115939
+        },
+        {
+          "formal_step": 24,
+          "loss": 10.82583999633789,
+          "step": 29,
+          "step_begin_ns": 2612305282137779,
+          "step_end_ns": 2612305326531779
+        },
+        {
+          "formal_step": 25,
+          "loss": 10.84866714477539,
+          "step": 30,
+          "step_begin_ns": 2612310740568966,
+          "step_end_ns": 2612310799013591
+        },
+        {
+          "formal_step": 26,
+          "loss": 10.836835861206055,
+          "step": 31,
+          "step_begin_ns": 2612310799037351,
+          "step_end_ns": 2612310844649546
+        },
+        {
+          "formal_step": 27,
+          "loss": 10.832338333129883,
+          "step": 32,
+          "step_begin_ns": 2612310844668046,
+          "step_end_ns": 2612310888942396
+        },
+        {
+          "formal_step": 28,
+          "loss": 10.809296607971191,
+          "step": 33,
+          "step_begin_ns": 2612316360550144,
+          "step_end_ns": 2612316418990909
+        },
+        {
+          "formal_step": 29,
+          "loss": 10.86323070526123,
+          "step": 34,
+          "step_begin_ns": 2612316419019609,
+          "step_end_ns": 2612316464505524
+        },
+        {
+          "formal_step": 30,
+          "loss": 10.851835250854492,
+          "step": 35,
+          "step_begin_ns": 2612316464524304,
+          "step_end_ns": 2612316508921135
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 83.350777905
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "checkpoint_count": 1,
+      "checkpoints": [
+        {
+          "adapter": "bytecheckpoint_host",
+          "admitted": true,
+          "data_completed": true,
+          "error": null,
+          "failed": false,
+          "generation": 1,
+          "input_buffer_released": true,
+          "persisted": true,
+          "persisted_ns": 2610102382546251,
+          "request_id": "bytecheckpoint_host-000001",
+          "sha256": "54156e898ea9e60eec326aa5595634a44b74d9e34361bfd018635369b41232ca",
+          "source_released": true,
+          "step": 8,
+          "submit_ns": 2610096231418469
+        }
+      ],
+      "formal_steps": 3,
+      "fresh_restore_required": true,
+      "kind": "mechanism-only",
+      "legacy_unclassified": false,
+      "model": "gpt2",
+      "restore": {
+        "adapter": "bytecheckpoint_host",
+        "byte_exact": true,
+        "checkpoint_step": 8,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 9, 'sample': 8}",
+          "global_step": "[8]",
+          "loss_scale": "1.0"
+        },
+        "generation": 1,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "restored_losses": [
+          10.87883186340332,
+          10.845147132873535,
+          10.859260559082031
+        ],
+        "source_oracle_losses": [
+          10.87883186340332,
+          10.845147132873535,
+          10.859260559082031
+        ],
+        "status": "pass"
+      },
+      "result_path": "results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_135458_2954657/result.json",
+      "seed": 41,
+      "source_oracle": [
+        {
+          "loss": 10.87883186340332,
+          "step": 9,
+          "step_begin_ns": 2610102382804982,
+          "step_end_ns": 2610102443124622
+        },
+        {
+          "loss": 10.845147132873535,
+          "step": 10,
+          "step_begin_ns": 2610102443198672,
+          "step_end_ns": 2610102486632098
+        },
+        {
+          "loss": 10.859260559082031,
+          "step": 11,
+          "step_begin_ns": 2610102486697378,
+          "step_end_ns": 2610102528800189
+        }
+      ],
+      "state_bytes": 1485030841,
+      "status": "trend_measured",
+      "steps": [
+        {
+          "formal_step": 1,
+          "loss": 10.868734359741211,
+          "step": 6,
+          "step_begin_ns": 2610069123194022,
+          "step_end_ns": 2610096141189084
+        },
+        {
+          "formal_step": 2,
+          "loss": 10.88557243347168,
+          "step": 7,
+          "step_begin_ns": 2610096141215554,
+          "step_end_ns": 2610096187647781
+        },
+        {
+          "formal_step": 3,
+          "loss": 10.84721565246582,
+          "step": 8,
+          "step_begin_ns": 2610096187670562,
+          "step_end_ns": 2610096231409669
+        }
+      ],
+      "storage_backend": "filesystem",
+      "total_wall_seconds": 33.405674137
     },
     {
       "adapter": "none",

@@ -1,33 +1,32 @@
 from pathlib import Path
 
-from .base import Adapter
-from ..protocol import DependencyBlocked
+from .base import MechanismOnlyAdapter, probe_worker
 
 
-class FastPersistHostAdapter(Adapter):
+class FastPersistHostAdapter(MechanismOnlyAdapter):
     name = "fastpersist_host"
-    kind = "host-adapted"
+    kind = "mechanism-only"
+    upstream_name = "FastPersist/DeepNVMe"
+    degradation_reason = ("CPU worker and AIO extensions are available, but "
+                          "the upstream legacy serializer is not yet connected "
+                          "to the MindSpore state bridge")
 
     @classmethod
     def preflight(cls, config):
         worker = config.get("worker_python_fastpersist")
         root = Path(config.get("upstream_root", "")) / "DeepSpeedExamples"
         ds = Path(config.get("upstream_root", "")) / "DeepSpeed"
-        missing = [str(path) for path in (root, ds) if not path.exists()]
-        if missing:
-            return {"adapter": cls.name, "kind": cls.kind,
-                    "status": "dependency_blocked", "reason": "missing locked source: " + ", ".join(missing)}
-        if not worker or not Path(worker).exists():
-            return {"adapter": cls.name, "kind": cls.kind,
-                    "status": "dependency_blocked",
-                    "reason": f"missing CPU worker Python: {worker}"}
-        return {"adapter": cls.name, "kind": cls.kind,
-                "status": "build_pending", "source": str(root), "worker": worker}
-
-    def submit(self, generation, state_source, controls):
-        raise DependencyBlocked(
-            "FastPersist worker/AIO extensions are not prepared; no torch.save fallback is allowed")
-
-    def restore(self, generation, destination):
-        raise DependencyBlocked("FastPersist worker is not prepared")
-
+        status = super().preflight(config)
+        probe = probe_worker(
+            worker,
+            "import torch, deepspeed; "
+            "from deepspeed.ops.op_builder import AsyncIOBuilder, PinMemoryBuilder; "
+            "print('builders=available'); "
+            "print('torch='+torch.__version__+',deepspeed='+deepspeed.__version__)" ,
+            timeout=30)
+        status.update({"source": str(root), "deepspeed": str(ds),
+                       "worker": worker,
+                       "worker_status": probe,
+                       "upstream_integration": "not_attempted",
+                       "fallback_reason": "common Host bridge used; FastFileWriter not invoked"})
+        return status

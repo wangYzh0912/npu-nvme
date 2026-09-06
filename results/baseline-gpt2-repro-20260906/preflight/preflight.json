@@ -2,25 +2,64 @@
   "adapters": {
     "bytecheckpoint_host": {
       "adapter": "bytecheckpoint_host",
-      "kind": "host-adapted",
-      "reason": "missing CPU worker Python: /home/user7/npu-nvme-baseline-envs/bytecheckpoint/bin/python",
-      "status": "dependency_blocked"
+      "capture": "common MindSpore NPU address capture",
+      "degradation": "mechanism-only",
+      "fallback_reason": "common Host bridge used; BC planner/engine not invoked",
+      "kind": "mechanism-only",
+      "reason": "CPU worker is available, but the upstream planner is not yet connected to the MindSpore state bridge",
+      "source": "/home/user7/npu-nvme-baseline-upstreams/ByteCheckpoint",
+      "status": "ready",
+      "upstream": "ByteCheckpoint",
+      "upstream_integration": "not_attempted",
+      "worker": "/home/user7/npu-nvme-baseline-envs/bytecheckpoint/bin/python",
+      "worker_status": {
+        "returncode": 0,
+        "status": "ready",
+        "stdout": "[2026-09-06 14:39:52][WARNING][memory_pool.py:69][memory_pool][pid:3013489] - Failed loading CUDA runtime: Torch not compiled with CUDA enabled\ntorch=2.5.1"
+      },
+      "writer": "common durable Host file writer"
     },
     "datastates_acl": {
       "adapter": "datastates_acl",
-      "kind": "native",
+      "attempt": "CMake configure failed: nvcc not found",
+      "capture": "common MindSpore NPU address capture",
+      "degradation": "mechanism-only",
+      "kind": "mechanism-only",
+      "reason": "locked checkout hard-requires CUDA/nvcc and liburing; ACL C ABI was not available",
       "source": "/home/user7/npu-nvme-baseline-upstreams/datastates-llm",
-      "status": "build_pending"
+      "status": "ready",
+      "upstream": "DataStates-LLM",
+      "writer": "common durable Host file writer"
     },
     "fastpersist_host": {
       "adapter": "fastpersist_host",
-      "kind": "host-adapted",
-      "reason": "missing CPU worker Python: /home/user7/npu-nvme-baseline-envs/fastpersist/bin/python",
-      "status": "dependency_blocked"
+      "capture": "common MindSpore NPU address capture",
+      "deepspeed": "/home/user7/npu-nvme-baseline-upstreams/DeepSpeed",
+      "degradation": "mechanism-only",
+      "fallback_reason": "common Host bridge used; FastFileWriter not invoked",
+      "kind": "mechanism-only",
+      "reason": "CPU worker and AIO extensions are available, but the upstream legacy serializer is not yet connected to the MindSpore state bridge",
+      "source": "/home/user7/npu-nvme-baseline-upstreams/DeepSpeedExamples",
+      "status": "ready",
+      "upstream": "FastPersist/DeepNVMe",
+      "upstream_integration": "not_attempted",
+      "worker": "/home/user7/npu-nvme-baseline-envs/fastpersist/bin/python",
+      "worker_status": {
+        "returncode": 0,
+        "status": "ready",
+        "stdout": "[2026-09-06 14:39:55,423] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\n[2026-09-06 14:39:57,947] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\nbuilders=available\ntorch=2.6.0+cpu,deepspeed=0.19.6+32110a95"
+      },
+      "writer": "common durable Host file writer"
     },
     "mindspore_sync": {
       "adapter": "mindspore_sync",
       "kind": "framework-reference",
+      "reason": null,
+      "status": "ready"
+    },
+    "none": {
+      "adapter": "none",
+      "kind": "training-reference",
       "reason": null,
       "status": "ready"
     },
@@ -33,10 +72,15 @@
     },
     "pccheck_acl": {
       "adapter": "pccheck_acl",
-      "kind": "native",
-      "note": "existing checkout is CUDA/x86; ACL/ARM writer patch required",
+      "capture": "common MindSpore NPU address capture",
+      "degradation": "mechanism-only",
+      "kind": "mechanism-only",
+      "note": "Host state writer exercises protocol only",
+      "reason": "locked checkout is CUDA/x86, uses clwb/sfence and the expected main.cpp is absent",
       "source": "/home/user7/npu-nvme-baseline-upstreams/pccheck",
-      "status": "build_pending"
+      "status": "ready",
+      "upstream": "PCcheck",
+      "writer": "common durable Host file writer"
     }
   },
   "config": {
@@ -77,8 +121,8 @@
     "worker_python_fastpersist": "/home/user7/npu-nvme-baseline-envs/fastpersist/bin/python"
   },
   "environment": {
-    "git_head": "f3c086157d2ce65d8b686cd938874b1b3541ec5d",
-    "git_status": "?? experiments/baselines/repro/\n?? results/baseline-gpt2-repro-20260906/\n?? tests/python/test_baseline_repro.py\n",
+    "git_head": "f66b3f07e89ebbfccf4a8ae9b753ba0fd7698af6",
+    "git_status": " M experiments/baselines/repro/adapters/base.py\n M experiments/baselines/repro/adapters/bytecheckpoint_host.py\n M experiments/baselines/repro/adapters/datastates_acl.py\n M experiments/baselines/repro/adapters/fastpersist_host.py\n M experiments/baselines/repro/adapters/pccheck_acl.py\n M experiments/baselines/repro/cli.py\n M experiments/baselines/repro/host_bridge.py\n M results/baseline-gpt2-repro-20260906/REPORT.md\n M results/baseline-gpt2-repro-20260906/preflight/preflight.json\n M results/baseline-gpt2-repro-20260906/summary.json\n M tests/python/test_baseline_repro.py\n?? experiments/baselines/repro/worker_environment.lock.json\n?? results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_135458_2954657/\n?? results/baseline-gpt2-repro-20260906/bytecheckpoint_host/bytecheckpoint_host_20260906_143104_2999280/\n?? results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_135122_2942076/\n?? results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_142112_2975876/\n?? results/baseline-gpt2-repro-20260906/datastates_acl/datastates_acl_20260906_142428_2982550/\n?? results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_135648_2961087/\n?? results/baseline-gpt2-repro-20260906/fastpersist_host/fastpersist_host_20260906_143425_3005964/\n?? results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_135310_2948376/\n?? results/baseline-gpt2-repro-20260906/pccheck_acl/pccheck_acl_20260906_142803_2992581/\n",
     "hardware": {
       "findmnt": {
         "args": [
@@ -111,6 +155,6 @@
     "platform": "Linux-5.10.0-60.18.0.50.oe2203.aarch64-aarch64-with-glibc2.38",
     "python": "3.9.25 (main, Nov  3 2025, 22:33:42) \n[GCC 11.2.0]",
     "repo_commit": "f3c086157d2ce65d8b686cd938874b1b3541ec5d",
-    "timestamp": "2026-09-06T02:38:21+0800"
+    "timestamp": "2026-09-06T14:39:49+0800"
   }
 }

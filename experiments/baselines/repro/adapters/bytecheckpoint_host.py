@@ -1,32 +1,27 @@
 from pathlib import Path
 
-from .base import Adapter
-from ..protocol import DependencyBlocked
+from .base import MechanismOnlyAdapter, probe_worker
 
 
-class ByteCheckpointHostAdapter(Adapter):
+class ByteCheckpointHostAdapter(MechanismOnlyAdapter):
     name = "bytecheckpoint_host"
-    kind = "host-adapted"
+    kind = "mechanism-only"
+    upstream_name = "ByteCheckpoint"
+    degradation_reason = ("CPU worker is available, but the upstream planner "
+                          "is not yet connected to the MindSpore state bridge")
 
     @classmethod
     def preflight(cls, config):
         worker = config.get("worker_python_bytecheckpoint")
         root = Path(config.get("upstream_root", "")) / "ByteCheckpoint"
-        if not root.exists():
-            return {"adapter": cls.name, "kind": cls.kind,
-                    "status": "dependency_blocked",
-                    "reason": f"missing locked source: {root}"}
-        if not worker or not Path(worker).exists():
-            return {"adapter": cls.name, "kind": cls.kind,
-                    "status": "dependency_blocked",
-                    "reason": f"missing CPU worker Python: {worker}"}
-        return {"adapter": cls.name, "kind": cls.kind,
-                "status": "build_pending", "source": str(root), "worker": worker}
-
-    def submit(self, generation, state_source, controls):
-        raise DependencyBlocked(
-            "ByteCheckpoint worker is not prepared; no ordinary pickle/file fallback is allowed")
-
-    def restore(self, generation, destination):
-        raise DependencyBlocked("ByteCheckpoint worker is not prepared")
-
+        status = super().preflight(config)
+        probe = probe_worker(
+            worker,
+            "import torch, bytecheckpoint; "
+            "import bytecheckpoint.workflow.state_dict; "
+            "print('torch='+torch.__version__)" )
+        status.update({"source": str(root), "worker": worker,
+                       "worker_status": probe,
+                       "upstream_integration": "not_attempted",
+                       "fallback_reason": "common Host bridge used; BC planner/engine not invoked"})
+        return status

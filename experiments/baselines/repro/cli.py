@@ -93,6 +93,9 @@ def run_one(config, name, mode="run"):
     lock_path = Path(__file__).with_name("upstream.lock.json")
     if lock_path.exists():
         shutil.copy2(lock_path, run_dir / "upstream.lock.json")
+    worker_lock = Path(__file__).with_name("worker_environment.lock.json")
+    if worker_lock.exists():
+        shutil.copy2(worker_lock, run_dir / "worker_environment.lock.json")
     schema_path = Path(config["results_root"]) / "prepare" / "state_schema.json"
     if schema_path.exists():
         shutil.copy2(schema_path, run_dir / "state_schema.json")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import os
 from pathlib import Path
 
@@ -104,6 +105,59 @@ class DurableFileAdapter(Adapter):
         return load_raw_snapshot(self._generation_dir(generation))
 
 
+class MechanismOnlyAdapter(DurableFileAdapter):
+    """Explicit downgrade for CUDA-only baselines.
+
+    Common NPU capture and durable restore are exercised, while the upstream
+    CUDA writer/planner is not claimed to be present.
+    """
+
+    kind = "mechanism-only"
+    degradation_reason = "upstream CUDA path unavailable on current platform"
+    upstream_name = None
+
+    @classmethod
+    def preflight(cls, config):
+        return {
+            "adapter": cls.name, "kind": cls.kind, "status": "ready",
+            "degradation": "mechanism-only", "upstream": cls.upstream_name,
+            "reason": cls.degradation_reason,
+            "capture": "common MindSpore NPU address capture",
+            "writer": "common durable Host file writer",
+        }
+
+    def submit(self, generation, state_source, controls):
+        snapshot = state_source() if callable(state_source) else state_source["snapshot"]()
+        request_id = f"{self.name}-{int(generation):06d}"
+        self.events.emit("degradation", int(generation), request_id,
+                         level="mechanism-only", reason=self.degradation_reason)
+        # Exercise the same explicit Host bridge expected by a CPU worker.  A
+        # copy through shared memory is intentional and is accounted for as a
+        # downgrade cost; it is not presented as zero-copy NPU persistence.
+        from ..host_bridge import SharedSnapshot, snapshot_view_from_descriptor
+        owner = None
+        bridged = None
+        try:
+            self.events.emit("ipc_begin", int(generation), request_id,
+                             bytes=snapshot.total_bytes)
+            owner, descriptor = SharedSnapshot.from_snapshot(snapshot,
+                                                               prefix=self.name)
+            self.events.emit("ipc_ready", int(generation), request_id,
+                             shm=descriptor["name"], bytes=descriptor["size"])
+            # Keep the owner alive through the synchronous durable writer so
+            # the bridged arrays are views, avoiding a third full-state copy.
+            bridged = snapshot_view_from_descriptor(owner, descriptor)
+            self.events.emit("ipc_receive", int(generation), request_id,
+                             bytes=bridged.total_bytes)
+            handle = super().submit(generation, {"snapshot": lambda: bridged}, controls)
+            return handle
+        finally:
+            bridged = None
+            if owner is not None:
+                owner.close(unlink=True)
+                self.events.emit("ipc_released", int(generation), request_id)
+
+
 def require_path(path, label):
     if not path:
         raise DependencyBlocked(f"{label} is not configured")
@@ -117,3 +171,21 @@ def require_python_module(python, module):
     probe = Path(python)
     if not probe.exists():
         raise DependencyBlocked(f"worker Python does not exist: {python}")
+
+
+def probe_worker(python, code, timeout=30):
+    """Run a side-effect-free import/build probe in a locked worker venv."""
+    if not python:
+        return {"status": "missing", "reason": "worker Python is not configured"}
+    try:
+        proc = subprocess.run([str(python), "-c", code], capture_output=True,
+                              text=True, check=False, timeout=timeout)
+    except Exception as error:
+        return {"status": "error", "reason": repr(error)}
+    result = {"status": "ready" if proc.returncode == 0 else "failed",
+              "returncode": proc.returncode}
+    if proc.stdout.strip():
+        result["stdout"] = proc.stdout.strip()[-4000:]
+    if proc.stderr.strip():
+        result["stderr"] = proc.stderr.strip()[-4000:]
+    return result

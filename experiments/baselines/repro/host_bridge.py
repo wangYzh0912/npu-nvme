@@ -75,3 +75,18 @@ def snapshot_from_descriptor(descriptor):
     finally:
         owner.close()
 
+
+def snapshot_view_from_descriptor(owner, descriptor):
+    """Build a read-only Snapshot view without copying shared-memory payloads."""
+    arrays = {}
+    for field in descriptor["fields"]:
+        begin = int(field["offset"])
+        end = begin + int(field["nbytes"])
+        arrays[field["name"]] = np.frombuffer(
+            owner.shm.buf[begin:end], dtype=np.dtype(field["dtype"])).reshape(
+                tuple(field["shape"]))
+    control = descriptor["controls"]
+    begin = int(control["offset"])
+    end = begin + int(control["nbytes"])
+    payload = np.frombuffer(owner.shm.buf[begin:end], dtype=np.uint8)
+    return Snapshot(arrays, payload, control["metadata"], descriptor["schema"])
