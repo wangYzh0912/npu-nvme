@@ -31,8 +31,10 @@ their locked sources require CUDA/x86 components. ByteCheckpoint and
 FastPersist have isolated CPU worker import probes (the versions are locked in
 `worker_environment.lock.json`), but their planners/serializers are not yet
 connected to the MindSpore state bridge; their measured runs therefore use the
-common shared-memory Host bridge and durable writer. These runs validate the
-shared capture, persistence, checksum and fresh-restore mechanisms, not the
-upstream CUDA backend performance. The native raw adapter remains blocked by
+common shared-memory Host bridge and durable writer. The common runner obtains
+bytes with synchronous MindSpore `asnumpy()`; `_data_ptr()` is used for alias
+identification, not for an ACL asynchronous DMA submission. These runs
+validate shared capture, persistence, checksum and fresh-restore semantics,
+not the upstream CUDA backend performance. The native raw adapter remains blocked by
 SPDK being unable to attach the `uio_pci_generic`-bound `0000:83:00.0` device
 (`PA IOVA` probe failure).

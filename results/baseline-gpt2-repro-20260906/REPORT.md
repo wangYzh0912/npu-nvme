@@ -39,9 +39,11 @@ continuation losses matched the source oracle exactly under the configured
 
 Raw JSON, event timelines, state schema, fixture hashes, failure records and
 restore logs are kept beside each run. Mechanism-only runs deliberately
-exercise the common NPU capture, shared-memory bridge, durable Host writer and
-fresh-process restore, but do not claim the corresponding CUDA planner or
-serializer. The two early smoke runs are retained as historical diagnostics;
+exercise the common synchronous `asnumpy()` NPU capture, shared-memory bridge,
+durable Host writer and fresh-process restore, but do not claim the
+corresponding CUDA planner or serializer. `_data_ptr()` is used only for alias
+identification in this runner; it is not an ACL asynchronous DMA submission.
+The two early smoke runs are retained as historical diagnostics;
 formal records include `storage_backend` and `kind` so they cannot be mixed
 into a performance comparison accidentally. Worker versions and probe status
 are locked in `experiments/baselines/repro/worker_environment.lock.json`.

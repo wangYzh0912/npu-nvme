@@ -122,7 +122,7 @@ class MechanismOnlyAdapter(DurableFileAdapter):
             "adapter": cls.name, "kind": cls.kind, "status": "ready",
             "degradation": "mechanism-only", "upstream": cls.upstream_name,
             "reason": cls.degradation_reason,
-            "capture": "common MindSpore NPU address capture",
+            "capture": "common MindSpore synchronous asnumpy capture; _data_ptr only used for alias detection",
             "writer": "common durable Host file writer",
         }
 
