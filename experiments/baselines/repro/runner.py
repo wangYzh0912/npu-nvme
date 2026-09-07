@@ -248,13 +248,34 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
             snapshot = restored
             applied = apply_snapshot(ms, snapshot,
                                       {"model": model, "optimizer": optimizer}, optimizer)
-            restored_digest = snapshot.digest()
         else:
             snapshot = None
             applied = restore_training_controls(ms, optimizer, restored)
-            restored_digest = selected.get("sha256")
         ms.hal.synchronize()
-        mark("state_ready", state_sha256=restored_digest)
+        mark("state_ready")
+
+        # The performance metric ends at state_ready.  Full-state hashing is
+        # deliberately restricted to the independent verification process so
+        # a 1.5 GiB oracle scan is never reported as restore latency.
+        persisted_digest = None
+        applied_digest = None
+        byte_exact = None
+        if mode == "verify":
+            mark("verify_begin")
+            if snapshot is not None:
+                persisted_digest = snapshot.digest()
+            applied_snapshot = capture_snapshot(
+                ms, {"model": model, "optimizer": optimizer}, optimizer,
+                int(selected["step"]), int(config["seed"]))
+            applied_digest = applied_snapshot.digest()
+            byte_exact = (
+                (persisted_digest is None or
+                 persisted_digest == selected.get("sha256")) and
+                applied_digest == selected.get("sha256"))
+            mark("verify_end", persisted_state_sha256=persisted_digest,
+                 applied_state_sha256=applied_digest,
+                 expected_state_sha256=selected.get("sha256"),
+                 byte_exact=byte_exact)
         steps = int(config["continue_steps"] if continue_steps is None else continue_steps)
         losses = []
         final_step = int(selected["step"])
@@ -273,13 +294,20 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
                      includes_graph_compile=True)
         oracle = [row["loss"] for row in result.get("source_oracle", [])[:steps]]
         deviations = [abs(float(a) - float(b)) for a, b in zip(losses, oracle)]
+        loss_ok = (not deviations or
+                   max(deviations) <= float(config["loss_atol"]) +
+                   float(config["loss_rtol"]) *
+                   max(1.0, max(map(abs, oracle))))
         restore_result = {
-            "status": "pass" if restored_digest == selected.get("sha256") and
-                      (not deviations or max(deviations) <= float(config["loss_atol"]) +
-                       float(config["loss_rtol"]) * max(1.0, max(map(abs, oracle)))) else "restore_failed",
+            "status": "pass" if (mode == "timing" or byte_exact is True) and
+                      loss_ok else "restore_failed",
             "adapter": adapter_name, "generation": int(selected["generation"]),
             "checkpoint_step": int(selected["step"]),
-            "byte_exact": restored_digest == selected.get("sha256"),
+            "verification_performed": mode == "verify",
+            "byte_exact": byte_exact,
+            "persisted_state_sha256": persisted_digest,
+            "applied_state_sha256": applied_digest,
+            "expected_state_sha256": selected.get("sha256"),
             "controls": {key: str(value) for key, value in applied.items()},
             "restored_losses": losses, "source_oracle_losses": oracle,
             "loss_deviation": deviations,

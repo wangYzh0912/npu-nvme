@@ -1,5 +1,7 @@
 # Full-state recovery comparison (2026-09-07)
 
+> Superseded for latency reporting by `../full-state-recovery-net-20260907/`. The values below include a full-state SHA-256 oracle scan before `state_ready`; retain this directory only as raw audit evidence and preflight/runtime-gate evidence.
+
 This run compares complete GPT-2 state recovery on the same NPU configuration. The measured state contains model parameters, Adam state, controls, global step and data cursor.
 
 | method | backend | state-ready mean | median | min–max | verification |

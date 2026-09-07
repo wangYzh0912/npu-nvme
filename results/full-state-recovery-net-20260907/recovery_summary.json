@@ -1,0 +1,87 @@
+{
+  "status": "partial_complete",
+  "date": "2026-09-07",
+  "metric_definition": "state_ready_ns - restore_begin_ns; excludes full-state digest verification",
+  "state_fields": 591,
+  "state_bytes": 1485030841,
+  "timing_repetitions_per_available_method": 5,
+  "verification_repetitions_per_available_method": 1,
+  "methods": {
+    "mindspore_native_save": {
+      "status": "measured",
+      "backend": "XFS /models",
+      "state_ready_seconds": {
+        "raw": [7.290153815, 7.120585677, 7.012742684, 7.104638428, 6.971387048],
+        "mean": 7.0999015304,
+        "median": 7.104638428,
+        "min": 6.971387048,
+        "max": 7.290153815
+      },
+      "phase_mean_seconds": {
+        "adapter_and_metadata_ready": 0.000287899,
+        "read_deserialize": 4.3403703586,
+        "apply_and_device_sync": 2.7592432728
+      },
+      "first_step_seconds": {
+        "raw": [26.662987288, 25.688880158, 25.521881727, 25.517841322, 25.24836811],
+        "mean": 25.727991721,
+        "median": 25.521881727,
+        "min": 25.24836811,
+        "max": 26.662987288,
+        "includes_graph_compile": true
+      },
+      "verification": {
+        "status": "pass",
+        "persisted_byte_exact": true,
+        "applied_npu_state_byte_exact": true,
+        "continue_steps": 3,
+        "loss_deviation": [0.0, 0.0, 0.0]
+      }
+    },
+    "bytecheckpoint_host": {
+      "status": "measured",
+      "backend": "XFS /models",
+      "port_class": "host-adapted-semantic-port",
+      "state_ready_seconds": {
+        "raw": [15.278111977, 15.390344864, 15.388250435, 15.629746785, 15.369163559],
+        "mean": 15.411123524,
+        "median": 15.388250435,
+        "min": 15.278111977,
+        "max": 15.629746785
+      },
+      "phase_mean_seconds": {
+        "adapter_and_metadata_ready": 0.067232081,
+        "read_deserialize": 12.3583215382,
+        "apply_and_device_sync": 2.9855699048
+      },
+      "first_step_seconds": {
+        "raw": [26.219921343, 26.373581813, 26.436986816, 26.553895201, 26.754594859],
+        "mean": 26.4677960064,
+        "median": 26.436986816,
+        "min": 26.219921343,
+        "max": 26.754594859,
+        "includes_graph_compile": true
+      },
+      "verification": {
+        "status": "pass",
+        "persisted_byte_exact": true,
+        "applied_npu_state_byte_exact": true,
+        "continue_steps": 3,
+        "loss_deviation": [0.0, 0.0, 0.0]
+      }
+    },
+    "ours": {
+      "status": "runtime_attach_failed",
+      "backend": "raw SPDK 0000:83:00.0",
+      "reason": "PA IOVA required but current mode is VA; SPDK controller attach/probe failed",
+      "filesystem_fallback_used": false
+    }
+  },
+  "limited_comparison": {
+    "bytecheckpoint_to_native_state_ready_ratio": 2.1706108821,
+    "same_filesystem_for_these_two_methods": true,
+    "three_way_same_physical_storage_verified": false,
+    "p99_or_confidence_interval_claimed": false
+  },
+  "supporting_evidence": "../full-state-recovery-20260907/"
+}

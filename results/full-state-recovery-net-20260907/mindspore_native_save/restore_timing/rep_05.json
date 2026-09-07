@@ -1,0 +1,78 @@
+{
+  "adapter": "mindspore_native_save",
+  "applied_state_sha256": null,
+  "byte_exact": null,
+  "checkpoint_step": 35,
+  "controls": {
+    "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+    "global_step": "[35]",
+    "loss_scale": "1.0"
+  },
+  "expected_state_sha256": "9bae6ff8a1932784e5eca0425e82ff186a1555788ce19a0bb42cdfacaee3a8dd",
+  "generation": 10,
+  "loss_deviation": [
+    0.0
+  ],
+  "mode": "timing",
+  "persisted_state_sha256": null,
+  "repeat_index": 5,
+  "restored_losses": [
+    10.826495170593262
+  ],
+  "source_oracle_losses": [
+    10.826495170593262
+  ],
+  "status": "pass",
+  "timing": {
+    "events": [
+      {
+        "event": "process_start",
+        "mode": "timing",
+        "monotonic_ns": 2718284543143495,
+        "pid": 3329104,
+        "repeat_index": 5
+      },
+      {
+        "event": "model_constructed",
+        "monotonic_ns": 2718291873469461
+      },
+      {
+        "event": "restore_begin",
+        "monotonic_ns": 2718291873823763,
+        "selected_generation": 10,
+        "selected_step": 35
+      },
+      {
+        "event": "metadata_ready",
+        "monotonic_ns": 2718291874101374
+      },
+      {
+        "combined": true,
+        "event": "read_deserialize_done",
+        "monotonic_ns": 2718296133683140
+      },
+      {
+        "event": "state_ready",
+        "monotonic_ns": 2718298845210811
+      },
+      {
+        "event": "first_step_begin",
+        "monotonic_ns": 2718298845223981,
+        "step": 36
+      },
+      {
+        "event": "first_step_end",
+        "includes_graph_compile": true,
+        "loss": 10.826495170593262,
+        "monotonic_ns": 2718324093592091,
+        "step": 36
+      }
+    ],
+    "first_step_begin_ns": 2718298845223981,
+    "first_step_end_ns": 2718324093592091,
+    "process_start_ns": 2718284543139395,
+    "restore_begin_ns": 2718291873823763,
+    "state_ready_ns": 2718298845210811
+  },
+  "verification_performed": false
+}
