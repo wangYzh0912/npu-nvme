@@ -10,6 +10,7 @@ from experiments.baselines.repro.cli import (adapter_evidence,
 from experiments.baselines.repro.adapters import ADAPTERS
 from experiments.baselines.repro.protocol import EventLog, Handle
 from experiments.baselines.repro.state_bridge import Snapshot, load_raw_snapshot, save_raw_snapshot
+from experiments.baselines.repro.inventory import build_inventory
 from python.full_checkpoint_protocol import CheckpointState
 
 
@@ -132,3 +133,16 @@ def test_native_mindspore_save_adapter_is_distinct_from_raw_reference():
     status = adapter.preflight({"fs_test_dir": "/models"})
     assert status["api"] == "mindspore.save_checkpoint(async_save=False)"
     assert status["storage"] == "durable XFS file backend"
+
+
+def test_inventory_records_missing_run_without_guessing(tmp_path):
+    config = {
+        "project_root": str(tmp_path), "project_commit": "locked",
+        "fs_test_dir": str(tmp_path / "fs"), "raw_pci": "0000:83:00.0",
+        "same_physical_storage_verified": False,
+    }
+    report = build_inventory(config, {"ours": str(tmp_path / "missing")})
+    row = report["methods"][0]
+    assert row["status"] == "missing"
+    assert row["reason"] == "source.json missing"
+    assert report["storage"]["same_physical_storage_verified"] is False

@@ -74,6 +74,21 @@ class OursAdapter(Adapter):
                 "status": "ready", "raw_pci": config["raw_pci"],
                 "implementation": "DirectCheckpoint FULL path"}
 
+    @classmethod
+    def runtime_probe(cls, config):
+        """Attempt the real SPDK/ACL attach without submitting a checkpoint."""
+        try:
+            probe = cls(config, Path(config.get("results_root", ".")) / "runtime_probe")
+            probe.close()
+            return {"adapter": cls.name, "status": "ready",
+                    "runtime_attach": "passed", "raw_pci": config["raw_pci"]}
+        except DependencyBlocked as error:
+            return {"adapter": cls.name, "status": "dependency_blocked",
+                    "runtime_attach": "failed", "reason": repr(error)}
+        except BuildFailed as error:
+            return {"adapter": cls.name, "status": "runtime_attach_failed",
+                    "runtime_attach": "failed", "reason": repr(error)}
+
     def __init__(self, config, run_dir):
         super().__init__(config, run_dir)
         try:

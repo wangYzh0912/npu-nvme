@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 
 from .adapters import ADAPTERS
-from .protocol import AdapterError, DependencyBlocked
+from .protocol import AdapterError, DependencyBlocked, EventLog
 from .state_bridge import (apply_snapshot, capture_snapshot, create_batches,
                            load_raw_snapshot, save_raw_snapshot, write_json)
 from python.training_state import capture_training_controls, restore_training_controls
@@ -205,50 +205,105 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
 
 
 def restore(config, adapter_name, run_dir, generation="latest-committed",
-            continue_steps=None, fixture_dir=None):
+            continue_steps=None, fixture_dir=None, output_path=None,
+            mode="verify", repeat_index=None):
+    """Restore in a fresh process and optionally emit phase timing evidence.
+
+    ``output_path`` is deliberately independent from ``restore.json`` so
+    repeated timing processes cannot overwrite correctness evidence.
+    """
     run_dir = Path(run_dir)
+    process_start = time.monotonic_ns()
+    events = []
+    def mark(event, **detail):
+        row = {"event": event, "monotonic_ns": time.monotonic_ns()}
+        row.update(detail)
+        events.append(row)
+        return row["monotonic_ns"]
+    mark("process_start", pid=os.getpid(), mode=mode,
+         repeat_index=repeat_index)
     result = json.loads((run_dir / "source.json").read_text())
     checkpoints = result.get("checkpoints", [])
     if not checkpoints:
         raise ValueError("source run has no committed checkpoints")
     selected = checkpoints[-1] if generation == "latest-committed" else next(
         item for item in checkpoints if int(item["generation"]) == int(generation))
-    ms, model, optimizer, cell = _model(config)
-    adapter = ADAPTERS[adapter_name](config, run_dir)
-    destination = {"model": model, "optimizer": optimizer,
-                   "_step": int(selected["step"])}
-    restored = adapter.restore(int(selected["generation"]), destination)
-    if hasattr(restored, "arrays"):
-        snapshot = restored
-        applied = apply_snapshot(ms, snapshot,
-                                  {"model": model, "optimizer": optimizer}, optimizer)
-        restored_digest = snapshot.digest()
-    else:
-        snapshot = None
-        applied = restore_training_controls(ms, optimizer, restored)
-        restored_digest = selected.get("sha256")
-    steps = int(config["continue_steps"] if continue_steps is None else continue_steps)
-    losses = []
-    final_step = int(selected["step"])
-    for step in range(final_step + 1, final_step + steps + 1):
-        start_token = (step * 104729) % 50257
-        ids = (np.arange(int(config["input_tokens"]), dtype=np.int32) + start_token) % 50257
-        mask = np.ones_like(ids)
-        loss = cell(ms.Tensor(ids[None, :]), ms.Tensor(mask[None, :]))
+    adapter = None
+    try:
+        ms, model, optimizer, cell = _model(config)
+        mark("model_constructed")
         ms.hal.synchronize()
-        losses.append(float(np.asarray(loss.asnumpy()).reshape(())))
-    oracle = [row["loss"] for row in result.get("source_oracle", [])[:steps]]
-    deviations = [abs(float(a) - float(b)) for a, b in zip(losses, oracle)]
-    restore_result = {
-        "status": "pass" if restored_digest == selected.get("sha256") and
-                  (not deviations or max(deviations) <= float(config["loss_atol"]) +
-                   float(config["loss_rtol"]) * max(1.0, max(map(abs, oracle)))) else "restore_failed",
-        "adapter": adapter_name, "generation": int(selected["generation"]),
-        "checkpoint_step": int(selected["step"]),
-        "byte_exact": restored_digest == selected.get("sha256"),
-        "controls": {key: str(value) for key, value in applied.items()},
-        "restored_losses": losses, "source_oracle_losses": oracle,
-        "loss_deviation": deviations,
-    }
-    write_json(run_dir / "restore.json", restore_result)
+        mark("restore_begin", selected_generation=int(selected["generation"]),
+             selected_step=int(selected["step"]))
+        adapter = ADAPTERS[adapter_name](config, run_dir)
+        if output_path:
+            adapter.events = EventLog(Path(output_path).with_suffix(".events.jsonl"))
+        mark("metadata_ready")
+        destination = {"model": model, "optimizer": optimizer,
+                       "_step": int(selected["step"])}
+        restored = adapter.restore(int(selected["generation"]), destination)
+        mark("read_deserialize_done",
+             combined=adapter_name in {"mindspore_native_save", "bytecheckpoint_host"})
+        if hasattr(restored, "arrays"):
+            snapshot = restored
+            applied = apply_snapshot(ms, snapshot,
+                                      {"model": model, "optimizer": optimizer}, optimizer)
+            restored_digest = snapshot.digest()
+        else:
+            snapshot = None
+            applied = restore_training_controls(ms, optimizer, restored)
+            restored_digest = selected.get("sha256")
+        ms.hal.synchronize()
+        mark("state_ready", state_sha256=restored_digest)
+        steps = int(config["continue_steps"] if continue_steps is None else continue_steps)
+        losses = []
+        final_step = int(selected["step"])
+        for step in range(final_step + 1, final_step + steps + 1):
+            if step == final_step + 1:
+                mark("first_step_begin", step=step)
+            start_token = (step * 104729) % 50257
+            ids = (np.arange(int(config["input_tokens"]), dtype=np.int32) + start_token) % 50257
+            mask = np.ones_like(ids)
+            loss = cell(ms.Tensor(ids[None, :]), ms.Tensor(mask[None, :]))
+            ms.hal.synchronize()
+            value = float(np.asarray(loss.asnumpy()).reshape(()))
+            losses.append(value)
+            if step == final_step + 1:
+                mark("first_step_end", step=step, loss=value,
+                     includes_graph_compile=True)
+        oracle = [row["loss"] for row in result.get("source_oracle", [])[:steps]]
+        deviations = [abs(float(a) - float(b)) for a, b in zip(losses, oracle)]
+        restore_result = {
+            "status": "pass" if restored_digest == selected.get("sha256") and
+                      (not deviations or max(deviations) <= float(config["loss_atol"]) +
+                       float(config["loss_rtol"]) * max(1.0, max(map(abs, oracle)))) else "restore_failed",
+            "adapter": adapter_name, "generation": int(selected["generation"]),
+            "checkpoint_step": int(selected["step"]),
+            "byte_exact": restored_digest == selected.get("sha256"),
+            "controls": {key: str(value) for key, value in applied.items()},
+            "restored_losses": losses, "source_oracle_losses": oracle,
+            "loss_deviation": deviations,
+            "timing": {"events": events,
+                       "state_ready_ns": next((e["monotonic_ns"] for e in events if e["event"] == "state_ready"), None),
+                       "restore_begin_ns": next((e["monotonic_ns"] for e in events if e["event"] == "restore_begin"), None),
+                       "first_step_begin_ns": next((e["monotonic_ns"] for e in events if e["event"] == "first_step_begin"), None),
+                       "first_step_end_ns": next((e["monotonic_ns"] for e in events if e["event"] == "first_step_end"), None),
+                       "process_start_ns": process_start},
+            "mode": mode, "repeat_index": repeat_index,
+        }
+    except Exception as error:
+        restore_result = {"status": "restore_failed", "adapter": adapter_name,
+                          "error": repr(error), "timing": {"events": events},
+                          "mode": mode, "repeat_index": repeat_index}
+        raise
+    finally:
+        if adapter is not None:
+            try:
+                adapter.close()
+            except Exception as error:
+                restore_result.setdefault("cleanup_error", repr(error))
+    destination_path = Path(output_path) if output_path else run_dir / "restore.json"
+    if destination_path.exists() and output_path:
+        raise FileExistsError(f"refusing to overwrite restore output: {destination_path}")
+    write_json(destination_path, restore_result)
     return restore_result

@@ -1,0 +1,81 @@
+{
+  "adapter": "mindspore_native_save",
+  "byte_exact": true,
+  "checkpoint_step": 35,
+  "controls": {
+    "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+    "global_step": "[35]",
+    "loss_scale": "1.0"
+  },
+  "generation": 10,
+  "loss_deviation": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "mode": "verify",
+  "repeat_index": 0,
+  "restored_losses": [
+    10.826495170593262,
+    10.842885971069336,
+    10.857515335083008
+  ],
+  "source_oracle_losses": [
+    10.826495170593262,
+    10.842885971069336,
+    10.857515335083008
+  ],
+  "status": "pass",
+  "timing": {
+    "events": [
+      {
+        "event": "process_start",
+        "mode": "verify",
+        "monotonic_ns": 2716027070114166,
+        "pid": 3272914,
+        "repeat_index": 0
+      },
+      {
+        "event": "model_constructed",
+        "monotonic_ns": 2716034547743871
+      },
+      {
+        "event": "restore_begin",
+        "monotonic_ns": 2716034548134223,
+        "selected_generation": 10,
+        "selected_step": 35
+      },
+      {
+        "event": "metadata_ready",
+        "monotonic_ns": 2716034548322613
+      },
+      {
+        "combined": true,
+        "event": "read_deserialize_done",
+        "monotonic_ns": 2716039315478306
+      },
+      {
+        "event": "state_ready",
+        "monotonic_ns": 2716043223431967,
+        "state_sha256": "9bae6ff8a1932784e5eca0425e82ff186a1555788ce19a0bb42cdfacaee3a8dd"
+      },
+      {
+        "event": "first_step_begin",
+        "monotonic_ns": 2716043223454037,
+        "step": 36
+      },
+      {
+        "event": "first_step_end",
+        "includes_graph_compile": true,
+        "loss": 10.826495170593262,
+        "monotonic_ns": 2716068824428828,
+        "step": 36
+      }
+    ],
+    "first_step_begin_ns": 2716043223454037,
+    "first_step_end_ns": 2716068824428828,
+    "process_start_ns": 2716027070110096,
+    "restore_begin_ns": 2716034548134223,
+    "state_ready_ns": 2716043223431967
+  }
+}

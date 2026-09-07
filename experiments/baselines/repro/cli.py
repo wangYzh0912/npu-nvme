@@ -18,6 +18,7 @@ from .runner import prepare as prepare_run
 from .runner import restore as restore_run
 from .runner import run as train_run
 from .state_bridge import write_json
+from .inventory import build_inventory, storage_evidence
 
 
 REQUIRED = (
@@ -65,17 +66,22 @@ def env_snapshot(config):
             "raw_pci": config["raw_pci"],
             "raw_pci_info": command(["lspci", "-s", config["raw_pci"], "-nnk"]),
             "findmnt": command(["findmnt", "-no", "TARGET,SOURCE,FSTYPE,OPTIONS", "-T", config["fs_test_dir"]]),
+            "lsblk": command(["lsblk", "-o", "NAME,PATH,MODEL,SERIAL,PKNAME,FSTYPE,MOUNTPOINT"]),
+            "storage_evidence": storage_evidence(config),
         },
     }
 
 
-def preflight(config, selected):
+def preflight(config, selected, runtime_probe=False):
     root = Path(config["results_root"]) / "preflight"
     root.mkdir(parents=True, exist_ok=True)
     output = {"config": config, "environment": env_snapshot(config), "adapters": {}}
     for name in selected:
         try:
-            output["adapters"][name] = ADAPTERS[name].preflight(config)
+            status = ADAPTERS[name].preflight(config)
+            if runtime_probe and name == "ours" and status.get("status") == "ready":
+                status = ADAPTERS[name].runtime_probe(config)
+            output["adapters"][name] = status
         except Exception as error:
             output["adapters"][name] = {"adapter": name, "status": "build_failed",
                                          "reason": repr(error)}
@@ -209,7 +215,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
     for command_name in ("preflight", "prepare", "smoke", "run", "source",
-                         "restore", "suite", "summarize"):
+                         "restore", "inventory", "suite", "summarize"):
         cmd = sub.add_parser(command_name)
         cmd.add_argument("--config", required=True)
         cmd.add_argument("--all", action="store_true")
@@ -224,6 +230,11 @@ def main(argv=None):
         cmd.add_argument("--generation", default="latest-committed")
         cmd.add_argument("--continue-steps", type=int)
         cmd.add_argument("--run-dir")
+        cmd.add_argument("--source-run", action="append", default=[])
+        cmd.add_argument("--output")
+        cmd.add_argument("--mode", choices=("timing", "verify"), default="verify")
+        cmd.add_argument("--repeat-index", type=int)
+        cmd.add_argument("--runtime-probe", action="store_true")
     args = parser.parse_args(argv)
     config = load_config(args.config)
     # Command-line overrides are intentionally explicit so short G2 smoke runs
@@ -245,7 +256,9 @@ def main(argv=None):
         config["continue_steps"] = args.continue_steps
     names = list(ADAPTERS) if args.all or not args.adapter else [args.adapter]
     if args.command == "preflight":
-        return 0 if preflight(config, names) else 1
+        report = preflight(config, names, runtime_probe=args.runtime_probe)
+        statuses = [row.get("status") for row in report.get("adapters", {}).values()]
+        return 0 if statuses and all(status in ("ready", "trend_measured") for status in statuses) else 1
     if args.command == "prepare":
         root = Path(config["results_root"]) / "prepare"
         write_json(root / "config.json", config)
@@ -301,14 +314,41 @@ def main(argv=None):
         try:
             result = restore_run(config, args.adapter, args.run_dir,
                                  generation=args.generation,
-                                 continue_steps=args.continue_steps)
+                                 continue_steps=args.continue_steps,
+                                 output_path=args.output,
+                                 mode=args.mode,
+                                 repeat_index=args.repeat_index)
         except Exception as error:
-            write_json(Path(args.run_dir) / "restore.json",
+            failure_path = Path(args.output) if args.output else Path(args.run_dir) / "restore.json"
+            if not failure_path.exists():
+                write_json(failure_path,
                        {"status": "restore_failed", "adapter": args.adapter,
-                        "error": repr(error)})
+                        "error": repr(error), "mode": args.mode,
+                        "repeat_index": args.repeat_index})
             return 1
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0 if result.get("status") == "pass" else 1
+    if args.command == "inventory":
+        if args.source_run:
+            source_runs = {}
+            for value in args.source_run:
+                if "=" not in value:
+                    parser.error("--source-run must be adapter=run_dir")
+                name, path = value.split("=", 1)
+                if name not in ADAPTERS:
+                    parser.error(f"unknown adapter: {name}")
+                source_runs[name] = path
+        else:
+            if not args.adapter or not args.run_dir:
+                parser.error("inventory requires --adapter and --run-dir")
+            source_runs = {args.adapter: args.run_dir}
+        output = Path(args.output) if args.output else Path(config["results_root"]) / "checkpoint_inventory.json"
+        if output.exists():
+            parser.error(f"refusing to overwrite inventory: {output}")
+        inventory = build_inventory(config, source_runs)
+        write_json(output, inventory)
+        print(json.dumps(inventory, indent=2, sort_keys=True))
+        return 0
     if args.command == "summarize":
         root = Path(config["results_root"])
         summary = {"config": config, "runs": []}
