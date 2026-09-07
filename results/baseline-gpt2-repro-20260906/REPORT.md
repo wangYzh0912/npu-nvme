@@ -8,6 +8,7 @@ each run's `environment.json`.
 |---|---|---|---|
 | `none` | trend measured | none | not applicable |
 | `mindspore_sync` | 30-step trend measured | `/models` XFS filesystem | fresh process, byte exact, loss oracle pass |
+| `mindspore_native_save` | 30-step native API trend measured | `/models` XFS filesystem | fresh process, byte exact, loss oracle pass |
 | `ours` | build failed | raw SPDK requested | SPDK probe failed before generation |
 | `datastates_acl` | NPU semantic port G3/G4 pass | real ACL D2H -> pinned Host -> durable XFS | tier ordering, bounded pool and source/persist split preserved |
 | `pccheck_acl` | NPU semantic port G3/G4 pass | real ACL D2H -> bounded slots -> 4 MiB writer -> durable XFS | bounded writer/backpressure; XFS fsync/atomic publish replaces CLWB/SFENCE |
@@ -23,6 +24,19 @@ passed fresh-process byte-exact restore plus the three-step loss oracle:
 | `pccheck_acl` | 42.20 | 10 | byte exact; 3/3 loss pass |
 | `bytecheckpoint_host` | 62.48 | 10 | byte exact; 3/3 loss pass |
 | `fastpersist_host` | 45.93 | 10 | byte exact; 3/3 loss pass |
+
+The additional native MindSpore reference used the actual
+`mindspore.save_checkpoint(..., async_save=False)` and
+`mindspore.load_checkpoint` APIs, with the same GPT-2/seed/configuration and
+the same ten generations. It completed in 89.67 s and passed byte-exact fresh
+restore plus the three-step loss oracle. Per-generation native API time
+averaged 1.704 s (range 1.517--2.587 s), the pre-save state-capture oracle
+averaged 1.066 s, and the explicit post-write file flush averaged 0.643 s.
+These timings are recorded separately in `events.jsonl`; the total includes
+the synchronous native call, capture oracle, and durable sidecar commit.
+The older `mindspore_sync` row is the project raw-byte reference writer (66.74
+s), not this native protobuf serializer, so the two rows should not be
+interpreted as the same implementation.
 
 These are semantic-port Host-file measurements, not CUDA artifact performance
 claims. Shared-memory bridge events, worker hook evidence, durable writer

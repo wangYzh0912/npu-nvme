@@ -7,6 +7,7 @@ from experiments.baselines.repro.host_bridge import (
     SharedSnapshot, snapshot_from_descriptor, snapshot_view_from_descriptor)
 from experiments.baselines.repro.cli import (adapter_evidence,
                                              is_formal_semantic_port)
+from experiments.baselines.repro.adapters import ADAPTERS
 from experiments.baselines.repro.protocol import EventLog, Handle
 from experiments.baselines.repro.state_bridge import Snapshot, load_raw_snapshot, save_raw_snapshot
 from python.full_checkpoint_protocol import CheckpointState
@@ -123,3 +124,11 @@ def test_adapter_evidence_discloses_port_substitutions():
     bytecheckpoint = adapter_evidence("bytecheckpoint_host")
     assert "three-component CKPTCounter" in bytecheckpoint
     assert "extra_state workflow" in bytecheckpoint
+
+
+def test_native_mindspore_save_adapter_is_distinct_from_raw_reference():
+    adapter = ADAPTERS["mindspore_native_save"]
+    assert adapter.kind == "framework-native-save"
+    status = adapter.preflight({"fs_test_dir": "/models"})
+    assert status["api"] == "mindspore.save_checkpoint(async_save=False)"
+    assert status["storage"] == "durable XFS file backend"

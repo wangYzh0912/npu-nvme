@@ -1,0 +1,10 @@
+# Adapter: mindspore_native_save
+# Port class: framework-native-save
+# Locked upstream core invoked: True
+# Mechanisms preserved:
+# - MindSpore save_checkpoint parameter serialization
+# - MindSpore checkpoint protobuf file format
+# - synchronous native API completion before source release
+# Platform substitutions:
+# - MindSpore native serializer writes the configured XFS filesystem
+# - controls are encoded as a uint8 tensor plus a durable sidecar

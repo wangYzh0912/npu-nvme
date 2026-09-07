@@ -138,6 +138,46 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
         value = float(np.asarray(loss.asnumpy()).reshape(()))
         oracle.append({"step": step, "loss": value,
                       "step_begin_ns": started, "step_end_ns": time.monotonic_ns()})
+    native_save_metrics = None
+    if adapter_name == "mindspore_native_save":
+        def transition_detail(checkpoint, event):
+            for transition in checkpoint.get("transitions", ()):
+                if transition.get("event") == event:
+                    return transition.get("detail", {})
+            return {}
+
+        def summary(values):
+            values = [int(value) for value in values if value is not None]
+            if not values:
+                return {"count": 0, "values_ns": []}
+            ordered = sorted(values)
+            return {
+                "count": len(values),
+                "values_ns": values,
+                "mean_ns": sum(values) // len(values),
+                "min_ns": min(values),
+                "max_ns": max(values),
+                "p95_ns": ordered[min(len(ordered) - 1,
+                                      int(len(ordered) * 0.95))],
+            }
+
+        native_save_metrics = {
+            "native_api": summary([
+                transition_detail(checkpoint, "PERSISTED").get("native_api_ns")
+                for checkpoint in checkpoints]),
+            "pre_save_capture_oracle": summary([
+                transition_detail(checkpoint, "SNAPSHOT_READY").get("capture_ns")
+                for checkpoint in checkpoints]),
+            "post_write_file_flush": summary([
+                transition_detail(checkpoint, "PERSISTED").get("flush_ns")
+                for checkpoint in checkpoints]),
+            "submit_to_persist": summary([
+                checkpoint.get("timestamps_ns", {}).get("PERSISTED", 0) -
+                checkpoint.get("submit_ns", 0)
+                for checkpoint in checkpoints]),
+            "storage_backend": "filesystem",
+            "api": "mindspore.save_checkpoint(async_save=False)",
+        }
     result = {
         "status": "trend_measured", "adapter": adapter_name,
         "kind": AdapterClass.kind, "model": config["model"],
@@ -157,6 +197,8 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
         "total_wall_seconds": (time.monotonic_ns() - start) / 1e9,
         "state_bytes": fixture.total_bytes,
     }
+    if native_save_metrics is not None:
+        result["native_save_metrics"] = native_save_metrics
     write_json(run_dir / "source.json", result)
     write_json(run_dir / "result.json", result)
     return result
