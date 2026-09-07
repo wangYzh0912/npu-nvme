@@ -14,4 +14,6 @@ The `/models` filesystem is backed by PCI `84:00.0`, while the Raw SPDK target i
 
 Ours failed before any checkpoint read: SPDK required PA IOVA but the process was in VA mode and the controller attach failed. No filesystem fallback was used.
 
+The focused Python suite passed 10/10 and the complete Python suite passed 117/117. The C pure-logic smoke passed 10/10; the V2 hardware smoke failed at `spdk_nvme_probe`, matching the runtime probe above. No CTest targets are registered in either build directory. See `c_smoke.json`.
+
 Raw evidence is in `restore_timing/`, `restore_verify.json`, `checkpoint_inventory.json`, and `ours_runtime_probe.json`. Five repetitions are reported as raw values, mean, median and range only; no P99 or confidence interval is inferred.
