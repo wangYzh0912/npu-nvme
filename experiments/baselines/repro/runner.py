@@ -120,8 +120,21 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
             checkpoint = item["handle"].as_dict()
             checkpoint.update({"step": item["step"],
                                "submit_ns": item["submit_ns"]})
-            checkpoint["persisted_ns"] = checkpoint["timestamps_ns"].get(
-                "PERSISTED", checkpoint["timestamps_ns"].get("persisted"))
+            # The common protocol Handle exposes timestamps_ns, while the
+            # native DirectCheckpoint handle exposes explicit event fields and
+            # an events list.  Normalize both instead of assuming one shape;
+            # otherwise a successful raw-SPDK commit is reported as a runner
+            # failure after the data is already durable.
+            timestamps = checkpoint.get("timestamps_ns", {})
+            persisted_ns = timestamps.get("PERSISTED", timestamps.get("persisted"))
+            if persisted_ns is None:
+                persisted_ns = next(
+                    (event.get("monotonic_ns") for event in checkpoint.get("events", [])
+                     if event.get("state") == "PERSISTED" or
+                     event.get("event") == "persisted"), None)
+            if persisted_ns is None:
+                persisted_ns = checkpoint.get("persisted_ns")
+            checkpoint["persisted_ns"] = persisted_ns
             materialized.append(checkpoint)
         checkpoints = materialized
     # Continue from the last committed state in the source process for oracle.
@@ -172,8 +185,7 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
                 transition_detail(checkpoint, "PERSISTED").get("flush_ns")
                 for checkpoint in checkpoints]),
             "submit_to_persist": summary([
-                checkpoint.get("timestamps_ns", {}).get("PERSISTED", 0) -
-                checkpoint.get("submit_ns", 0)
+                (checkpoint.get("persisted_ns") or 0) - checkpoint.get("submit_ns", 0)
                 for checkpoint in checkpoints]),
             "storage_backend": "filesystem",
             "api": "mindspore.save_checkpoint(async_save=False)",
@@ -240,7 +252,8 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
             adapter.events = EventLog(Path(output_path).with_suffix(".events.jsonl"))
         mark("metadata_ready")
         destination = {"model": model, "optimizer": optimizer,
-                       "_step": int(selected["step"])}
+                       "_step": int(selected["step"]),
+                       "_verify_checksums": mode == "verify"}
         restored = adapter.restore(int(selected["generation"]), destination)
         mark("read_deserialize_done",
              combined=adapter_name in {"mindspore_native_save", "bytecheckpoint_host"})

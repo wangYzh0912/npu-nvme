@@ -1,0 +1,139 @@
+{
+  "adapter": "ours",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "acl_event": "c-layer-per-dma-slot",
+      "adapter": "ours",
+      "admission_wait_ns": 34660,
+      "api_enter_ns": 2720320810360064,
+      "api_return_ns": 2720323392798643,
+      "checkpoint_step": 8,
+      "checksum": "28aa8aa48bf32cd00fb677aa1671f2ba1182d8605c353fc28a91fac9edafa90d",
+      "data_completed": true,
+      "dma_chunks": [],
+      "dma_complete_ns": null,
+      "dma_slot": null,
+      "dma_submit_ns": null,
+      "error": null,
+      "events": [
+        {
+          "monotonic_ns": 2720323015916699,
+          "state": "CREATED"
+        },
+        {
+          "monotonic_ns": 2720323015929299,
+          "state": "SNAPSHOTTING"
+        },
+        {
+          "monotonic_ns": 2720323385504574,
+          "state": "SNAPSHOT_READY"
+        },
+        {
+          "monotonic_ns": 2720323392505152,
+          "state": "QUEUED"
+        },
+        {
+          "monotonic_ns": 2720323392699043,
+          "state": "DMA_COPYING"
+        },
+        {
+          "monotonic_ns": 2720324567870942,
+          "state": "NVME_WRITING"
+        },
+        {
+          "monotonic_ns": 2720324567881972,
+          "state": "FLUSHING"
+        },
+        {
+          "monotonic_ns": 2720324568982567,
+          "state": "METADATA_COMMITTING"
+        },
+        {
+          "monotonic_ns": 2720324589167637,
+          "state": "PERSISTED"
+        }
+      ],
+      "failed": false,
+      "freeze_wait_ns": 0,
+      "generation": 3826,
+      "input_buffer_released": true,
+      "metadata_generation": 3826,
+      "nvme_completion": "all-data-completions-observed",
+      "persisted": true,
+      "persisted_ns": 2720324589167637,
+      "rank_id": 0,
+      "request_id": "rank0-pid3378412-request1",
+      "sha256": "e21ffbe0ba04d128689f70d540167156f52a81221165e7d461705f951e03b12b",
+      "snapshot_generation": 1,
+      "snapshot_slot": 2,
+      "source_released": true,
+      "state": "PERSISTED",
+      "status": "PERSISTED",
+      "step": 8,
+      "submit_ns": 2720318299158007,
+      "timeout": 900.0,
+      "training_dependency": null,
+      "update_deadline_missed": false,
+      "update_fence_install_ns": null,
+      "update_fence_release_ns": null,
+      "update_wait_ns": 0
+    }
+  ],
+  "formal_steps": 3,
+  "fresh_restore_required": true,
+  "kind": "native",
+  "mechanisms_preserved": [],
+  "model": "gpt2",
+  "platform_substitutions": [],
+  "port_class": "native",
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.87883186340332,
+      "step": 9,
+      "step_begin_ns": 2720324758583658,
+      "step_end_ns": 2720324892762080
+    },
+    {
+      "loss": 10.845147132873535,
+      "step": 10,
+      "step_begin_ns": 2720324892839731,
+      "step_end_ns": 2720325079185919
+    },
+    {
+      "loss": 10.859260559082031,
+      "step": 11,
+      "step_begin_ns": 2720325079257770,
+      "step_end_ns": 2720325280518928
+    }
+  ],
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.868734359741211,
+      "step": 6,
+      "step_begin_ns": 2720287734056830,
+      "step_end_ns": 2720317818086530
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.88557243347168,
+      "step": 7,
+      "step_begin_ns": 2720317818131160,
+      "step_end_ns": 2720318080100599
+    },
+    {
+      "formal_step": 3,
+      "loss": 10.84721565246582,
+      "step": 8,
+      "step_begin_ns": 2720318080132399,
+      "step_end_ns": 2720318299147497
+    }
+  ],
+  "storage_backend": "raw_spdk",
+  "total_wall_seconds": 37.546540209,
+  "upstream_core_invoked": null
+}

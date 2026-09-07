@@ -1,0 +1,78 @@
+{
+  "adapter": "ours",
+  "applied_state_sha256": null,
+  "byte_exact": null,
+  "checkpoint_step": 8,
+  "controls": {
+    "data_cursor": "{'epoch': 0, 'next_step': 9, 'sample': 8}",
+    "global_step": "[8]",
+    "loss_scale": "1.0"
+  },
+  "expected_state_sha256": "e21ffbe0ba04d128689f70d540167156f52a81221165e7d461705f951e03b12b",
+  "generation": 3826,
+  "loss_deviation": [
+    0.0
+  ],
+  "mode": "timing",
+  "persisted_state_sha256": null,
+  "repeat_index": 5,
+  "restored_losses": [
+    10.87883186340332
+  ],
+  "source_oracle_losses": [
+    10.87883186340332
+  ],
+  "status": "pass",
+  "timing": {
+    "events": [
+      {
+        "event": "process_start",
+        "mode": "timing",
+        "monotonic_ns": 2721160366968136,
+        "pid": 3418683,
+        "repeat_index": 5
+      },
+      {
+        "event": "model_constructed",
+        "monotonic_ns": 2721167746901057
+      },
+      {
+        "event": "restore_begin",
+        "monotonic_ns": 2721167747283979,
+        "selected_generation": 3826,
+        "selected_step": 8
+      },
+      {
+        "event": "metadata_ready",
+        "monotonic_ns": 2721167902241943
+      },
+      {
+        "combined": false,
+        "event": "read_deserialize_done",
+        "monotonic_ns": 2721171878369988
+      },
+      {
+        "event": "state_ready",
+        "monotonic_ns": 2721171925937007
+      },
+      {
+        "event": "first_step_begin",
+        "monotonic_ns": 2721171925954217,
+        "step": 9
+      },
+      {
+        "event": "first_step_end",
+        "includes_graph_compile": true,
+        "loss": 10.87883186340332,
+        "monotonic_ns": 2721200379964434,
+        "step": 9
+      }
+    ],
+    "first_step_begin_ns": 2721171925954217,
+    "first_step_end_ns": 2721200379964434,
+    "process_start_ns": 2721160366964266,
+    "restore_begin_ns": 2721167747283979,
+    "state_ready_ns": 2721171925937007
+  },
+  "verification_performed": false
+}

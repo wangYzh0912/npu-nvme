@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-07",
+  "invalidated_experiments": [
+    {
+      "stage": "Ours runtime probe",
+      "symptom": "PA IOVA required but the non-root DPDK process selected VA; 0000:83:00.0 attach failed",
+      "root_cause": "execution identity and IOVA mode, not hugepage count, UIO group permissions, driver binding, device data, or checkpoint code",
+      "fix": "run the unchanged host MindSpore/CANN/SPDK environment as root through a privileged container chroot",
+      "verification": [
+        "root C V2 1 MiB write/read round-trip passed",
+        "root Python DirectCheckpoint runtime attach passed",
+        "no PCI driver rebinding, formatting, or filesystem fallback"
+      ]
+    },
+    {
+      "stage": "Ours source result materialization",
+      "symptom": "KeyError('timestamps_ns') after generation 3824 was already durably committed",
+      "root_cause": "the common runner assumed the common Handle timestamp schema; DirectCheckpoint exposes a native events list",
+      "fix": "normalize the native PERSISTED event into persisted_ns and tolerate both handle schemas",
+      "verification": "generation 3825 source completed and emitted source.json"
+    },
+    {
+      "stage": "Ours initial recovery timing",
+      "symptom": "state-ready mean 7.2049 s included DirectCheckpoint's 1.485 GB per-field checksum scan",
+      "root_cause": "load_state verify_checksums default remained enabled in timing mode",
+      "fix": "disable the checksum scan only in timing processes; retain it in the independent verification process",
+      "verification": "five replacement timing processes completed at 4.1823 s mean; independent checksum, applied-state digest and three-step continuation all passed"
+    }
+  ],
+  "final_source": {
+    "generation": 3826,
+    "step": 8,
+    "state_fields": 591,
+    "state_bytes": 1485030841,
+    "status": "PERSISTED"
+  },
+  "final_status": "resolved"
+}

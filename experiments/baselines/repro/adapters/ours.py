@@ -13,12 +13,13 @@ from ..protocol import BuildFailed, DependencyBlocked
 class _DirectHandle:
     """Expose the common lifecycle while retaining the native handle fields."""
 
-    def __init__(self, adapter, native, events):
+    def __init__(self, adapter, native, events, expected_state_digest=None):
         self.adapter = adapter
         self.native = native
         self.generation = int(native.generation)
         self.request_id = str(native.request_id)
         self.events = events
+        self.expected_state_digest = expected_state_digest
         self._source_released = False
 
     def wait_source_release(self, timeout):
@@ -41,6 +42,12 @@ class _DirectHandle:
 
     def as_dict(self):
         row = dict(self.native.as_dict())
+        events = list(row.get("events", []))
+        # Keep the native event spelling, but also provide the normalized
+        # terminal timestamp consumed by the common runner and summaries.
+        persisted_ns = next(
+            (event.get("monotonic_ns") for event in events
+             if event.get("state") == "PERSISTED"), None)
         row.update({
             "adapter": self.adapter.name,
             "request_id": self.request_id,
@@ -50,7 +57,9 @@ class _DirectHandle:
             "data_completed": row.get("state") == "PERSISTED",
             "persisted": row.get("state") == "PERSISTED",
             "failed": row.get("status") == "FAILED",
-            "sha256": row.get("snapshot_state_digest") or row.get("checksum"),
+            "sha256": (self.expected_state_digest or
+                       row.get("snapshot_state_digest") or row.get("checksum")),
+            "persisted_ns": persisted_ns,
         })
         return row
 
@@ -115,20 +124,35 @@ class OursAdapter(Adapter):
         control_state = payload.get("control_state") or controls
         if components is None:
             raise BuildFailed("native adapter requires live model/optimizer components")
+        snapshot_factory = payload.get("snapshot")
+        expected_state_digest = (snapshot_factory().digest()
+                                 if snapshot_factory is not None else None)
         native = self.ckpt.save_state(
             components, control_state, step=int(payload["step"]),
             meta_path=str(self.run_dir / f"metadata_{int(generation):06d}.pkl"),
             io_mode="serial", timeout=float(self.config["timeout_seconds"]))
-        handle = _DirectHandle(self, native, self.events)
+        handle = _DirectHandle(
+            self, native, self.events,
+            expected_state_digest=expected_state_digest)
         self.handles.append(handle)
         return handle
 
     def restore(self, generation, destination):
         if not destination:
             raise ValueError("native restore requires model and optimizer destination")
+        step = destination.get("_step")
+        key = f"step_{int(step)}"
+        record = self.ckpt.meta_dict.get("checkpoints", {}).get(key)
+        if record is None:
+            raise FileNotFoundError(f"checkpoint for {key} is not visible")
+        if int(record.get("generation", -1)) != int(generation):
+            raise ValueError(
+                f"generation mismatch for {key}: requested={generation} "
+                f"committed={record.get('generation')}")
         controls = self.ckpt.load_state(
             {"model": destination["model"], "optimizer": destination["optimizer"]},
-            step=destination.get("_step"))
+            step=step,
+            verify_checksums=bool(destination.get("_verify_checksums", True)))
         return controls
 
     def drain(self, timeout):

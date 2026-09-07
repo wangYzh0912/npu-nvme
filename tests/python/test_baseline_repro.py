@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from experiments.baselines.repro.host_bridge import (
     SharedSnapshot, snapshot_from_descriptor, snapshot_view_from_descriptor)
@@ -146,3 +147,41 @@ def test_inventory_records_missing_run_without_guessing(tmp_path):
     assert row["status"] == "missing"
     assert row["reason"] == "source.json missing"
     assert report["storage"]["same_physical_storage_verified"] is False
+
+
+def test_ours_handle_normalizes_native_persisted_event():
+    class Native:
+        generation = 4
+        request_id = "request-4"
+        snapshot_state_digest = None
+        def as_dict(self):
+            return {"state": "PERSISTED", "status": "PERSISTED",
+                    "events": [{"state": "PERSISTED", "monotonic_ns": 12345}]}
+
+    row = __import__("experiments.baselines.repro.adapters.ours",
+                     fromlist=["_DirectHandle"])._DirectHandle(
+        type("Adapter", (), {"name": "ours"})(), Native(),
+        EventLog(Path("/tmp/unused-events.jsonl")),
+        expected_state_digest="common-digest").as_dict()
+    assert row["persisted_ns"] == 12345
+    assert row["sha256"] == "common-digest"
+
+
+def test_ours_restore_checks_generation_and_forwards_verification_mode():
+    from experiments.baselines.repro.adapters.ours import OursAdapter
+
+    class Checkpoint:
+        meta_dict = {"checkpoints": {"step_8": {"generation": 42}}}
+        calls = []
+        def load_state(self, components, step=None, verify_checksums=True):
+            self.calls.append((components, step, verify_checksums))
+            return {"restored": True}
+
+    adapter = object.__new__(OursAdapter)
+    adapter.ckpt = Checkpoint()
+    destination = {"model": object(), "optimizer": object(), "_step": 8,
+                   "_verify_checksums": False}
+    assert adapter.restore(42, destination) == {"restored": True}
+    assert adapter.ckpt.calls[0][1:] == (8, False)
+    with pytest.raises(ValueError, match="generation mismatch"):
+        adapter.restore(43, destination)

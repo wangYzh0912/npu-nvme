@@ -1,5 +1,5 @@
 {
-  "status": "partial_complete",
+  "status": "complete_with_cross_device_caveat",
   "date": "2026-09-07",
   "metric_definition": "state_ready_ns - restore_begin_ns; excludes full-state digest verification",
   "state_fields": 591,
@@ -71,17 +71,52 @@
       }
     },
     "ours": {
-      "status": "runtime_attach_failed",
+      "status": "measured",
       "backend": "raw SPDK 0000:83:00.0",
-      "reason": "PA IOVA required but current mode is VA; SPDK controller attach/probe failed",
+      "execution_identity": "root (privileged container chroot into host)",
+      "source_generation": 3826,
+      "source_step": 8,
+      "state_ready_seconds": {
+        "raw": [4.172347863, 4.213963618, 4.159779134, 4.18675216, 4.178653028],
+        "mean": 4.1822991606,
+        "median": 4.178653028,
+        "min": 4.159779134,
+        "max": 4.213963618
+      },
+      "phase_mean_seconds": {
+        "adapter_and_metadata_ready": 0.1546819574,
+        "read_deserialize": 3.980391724,
+        "apply_and_device_sync": 0.0472254792
+      },
+      "first_step_seconds": {
+        "raw": [28.460823885, 29.836684249, 29.94018469, 28.907844437, 28.454010217],
+        "mean": 29.1199094956,
+        "median": 28.907844437,
+        "min": 28.454010217,
+        "max": 29.94018469,
+        "includes_graph_compile": true
+      },
+      "verification": {
+        "status": "pass",
+        "direct_checkpoint_per_field_checksums": true,
+        "applied_npu_state_byte_exact": true,
+        "continue_steps": 3,
+        "loss_deviation": [0.0, 0.0, 0.0]
+      },
       "filesystem_fallback_used": false
     }
   },
   "limited_comparison": {
     "bytecheckpoint_to_native_state_ready_ratio": 2.1706108821,
+    "native_to_ours_endpoint_ratio": 1.6976072867,
+    "bytecheckpoint_to_ours_endpoint_ratio": 3.6848448502,
+    "ours_reduction_vs_native_endpoint_percent": 41.0935610488,
     "same_filesystem_for_these_two_methods": true,
     "three_way_same_physical_storage_verified": false,
     "p99_or_confidence_interval_claimed": false
   },
-  "supporting_evidence": "../full-state-recovery-20260907/"
+  "supporting_evidence": [
+    "../full-state-recovery-20260907/",
+    "../full-state-recovery-ours-root-20260907/ours_source_oracle/"
+  ]
 }
