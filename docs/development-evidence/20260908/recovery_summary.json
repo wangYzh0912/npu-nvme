@@ -1,0 +1,122 @@
+{
+  "status": "complete_with_cross_device_caveat",
+  "date": "2026-09-07",
+  "metric_definition": "state_ready_ns - restore_begin_ns; excludes full-state digest verification",
+  "state_fields": 591,
+  "state_bytes": 1485030841,
+  "timing_repetitions_per_available_method": 5,
+  "verification_repetitions_per_available_method": 1,
+  "methods": {
+    "mindspore_native_save": {
+      "status": "measured",
+      "backend": "XFS /models",
+      "state_ready_seconds": {
+        "raw": [7.290153815, 7.120585677, 7.012742684, 7.104638428, 6.971387048],
+        "mean": 7.0999015304,
+        "median": 7.104638428,
+        "min": 6.971387048,
+        "max": 7.290153815
+      },
+      "phase_mean_seconds": {
+        "adapter_and_metadata_ready": 0.000287899,
+        "read_deserialize": 4.3403703586,
+        "apply_and_device_sync": 2.7592432728
+      },
+      "first_step_seconds": {
+        "raw": [26.662987288, 25.688880158, 25.521881727, 25.517841322, 25.24836811],
+        "mean": 25.727991721,
+        "median": 25.521881727,
+        "min": 25.24836811,
+        "max": 26.662987288,
+        "includes_graph_compile": true
+      },
+      "verification": {
+        "status": "pass",
+        "persisted_byte_exact": true,
+        "applied_npu_state_byte_exact": true,
+        "continue_steps": 3,
+        "loss_deviation": [0.0, 0.0, 0.0]
+      }
+    },
+    "bytecheckpoint_host": {
+      "status": "measured",
+      "backend": "XFS /models",
+      "port_class": "host-adapted-semantic-port",
+      "state_ready_seconds": {
+        "raw": [15.278111977, 15.390344864, 15.388250435, 15.629746785, 15.369163559],
+        "mean": 15.411123524,
+        "median": 15.388250435,
+        "min": 15.278111977,
+        "max": 15.629746785
+      },
+      "phase_mean_seconds": {
+        "adapter_and_metadata_ready": 0.067232081,
+        "read_deserialize": 12.3583215382,
+        "apply_and_device_sync": 2.9855699048
+      },
+      "first_step_seconds": {
+        "raw": [26.219921343, 26.373581813, 26.436986816, 26.553895201, 26.754594859],
+        "mean": 26.4677960064,
+        "median": 26.436986816,
+        "min": 26.219921343,
+        "max": 26.754594859,
+        "includes_graph_compile": true
+      },
+      "verification": {
+        "status": "pass",
+        "persisted_byte_exact": true,
+        "applied_npu_state_byte_exact": true,
+        "continue_steps": 3,
+        "loss_deviation": [0.0, 0.0, 0.0]
+      }
+    },
+    "ours": {
+      "status": "measured",
+      "backend": "raw SPDK 0000:83:00.0",
+      "execution_identity": "root (privileged container chroot into host)",
+      "source_generation": 3826,
+      "source_step": 8,
+      "state_ready_seconds": {
+        "raw": [4.172347863, 4.213963618, 4.159779134, 4.18675216, 4.178653028],
+        "mean": 4.1822991606,
+        "median": 4.178653028,
+        "min": 4.159779134,
+        "max": 4.213963618
+      },
+      "phase_mean_seconds": {
+        "adapter_and_metadata_ready": 0.1546819574,
+        "read_deserialize": 3.980391724,
+        "apply_and_device_sync": 0.0472254792
+      },
+      "first_step_seconds": {
+        "raw": [28.460823885, 29.836684249, 29.94018469, 28.907844437, 28.454010217],
+        "mean": 29.1199094956,
+        "median": 28.907844437,
+        "min": 28.454010217,
+        "max": 29.94018469,
+        "includes_graph_compile": true
+      },
+      "verification": {
+        "status": "pass",
+        "direct_checkpoint_per_field_checksums": true,
+        "applied_npu_state_byte_exact": true,
+        "continue_steps": 3,
+        "loss_deviation": [0.0, 0.0, 0.0]
+      },
+      "filesystem_fallback_used": false
+    }
+  },
+  "limited_comparison": {
+    "bytecheckpoint_to_native_state_ready_ratio": 2.1706108821,
+    "native_to_ours_endpoint_ratio": 1.6976072867,
+    "bytecheckpoint_to_ours_endpoint_ratio": 3.6848448502,
+    "ours_reduction_vs_native_endpoint_percent": 41.0935610488,
+    "same_filesystem_for_these_two_methods": true,
+    "three_way_same_physical_storage_verified": false,
+    "p99_or_confidence_interval_claimed": false
+  },
+  "supporting_evidence": [
+    "../full-state-recovery-20260907/",
+    "../full-state-recovery-ours-root-20260907/ours_source_oracle/"
+  ]
+}
