@@ -18,7 +18,7 @@ RUNNER = ROOT / "experiments" / "benchmarks" / "run_single_card_full.py"
 from experiments.benchmarks.longrun_utils import (atomic_json, checked_stdout,
                                                    completed_result, open_campaign,
                                                    update_entry)
-from ppt_evidence import command, environment_snapshot
+from experiment_evidence import command, environment_snapshot
 
 
 def main():

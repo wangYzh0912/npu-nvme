@@ -39,7 +39,7 @@ from chunk_helpers import build_chunks_host, build_ctypes_arrays  # noqa: E402
 from c_bindings import lib  # noqa: E402
 from training_state import (TRAINING_STATE_SCHEMA_VERSION, decode_control_value,
                             encode_control_value)
-from ppt_evidence import command as shell_command, environment_snapshot  # noqa: E402
+from experiment_evidence import command as shell_command, environment_snapshot  # noqa: E402
 
 
 FRAME_LIMIT = 8 * 1024 * 1024

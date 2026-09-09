@@ -209,32 +209,6 @@ target_link_options(test_npu_nvme PRIVATE
 # ==================================================
 # V0 SPDK Thread Lib Test (minimal reproducer)
 # ==================================================
-add_executable(reactor_v0_spdk_thread_test
-    tests/c/reactor_v0_spdk_thread_test.c
-)
-target_include_directories(reactor_v0_spdk_thread_test PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${SPDK_INCLUDE_DIRS}
-    ${ASCEND_ACL_INCLUDE_DIRS}
-)
-target_compile_definitions(reactor_v0_spdk_thread_test PRIVATE _GNU_SOURCE)
-target_compile_options(reactor_v0_spdk_thread_test PRIVATE
-    -Wall -Wno-unused-parameter
-)
-target_link_libraries(reactor_v0_spdk_thread_test PRIVATE
-    -Wl,--whole-archive ${SPDK_STATIC_LIBS} -Wl,--no-whole-archive
-    ${ISAL_LIBS}
-    -Wl,--whole-archive ${DPDK_LIBS_FILES} -Wl,--no-whole-archive
-    ${SYSTEM_LIBS}
-)
-set_target_properties(reactor_v0_spdk_thread_test PROPERTIES
-    BUILD_RPATH "$ORIGIN/../lib" INSTALL_RPATH "$ORIGIN/../lib"
-)
-target_link_options(reactor_v0_spdk_thread_test PRIVATE
-    "LINKER:-rpath,$ORIGIN/../lib" "LINKER:--enable-new-dtags"
-)
-
 # ==================================================
 # V2 Smoke Test: init + host write/read + cleanup
 # ==================================================
@@ -257,47 +231,6 @@ target_link_options(v2_smoke_test PRIVATE
     "LINKER:-rpath,$ORIGIN/../lib"
     "LINKER:--enable-new-dtags"
 )
-add_executable(reactor_v0_test
-    tests/c/reactor_v0_test.c
-)
-
-target_include_directories(reactor_v0_test PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${SPDK_INCLUDE_DIRS}
-    ${ASCEND_ACL_INCLUDE_DIRS}
-)
-
-target_compile_definitions(reactor_v0_test PRIVATE _GNU_SOURCE)
-
-target_compile_options(reactor_v0_test PRIVATE
-    -Wall -Wno-unused-parameter
-)
-
-target_link_libraries(reactor_v0_test PRIVATE
-    -Wl,--whole-archive
-    ${SPDK_STATIC_LIBS}
-    -Wl,--no-whole-archive
-
-    ${ISAL_LIBS}
-
-    -Wl,--whole-archive
-    ${DPDK_LIBS_FILES}
-    -Wl,--no-whole-archive
-
-    ${SYSTEM_LIBS}
-)
-
-set_target_properties(reactor_v0_test PROPERTIES
-    BUILD_RPATH "$ORIGIN/../lib"
-    INSTALL_RPATH "$ORIGIN/../lib"
-)
-
-target_link_options(reactor_v0_test PRIVATE
-    "LINKER:-rpath,$ORIGIN/../lib"
-    "LINKER:--enable-new-dtags"
-)
-
 # ==================================================
 # Installation
 # ==================================================

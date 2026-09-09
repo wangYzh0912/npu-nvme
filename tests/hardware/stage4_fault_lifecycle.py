@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / "python")]
 
 from c_bindings import NPUNVMEContext, NPUNVMERequest, acl_lib, lib  # noqa: E402
-from ppt_evidence import command, environment_snapshot  # noqa: E402
+from experiment_evidence import command, environment_snapshot  # noqa: E402
 
 
 ALIGN = 4096

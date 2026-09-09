@@ -1,20 +1,16 @@
-# C 测试说明
+# C 与硬件验证
 
-| 目标 | 用途 | 是否需要硬件 |
-|---|---|---|
-| `test_npu_nvme` | 环形队列等纯逻辑测试；传入 PCI 地址和 NPU ID 后追加硬件回环 | 可选 |
-| `v2_smoke_test` | 固定测试环境下的 Host→NVMe→Host 冒烟测试 | 是 |
-| `reactor_v0_test` | SPDK thread/poller 可行性与生命周期诊断 | 是 |
-| `reactor_v0_spdk_thread_test` | DPDK mempool 与 SPDK thread 初始化回归诊断 | 是 |
+`test_npu_nvme` 验证主库，`v2_smoke_test` 验证 init/Host 写读/cleanup。
+`test_npu_nvme` 中设备批量回环仍有 TBD 占位，不能把该程序退出成功当作四路径全通过；
+实际设备数据回环与恢复须执行 `tests/hardware/full_io_roundtrip.py` 等对应门禁。
+旧 reactor_v0 独立原型及构建目标已移除，现有数据面仍采用单 Reactor。
+构建方式和修补 DPDK 归档要求见根 README。
 
-构建仍由仓库根目录的 `CMakeLists.txt` 统一管理。目标机上先完成 `build.sh`，再运行：
+硬件测试会写入裸盘区域，使用已确认的专用设备和布局；不要将历史 BDF 当作机器无关配置。
+构建后按测试程序实际 CLI 指定已核对的设备；旧 Phase A 一次性脚本已移除。
 
-```bash
-# 无参数时只执行 test_npu_nvme 中不依赖硬件的检查
-./build/test_npu_nvme
-
-# 指定裸盘 PCI 地址和 NPU ID 后执行破坏性的硬件回环检查
-sudo -n ./build/test_npu_nvme 0000:83:00.0 1
-```
-
-硬件回环会直接读写传入 PCI 地址对应的裸 NVMe 空间，只能在确认测试盘和数据边界后运行。
+当前 `tests/hardware/` 覆盖 I/O 回环、FULL 重启、元数据、Delta 协议链、多 rank 提交及
+故障生命周期。完整训练恢复入口为 `c1_training_state_restart.py`、`c2_multirank_state.py`
+和 `experiments/benchmarks/run_single_card_full.py`，参数用对应 `--help` 查看。
+通过要求：源进程退出后重新读取、字段/控制状态校验及续训；注入失败不得发布成功代际。
+Linux/CANN/SPDK 硬件测试不能由 Windows 下的 Python 子集替代。

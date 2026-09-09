@@ -17,7 +17,7 @@ MATRIX = ROOT / "experiments" / "benchmarks" / "s3_training_io_matrix.py"
 sys.path[:0] = [str(ROOT), str(ROOT / "python")]
 
 from experiments.benchmarks.longrun_utils import atomic_json  # noqa: E402
-from ppt_evidence import command, environment_snapshot  # noqa: E402
+from experiment_evidence import command, environment_snapshot  # noqa: E402
 
 MIB = 1024 * 1024
 

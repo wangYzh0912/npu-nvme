@@ -23,7 +23,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT), str(ROOT / "python")]
 
-from ppt_evidence import environment_snapshot, command  # noqa: E402
+from experiment_evidence import environment_snapshot, command  # noqa: E402
 from full_checkpoint_protocol import validate_result_gate  # noqa: E402
 
 

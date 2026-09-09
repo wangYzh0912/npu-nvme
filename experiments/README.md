@@ -1,22 +1,47 @@
-# 实验目录
+# 当前实验入口
 
-实验代码按证据用途分层，避免一次性排障脚本和正式验证入口混在一起。
+从仓库根目录运行，环境见主 README。新结果写入独立的 `experiments/output/<run-id>/`，
+记录实际 HEAD/dirty、配置、设备、原始事件与恢复证据；不要覆盖保留的 results。
 
-- `baselines/`：检查点方法与 I/O 路径对照实验。必须记录设备、数据集、参数和源码提交。
-- `benchmarks/checkpoint_trace.py`：同一字节流的 buffered FS、O_DIRECT 和 Host-SPDK
-  分阶段计时；`scripts/same_device_83.sh` 负责受控的 83.0.0 文件系统/SPDK 切换。
-- `benchmarks/run_single_card_full.py`：单盘单卡 FULL 训练基准唯一入口，固定执行
-  baseline、source 持久化、source 退出、fresh restore 和续训校验；后续阶段复用该
-  入口，不重新实现训练生命周期。
-- `benchmarks/summarize_checkpoint_matrix.py`：汇总同盘 trace 与 MindFormers 模型矩阵。
-- `delta_e2e/`：Delta 路径的正确性门禁。所选用例全部通过且进程返回 0，才可进入性能比较。
-- `microbench/`：算子与更新路径微基准，只用于定位瓶颈，不能单独证明系统端到端收益。
-- `training/`：单卡与分布式训练示例。
-- `common.py`：共享的模型、数据集和 DirectCheckpoint 初始化代码。
+| 工作负载 | 入口（相对 experiments） | 用途 |
+|---|---|---|
+| 单卡 FULL | `benchmarks/run_single_card_full.py` | serial/frozen/live，退出后恢复与续训 |
+| IO1/IO2 | `benchmarks/io_next_campaign.py` | GPT-2/XL 机制、重复运行与慢盘压力 |
+| IO3 | `benchmarks/io3_hccl_longrun.py` | 2/4 rank、HCCL 恢复、保留代际验证 |
+| IO4 | `benchmarks/io4_bottleneck_campaign.py` | Host、Unix staging 和 Reactor 瓶颈 |
+| INC1 | `microbench/vector_engine_profile.py` | 使用 `--model` 进入真实训练 PMU 模式 |
+| INC2 | `benchmarks/inc2_graph_edge_load.py` | 图内 marker/compute/memory/chain 负载 |
+| INC3 | `benchmarks/s2_real_trajectory.py` | adjacent/persisted reference 更新统计 |
+| 结果处理 | `benchmarks/summarize_inc_minimal.py`、`p6_vector_timeline.py`、`io_next_report.py` | 当前记录校验与统计 |
+| 方法对照 | [baselines/repro](baselines/repro/README.md) | 统一 fixture、状态桥、适配器和恢复计时 |
 
-所有新运行结果写入已忽略的 `experiments/output/`。进入报告前，应将原始 JSON、
-运行日志和环境说明复制到独立的结果目录，并同时记录源码提交；未通过恢复正确性、
-失败退出码和配置完整性检查的结果不得作为结论。
+其余保留的 benchmark 模块是上述入口的 I/O、矩阵、环境和时间线依赖。
+`baselines/two_phase_common.py` 是现行 ACL 捕获的共享依赖。
 
-已删除的一次性脚本、失效结果和图表仍保存在远端
-`codex/pre-cleanup-archive`，不再进入后续开发主线。
+```bash
+python experiments/benchmarks/io_next_campaign.py --dry-run \
+  --phases io1_mechanism --output-root experiments/output/io1-001
+python experiments/benchmarks/io3_hccl_longrun.py --dry-run \
+  --world-sizes 2 --seeds 41 --output-root experiments/output/io3-001
+```
+
+更新观测示例，需目标机和模型/数据准备：
+
+```bash
+python experiments/benchmarks/s2_real_trajectory.py \
+  --model gpt2_xl --steps 120 --seq-len 129 --seed 41 --npu 7 \
+  --block-sizes 65536,262144 --top-k-percents 5,10,20 \
+  --sample-windows 1-20,51-70,101-120 --score-dtype float32 \
+  --output-root experiments/output/trajectory-001
+```
+
+完整状态观测不要使用 `--no-optimizer`。seeds 42/43 独立运行，保存真实数据路径与哈希。
+PMU/INC2 参数见各自 `--help`，不能用默认算子微基准替代真实训练。原运行配置见结果
+中的 config/environment，绝对路径和设备编号需根据实际机器调整。
+
+## 解释边界
+
+FULL 必须证明持久化、新进程逐字段恢复及续训；派发耗时不能代替持久化时间。
+XL live 严格续训失败保留，放宽容差的诊断不等于正式通过。INC PMU 尚无共同设备时钟，
+图内负载等效性门禁未过，固定 Top-K 类别覆盖不足；这些观测不证明增量检查点可恢复。
+旧 PPT、R0/R1/R2 历史 campaign、重复排障和图表生成入口已移出 master，历史在 Git 中。

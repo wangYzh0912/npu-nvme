@@ -1,6 +1,6 @@
 # Net full-state recovery comparison (2026-09-07)
 
-This directory supersedes the recovery-latency numbers in `../full-state-recovery-20260907/`. The earlier timing boundary included a full 1.485 GB SHA-256 oracle scan before `state_ready`. The implementation now ends the performance metric after state application and device synchronization, and performs byte-exact validation only in a separate verification process.
+This directory contains the current recovery-latency reference. Earlier timing records remain in Git history. The earlier timing boundary included a full 1.485 GB SHA-256 oracle scan before `state_ready`. The implementation now ends the performance metric after state application and device synchronization, and performs byte-exact validation only in a separate verification process.
 
 | method | backend | state-ready mean | median | min–max | independent verification |
 |---|---|---:|---:|---:|---|
@@ -26,4 +26,4 @@ The source checkpoints use the same GPT-2 configuration, seed, batch file/fixtur
 
 The `/models` filesystem is PCI `84:00.0`; Ours targets raw PCI `83:00.0`. `same_physical_storage_verified=false`, so no strict three-way storage speedup is claimed. The original non-root run selected VA IOVA and could not attach the `uio_pci_generic` device. Running the existing MindSpore/CANN environment as root selected PA IOVA; the C V2 round-trip, Python runtime probe, FULL save, fresh restore, checksum and continuation gates then passed. No driver rebinding, formatting or filesystem fallback was used.
 
-See `failure_analysis.json` for the invalid-run causes and fixes. Supporting inventory and the original failure evidence remain in `../full-state-recovery-20260907/`; the final Ours source evidence is in `../full-state-recovery-ours-root-20260907/ours_source_oracle/`.
+See `failure_analysis.json` for the invalid-run causes and fixes. Supporting inventory/preflight remain in `../full-state-recovery-20260907/`; the final Ours source evidence is in `../full-state-recovery-ours-root-20260907/ours_source_oracle/`.

@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 C2 = ROOT / "tests" / "hardware" / "c2_multirank_state.py"
 sys.path.insert(0, str(ROOT / "python"))
-from ppt_evidence import command, environment_snapshot  # noqa: E402
+from experiment_evidence import command, environment_snapshot  # noqa: E402
 
 
 def atomic_json(path, value):

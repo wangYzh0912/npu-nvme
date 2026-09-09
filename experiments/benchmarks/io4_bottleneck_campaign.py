@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PIPELINE = ROOT / "experiments/benchmarks/io4_unix_pipeline.py"
 ASYNC = ROOT / "experiments/benchmarks/s2_async_data_plane.py"
 sys.path.insert(0, str(ROOT / "python"))
-from ppt_evidence import command, environment_snapshot  # noqa: E402
+from experiment_evidence import command, environment_snapshot  # noqa: E402
 
 
 def atomic_json(path, value):
