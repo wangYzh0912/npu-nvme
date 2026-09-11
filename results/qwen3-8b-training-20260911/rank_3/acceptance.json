@@ -1,0 +1,108 @@
+{
+  "model": "/models/Qwen3-8B",
+  "rank": 3,
+  "pid": 166854,
+  "python": "/models/npu_nvme_exp/user7-stack/conda/bin/python",
+  "environment_id": "32a715b267ca5961b230e3e786f24447cec9d70b0cbae5e54b8f7c4be5a6cc39",
+  "parallel": {
+    "tensor_parallel": 4,
+    "data_parallel": 1,
+    "pipeline_parallel": 1
+  },
+  "status": "training_pass_restart_not_tested",
+  "losses": [
+    {
+      "step": 1,
+      "loss": 0.7610580921173096,
+      "overflow": false
+    },
+    {
+      "step": 2,
+      "loss": 0.748114824295044,
+      "overflow": false
+    },
+    {
+      "step": 3,
+      "loss": 0.7269825339317322,
+      "overflow": false
+    },
+    {
+      "step": 4,
+      "loss": 0.7153259515762329,
+      "overflow": false
+    },
+    {
+      "step": 5,
+      "loss": 0.6371623277664185,
+      "overflow": false
+    },
+    {
+      "step": 6,
+      "loss": 0.6265520453453064,
+      "overflow": false
+    },
+    {
+      "step": 7,
+      "loss": 0.6059791445732117,
+      "overflow": false
+    },
+    {
+      "step": 8,
+      "loss": 0.5963893532752991,
+      "overflow": false
+    }
+  ],
+  "phases": {
+    "config": "pass",
+    "communication": "pass",
+    "model_construct": "pass",
+    "load": "pass",
+    "train": "pass",
+    "checkpoint": "not_run",
+    "restart": "not_run",
+    "oracle_compare": "not_run"
+  },
+  "weights": [
+    {
+      "name": "model-00001-of-00005.safetensors",
+      "bytes": 3996250744
+    },
+    {
+      "name": "model-00002-of-00005.safetensors",
+      "bytes": 3993160032
+    },
+    {
+      "name": "model-00003-of-00005.safetensors",
+      "bytes": 3959604768
+    },
+    {
+      "name": "model-00004-of-00005.safetensors",
+      "bytes": 3187841392
+    },
+    {
+      "name": "model-00005-of-00005.safetensors",
+      "bytes": 1244659840
+    }
+  ],
+  "config_sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
+  "versions": {
+    "mindspore": "2.7.1",
+    "mindformers": "1.7.0"
+  },
+  "precision": {
+    "compute": "bfloat16",
+    "parameters_and_adam": "float32"
+  },
+  "world_size": 4,
+  "device_id": 3,
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "data_kind": "fixed local tokenized text, smoke training only",
+  "checkpoint_files": [
+    "training/checkpoint/rank_3/qwen3_rank_3-8_1.safetensors",
+    "training/qwen3_ms_converted_weight/model-00005-of-00005.safetensors",
+    "training/qwen3_ms_converted_weight/model-00004-of-00005.safetensors",
+    "training/qwen3_ms_converted_weight/model-00002-of-00005.safetensors",
+    "training/qwen3_ms_converted_weight/model-00003-of-00005.safetensors",
+    "training/qwen3_ms_converted_weight/model-00001-of-00005.safetensors"
+  ]
+}
