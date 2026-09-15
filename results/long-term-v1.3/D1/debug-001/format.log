@@ -1,0 +1,34 @@
+
+============================================================
+!!! WARNING: NPUNVME DISK FORMAT UTILITY !!!
+============================================================
+Target NVMe Device : 0000:83:00.0
+NPU Device ID      : 7
+FULL geometry      : 3 slots x 10 GiB
+Delta geometry     : 128 slots x 256 MiB
+
+This operation will OVERWRITE the Superblock and Metadata slots.
+All previously saved Checkpoints on this disk will be rendered UNREADABLE.
+
+[force=True] Skipping interactive confirmation.
+
+[1/4] Initializing SPDK and connecting to NVMe...
+Invalid opts->opts_size 0 too small, please set opts_size correctly
+EAL: '-c <coremask>' option is deprecated, and will be removed in a future release
+EAL: 	Use '-l <corelist>' or '--lcores=<corelist>' option instead
+[Diag] after spdk_env_init: rte_lcore_count=1 rte_socket_count=8 spdk_core_count=1
+[Diag] reactor: rings w=0x2000008fd600 r=0x2000008fd080 m=0x2000008fcb80 pollers s=0xffffa4001db0 w=0xffffa4001f50 r=0xffffa40020f0 m=0xffffa4002290
+[NPU-NVMe] Found matching controller at 0000:83:00.0
+[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528
+[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 1
+[Init] Initialisation complete.
+[2/4] Device connected. Total capacity: 3576.98 GB (937684566 4K-blocks)
+      FULL:  1048576..32213303296
+      Delta: 3806396243968..3840755982336
+[3/4] Wiping Metadata Slots (A and B)...
+[4/4] Writing V2 Superblock (layout + CRC)...
+Flushing NVMe cache to NAND... Please wait...
+NVMe namespace flush completed.
+
+============================================================
+[SUCCESS] NVMe disk 0000:83:00.0 successfully formatted for NPUNVME!

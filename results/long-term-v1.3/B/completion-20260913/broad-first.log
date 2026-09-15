@@ -1,0 +1,97 @@
+........................................................................ [ 32%]
+........................................................................ [ 64%]
+...................................................FFF.................. [ 97%]
+......                                                                   [100%]
+=================================== FAILURES ===================================
+_________ test_preworker_failures_release_only_owned_resources[chunks] _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xffffac5027f0>
+fault = 'chunks'
+
+    @pytest.mark.parametrize('fault',['prepare','chunks','thread_start'])
+    def test_preworker_failures_release_only_owned_resources(monkeypatch,fault):
+        m=manager(monkeypatch)
+        def fail(*args,**kwargs): raise RuntimeError('injected '+fault)
+        if fault=='prepare': m._prepare_params=fail
+        if fault=='chunks': monkeypatch.setattr(checkpoint,'build_chunks',fail)
+        if fault=='thread_start': monkeypatch.setattr(checkpoint.threading.Thread,'start',fail)
+>       with pytest.raises(RuntimeError,match='injected'): m.save(None,1,commit_meta=False)
+
+tests/regression/test_admission_lifetime.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+python/npu_nvme/checkpoint.py:490: in save
+    return self._save_admitted(model, step, meta_path, commit_meta,
+python/npu_nvme/checkpoint.py:552: in _save_admitted
+    self._capture.synchronize()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <npu_nvme.framework.capture.FrozenCapture object at 0xffffb476e220>
+
+    def synchronize(self):
+>       if hasattr(self.ms.hal, "synchronize"):
+E       AttributeError: 'FrozenCapture' object has no attribute 'ms'
+
+python/npu_nvme/framework/capture.py:316: AttributeError
+______ test_preworker_failures_release_only_owned_resources[thread_start] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xfffea990a5e0>
+fault = 'thread_start'
+
+    @pytest.mark.parametrize('fault',['prepare','chunks','thread_start'])
+    def test_preworker_failures_release_only_owned_resources(monkeypatch,fault):
+        m=manager(monkeypatch)
+        def fail(*args,**kwargs): raise RuntimeError('injected '+fault)
+        if fault=='prepare': m._prepare_params=fail
+        if fault=='chunks': monkeypatch.setattr(checkpoint,'build_chunks',fail)
+        if fault=='thread_start': monkeypatch.setattr(checkpoint.threading.Thread,'start',fail)
+>       with pytest.raises(RuntimeError,match='injected'): m.save(None,1,commit_meta=False)
+
+tests/regression/test_admission_lifetime.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+python/npu_nvme/checkpoint.py:490: in save
+    return self._save_admitted(model, step, meta_path, commit_meta,
+python/npu_nvme/checkpoint.py:552: in _save_admitted
+    self._capture.synchronize()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <npu_nvme.framework.capture.FrozenCapture object at 0xfffea990a550>
+
+    def synchronize(self):
+>       if hasattr(self.ms.hal, "synchronize"):
+E       AttributeError: 'FrozenCapture' object has no attribute 'ms'
+
+python/npu_nvme/framework/capture.py:316: AttributeError
+_____________ test_cancelled_worker_does_not_unlock_foreign_mutex ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xffffac35aac0>
+
+    def test_cancelled_worker_does_not_unlock_foreign_mutex(monkeypatch):
+        m=manager(monkeypatch)
+        m._io_mutex.acquire()
+        actual_start=threading.Thread.start
+        def poison_then_start(thread):
+            m._poison_checkpoint_queue(None)
+            actual_start(thread)
+        monkeypatch.setattr(threading.Thread,'start',poison_then_start)
+>       handle=m.save(None,1,commit_meta=False)
+
+tests/regression/test_admission_lifetime.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+python/npu_nvme/checkpoint.py:490: in save
+    return self._save_admitted(model, step, meta_path, commit_meta,
+python/npu_nvme/checkpoint.py:552: in _save_admitted
+    self._capture.synchronize()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <npu_nvme.framework.capture.FrozenCapture object at 0xffffb6608ac0>
+
+    def synchronize(self):
+>       if hasattr(self.ms.hal, "synchronize"):
+E       AttributeError: 'FrozenCapture' object has no attribute 'ms'
+
+python/npu_nvme/framework/capture.py:316: AttributeError
+=========================== short test summary info ============================
+FAILED tests/regression/test_admission_lifetime.py::test_preworker_failures_release_only_owned_resources[chunks]
+FAILED tests/regression/test_admission_lifetime.py::test_preworker_failures_release_only_owned_resources[thread_start]
+FAILED tests/regression/test_admission_lifetime.py::test_cancelled_worker_does_not_unlock_foreign_mutex
+3 failed, 219 passed, 22 warnings in 10.57s

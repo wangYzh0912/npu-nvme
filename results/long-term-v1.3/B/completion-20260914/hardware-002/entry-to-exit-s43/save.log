@@ -1,0 +1,50 @@
+[WARNING] ME(500233:281473817268256,MainProcess):2026-09-14-12:06:58.380.263 [mindspore/run_check/_check_version.py:402] Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+[WARNING] ME(500233:281473817268256,MainProcess):2026-09-14-12:07:01.756.510 [mindspore/run_check/_check_version.py:402] Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+[WARNING] ME(500233:281473817268256,MainProcess):2026-09-14-12:07:01.756.762 [mindspore/context.py:1335] For 'context.set_context', the parameter 'device_target' will be deprecated and removed in a future version. Please use the api mindspore.set_device() instead.
+[WARNING] ME(500233:281473817268256,MainProcess):2026-09-14-12:07:01.757.426 [mindspore/run_check/_check_version.py:402] Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+[WARNING] ME(500233:281473817268256,MainProcess):2026-09-14-12:07:01.757.524 [mindspore/context.py:1335] For 'context.set_context', the parameter 'device_id' will be deprecated and removed in a future version. Please use the api mindspore.set_device() instead.
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/jieba/_compat.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+[Common] Building gpt2 model...
+2026-09-14 12:07:02,891 - mindformers[mindformers/models/auto/configuration_auto.py:335] - INFO - default yaml config in ./checkpoint_download/gpt2/gpt2.yaml is used.
+[WARNING] ME(500233:281473817268256,MainProcess):2026-09-14-12:07:02.916.531 [mindspore/ops/primitive.py:217] The in_strategy/in_layout of the operator in your network will not take effect in stand_alone mode. This means the the shard function called in the network is ignored. 
+If you want to enable it, please use semi auto or auto parallel mode by context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)
+[WARNING] ME(500233:281473817268256,MainProcess):2026-09-14-12:07:03.313.997 [mindspore/common/parameter.py:851] This interface may be deleted in the future.
+2026-09-14 12:07:04,528 - mindformers[mindformers/models/modeling_utils.py:1502] - INFO - model built, but weights is unloaded, since the config has no checkpoint_name_or_path attribute or checkpoint_name_or_path is None.
+2026-09-14 12:07:08,549 - mindformers[mindformers/models/auto/auto_factory.py:362] - INFO - model built successfully!
+[WARNING] ME(500233:281473817268256,MainProcess):2026-09-14-12:07:30.981.831 [mindspore/hal/stream.py:272] WARN_DEPRECATED: The usage of mindspore.hal.synchronize() is deprecated. Please use mindspore.runtime.synchronize()
+[C1] excluded_step=0 loss=10.893074 time=21.688s
+[C1] step=1 loss=10.8969383 time=0.044s
+[C1] step=2 loss=10.8601341 time=0.042s
+[DirectCheckpoint] loading so from /models/npu_nvme_exp/user7-stack/checkouts/batch-B-entry/build_out/lib/libnpu_nvme.so
+EAL: '-c <coremask>' option is deprecated, and will be removed in a future release
+EAL: 	Use '-l <corelist>' or '--lcores=<corelist>' option instead
+[Diag] after spdk_env_init: rte_lcore_count=1 rte_socket_count=8 spdk_core_count=1
+[Diag] reactor: rings w=0x2000008fd600 r=0x2000008fd080 m=0x2000008fcb80 pollers s=0xfffb3001a500 w=0xfffb30009fc0 r=0xfffb3001c9a0 m=0xfffb30003810
+[NPU-NVMe] Found matching controller at 0000:83:00.0
+[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528
+[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 8
+[Init] Initialisation complete.
+[DirectCheckpoint] init ok. chunk=4.00MB (effective=4.00MB), rank=0/1
+[Rank 0] FileSystem Mounted. V2 generation=8 Active Slot: A
+[DirectCkpt] Rank 0 saving step 2 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 2 | Python save() dispatched to background thread. Layout cost: 384.31ms
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 2 | Background SPDK Flush ENDED at 3294810.676s
+[Breakdown][Rank 0] Prep: 2539.64ms | Layout: 384.31ms | SPDK(H/W): 328.89ms | Meta: 19.02ms
+[DirectCkpt][Rank 0] Background Safe Write: 1416.24 MB | BW: 432.65 MB/s
+======================================================
+
+[C1] step=3 loss=10.883544 time=0.065s
+[C1] step=4 loss=10.8725424 time=0.043s
+[C1] step=5 loss=10.8724909 time=0.042s

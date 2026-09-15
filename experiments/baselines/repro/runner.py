@@ -17,12 +17,12 @@ from .state_bridge import (apply_snapshot, capture_snapshot, create_batches,
 from python.training_state import capture_training_controls, restore_training_controls
 
 
-def _model(config):
+def _model(config, initialized=False):
     import mindspore as ms
     from experiments.common import init_env, make_causal_lm_training
     from direct_checkpoint import ProbeTrainOneStepCell
 
-    init_env(device_id=int(config["npu_device"]), seed=int(config["seed"]))
+    if not initialized: init_env(device_id=int(config["npu_device"]), seed=int(config["seed"]))
     random.seed(int(config["seed"]))
     np.random.seed(int(config["seed"]))
     model, _dataset, optimizer = make_causal_lm_training(
@@ -32,6 +32,16 @@ def _model(config):
     cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=False,
                                  ckpt_interval=10**9)
     return ms, model, optimizer, cell
+
+
+def _strict_model(config, initialized=False):
+    import mindspore as ms
+    from experiments.benchmarks.run_single_card_full import batch_for_step
+    ms.set_context(deterministic='ON')
+    framework, model, optimizer, cell = _model(config, initialized=initialized)
+    cell(*batch_for_step(framework, 0, int(config['input_tokens'])))
+    framework.hal.synchronize()
+    return framework, model, optimizer, cell
 
 
 def _step(ms, cell, batch_path, step):
@@ -76,12 +86,12 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     AdapterClass = ADAPTERS[adapter_name]
-    adapter = AdapterClass(config, run_dir)
     if fixture_dir is None:
         fixture_dir = Path(config["results_root"]) / "prepare" / "initial_state"
     if batches_path is None:
         batches_path = Path(config["results_root"]) / "prepare" / "batches.npz"
-    ms, model, optimizer, cell = _model(config)
+    ms, model, optimizer, cell = (_strict_model(config) if adapter_name == "ours" else _model(config))
+    adapter = AdapterClass(config, run_dir)
     fixture = load_raw_snapshot(fixture_dir)
     apply_snapshot(ms, fixture, {"model": model, "optimizer": optimizer}, optimizer)
     records = []
@@ -242,7 +252,11 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
         item for item in checkpoints if int(item["generation"]) == int(generation))
     adapter = None
     try:
-        ms, model, optimizer, cell = _model(config)
+        ms, model, optimizer, cell = (_strict_model(config) if adapter_name == "ours" else _model(config))
+        if adapter_name == "ours":
+            import gc
+            del model, optimizer, cell
+            gc.collect()
         mark("model_constructed")
         ms.hal.synchronize()
         mark("restore_begin", selected_generation=int(selected["generation"]),
@@ -251,10 +265,22 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
         if output_path:
             adapter.events = EventLog(Path(output_path).with_suffix(".events.jsonl"))
         mark("metadata_ready")
-        destination = {"model": model, "optimizer": optimizer,
-                       "_step": int(selected["step"]),
-                       "_verify_checksums": mode == "verify"}
-        restored = adapter.restore(int(selected["generation"]), destination)
+        if adapter_name == 'ours':
+            from npu_nvme.framework.full_state import MindSporeRestoreTarget
+            from npu_nvme.storage.bindings import load_backend
+            from .adapters.ours import OursAdapter
+            def factory(spec):
+                framework, new_model, new_optimizer, new_cell = _strict_model(config, initialized=True)
+                return MindSporeRestoreTarget(framework=framework, acl=load_backend().acl_lib,
+                    npu=int(config['npu_device']), model=new_model, optimizer=new_optimizer, cell=new_cell,
+                    identity=OursAdapter.training_identity(config, framework))
+            destination = dict(target_factory=factory, expected_spec=selected['expected_spec'], _step=int(selected['step']))
+            ready, receipt = adapter.restore(int(selected['generation']), destination)
+            model, optimizer, cell, restored = ready.model, ready.optimizer, ready.cell, ready.controls
+        else:
+            destination = {'model':model, 'optimizer':optimizer, '_step':int(selected['step']),
+                           '_verify_checksums':mode=='verify'}
+            restored = adapter.restore(int(selected['generation']), destination)
         mark("read_deserialize_done",
              combined=adapter_name in {"mindspore_native_save", "bytecheckpoint_host"})
         if hasattr(restored, "arrays"):
@@ -263,7 +289,7 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
                                       {"model": model, "optimizer": optimizer}, optimizer)
         else:
             snapshot = None
-            applied = restore_training_controls(ms, optimizer, restored)
+            applied = restored if adapter_name == "ours" else restore_training_controls(ms, optimizer, restored)
         ms.hal.synchronize()
         mark("state_ready")
 

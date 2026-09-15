@@ -1,0 +1,53 @@
+{
+  "after_close": {
+    "retained_slots": [],
+    "stats": {
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "completion_error_count": 0,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 0,
+      "nvme_complete_count": 0,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 0,
+      "nvme_submit_count": 0,
+      "reactor_cpu_us": 936,
+      "request_ring_depth": 0,
+      "request_ring_peak": 0,
+      "spdk_retry_count": 0,
+      "stream_sync_fallback_count": 0
+    }
+  },
+  "before_close": {
+    "retained_slots": [],
+    "stats": {
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "completion_error_count": 0,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 0,
+      "nvme_complete_count": 0,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 0,
+      "nvme_submit_count": 0,
+      "reactor_cpu_us": 936,
+      "request_ring_depth": 0,
+      "request_ring_peak": 0,
+      "spdk_retry_count": 0,
+      "stream_sync_fallback_count": 0
+    }
+  },
+  "case": "submit-close",
+  "cleanup_safe": true,
+  "close_rc": 0,
+  "close_seconds": 4.359986633062363e-06,
+  "init_rc": 0,
+  "pid": 572076,
+  "safe_process_exit": true,
+  "scope": "real hardware with controlled software fault injection",
+  "status": "fail",
+  "superblock_before": "797341143fc310797510fc7d0166022a7eb8aab7b495efae25765631d218a74b",
+  "traceback": "Traceback (most recent call last):\n  File \"/models/npu_nvme_exp/user7-stack/checkouts/d1-acceptance-001/tests/hardware/d1_lifecycle.py\", line 63, in execute\n    require(all(rc in (0,-errno.EBUSY,-errno.ESHUTDOWN) for rc in results),'unexpected admission result')\n  File \"/models/npu_nvme_exp/user7-stack/checkouts/d1-acceptance-001/tests/hardware/stage4_fault_lifecycle.py\", line 40, in require\n    raise AssertionError(message)\nAssertionError: unexpected admission result\n"
+}

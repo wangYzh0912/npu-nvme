@@ -93,8 +93,20 @@ typedef struct NPUNVMEContext {
     pthread_t reactor_pthread;
     pthread_barrier_t init_barrier;
     atomic_int app_should_stop;
+    atomic_int quarantined;
+    atomic_int admission_closed;
+    atomic_uint safety_reason; /* 1: event record, 2: event query, 3: observation timeout */
+    atomic_ullong request_serial;
+    atomic_int reactor_exited;
+    atomic_uint refs;          /* owner + allocated request objects */
+    atomic_uint queued_writes;
+    atomic_uint pending_requests; /* queued or reactor-owned requests */
     bool reactor_pthread_started;
     bool state_lock_initialized;
+    atomic_bool close_in_progress;
+    bool native_owner_held;
+    int native_owner_fd;
+    pid_t native_owner_pid;
     int reactor_init_result;
 
     /* ---- Step-counter poller ---- */

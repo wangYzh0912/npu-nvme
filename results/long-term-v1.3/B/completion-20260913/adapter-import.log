@@ -1,0 +1,14 @@
+[WARNING] ME(435307:281473147858976,MainProcess):2026-09-14-00:03:47.427.804 [mindspore/run_check/_check_version.py:402] Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/python/npu_nvme/framework/weights.py", line 6, in <module>
+    from npu_nvme.storage.chunks import rebuild_chunks_from_meta, build_ctypes_arrays
+ImportError: cannot import name 'rebuild_chunks_from_meta' from 'npu_nvme.storage.chunks' (/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/python/npu_nvme/storage/chunks.py)

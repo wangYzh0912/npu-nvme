@@ -21,14 +21,18 @@ from c_bindings import lib, NPUNVMEContext
 
 
 def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
-                keep_last_n=3, full_slot_gb=10, delta_slot_mb=256,
-                delta_slot_count=128):
+                keep_last_n=2, full_slot_gb=10, delta_slot_mb=256,
+                delta_slot_count=128, strict=True):
+    if not strict or world_size != 1 or keep_last_n != 2:
+        raise ValueError('D1 requires strict single-rank retention 2 (three physical FULL slots)')
+    if pci_addr != '0000:83:00.0':
+        raise ValueError('only authorized scratch namespace 0000:83:00.0 may be formatted')
     print(f"\n{'='*60}")
     print(f"!!! WARNING: NPUNVME DISK FORMAT UTILITY !!!")
     print(f"{'='*60}")
     print(f"Target NVMe Device : {pci_addr}")
     print(f"NPU Device ID      : {npu_id}")
-    print(f"FULL geometry      : {world_size * keep_last_n} slots x "
+    print(f"FULL geometry      : {3} slots x "
           f"{full_slot_gb} GiB")
     print(f"Delta geometry     : {delta_slot_count} slots x "
           f"{delta_slot_mb} MiB")
@@ -60,21 +64,14 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
         layout = make_layout(
             total_bytes=total_bytes,
             full_slot_bytes=full_slot_gb * 1024**3,
-            full_slot_count=world_size * keep_last_n,
+            full_slot_count=3,
             delta_slot_bytes=delta_slot_mb * 1024**2,
             delta_slot_count=delta_slot_count,
         )
         print(f"      FULL:  {layout.full_base}..{layout.full_end}")
         print(f"      Delta: {layout.delta_base}..{layout.delta_end}")
 
-        empty_meta = {
-            "schema": 2,
-            "checkpoints": {},
-            "delta_chain": {},
-            "full_generation": 0,
-            "delta_head": 0,
-            "delta_tail": 0,
-        }
+        empty_meta = {'strict_contract':'D1', 'catalog_revision':0, 'checkpoints':{}}
         meta_buf = ctypes.create_string_buffer(
             pack_metadata(empty_meta, generation=0), META_SLOT_BYTES)
 
@@ -118,11 +115,12 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NPUNVME Disk Formatting Tool")
     parser.add_argument("--pci_addr", type=str, default="0000:83:00.0")
+    parser.add_argument('--strict', action='store_true', default=True, help='strict D1 is mandatory (default)')
     parser.add_argument("--npu_id", type=int, default=0)
     parser.add_argument("--yes", action="store_true",
                         help="Skip interactive confirmation")
     parser.add_argument("--world-size", type=int, default=1)
-    parser.add_argument("--keep-last-n", type=int, default=3)
+    parser.add_argument("--keep-last-n", type=int, default=2)
     parser.add_argument("--full-slot-gb", type=int, default=10)
     parser.add_argument("--delta-slot-mb", type=int, default=256)
     parser.add_argument("--delta-slot-count", type=int, default=128)
@@ -131,4 +129,4 @@ if __name__ == "__main__":
                 world_size=args.world_size, keep_last_n=args.keep_last_n,
                 full_slot_gb=args.full_slot_gb,
                 delta_slot_mb=args.delta_slot_mb,
-                delta_slot_count=args.delta_slot_count)
+                delta_slot_count=args.delta_slot_count, strict=args.strict)
