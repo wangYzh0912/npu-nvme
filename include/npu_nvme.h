@@ -2,12 +2,16 @@
 #define NPU_NVME_H
 
 #include <stdint.h>
+
+#define NPU_NVME_ABI_VERSION 2
 #include <stddef.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+uint32_t npu_nvme_get_abi_version(void);
 
 /** @brief Opaque context handle.  Python sees this as an opaque pointer. */
 typedef struct NPUNVMEContext NPUNVMEContext;
@@ -78,10 +82,15 @@ int npu_nvme_submit_write_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
 /** @brief Poll a submitted request; result is returned once done is true. */
 int npu_nvme_poll_request(NPUNVMERequest *request, int *done);
 
-/** @brief Wait up to timeout_ms (zero means unbounded). */
+/** @brief Observe for timeout_ms; zero selects the finite request default.
+ * Timeout does not cancel I/O or prove source/destination buffers are safe.
+ */
 int npu_nvme_wait_request(NPUNVMERequest *request, uint32_t timeout_ms);
 
-/** @brief Release a terminal request.  Non-terminal requests are retained. */
+/** @brief Drop caller's request reference, including before completion.
+ * The queue/reactor retains its reference. This never transfers ownership of
+ * caller data buffers: retain those until completion or proven quiescence.
+ */
 void npu_nvme_release_request(NPUNVMERequest *request);
 
 /** @brief Return total NVMe capacity in bytes. */
@@ -119,10 +128,6 @@ int npu_nvme_flush(NPUNVMEContext *ctx);
 int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
                          uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
-/** @brief HBM write with one CRC32 result per logical (unpadded) chunk. */
-int npu_nvme_write_batch_crc(NPUNVMEContext *ctx, void **npu_ptrs,
-                             uint64_t *nvme_offsets, size_t *sizes,
-                             uint32_t *crc32_out, int num_items);
 
 /**
  * @brief Batch read: NVMe -> NPU HBM (blocking).
@@ -149,52 +154,6 @@ int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
 int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
                               uint64_t *nvme_offsets, size_t *sizes, int num_items);
 
-/**
- * @brief Register parameter pointers for background persistence by the
- *        Reactor step poller.
- */
-int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
-                            uint64_t *nvme_offsets, size_t *sizes, int num_items);
-
-// -- FaF listener control (I2) --
-
-/** @brief Set the NPU-side probe-flag device address. */
-int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
-
-int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
-
-/**
- * @brief Register the step_counter device pointer for the Reactor poller.
- *
- * @param ctx           context handle
- * @param dev_ptr       step_counter device (HBM) pointer
- * @param ckpt_interval trigger a write every N steps
- * @return 0 on success, -1 on error
- */
-int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval);
-
-/** @brief Return the self-allocated probe-flag device pointer (or NULL). */
-void* npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx);
-
-// -- Delta frame I/O (I3) --
-
-/**
- * @brief Initialise the delta ring-buffer layout on disk.
- *
- * @param ctx              context handle
- * @param delta_slot_size  bytes per delta slot (256 MB = 268435456 recommended)
- * @param delta_slot_count number of slots in the ring (128 recommended)
- * @return 0 on success, -1 on error
- */
-int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t area_offset,
-                        uint64_t delta_slot_size, uint32_t delta_slot_count);
-
-/** @brief Return the byte offset of the delta ring on the NVMe device. */
-uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx);
-
-uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx);
-uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
-
 /** @brief Set the bounded timeout used by blocking C API calls. */
 int npu_nvme_set_io_timeout_ms(NPUNVMEContext *ctx, uint32_t timeout_ms);
 
@@ -210,9 +169,28 @@ uint32_t npu_nvme_get_io_timeout_ms(NPUNVMEContext *ctx);
  */
 int npu_nvme_wait_quiescent(NPUNVMEContext *ctx, uint32_t timeout_ms);
 
-/* Delta frame I/O: migrated to Python side via build_chunks_host +
- * write_batch_host / read_batch.  The SPSC ring-buffer pipeline handles
- * arbitrary frame sizes without the 64 MB sync_meta_io limitation. */
+/** Diagnostic ownership snapshot; no entry authorizes freeing a buffer.
+ * reason: 0 active, 1 event record stop unproven, 2 event query stop unproven,
+ * 3 observation timeout. Free only after request completion/proven quiescence.
+ */
+typedef struct {
+    uint32_t slot;
+    uint32_t reason;
+    uint64_t request_id;
+    uint64_t bytes;
+    uint64_t nvme_offset;
+} NPUNVMERetainedSlot;
+int npu_nvme_get_retained_slots(NPUNVMEContext *ctx, NPUNVMERetainedSlot *slots,
+                                 uint32_t capacity, uint32_t *count);
+
+/** Close admission and wait for reactor exit, retaining context on failure.
+ *  0 timeout selects the finite default. May be retried; does not free ctx.
+ *  -EIO means DMA stop is unproven; buffers and context must remain alive.
+ *  After successful close and joined submitters, cleanup releases the owner.
+ */
+int npu_nvme_close(NPUNVMEContext *ctx, uint32_t timeout_ms);
+
+
 
 /**
  * @brief Return the C-layer I/O latency of the most recent batch operation.

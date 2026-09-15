@@ -10,10 +10,14 @@
 int main(int argc, char **argv) {
     NPUNVMEContext *ctx = NULL;
     const char *pci_addr = (argc > 1) ? argv[1] : "0000:83:00.0";
-    int npu_id = (argc > 2) ? atoi(argv[2]) : 1;
+    int npu_id = (argc > 2) ? atoi(argv[2]) : 7;
 
+    if (strcmp(pci_addr, "0000:83:00.0") != 0) {
+        fprintf(stderr, "Only authorized scratch namespace 83:00.0 may be written\n");
+        return 2;
+    }
     printf("[V2-smoke] calling npu_nvme_init...\n"); fflush(stdout);
-    int rc = npu_nvme_init(&ctx, pci_addr, npu_id, 4, 4194304, false, ".");
+    int rc = npu_nvme_init(&ctx, pci_addr, npu_id, 4, 1048576, false, ".");
     if (rc != 0 || !ctx) {
         fprintf(stderr, "[V2-smoke] FAIL: init returned %d\n", rc);
         return 1;

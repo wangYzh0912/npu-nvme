@@ -9,10 +9,7 @@ import numpy as np
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "python"))
 
-from training_state import (decode_control_value, encode_control_value,
-                            capture_training_controls,
-                            restore_training_controls,
-                            validate_state_names)
+from npu_nvme.framework.training_state import decode_control_value, encode_control_value, capture_training_controls, restore_training_controls, validate_state_names
 
 
 class TrainingStateCodecTests(unittest.TestCase):
@@ -81,6 +78,7 @@ class TrainingStateCodecTests(unittest.TestCase):
             @classmethod
             def set_seed(cls, seed):
                 cls.seed = seed
+                np.random.seed(seed)  # MindSpore's real set_seed has this side effect.
 
         class FakeMS:
             common = FakeCommon
@@ -115,6 +113,9 @@ class TrainingStateCodecTests(unittest.TestCase):
         self.assertTrue(np.array_equal(FakeMS.restored_rng,
                                        np.array([7, 11], dtype=np.int64)))
         self.assertEqual(FakeCommon.seed, 31)
+        self.assertEqual(encode_control_value(np.random.get_state())[0].tobytes(),
+                         encode_control_value(controls['numpy_rng'])[0].tobytes())
+        self.assertEqual(random.getstate(), controls['python_rng'])
         self.assertEqual(restored["data_cursor"], {"epoch": 2, "sample": 19})
         random.setstate(python_before)
         np.random.set_state(numpy_before)

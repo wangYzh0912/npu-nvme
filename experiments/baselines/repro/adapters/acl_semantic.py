@@ -6,7 +6,7 @@ import queue
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from python.full_checkpoint_protocol import CheckpointState
+from experiments.baselines.repro.states import CheckpointState
 
 from ..acl_capture import allocate_slot, capture_to_slot, device_state_layout
 from ..protocol import AdapterError, Handle

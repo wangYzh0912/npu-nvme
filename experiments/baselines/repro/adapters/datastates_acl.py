@@ -25,6 +25,6 @@ class DataStatesAclAdapter(ACLSemanticAdapter):
         status.update({"source": str(root),
                        "source_exists": root.is_dir(),
                        "implementation": "semantic tier port using upstream tier ordering",
-                       "upstream_patch_required": True,
-                       "status": "ready" if root.is_dir() else "dependency_blocked"})
+                       "upstream_core_invoked": False,
+                       "status": status["status"]})
         return status

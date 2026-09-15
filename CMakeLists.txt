@@ -131,6 +131,15 @@ message(STATUS "==============================================")
 # ==================================================
 add_library(npu_nvme SHARED
     src/npu_nvme.c
+    src/runtime.c
+    src/reactor.c
+    src/request.c
+    src/validation.c
+    src/dma.c
+    src/write_pipeline.c
+    src/read_pipeline.c
+    src/metadata_io.c
+    src/metrics.c
 )
 
 target_include_directories(npu_nvme PUBLIC
@@ -173,45 +182,13 @@ target_link_libraries(npu_nvme PRIVATE
 )
 
 set_target_properties(npu_nvme PROPERTIES
-    VERSION 1.0
-    SOVERSION 1
+    VERSION 2.0
+    SOVERSION 2
     BUILD_RPATH "${ASCEND_ACL_LIB_DIRS}"
     INSTALL_RPATH "${ASCEND_ACL_LIB_DIRS}"
 )
 
-# ==================================================
-# Test Executable
-# ==================================================
-add_executable(test_npu_nvme
-    tests/c/test_npu_nvme.c
-)
-
-target_include_directories(test_npu_nvme PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${ASCEND_ACL_INCLUDE_DIRS}
-)
-
-target_link_libraries(test_npu_nvme PRIVATE
-    npu_nvme
-)
-
-set_target_properties(test_npu_nvme PROPERTIES
-    BUILD_RPATH "$ORIGIN/../lib"
-    INSTALL_RPATH "$ORIGIN/../lib"
-)
-
-target_link_options(test_npu_nvme PRIVATE
-    "LINKER:-rpath,$ORIGIN/../lib"
-    "LINKER:--enable-new-dtags"
-)
-
-# ==================================================
-# V0 SPDK Thread Lib Test (minimal reproducer)
-# ==================================================
-# ==================================================
-# V2 Smoke Test: init + host write/read + cleanup
-# ==================================================
+# Native smoke: initialization, Host I/O, shutdown.
 add_executable(v2_smoke_test
     tests/c/v2_smoke_test.c
 )
@@ -243,34 +220,11 @@ install(FILES include/npu_nvme.h
     DESTINATION include
 )
 
-install(TARGETS test_npu_nvme
-    RUNTIME DESTINATION bin
-)
-
-# Create run script
-install(CODE "
-set(SCRIPT_CONTENT \"#!/bin/bash
-SCRIPT_DIR=\\\$(cd \\\$(dirname \\\${BASH_SOURCE[0]}) && pwd)
-INSTALL_ROOT=\\\$(dirname \\\$SCRIPT_DIR)
-
-if [ -f '${ASCEND_CANN_PACKAGE_PATH}/bin/setenv.bash' ]; then
-    source '${ASCEND_CANN_PACKAGE_PATH}/bin/setenv.bash'
-fi
-
-# 永久添加LD_LIBRARY_PATH（支持libnpu_nvme的运行时路径）
-export LD_LIBRARY_PATH=\\\$INSTALL_ROOT/lib:${ASCEND_CANN_PACKAGE_PATH}/lib64:\\\$LD_LIBRARY_PATH
-
-# 日志输出（帮助调试）
-echo \"[INFO] Executable: \\\$INSTALL_ROOT/bin/test_npu_nvme\"
-echo \"[INFO] LD_LIBRARY_PATH: \\\$LD_LIBRARY_PATH\"
-
-# 使用sudo运行目标测试程序且保留环境变量
-sudo LD_LIBRARY_PATH=\\\$LD_LIBRARY_PATH \\\$INSTALL_ROOT/bin/test_npu_nvme \\\$@\")
-file(WRITE \${CMAKE_INSTALL_PREFIX}/bin/run_test.sh \"\${SCRIPT_CONTENT}\")
-execute_process(COMMAND chmod +x \${CMAKE_INSTALL_PREFIX}/bin/run_test.sh)
-")
-
+install(TARGETS v2_smoke_test RUNTIME DESTINATION bin)
 
 message(STATUS "==============================================")
 message(STATUS "Build configured successfully")
 message(STATUS "==============================================")
+
+target_link_options(npu_nvme PRIVATE "LINKER:--version-script=${CMAKE_CURRENT_SOURCE_DIR}/src/exports.map")
+set_property(TARGET npu_nvme APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/exports.map")

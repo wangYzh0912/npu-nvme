@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "profile_id": "CLEANUP",
+  "profile_sha256": "f57dd269d66509a92c00a08a7de6372a2b397da74e27e7997a79adb2d4aa3707",
+  "execution_status": "completed",
+  "validation_status": "pass",
+  "cases": [
+    {
+      "id": "D1-core",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/d1",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-000/junit.xml"
+      ],
+      "counts": {
+        "tests": 48,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-000/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 1.0161094488576055,
+      "stdout": "case-000/stdout.txt",
+      "stderr": "case-000/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "D1-C-safety",
+      "required": true,
+      "tier": "C_IMPL",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/regression/test_c_host_safety.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-001/junit.xml"
+      ],
+      "counts": {
+        "tests": 22,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-001/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 117.99672547122464,
+      "stdout": "case-001/stdout.txt",
+      "stderr": "case-001/stderr.txt",
+      "binary_artifacts": [
+        "case-001/compiled/host.elf"
+      ]
+    },
+    {
+      "id": "D1-controls",
+      "required": true,
+      "tier": "FAKE",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/python/test_training_state.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-002/junit.xml"
+      ],
+      "counts": {
+        "tests": 5,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-002/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.49383669532835484,
+      "stdout": "case-002/stdout.txt",
+      "stderr": "case-002/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "G15-imports",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/gates/test_module_boundaries.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-003/junit.xml"
+      ],
+      "counts": {
+        "tests": 4,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-003/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.5657849321141839,
+      "stdout": "case-003/stdout.txt",
+      "stderr": "case-003/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "ABI",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/gates/test_abi_layout.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-004/junit.xml"
+      ],
+      "counts": {
+        "tests": 1,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-004/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.4367020446807146,
+      "stdout": "case-004/stdout.txt",
+      "stderr": "case-004/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "G14-evidence",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/regression/test_gate_evidence.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-005/junit.xml"
+      ],
+      "counts": {
+        "tests": 17,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-005/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 8.937232026830316,
+      "stdout": "case-005/stdout.txt",
+      "stderr": "case-005/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "H02-orchestration",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/regression/test_h02_orchestration.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-006/junit.xml"
+      ],
+      "counts": {
+        "tests": 17,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-006/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 1.2526002512313426,
+      "stdout": "case-006/stdout.txt",
+      "stderr": "case-006/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "D1-retirement",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/acceptance",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-007/junit.xml"
+      ],
+      "counts": {
+        "tests": 34,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-007/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.42749783815816045,
+      "stdout": "case-007/stdout.txt",
+      "stderr": "case-007/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "current-Python",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/python",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-008/junit.xml"
+      ],
+      "counts": {
+        "tests": 80,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-008/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 2.4647692651487887,
+      "stdout": "case-008/stdout.txt",
+      "stderr": "case-008/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "ownership",
+      "required": true,
+      "tier": "FAKE",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/gates/test_runtime_ownership.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-009/junit.xml"
+      ],
+      "counts": {
+        "tests": 3,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-009/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.5930644869804382,
+      "stdout": "case-009/stdout.txt",
+      "stderr": "case-009/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "full-safety",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/regression/test_full_safety.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-010/junit.xml"
+      ],
+      "counts": {
+        "tests": 15,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-010/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.5077968989498913,
+      "stdout": "case-010/stdout.txt",
+      "stderr": "case-010/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "cleanup-entry",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/cleanup",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/software/case-011/junit.xml"
+      ],
+      "counts": {
+        "tests": 9,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-011/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.535857287235558,
+      "stdout": "case-011/stdout.txt",
+      "stderr": "case-011/stderr.txt",
+      "binary_artifacts": []
+    }
+  ],
+  "case_count": 255,
+  "environment": {
+    "commit": "6a3c81d51b54aec5963f2cae28ba9991083f0b1d",
+    "python": "3.9.25 (main, Nov  3 2025, 22:33:42) \n[GCC 11.2.0]",
+    "executable": "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+    "binary_sha256": null,
+    "source_manifest_sha256": "a0a3ba32f389bd3540fa8c2468c940d3664d04fe73b4df5a3e3d1eaebe8fbb58"
+  },
+  "invocation": {
+    "argv": [
+      "tools/run_gate.py",
+      "--profile",
+      "CLEANUP",
+      "--out",
+      "results/legacy-cleanup/acceptance-001/software"
+    ],
+    "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+    "script_sha256": "bab6a391b0f4ef40d89817ba714c3d62b511d1a8d4de7cec02835c820c073d4f"
+  },
+  "metrics": {},
+  "faults_injected": [],
+  "changed_sources": [],
+  "boundaries": {
+    "can_prove": [
+      "declared host test outcomes"
+    ],
+    "cannot_prove": [
+      "device behavior",
+      "hardware DMA stop",
+      "C binary identity unless reported by C_IMPL test output"
+    ]
+  }
+}

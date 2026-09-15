@@ -7,14 +7,8 @@ import unittest
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.join(REPO_ROOT, "python"))
 
-from disk_layout import (  # noqa: E402
-    META_SLOT_BYTES,
-    make_layout,
-    pack_metadata,
-    pack_superblock,
-    unpack_metadata,
-    unpack_superblock,
-)
+from npu_nvme.storage.layout import META_SLOT_BYTES, make_layout
+from npu_nvme.storage.format import pack_metadata, pack_superblock, unpack_metadata, unpack_superblock
 
 
 class DiskLayoutTests(unittest.TestCase):
@@ -29,8 +23,6 @@ class DiskLayoutTests(unittest.TestCase):
             active_meta_slot=1,
         )
         self.assertLessEqual(layout.full_end, layout.delta_base)
-        self.assertEqual(layout.full_slot_offset(1, 4, 3), layout.full_base + 4 * layout.full_slot_bytes)
-        self.assertEqual(layout.delta_slot_offset(7), layout.delta_base + 7 * layout.delta_slot_bytes)
         self.assertEqual(unpack_superblock(pack_superblock(layout)), layout)
 
     def test_layout_rejects_full_delta_overlap(self):

@@ -1,0 +1,40 @@
+{
+  "model": "gpt2",
+  "seed": 41,
+  "input_tokens": 129,
+  "batch_size": 1,
+  "dropout": 0.0,
+  "warmup_steps": 1,
+  "formal_steps": 2,
+  "checkpoint_every": 2,
+  "continue_steps": 3,
+  "loss_rtol": 1e-05,
+  "loss_atol": 1e-06,
+  "npu_device": 7,
+  "numa_node": 4,
+  "training_numa_node": 2,
+  "io_numa_node": 4,
+  "fs_test_dir": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/method-files",
+  "raw_pci": "0000:83:00.0",
+  "raw_test_authorized": true,
+  "worker_python_bytecheckpoint": "/home/user7/npu-nvme-baseline-envs/bytecheckpoint/bin/python",
+  "worker_python_fastpersist": "/home/user7/npu-nvme-baseline-envs/fastpersist/bin/python",
+  "results_root": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/methods",
+  "same_physical_storage_verified": false,
+  "max_inflight": 2,
+  "timeout_seconds": 900,
+  "chunk_bytes": 4194304,
+  "pipeline_depth": 4,
+  "slot_size_gb": 10,
+  "spdk_shm_id": 56100,
+  "training_cpu_set": "48-71",
+  "io_cpu_set": "96-119",
+  "upstream_root": "/home/user7/npu-nvme-baseline-upstreams",
+  "schema_version": 2,
+  "methods": {
+    "ours": {
+      "chunk_bytes": 1048576,
+      "max_inflight": 1
+    }
+  }
+}

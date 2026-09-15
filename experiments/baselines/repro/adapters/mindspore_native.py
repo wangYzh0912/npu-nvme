@@ -9,8 +9,8 @@ from pathlib import Path
 
 import numpy as np
 
-from python.full_checkpoint_protocol import CheckpointState
-from python.training_state import encode_control_value
+from experiments.baselines.repro.states import CheckpointState
+from npu_nvme.framework.training_state import encode_control_value
 
 from ..protocol import Handle
 from ..state_bridge import (Snapshot, capture_snapshot, fsync_directory,

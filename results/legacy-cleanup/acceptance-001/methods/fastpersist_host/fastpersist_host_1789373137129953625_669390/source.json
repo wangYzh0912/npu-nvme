@@ -1,0 +1,170 @@
+{
+  "adapter": "fastpersist_host",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "adapter": "fastpersist_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3309216611179007,
+      "request_id": "fastpersist_host-000001",
+      "sha256": "c1bb400b0111a9ed3d0145bb0f9124c3e9879e52bab134d93eeea0e93d8e3493",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 3,
+      "submit_ns": 3309137495413506,
+      "timestamps_ns": {
+        "CREATED": 3309137534104306,
+        "DMA_COPYING": 3309137535179701,
+        "FLUSHING": 3309216597975495,
+        "METADATA_COMMITTING": 3309216598156456,
+        "NVME_WRITING": 3309137648852942,
+        "PERSISTED": 3309216611179007,
+        "QUEUED": 3309137535069070,
+        "SNAPSHOTTING": 3309137534785829,
+        "SNAPSHOT_READY": 3309137534926060,
+        "admitted": 3309137534157997,
+        "data_completed": 3309216597642244,
+        "input_buffer_released": 3309138917395873,
+        "source_released": 3309137636739085
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 3309137534785829,
+          "request_id": "fastpersist_host-000001"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 3309137534926060,
+          "request_id": "fastpersist_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 26800
+          },
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 3309137535069070,
+          "request_id": "fastpersist_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 3309137535179701,
+          "request_id": "fastpersist_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 3309137648852942,
+          "request_id": "fastpersist_host-000001"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3309216559642927
+          },
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 3309216597975495,
+          "request_id": "fastpersist_host-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 3309216598156456,
+          "request_id": "fastpersist_host-000001"
+        },
+        {
+          "detail": {
+            "sha256": "c1bb400b0111a9ed3d0145bb0f9124c3e9879e52bab134d93eeea0e93d8e3493",
+            "upstream_hook": "patched legacy serializer+FastFileWriter+AIO"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 3309216611179007,
+          "request_id": "fastpersist_host-000001"
+        }
+      ]
+    }
+  ],
+  "formal_steps": 2,
+  "fresh_restore_required": true,
+  "kind": "host-adapted-semantic-port",
+  "mechanisms_preserved": [
+    "patched PyTorch legacy serialization storage-list hook",
+    "DeepNVMe FastFileWriter and AIO",
+    "64 MiB double-buffered drain before durable completion"
+  ],
+  "model": "gpt2",
+  "platform_substitutions": [
+    "PyTorch model extraction -> common ACL FULL capture and shared memory",
+    "CUDA pinned memory -> DeepNVMe CPU locked memory",
+    "GDS disabled; Host AIO retained",
+    "CUDA-only UtilsBuilder -> equivalent CPU byte view"
+  ],
+  "port_class": "host-adapted-semantic-port",
+  "project_commit": "6a3c81d51b54aec5963f2cae28ba9991083f0b1d",
+  "schema_version": 2,
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.876251220703125,
+      "step": 4,
+      "step_begin_ns": 3309218360947745,
+      "step_end_ns": 3309218407884107
+    },
+    {
+      "loss": 10.873220443725586,
+      "step": 5,
+      "step_begin_ns": 3309218407971188,
+      "step_end_ns": 3309218453265833
+    },
+    {
+      "loss": 10.878211975097656,
+      "step": 6,
+      "step_begin_ns": 3309218453336264,
+      "step_end_ns": 3309218497951217
+    }
+  ],
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.850872039794922,
+      "step": 2,
+      "step_begin_ns": 3309136988639150,
+      "step_end_ns": 3309137446344286
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.85014533996582,
+      "step": 3,
+      "step_begin_ns": 3309137446379846,
+      "step_end_ns": 3309137495402796
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 81.509410747,
+  "upstream_core_invoked": true
+}

@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 
-from experiments.benchmarks.validate_timeline import validate_sample
+from npu_nvme.schemas.timeline import validate_sample
 
 
 class Wp1TimelineTests(unittest.TestCase):

@@ -1,0 +1,12 @@
+# Adapter: fastpersist_host
+# Port class: host-adapted-semantic-port
+# Locked upstream core invoked: True
+# Mechanisms preserved:
+# - patched PyTorch legacy serialization storage-list hook
+# - DeepNVMe FastFileWriter and AIO
+# - 64 MiB double-buffered drain before durable completion
+# Platform substitutions:
+# - PyTorch model extraction -> common ACL FULL capture and shared memory
+# - CUDA pinned memory -> DeepNVMe CPU locked memory
+# - GDS disabled; Host AIO retained
+# - CUDA-only UtilsBuilder -> equivalent CPU byte view

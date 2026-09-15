@@ -1,0 +1,81 @@
+{
+  "after_close": {
+    "retained_slots": [],
+    "stats": {
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "completion_error_count": 0,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 1,
+      "nvme_complete_count": 1,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 1,
+      "nvme_submit_count": 1,
+      "reactor_cpu_us": 1908,
+      "request_ring_depth": 0,
+      "request_ring_peak": 1,
+      "spdk_retry_count": 0,
+      "stream_sync_fallback_count": 0
+    }
+  },
+  "before_close": {
+    "retained_slots": [],
+    "stats": {
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "completion_error_count": 0,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 1,
+      "nvme_complete_count": 1,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 1,
+      "nvme_submit_count": 1,
+      "reactor_cpu_us": 1908,
+      "request_ring_depth": 0,
+      "request_ring_peak": 1,
+      "spdk_retry_count": 0,
+      "stream_sync_fallback_count": 0
+    }
+  },
+  "case": "lost-completion",
+  "cleanup_safe": true,
+  "close_rc": 0,
+  "close_seconds": 0.007739398628473282,
+  "completion_mode": "withheld then delivered; not a physical lost interrupt",
+  "held_completion": {
+    "retained_slots": [
+      {
+        "bytes": 4096,
+        "nvme_offset": 69256347648,
+        "reason": 3,
+        "request_id": 1,
+        "slot": 0
+      }
+    ],
+    "stats": {
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "completion_error_count": 0,
+      "dma_inflight": 1,
+      "dma_inflight_peak": 1,
+      "nvme_complete_count": 0,
+      "nvme_outstanding": 1,
+      "nvme_outstanding_peak": 1,
+      "nvme_submit_count": 1,
+      "reactor_cpu_us": 1686,
+      "request_ring_depth": 0,
+      "request_ring_peak": 1,
+      "spdk_retry_count": 0,
+      "stream_sync_fallback_count": 0
+    }
+  },
+  "init_rc": 0,
+  "pid": 669306,
+  "safe_process_exit": true,
+  "scope": "real hardware with controlled software fault injection",
+  "status": "pass",
+  "superblock_before": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+}

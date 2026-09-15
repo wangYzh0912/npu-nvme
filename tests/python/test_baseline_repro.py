@@ -6,13 +6,13 @@ import pytest
 
 from experiments.baselines.repro.host_bridge import (
     SharedSnapshot, snapshot_from_descriptor, snapshot_view_from_descriptor)
-from experiments.baselines.repro.cli import (adapter_evidence,
+from experiments.baselines.repro.entry import (adapter_evidence,
                                              is_formal_semantic_port)
 from experiments.baselines.repro.adapters import ADAPTERS
 from experiments.baselines.repro.protocol import EventLog, Handle
 from experiments.baselines.repro.state_bridge import Snapshot, load_raw_snapshot, save_raw_snapshot
 from experiments.baselines.repro.inventory import build_inventory
-from python.full_checkpoint_protocol import CheckpointState
+from experiments.baselines.repro.states import CheckpointState
 
 
 def _snapshot():
@@ -167,21 +167,23 @@ def test_ours_handle_normalizes_native_persisted_event():
     assert row["sha256"] == "common-digest"
 
 
-def test_ours_restore_checks_generation_and_forwards_verification_mode():
+def test_ours_restore_requires_fresh_factory_and_never_disables_integrity():
     from experiments.baselines.repro.adapters.ours import OursAdapter
-
     class Checkpoint:
-        meta_dict = {"checkpoints": {"step_8": {"generation": 42}}}
+        meta_dict = {'checkpoints': {'generation_42': {'state_step':8}}}
         calls = []
-        def load_state(self, components, step=None, verify_checksums=True):
-            self.calls.append((components, step, verify_checksums))
-            return {"restored": True}
-
+        def restore_full_state(self, factory, spec, **kwargs):
+            self.calls.append((factory, spec, kwargs))
+            return 'ready', 'receipt'
     adapter = object.__new__(OursAdapter)
     adapter.ckpt = Checkpoint()
-    destination = {"model": object(), "optimizer": object(), "_step": 8,
-                   "_verify_checksums": False}
-    assert adapter.restore(42, destination) == {"restored": True}
-    assert adapter.ckpt.calls[0][1:] == (8, False)
-    with pytest.raises(ValueError, match="generation mismatch"):
-        adapter.restore(43, destination)
+    adapter.config = {'timeout_seconds':3}
+    factory = lambda spec: object()
+    destination = dict(target_factory=factory, expected_spec={'identity':'test'}, _step=8,
+                       _verify_checksums=False)
+    assert adapter.restore(42, destination) == ('ready','receipt')
+    assert adapter.ckpt.calls[0][0] is factory
+    assert adapter.ckpt.calls[0][2]['step'] == 8
+    assert 'verify_checksums' not in adapter.ckpt.calls[0][2]
+    with pytest.raises(ValueError, match='not retained'): adapter.restore(43, destination)
+    with pytest.raises(ValueError, match='target_factory'): adapter.restore(42, {'model':object()})

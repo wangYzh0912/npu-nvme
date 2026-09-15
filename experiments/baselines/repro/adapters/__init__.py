@@ -1,7 +1,6 @@
 """Baseline adapter registry."""
 
 from .base import Adapter, NoneAdapter, adapter_status
-from .mindspore_sync import MindSporeSyncAdapter
 from .mindspore_native import MindSporeNativeSaveAdapter
 from .ours import OursAdapter
 from .datastates_acl import DataStatesAclAdapter
@@ -11,7 +10,6 @@ from .fastpersist_host import FastPersistHostAdapter
 
 ADAPTERS = {
     "none": NoneAdapter,
-    "mindspore_sync": MindSporeSyncAdapter,
     "mindspore_native_save": MindSporeNativeSaveAdapter,
     "ours": OursAdapter,
     "datastates_acl": DataStatesAclAdapter,

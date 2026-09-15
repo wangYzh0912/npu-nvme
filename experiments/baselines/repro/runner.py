@@ -14,24 +14,16 @@ from .adapters import ADAPTERS
 from .protocol import AdapterError, DependencyBlocked, EventLog
 from .state_bridge import (apply_snapshot, capture_snapshot, create_batches,
                            load_raw_snapshot, save_raw_snapshot, write_json)
-from python.training_state import capture_training_controls, restore_training_controls
+from npu_nvme.framework.training_state import capture_training_controls, restore_training_controls
 
 
-def _model(config):
-    import mindspore as ms
-    from experiments.common import init_env, make_causal_lm_training
-    from direct_checkpoint import ProbeTrainOneStepCell
-
-    init_env(device_id=int(config["npu_device"]), seed=int(config["seed"]))
-    random.seed(int(config["seed"]))
-    np.random.seed(int(config["seed"]))
-    model, _dataset, optimizer = make_causal_lm_training(
-        config["model"], total_steps=1, device_id=int(config["npu_device"]),
-        seq_len=int(config["input_tokens"]), dropout_rate=float(config["dropout"]),
-        require_dataset=False)
-    cell = ProbeTrainOneStepCell(model, optimizer, enable_probe=False,
-                                 ckpt_interval=10**9)
-    return ms, model, optimizer, cell
+def _model(config, initialized=False):
+    from types import SimpleNamespace
+    from experiments.training.full_fixture import build_training
+    args = SimpleNamespace(model=config['model'], npu=int(config['npu_device']),
+        seed=int(config['seed']), seq_len=int(config['input_tokens']),
+        dropout_rate=float(config['dropout']), deterministic='ON')
+    return build_training(args, initialized=initialized)
 
 
 def _step(ms, cell, batch_path, step):
@@ -76,12 +68,12 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     AdapterClass = ADAPTERS[adapter_name]
-    adapter = AdapterClass(config, run_dir)
     if fixture_dir is None:
         fixture_dir = Path(config["results_root"]) / "prepare" / "initial_state"
     if batches_path is None:
         batches_path = Path(config["results_root"]) / "prepare" / "batches.npz"
     ms, model, optimizer, cell = _model(config)
+    adapter = AdapterClass(config, run_dir)
     fixture = load_raw_snapshot(fixture_dir)
     apply_snapshot(ms, fixture, {"model": model, "optimizer": optimizer}, optimizer)
     records = []
@@ -120,21 +112,9 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
             checkpoint = item["handle"].as_dict()
             checkpoint.update({"step": item["step"],
                                "submit_ns": item["submit_ns"]})
-            # The common protocol Handle exposes timestamps_ns, while the
-            # native DirectCheckpoint handle exposes explicit event fields and
-            # an events list.  Normalize both instead of assuming one shape;
-            # otherwise a successful raw-SPDK commit is reported as a runner
-            # failure after the data is already durable.
-            timestamps = checkpoint.get("timestamps_ns", {})
-            persisted_ns = timestamps.get("PERSISTED", timestamps.get("persisted"))
-            if persisted_ns is None:
-                persisted_ns = next(
-                    (event.get("monotonic_ns") for event in checkpoint.get("events", [])
-                     if event.get("state") == "PERSISTED" or
-                     event.get("event") == "persisted"), None)
-            if persisted_ns is None:
-                persisted_ns = checkpoint.get("persisted_ns")
-            checkpoint["persisted_ns"] = persisted_ns
+            persisted_ns = checkpoint['persisted_ns']
+            if not isinstance(persisted_ns, int) or persisted_ns < item['submit_ns']:
+                raise ValueError('checkpoint lacks a valid persistence timestamp')
             materialized.append(checkpoint)
         checkpoints = materialized
     # Continue from the last committed state in the source process for oracle.
@@ -185,13 +165,14 @@ def run(config, adapter_name, run_dir, fixture_dir=None, batches_path=None):
                 transition_detail(checkpoint, "PERSISTED").get("flush_ns")
                 for checkpoint in checkpoints]),
             "submit_to_persist": summary([
-                (checkpoint.get("persisted_ns") or 0) - checkpoint.get("submit_ns", 0)
+                checkpoint["persisted_ns"] - checkpoint["submit_ns"]
                 for checkpoint in checkpoints]),
             "storage_backend": "filesystem",
             "api": "mindspore.save_checkpoint(async_save=False)",
         }
     result = {
-        "status": "trend_measured", "adapter": adapter_name,
+        "schema_version": 2, "status": "trend_measured", "adapter": adapter_name,
+        "project_commit": config["project_commit"],
         "kind": AdapterClass.kind, "model": config["model"],
         "port_class": getattr(AdapterClass, "kind", None),
         "upstream_core_invoked": getattr(AdapterClass,
@@ -243,6 +224,10 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
     adapter = None
     try:
         ms, model, optimizer, cell = _model(config)
+        if adapter_name == "ours":
+            import gc
+            del model, optimizer, cell
+            gc.collect()
         mark("model_constructed")
         ms.hal.synchronize()
         mark("restore_begin", selected_generation=int(selected["generation"]),
@@ -251,10 +236,22 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
         if output_path:
             adapter.events = EventLog(Path(output_path).with_suffix(".events.jsonl"))
         mark("metadata_ready")
-        destination = {"model": model, "optimizer": optimizer,
-                       "_step": int(selected["step"]),
-                       "_verify_checksums": mode == "verify"}
-        restored = adapter.restore(int(selected["generation"]), destination)
+        if adapter_name == 'ours':
+            from npu_nvme.framework.full_state import MindSporeRestoreTarget
+            from npu_nvme.storage.bindings import load_backend
+            from .adapters.ours import OursAdapter
+            def factory(spec):
+                framework, new_model, new_optimizer, new_cell = _model(config, initialized=True)
+                return MindSporeRestoreTarget(framework=framework, acl=load_backend().acl_lib,
+                    npu=int(config['npu_device']), model=new_model, optimizer=new_optimizer, cell=new_cell,
+                    identity=OursAdapter.training_identity(config, framework))
+            destination = dict(target_factory=factory, expected_spec=selected['expected_spec'], _step=int(selected['step']))
+            ready, receipt = adapter.restore(int(selected['generation']), destination)
+            model, optimizer, cell, restored = ready.model, ready.optimizer, ready.cell, ready.controls
+        else:
+            destination = {'model':model, 'optimizer':optimizer, '_step':int(selected['step']),
+                           '_verify_checksums':mode=='verify'}
+            restored = adapter.restore(int(selected['generation']), destination)
         mark("read_deserialize_done",
              combined=adapter_name in {"mindspore_native_save", "bytecheckpoint_host"})
         if hasattr(restored, "arrays"):
@@ -263,7 +260,7 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
                                       {"model": model, "optimizer": optimizer}, optimizer)
         else:
             snapshot = None
-            applied = restore_training_controls(ms, optimizer, restored)
+            applied = restored if adapter_name == "ours" else restore_training_controls(ms, optimizer, restored)
         ms.hal.synchronize()
         mark("state_ready")
 
@@ -305,14 +302,17 @@ def restore(config, adapter_name, run_dir, generation="latest-committed",
             if step == final_step + 1:
                 mark("first_step_end", step=step, loss=value,
                      includes_graph_compile=True)
-        oracle = [row["loss"] for row in result.get("source_oracle", [])[:steps]]
+        reference = {row['step']: row['loss'] for row in result['steps'] + result['source_oracle']}
+        wanted = list(range(final_step + 1, final_step + steps + 1))
+        if steps <= 0 or any(step not in reference for step in wanted):
+            raise ValueError('source trajectory does not cover requested continuation')
+        oracle = [reference[step] for step in wanted]
         deviations = [abs(float(a) - float(b)) for a, b in zip(losses, oracle)]
-        loss_ok = (not deviations or
-                   max(deviations) <= float(config["loss_atol"]) +
-                   float(config["loss_rtol"]) *
-                   max(1.0, max(map(abs, oracle))))
+        loss_ok = (len(losses) == len(oracle) == steps and
+                   bool(np.all(np.isfinite(losses))) and
+                   bool(np.allclose(losses, oracle, rtol=float(config['loss_rtol']), atol=float(config['loss_atol']))))
         restore_result = {
-            "status": "pass" if (mode == "timing" or byte_exact is True) and
+            "status": ("timing_measured" if mode == "timing" else "pass") if (mode == "timing" or byte_exact is True) and
                       loss_ok else "restore_failed",
             "adapter": adapter_name, "generation": int(selected["generation"]),
             "checkpoint_step": int(selected["step"]),

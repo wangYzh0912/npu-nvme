@@ -1,0 +1,166 @@
+{
+  "adapter": "pccheck_acl",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "adapter": "pccheck_acl",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3308913701049138,
+      "request_id": "pccheck_acl-000001",
+      "sha256": "c1bb400b0111a9ed3d0145bb0f9124c3e9879e52bab134d93eeea0e93d8e3493",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 3,
+      "submit_ns": 3308910995340760,
+      "timestamps_ns": {
+        "CREATED": 3308911032562125,
+        "DMA_COPYING": 3308911033517478,
+        "FLUSHING": 3308911843933843,
+        "METADATA_COMMITTING": 3308912455826547,
+        "NVME_WRITING": 3308911146011715,
+        "PERSISTED": 3308913701049138,
+        "QUEUED": 3308911033405798,
+        "SNAPSHOTTING": 3308911033134997,
+        "SNAPSHOT_READY": 3308911033266247,
+        "admitted": 3308911032589315,
+        "data_completed": 3308913700897417,
+        "input_buffer_released": 3308913700720326,
+        "source_released": 3308911134774711
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 3308911033134997,
+          "request_id": "pccheck_acl-000001"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 3308911033266247,
+          "request_id": "pccheck_acl-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 16060
+          },
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 3308911033405798,
+          "request_id": "pccheck_acl-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 3308911033517478,
+          "request_id": "pccheck_acl-000001"
+        },
+        {
+          "detail": {
+            "chunk_bytes": 4194304,
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 3308911146011715,
+          "request_id": "pccheck_acl-000001"
+        },
+        {
+          "detail": {},
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 3308911843933843,
+          "request_id": "pccheck_acl-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 3308912455826547,
+          "request_id": "pccheck_acl-000001"
+        },
+        {
+          "detail": {
+            "sha256": "c1bb400b0111a9ed3d0145bb0f9124c3e9879e52bab134d93eeea0e93d8e3493"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 3308913701049138,
+          "request_id": "pccheck_acl-000001"
+        }
+      ]
+    }
+  ],
+  "formal_steps": 2,
+  "fresh_restore_required": true,
+  "kind": "npu-semantic-port",
+  "mechanisms_preserved": [
+    "bounded concurrent checkpoint slots",
+    "background 4 MiB chunk writer and explicit slot backpressure",
+    "generation publish after durable data completion"
+  ],
+  "model": "gpt2",
+  "platform_substitutions": [
+    "CUDA capture -> ACL capture",
+    "x86 CLWB/SFENCE persistence -> XFS fsync and atomic rename"
+  ],
+  "port_class": "npu-semantic-port",
+  "project_commit": "6a3c81d51b54aec5963f2cae28ba9991083f0b1d",
+  "schema_version": 2,
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.876251220703125,
+      "step": 4,
+      "step_begin_ns": 3308914006096901,
+      "step_end_ns": 3308914050049872
+    },
+    {
+      "loss": 10.873220443725586,
+      "step": 5,
+      "step_begin_ns": 3308914050122912,
+      "step_end_ns": 3308914092268056
+    },
+    {
+      "loss": 10.878211975097656,
+      "step": 6,
+      "step_begin_ns": 3308914092332606,
+      "step_end_ns": 3308914133847077
+    }
+  ],
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.850872039794922,
+      "step": 2,
+      "step_begin_ns": 3308910843566601,
+      "step_end_ns": 3308910951009498
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.85014533996582,
+      "step": 3,
+      "step_begin_ns": 3308910951032578,
+      "step_end_ns": 3308910995332270
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 3.290327476,
+  "upstream_core_invoked": false
+}

@@ -14,21 +14,21 @@ import struct
 import argparse
 import sys
 
-from disk_layout import (SUPERBLOCK_OFFSET, META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
-                          META_SLOT_BYTES, CHUNK_SIZE, make_layout,
-                          pack_metadata, pack_superblock)
-from c_bindings import lib, NPUNVMEContext
+from npu_nvme.storage.layout import SUPERBLOCK_OFFSET, META_SLOT_A_OFFSET, META_SLOT_B_OFFSET, META_SLOT_BYTES, CHUNK_SIZE, make_layout
+from npu_nvme.storage.format import pack_metadata, pack_superblock
+from npu_nvme.storage.bindings import load_backend, NPUNVMEContext
 
 
-def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
-                keep_last_n=3, full_slot_gb=10, delta_slot_mb=256,
-                delta_slot_count=128):
+def format_disk(pci_addr, npu_id=7, force=False, full_slot_gb=10,
+                delta_slot_mb=256, delta_slot_count=128):
+    if pci_addr != '0000:83:00.0':
+        raise ValueError('only authorized scratch namespace 0000:83:00.0 may be formatted')
     print(f"\n{'='*60}")
     print(f"!!! WARNING: NPUNVME DISK FORMAT UTILITY !!!")
     print(f"{'='*60}")
     print(f"Target NVMe Device : {pci_addr}")
     print(f"NPU Device ID      : {npu_id}")
-    print(f"FULL geometry      : {world_size * keep_last_n} slots x "
+    print(f"FULL geometry      : {3} slots x "
           f"{full_slot_gb} GiB")
     print(f"Delta geometry     : {delta_slot_count} slots x "
           f"{delta_slot_mb} MiB")
@@ -43,6 +43,7 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
     else:
         print("\n[force=True] Skipping interactive confirmation.")
 
+    lib = load_backend().lib
     print("\n[1/4] Initializing SPDK and connecting to NVMe...")
     ctx = ctypes.POINTER(NPUNVMEContext)()
     ret = lib.npu_nvme_init(ctypes.byref(ctx), pci_addr.encode('utf-8'),
@@ -60,21 +61,14 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
         layout = make_layout(
             total_bytes=total_bytes,
             full_slot_bytes=full_slot_gb * 1024**3,
-            full_slot_count=world_size * keep_last_n,
+            full_slot_count=3,
             delta_slot_bytes=delta_slot_mb * 1024**2,
             delta_slot_count=delta_slot_count,
         )
         print(f"      FULL:  {layout.full_base}..{layout.full_end}")
         print(f"      Delta: {layout.delta_base}..{layout.delta_end}")
 
-        empty_meta = {
-            "schema": 2,
-            "checkpoints": {},
-            "delta_chain": {},
-            "full_generation": 0,
-            "delta_head": 0,
-            "delta_tail": 0,
-        }
+        empty_meta = {'strict_contract':'D1', 'catalog_revision':0, 'checkpoints':{}}
         meta_buf = ctypes.create_string_buffer(
             pack_metadata(empty_meta, generation=0), META_SLOT_BYTES)
 
@@ -87,7 +81,7 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
             ctypes.c_void_p(ctypes.addressof(meta_buf)))
         if ret_a != 0 or ret_b != 0:
             raise RuntimeError("Failed to wipe Metadata Slots.")
-        if hasattr(lib, "npu_nvme_flush") and lib.npu_nvme_flush(ctx) != 0:
+        if lib.npu_nvme_flush(ctx) != 0:
             raise RuntimeError("Failed to flush metadata replicas.")
 
         print("[4/4] Writing V2 Superblock (layout + CRC)...")
@@ -98,7 +92,7 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
             ctypes.c_void_p(ctypes.addressof(sb_buf)))
         if ret_sb != 0:
             raise RuntimeError("Failed to write Superblock.")
-        if hasattr(lib, "npu_nvme_flush") and lib.npu_nvme_flush(ctx) != 0:
+        if lib.npu_nvme_flush(ctx) != 0:
             raise RuntimeError("Failed to flush superblock.")
 
         print("Flushing NVMe cache to NAND... Please wait...")
@@ -121,14 +115,11 @@ if __name__ == "__main__":
     parser.add_argument("--npu_id", type=int, default=0)
     parser.add_argument("--yes", action="store_true",
                         help="Skip interactive confirmation")
-    parser.add_argument("--world-size", type=int, default=1)
-    parser.add_argument("--keep-last-n", type=int, default=3)
     parser.add_argument("--full-slot-gb", type=int, default=10)
     parser.add_argument("--delta-slot-mb", type=int, default=256)
     parser.add_argument("--delta-slot-count", type=int, default=128)
     args = parser.parse_args()
     format_disk(args.pci_addr, args.npu_id, force=args.yes,
-                world_size=args.world_size, keep_last_n=args.keep_last_n,
                 full_slot_gb=args.full_slot_gb,
                 delta_slot_mb=args.delta_slot_mb,
                 delta_slot_count=args.delta_slot_count)

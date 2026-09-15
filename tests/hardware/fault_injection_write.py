@@ -8,10 +8,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "python"))
-from c_bindings import NPUNVMEContext, lib
+from npu_nvme.storage.bindings import NPUNVMEContext, NPUNVMERequest, load_backend
 
 
 def main():
+    global lib, acl_lib
+    backend = load_backend()
+    lib, acl_lib = backend.lib, backend.acl_lib
     parser = argparse.ArgumentParser()
     parser.add_argument("--pci", default="0000:83:00.0")
     parser.add_argument("--npu", type=int, default=7)

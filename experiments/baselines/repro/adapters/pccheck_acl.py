@@ -31,6 +31,6 @@ class PCCheckAclAdapter(ACLSemanticAdapter):
                        "source_exists": root.is_dir(),
                        "implementation": "semantic N-slot port of PCcheck writer",
                        "max_async": int(config.get("max_inflight", 2)),
-                       "upstream_patch_required": True,
-                       "status": "ready" if root.is_dir() else "dependency_blocked"})
+                       "upstream_core_invoked": False,
+                       "status": status["status"]})
         return status

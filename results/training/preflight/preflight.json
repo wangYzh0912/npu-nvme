@@ -1,0 +1,242 @@
+{
+  "adapters": {
+    "bytecheckpoint_host": {
+      "adapter": "bytecheckpoint_host",
+      "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
+      "kind": "host-adapted-semantic-port",
+      "mechanisms_preserved": [
+        "model and optimizer DDPSavePlanner/DDPLoadPlanner workflows",
+        "official extra_state workflow for persisted controls",
+        "shared three-component CKPTCounter and async LocalStorageWriter queues"
+      ],
+      "platform_substitutions": [
+        "PyTorch model extraction -> common ACL FULL capture and shared memory",
+        "CUDA pinned D2H -> ACL pinned D2H"
+      ],
+      "port_class": "host-adapted-semantic-port",
+      "source": "/home/user7/npu-nvme-baseline-upstreams/ByteCheckpoint",
+      "source_exists": true,
+      "status": "ready",
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": true,
+      "upstream_integration": "model+optimizer DDP planners, extra_state workflow, shared CKPTCounter(3)",
+      "worker": "/home/user7/npu-nvme-baseline-envs/bytecheckpoint/bin/python",
+      "worker_status": {
+        "returncode": 0,
+        "status": "ready",
+        "stdout": "[2026-09-14 15:36:28][WARNING][memory_pool.py:69][memory_pool][pid:646436] - Failed loading CUDA runtime: Torch not compiled with CUDA enabled\ntorch=2.5.1"
+      }
+    },
+    "datastates_acl": {
+      "adapter": "datastates_acl",
+      "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
+      "implementation": "semantic tier port using upstream tier ordering",
+      "kind": "npu-semantic-port",
+      "mechanisms_preserved": [
+        "device-tier to pinned-host-tier to file-tier pipeline",
+        "region queue and bounded Host memory pool",
+        "separate source-release and persistence completion"
+      ],
+      "platform_substitutions": [
+        "CUDA runtime -> ACL runtime",
+        "upstream file tier -> durable XFS writer"
+      ],
+      "port_class": "npu-semantic-port",
+      "source": "/home/user7/npu-nvme-baseline-upstreams/datastates-llm",
+      "source_exists": true,
+      "status": "ready",
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": false
+    },
+    "fastpersist_host": {
+      "adapter": "fastpersist_host",
+      "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
+      "deepspeed": "/home/user7/npu-nvme-baseline-upstreams/DeepSpeed",
+      "kind": "host-adapted-semantic-port",
+      "mechanisms_preserved": [
+        "patched PyTorch legacy serialization storage-list hook",
+        "DeepNVMe FastFileWriter and AIO",
+        "64 MiB double-buffered drain before durable completion"
+      ],
+      "platform_substitutions": [
+        "PyTorch model extraction -> common ACL FULL capture and shared memory",
+        "CUDA pinned memory -> DeepNVMe CPU locked memory",
+        "GDS disabled; Host AIO retained",
+        "CUDA-only UtilsBuilder -> equivalent CPU byte view"
+      ],
+      "port_class": "host-adapted-semantic-port",
+      "source": "/home/user7/npu-nvme-baseline-upstreams/DeepSpeedExamples",
+      "source_exists": true,
+      "status": "ready",
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": true,
+      "upstream_integration": "patched serializer+FastFileWriter+AIO",
+      "worker": "/home/user7/npu-nvme-baseline-envs/fastpersist/bin/python",
+      "worker_status": {
+        "returncode": 0,
+        "status": "ready",
+        "stdout": "[2026-09-14 15:36:31,479] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\n[2026-09-14 15:36:33,989] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\nbuilders=available\ntorch=2.6.0+cpu,deepspeed=0.19.6+32110a95"
+      }
+    },
+    "mindspore_native_save": {
+      "adapter": "mindspore_native_save",
+      "api": "mindspore.save_checkpoint(async_save=False)",
+      "capture": "MindSpore save_checkpoint owns native parameter capture",
+      "kind": "framework-native-save",
+      "port_class": "framework-native-save",
+      "restore_api": "mindspore.load_checkpoint",
+      "status": "ready",
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": true
+    },
+    "none": {
+      "adapter": "none",
+      "kind": "training-reference",
+      "reason": null,
+      "status": "ready"
+    },
+    "ours": {
+      "adapter": "ours",
+      "implementation": "StrictCheckpoint FULL path",
+      "kind": "native",
+      "raw_pci": "0000:83:00.0",
+      "status": "ready"
+    },
+    "pccheck_acl": {
+      "adapter": "pccheck_acl",
+      "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
+      "implementation": "semantic N-slot port of PCcheck writer",
+      "kind": "npu-semantic-port",
+      "max_async": 2,
+      "mechanisms_preserved": [
+        "bounded concurrent checkpoint slots",
+        "background 4 MiB chunk writer and explicit slot backpressure",
+        "generation publish after durable data completion"
+      ],
+      "platform_substitutions": [
+        "CUDA capture -> ACL capture",
+        "x86 CLWB/SFENCE persistence -> XFS fsync and atomic rename"
+      ],
+      "port_class": "npu-semantic-port",
+      "source": "/home/user7/npu-nvme-baseline-upstreams/pccheck",
+      "source_exists": true,
+      "status": "ready",
+      "storage": "durable XFS file backend",
+      "upstream_core_invoked": false
+    }
+  },
+  "config": {
+    "batch_size": 1,
+    "checkpoint_every": 3,
+    "chunk_bytes": 4194304,
+    "continue_steps": 3,
+    "dropout": 0.0,
+    "formal_steps": 30,
+    "fs_test_dir": "/models/npu_nvme_exp/legacy-cleanup-baselines",
+    "input_tokens": 129,
+    "io_cpu_set": "96-119",
+    "io_numa_node": 4,
+    "loss_atol": 1e-06,
+    "loss_rtol": 1e-05,
+    "max_inflight": 2,
+    "methods": {
+      "ours": {
+        "chunk_bytes": 1048576,
+        "max_inflight": 1
+      }
+    },
+    "model": "gpt2",
+    "npu_device": 7,
+    "numa_node": 4,
+    "pipeline_depth": 4,
+    "project_commit": "ed43b2ed7c071ea7f719147e043080a892032531",
+    "project_root": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+    "raw_pci": "0000:83:00.0",
+    "raw_test_authorized": true,
+    "results_root": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/training",
+    "same_physical_storage_verified": false,
+    "schema_version": 2,
+    "seed": 41,
+    "slot_size_gb": 10,
+    "spdk_shm_id": 260906,
+    "timeout_seconds": 900,
+    "training_cpu_set": "48-71",
+    "training_numa_node": 2,
+    "upstream_root": "/home/user7/npu-nvme-baseline-upstreams",
+    "warmup_steps": 5,
+    "worker_python_bytecheckpoint": "/home/user7/npu-nvme-baseline-envs/bytecheckpoint/bin/python",
+    "worker_python_fastpersist": "/home/user7/npu-nvme-baseline-envs/fastpersist/bin/python"
+  },
+  "environment": {
+    "git_head": "ed43b2ed7c071ea7f719147e043080a892032531",
+    "git_status": " M CMakeLists.txt\n D config/safety_budgets.json\n M experiments/baselines/repro/acl_capture.py\n M experiments/baselines/repro/adapters/__init__.py\n M experiments/baselines/repro/adapters/acl_semantic.py\n M experiments/baselines/repro/adapters/base.py\n M experiments/baselines/repro/adapters/datastates_acl.py\n M experiments/baselines/repro/adapters/mindspore_native.py\n D experiments/baselines/repro/adapters/mindspore_sync.py\n M experiments/baselines/repro/adapters/ours.py\n M experiments/baselines/repro/adapters/pccheck_acl.py\n M experiments/baselines/repro/adapters/worker_semantic.py\n D experiments/baselines/repro/cli.py\n M experiments/baselines/repro/configs/full_state_recovery_20260907.json\n M experiments/baselines/repro/configs/full_state_recovery_ours_root_20260907.json\n M experiments/baselines/repro/configs/gpt2_30step.json\n M experiments/baselines/repro/protocol.py\n M experiments/baselines/repro/runner.py\n M experiments/baselines/repro/state_bridge.py\n D experiments/baselines/two_phase_common.py\n D experiments/benchmarks/inc2_graph_edge_load.py\n D experiments/benchmarks/io3_hccl_longrun.py\n D experiments/benchmarks/io4_bottleneck_campaign.py\n D experiments/benchmarks/io4_unix_pipeline.py\n D experiments/benchmarks/io_matrix.py\n D experiments/benchmarks/io_next_campaign.py\n D experiments/benchmarks/io_next_report.py\n D experiments/benchmarks/longrun_utils.py\n D experiments/benchmarks/p6_vector_timeline.py\n D experiments/benchmarks/run_single_card_full.py\n D experiments/benchmarks/s2_real_trajectory.py\n D experiments/benchmarks/s3_training_io_matrix.py\n D experiments/benchmarks/summarize_inc_minimal.py\n D experiments/benchmarks/validate_timeline.py\n M experiments/common.py\n D experiments/microbench/vector_engine_profile.py\n M include/internal/context.h\n M include/internal/io_task.h\n M include/npu_nvme.h\n D python/__init__.py\n D python/c_bindings.py\n D python/category_delta.py\n D python/chunk_helpers.py\n D python/delta_cell.py\n D python/delta_protocol.py\n D python/direct_checkpoint.py\n D python/disk_layout.py\n D python/export_model.py\n M python/format_npu_disk.py\n D python/frame_lifecycle.py\n D python/full_checkpoint_protocol.py\n D python/hbm_slots.py\n D python/incremental_frame.py\n D python/incremental_manifest.py\n M python/inspect_npu_disk.py\n D python/multirank_protocol.py\n D python/noop_init.py\n M python/npu_nvme/__init__.py\n D python/npu_nvme/checkpoint.py\n D python/npu_nvme/config.py\n M python/npu_nvme/framework/capture.py\n M python/npu_nvme/framework/cells.py\n M python/npu_nvme/framework/full_state.py\n D python/npu_nvme/framework/live.py\n M python/npu_nvme/runtime/d1_runtime.py\n D python/npu_nvme/runtime/handle.py\n D python/npu_nvme/runtime/leases.py\n D python/npu_nvme/runtime/lifecycle.py\n D python/npu_nvme/runtime/scheduler.py\n M python/npu_nvme/storage/bindings.py\n M python/npu_nvme/storage/layout.py\n D python/npu_nvme/storage/transport.py\n M python/npu_nvme/strict_checkpoint.py\n M python/npu_nvme/types.py\n D python/profiler.py\n D python/r0_pipeline.py\n D python/r0_session.py\n D python/raw_ring.py\n D python/s2_delta.py\n D python/s2_policy.py\n D python/s2_r0_cell.py\n D python/training_cell.py\n D python/training_state.py\n M src/dma.c\n M src/internal/implementation.h\n M src/metadata_io.c\n M src/npu_nvme.c\n M src/reactor.c\n M src/request.c\n M src/runtime.c\n D src/step_listener.c\n M src/validation.c\n M src/write_pipeline.c\n M tests/acceptance/test_retirement.py\n M tests/c/host_safety_test.c\n D tests/c/test_npu_nvme.c\n M tests/d1/test_runtime.py\n M tests/gates/test_module_boundaries.py\n M tests/gates/test_runtime_ownership.py\n D tests/hardware/b_compatibility.py\n D tests/hardware/c1_training_state_restart.py\n D tests/hardware/c2_multirank_state.py\n M tests/hardware/d1_full_state.py\n M tests/hardware/fault_injection_write.py\n M tests/hardware/full_io_roundtrip.py\n D tests/hardware/g0_roundtrip.py\n D tests/hardware/g1_full_restart.py\n D tests/hardware/g2_metadata.py\n D tests/hardware/g3_delta_chain.py\n D tests/hardware/g4_coordinator_2rank.py\n D tests/hardware/g5_evidence.py\n M tests/python/test_baseline_repro.py\n D tests/python/test_category_delta.py\n D tests/python/test_delta_protocol.py\n M tests/python/test_disk_layout.py\n D tests/python/test_frame_lifecycle.py\n M tests/python/test_full_checkpoint_protocol.py\n D tests/python/test_hbm_slots.py\n D tests/python/test_incremental_frame.py\n D tests/python/test_incremental_manifest.py\n D tests/python/test_io4_decision.py\n D tests/python/test_live_async_capability.py\n D tests/python/test_longrun_utils.py\n D tests/python/test_multirank_protocol.py\n D tests/python/test_p6_vector_timeline.py\n D tests/python/test_r0_pipeline.py\n D tests/python/test_r0_session.py\n D tests/python/test_raw_ring.py\n D tests/python/test_s2_delta.py\n D tests/python/test_s2_policy.py\n D tests/python/test_single_card_full_cli.py\n D tests/python/test_single_card_full_oracle.py\n M tests/python/test_training_state.py\n M tests/python/test_wp1_tools.py\n M tests/regression/test_c_host_safety.py\n M tests/regression/test_full_safety.py\n D tools/inventory_development.py\n",
+    "hardware": {
+      "findmnt": {
+        "args": [
+          "findmnt",
+          "-no",
+          "TARGET,SOURCE,FSTYPE,OPTIONS",
+          "-T",
+          "/models/npu_nvme_exp/legacy-cleanup-baselines"
+        ],
+        "returncode": 1,
+        "stderr": "",
+        "stdout": ""
+      },
+      "lsblk": {
+        "args": [
+          "lsblk",
+          "-o",
+          "NAME,PATH,MODEL,SERIAL,PKNAME,FSTYPE,MOUNTPOINT"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "NAME               PATH                       MODEL            SERIAL               PKNAME FSTYPE      MOUNTPOINT\nsda                /dev/sda                   RAID1            8D1C23E900000000                        \n\u251c\u2500sda1             /dev/sda1                                                        sda    vfat        /boot/efi\n\u251c\u2500sda2             /dev/sda2                                                        sda    ext4        /boot\n\u2514\u2500sda3             /dev/sda3                                                        sda    LVM2_member \n  \u251c\u2500openeuler-root /dev/mapper/openeuler-root                                       sda3   ext4        /\n  \u251c\u2500openeuler-swap /dev/mapper/openeuler-swap                                       sda3   swap        [SWAP]\n  \u2514\u2500openeuler-home /dev/mapper/openeuler-home                                       sda3   ext4        /home\nnvme1n1            /dev/nvme1n1               HWE62P443T8L005N 210255015710Q5100266        xfs         /models\n"
+      },
+      "npu_device": 7,
+      "numa_node": 4,
+      "raw_pci": "0000:83:00.0",
+      "raw_pci_info": {
+        "args": [
+          "lspci",
+          "-s",
+          "0000:83:00.0",
+          "-nnk"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "83:00.0 Non-Volatile memory controller [0108]: Huawei Technologies Co., Ltd. ES3000 V6 NVMe PCIe SSD [19e5:3754]\n\tSubsystem: Huawei Technologies Co., Ltd. NVMe SSD ES3500P V6 3840GB 2.5\" U.2 [19e5:6213]\n\tKernel driver in use: uio_pci_generic\n\tKernel modules: nvme\n"
+      },
+      "storage_evidence": {
+        "findmnt": {
+          "returncode": 1,
+          "stderr": "",
+          "stdout": ""
+        },
+        "fs_test_dir": "/models/npu_nvme_exp/legacy-cleanup-baselines",
+        "lsblk": {
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "NAME               PATH                       MODEL            SERIAL               PKNAME FSTYPE      MOUNTPOINT\nsda                /dev/sda                   RAID1            8D1C23E900000000                        \n\u251c\u2500sda1             /dev/sda1                                                        sda    vfat        /boot/efi\n\u251c\u2500sda2             /dev/sda2                                                        sda    ext4        /boot\n\u2514\u2500sda3             /dev/sda3                                                        sda    LVM2_member \n  \u251c\u2500openeuler-root /dev/mapper/openeuler-root                                       sda3   ext4        /\n  \u251c\u2500openeuler-swap /dev/mapper/openeuler-swap                                       sda3   swap        [SWAP]\n  \u2514\u2500openeuler-home /dev/mapper/openeuler-home                                       sda3   ext4        /home\nnvme1n1            /dev/nvme1n1               HWE62P443T8L005N 210255015710Q5100266        xfs         /models\n"
+        },
+        "raw_pci": "0000:83:00.0",
+        "raw_pci_info": {
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "83:00.0 Non-Volatile memory controller [0108]: Huawei Technologies Co., Ltd. ES3000 V6 NVMe PCIe SSD [19e5:3754]\n\tSubsystem: Huawei Technologies Co., Ltd. NVMe SSD ES3500P V6 3840GB 2.5\" U.2 [19e5:6213]\n\tKernel driver in use: uio_pci_generic\n\tKernel modules: nvme\n"
+        },
+        "same_physical_storage_verified": false
+      }
+    },
+    "machine": "aarch64",
+    "native_library": {
+      "path": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+      "required_abi": 2,
+      "sha256": "96bb9c03af68548be55a6520ef81bdd0185ef858c26b9b9581709c4dfe2c2261"
+    },
+    "platform": "Linux-5.10.0-60.18.0.50.oe2203.aarch64-aarch64-with-glibc2.38",
+    "python": "3.9.25 (main, Nov  3 2025, 22:33:42) \n[GCC 11.2.0]",
+    "repo_commit": "ed43b2ed7c071ea7f719147e043080a892032531",
+    "timestamp": "2026-09-14T15:36:25+0800"
+  }
+}

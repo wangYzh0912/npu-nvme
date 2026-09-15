@@ -8,9 +8,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from experiments.baselines import two_phase_common as tpc
-from python.direct_checkpoint import get_dev_ptr
-from python.training_state import encode_control_value
+from npu_nvme.storage.bindings import load_acl
+from npu_nvme.framework.parameters import get_dev_ptr
+from npu_nvme.framework.training_state import encode_control_value
 
 from .state_bridge import Snapshot
 
@@ -20,10 +20,11 @@ class ACLPinnedSlot:
     slot_id: int
     ptr: int
     size: int
+    acl: object
 
     def close(self):
         if self.ptr:
-            tpc.free_pinned_host_buffer(self.ptr)
+            check_acl(self.acl.aclrtFreeHost(ctypes.c_void_p(self.ptr)), "free pinned slot")
             self.ptr = 0
 
 
@@ -40,14 +41,8 @@ def device_state_layout(components):
                 continue
             seen_objects.add(id(parameter))
             ptr = int(get_dev_ptr(parameter))
-            dtype = np.dtype(str(parameter.dtype).replace("Float", "float").replace(
-                "Int", "int").replace("UInt", "uint").lower())
-            # MindSpore's dtype string is not guaranteed to be NumPy spelling.
-            try:
-                import mindspore as ms
-                dtype = np.dtype(ms.dtype_to_nptype(parameter.dtype))
-            except Exception:
-                pass
+            import mindspore as ms
+            dtype = np.dtype(ms.dtype_to_nptype(parameter.dtype))
             size = int(parameter.size) * int(dtype.itemsize)
             canonical = f"{category}/{name}"
             if not ptr:
@@ -75,31 +70,39 @@ def device_state_layout(components):
     return fields, host_fields, offset
 
 
+def check_acl(rc, operation):
+    if rc != 0:
+        raise RuntimeError(f"ACL {operation} failed: {rc}")
+
+
 def allocate_slot(slot_id, size):
-    return ACLPinnedSlot(int(slot_id), tpc.allocate_pinned_host_buffer(int(size)),
-                         int(size))
+    if size <= 0:
+        raise ValueError("pinned slot size must be positive")
+    acl = load_acl()
+    ptr = ctypes.c_void_p()
+    check_acl(acl.aclrtMallocHost(ctypes.byref(ptr), int(size)), "allocate pinned slot")
+    if not ptr.value:
+        raise RuntimeError("ACL returned a null pinned slot")
+    return ACLPinnedSlot(int(slot_id), ptr.value, int(size), acl)
 
 
 def capture_to_slot(fields, host_fields, slot, controls, device_id):
     """Synchronize the training boundary, then copy all fields with ACL D2H."""
     import mindspore as ms
 
-    tpc._ensure_acl_device(int(device_id))
+    check_acl(slot.acl.aclrtSetDevice(int(device_id)), "set device")
     sync_begin = time.monotonic_ns()
-    if hasattr(ms, "runtime") and hasattr(ms.runtime, "synchronize"):
-        ms.runtime.synchronize()
-    else:
-        ms.hal.synchronize()
+    ms.hal.synchronize()
     sync_end = time.monotonic_ns()
     dma_begin = time.monotonic_ns()
     chunks = []
     for field in fields:
         submit_ns = time.monotonic_ns()
-        rc = tpc.acl_lib.aclrtMemcpy(
+        rc = slot.acl.aclrtMemcpy(
             ctypes.c_void_p(slot.ptr + int(field["host_offset"])),
             int(field["nbytes"]), ctypes.c_void_p(int(field["address"])),
-            int(field["nbytes"]), tpc.ACL_MEMCPY_DEVICE_TO_HOST)
-        tpc._check_acl_ret(rc, f"FULL D2H {field['name']}")
+            int(field["nbytes"]), 2)
+        check_acl(rc, f"FULL D2H {field['name']}")
         chunks.append({"name": field["name"], "bytes": field["nbytes"],
                        "submit_ns": submit_ns,
                        "complete_ns": time.monotonic_ns()})

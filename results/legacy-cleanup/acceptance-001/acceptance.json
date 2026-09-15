@@ -1,0 +1,74 @@
+{
+  "status": "pass",
+  "commit": "6a3c81d51b54aec5963f2cae28ba9991083f0b1d",
+  "library_sha256": "96bb9c03af68548be55a6520ef81bdd0185ef858c26b9b9581709c4dfe2c2261",
+  "software_cases": 255,
+  "h01_seeds": [
+    41,
+    42,
+    43
+  ],
+  "h02_cases": 11,
+  "lifecycle_cases": [
+    "repeat",
+    "submit-close",
+    "lost-completion",
+    "query-quarantine",
+    "record-quarantine"
+  ],
+  "limitations": [
+    "Controlled software fault injection; no production quarantine recovery or power-failure guarantee.",
+    "H01 covers this GPT-2 single-card workload and fixed tolerances."
+  ],
+  "evidence": [
+    {
+      "path": "results/legacy-cleanup/acceptance-001/software",
+      "result_sha256": "26a98d654ed388febc90a5162d2c2ff71980b842d99b4c2e2558bf78f695e978"
+    },
+    {
+      "path": "results/legacy-cleanup/acceptance-001/h01",
+      "result_sha256": "c19eefdccc2011798eafc25eae6dacc2969df83191d07ad0f45d050e41defed6"
+    },
+    {
+      "path": "results/legacy-cleanup/acceptance-001/h02",
+      "result_sha256": "d48c6228ff7402d063a09946de5b852f435836597f12b459d1464987ef0a709b"
+    },
+    {
+      "path": "results/legacy-cleanup/acceptance-001/lifecycle",
+      "result_sha256": "611b317edd75e6366fbafa27acab0ac75f2a8a97ffca0fc9e03b2d307dab04d9"
+    }
+  ],
+  "stage": "implementation-cleanup",
+  "abi": 2,
+  "native_exports": 23,
+  "methods": {
+    "none": {
+      "result": "results/legacy-cleanup/acceptance-001/methods/none/none_1789372536738930185_669390/result.json",
+      "sha256": "2f5b0251bb55dddd3dc941aba8222d8ec0d09d5f4342fbf69e4e4d9fa86877e9"
+    },
+    "mindspore_native_save": {
+      "result": "results/legacy-cleanup/acceptance-001/methods/mindspore_native_save/mindspore_native_save_1789372583601525683_669390/result.json",
+      "sha256": "7628cdae3a6f2f78e43554a82c547b4fa37d3213bcd9c1e59a7d3624eeefbb86"
+    },
+    "ours": {
+      "result": "results/legacy-cleanup/acceptance-001/methods/ours/ours_1789372688311334212_669390/result.json",
+      "sha256": "1f60a706fdd9dd22043b25c070546e6302a99ae595b53766ab5b6261b7ee1e84"
+    },
+    "datastates_acl": {
+      "result": "results/legacy-cleanup/acceptance-001/methods/datastates_acl/datastates_acl_1789372817791189998_669390/result.json",
+      "sha256": "dbb4bec4097b02b5e92002b57058c94b8ca6459b1100015e96fb450c54e6b8b1"
+    },
+    "pccheck_acl": {
+      "result": "results/legacy-cleanup/acceptance-001/methods/pccheck_acl/pccheck_acl_1789372918126299253_669390/result.json",
+      "sha256": "51e3ec1c0989066cd04f69945ee37b72e967c3c3ac27339f0d2a580148ade3d1"
+    },
+    "bytecheckpoint_host": {
+      "result": "results/legacy-cleanup/acceptance-001/methods/bytecheckpoint_host/bytecheckpoint_host_1789373018238780316_669390/result.json",
+      "sha256": "72f69dedcbbdf7240d9b27569f6f76cfb967cda6c8a00d6e5e33045d4bc7a4f0"
+    },
+    "fastpersist_host": {
+      "result": "results/legacy-cleanup/acceptance-001/methods/fastpersist_host/fastpersist_host_1789373137129953625_669390/result.json",
+      "sha256": "1b89b2eb883467e256fdcbec27eacce59329a0ec854e34b69b4b79e1105a2614"
+    }
+  }
+}

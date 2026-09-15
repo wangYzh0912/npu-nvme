@@ -1,0 +1,1962 @@
+{
+  "case_count": 11,
+  "cases": [
+    {
+      "case": "acl_copy",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/001-acl_copy-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55401",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "acl_copy"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668744,
+        "returncode": 0,
+        "seconds": 3.7725808690302074,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 1135,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 1134,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "acl_copy",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007828739937394857,
+          "fault": {
+            "NPU_NVME_TEST_FAIL_ACL_COPY": "1"
+          },
+          "init_rc": 0,
+          "operation_rc": -1,
+          "operation_seconds": 0.0014314651489257812,
+          "pid": 668744,
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704650708 kB\nMemAvailable:   1995462892 kB\nBuffers:         4129232 kB\nCached:         1360499808 kB\nSwapCached:         3832 kB\nActive:         313413384 kB\nInactive:       1060076536 kB\nActive(anon):    7646364 kB\nInactive(anon): 74849512 kB\nActive(file):   305767020 kB\nInactive(file): 985227024 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1484 kB\nWriteback:             0 kB\nAnonPages:       8538224 kB\nMapped:           965572 kB\nShmem:          73635160 kB\nKReclaimable:    9611832 kB\nSlab:           16666640 kB\nSReclaimable:    9611832 kB\nSUnreclaim:      7054808 kB\nKernelStack:       76608 kB\nPageTables:        72424 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96916680 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671868 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5347328 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5060 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668744\nNgid:\t0\nPid:\t668744\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668744\nNSpid:\t668744\nNSpgid:\t668744\nNSsid:\t668744\nVmPeak:\t9127561344 kB\nVmSize:\t9127560860 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  177652 kB\nVmRSS:\t  177652 kB\nRssAnon:\t   74352 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     864 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t343\nnonvoluntary_ctxt_switches:\t304\n"
+          },
+          "shm_id": 55401,
+          "status": "pass"
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/002-acl_copy-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55402",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668762,
+        "returncode": 0,
+        "seconds": 3.0230568791739643,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1215,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1215,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.0077366093173623085,
+          "init_rc": 0,
+          "pid": 668762,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704638060 kB\nMemAvailable:   1995450488 kB\nBuffers:         4129232 kB\nCached:         1360512644 kB\nSwapCached:         3832 kB\nActive:         313413380 kB\nInactive:       1060092292 kB\nActive(anon):    7646360 kB\nInactive(anon): 74865088 kB\nActive(file):   305767020 kB\nInactive(file): 985227204 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1880 kB\nWriteback:             0 kB\nAnonPages:       8537324 kB\nMapped:           965544 kB\nShmem:          73647808 kB\nKReclaimable:    9611896 kB\nSlab:           16666732 kB\nSReclaimable:    9611896 kB\nSUnreclaim:      7054836 kB\nKernelStack:       76560 kB\nPageTables:        72416 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96931576 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671804 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5345280 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668762\nNgid:\t0\nPid:\t668762\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668762\nNSpid:\t668762\nNSpgid:\t668762\nNSsid:\t668762\nVmPeak:\t9127561340 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179456 kB\nVmRSS:\t  177788 kB\nRssAnon:\t   74492 kB\nRssFile:\t   90668 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     856 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t387\nnonvoluntary_ctxt_switches:\t372\n"
+          },
+          "shm_id": 55402,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "event_query",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/003-event_query-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55403",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "event_query"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668786,
+        "returncode": 0,
+        "seconds": 2.9716081409715116,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 1,
+              "async_event_query_count": 1,
+              "async_event_query_error_count": 1,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 1,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 1,
+              "reactor_cpu_us": 1379,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 1,
+              "async_event_query_count": 1,
+              "async_event_query_error_count": 1,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 1,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 1,
+              "reactor_cpu_us": 1379,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "event_query",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007745979819446802,
+          "fault": {
+            "NPU_NVME_TEST_FAIL_EVENT_QUERY": "1"
+          },
+          "init_rc": 0,
+          "operation_rc": -1,
+          "operation_seconds": 0.0014206059277057648,
+          "pid": 668786,
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704626200 kB\nMemAvailable:   1995438624 kB\nBuffers:         4129232 kB\nCached:         1360525248 kB\nSwapCached:         3832 kB\nActive:         313413388 kB\nInactive:       1060106560 kB\nActive(anon):    7646368 kB\nInactive(anon): 74879408 kB\nActive(file):   305767020 kB\nInactive(file): 985227152 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1328 kB\nWriteback:             0 kB\nAnonPages:       8541012 kB\nMapped:           965644 kB\nShmem:          73660456 kB\nKReclaimable:    9611944 kB\nSlab:           16666504 kB\nSReclaimable:    9611944 kB\nSUnreclaim:      7054560 kB\nKernelStack:       76560 kB\nPageTables:        72440 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96946952 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671820 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5347328 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668786\nNgid:\t0\nPid:\t668786\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668786\nNSpid:\t668786\nNSpgid:\t668786\nNSsid:\t668786\nVmPeak:\t9127561344 kB\nVmSize:\t9127560860 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179952 kB\nVmRSS:\t  179952 kB\nRssAnon:\t   76648 kB\nRssFile:\t   90676 kB\nRssShmem:\t   12628 kB\nVmData:\t  139436 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     864 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t350\nnonvoluntary_ctxt_switches:\t255\n"
+          },
+          "shm_id": 55403,
+          "status": "pass"
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/004-event_query-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55404",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668806,
+        "returncode": 0,
+        "seconds": 4.022952714934945,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1248,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1248,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007730458863079548,
+          "init_rc": 0,
+          "pid": 668806,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704618980 kB\nMemAvailable:   1995431580 kB\nBuffers:         4129232 kB\nCached:         1360537952 kB\nSwapCached:         3832 kB\nActive:         313413392 kB\nInactive:       1060116212 kB\nActive(anon):    7646364 kB\nInactive(anon): 74888988 kB\nActive(file):   305767028 kB\nInactive(file): 985227224 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1400 kB\nWriteback:             0 kB\nAnonPages:       8534400 kB\nMapped:           965596 kB\nShmem:          73673104 kB\nKReclaimable:    9612040 kB\nSlab:           16666424 kB\nSReclaimable:    9612040 kB\nSUnreclaim:      7054384 kB\nKernelStack:       76560 kB\nPageTables:        72400 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96955932 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671820 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5345280 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668806\nNgid:\t0\nPid:\t668806\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668806\nNSpid:\t668806\nNSpgid:\t668806\nNSsid:\t668806\nVmPeak:\t9127561344 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179460 kB\nVmRSS:\t  177792 kB\nRssAnon:\t   74492 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     864 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t365\nnonvoluntary_ctxt_switches:\t300\n"
+          },
+          "shm_id": 55404,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "event_record",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/005-event_record-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55405",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "event_record"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668830,
+        "returncode": 0,
+        "seconds": 2.9726824737153947,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 1,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 1312,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 1
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 1,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 1312,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 1
+            }
+          },
+          "case": "event_record",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.0077214790508151054,
+          "fault": {
+            "NPU_NVME_TEST_FAIL_EVENT_RECORD": "1"
+          },
+          "init_rc": 0,
+          "operation_rc": -1,
+          "operation_seconds": 0.0014314251020550728,
+          "pid": 668830,
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704608908 kB\nMemAvailable:   1995421632 kB\nBuffers:         4129236 kB\nCached:         1360550688 kB\nSwapCached:         3832 kB\nActive:         313413400 kB\nInactive:       1060129568 kB\nActive(anon):    7646360 kB\nInactive(anon): 74902288 kB\nActive(file):   305767040 kB\nInactive(file): 985227280 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              2016 kB\nWriteback:             0 kB\nAnonPages:       8537100 kB\nMapped:           965692 kB\nShmem:          73685752 kB\nKReclaimable:    9612096 kB\nSlab:           16666780 kB\nSReclaimable:    9612096 kB\nSUnreclaim:      7054684 kB\nKernelStack:       76544 kB\nPageTables:        72412 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96965260 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671724 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5347328 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668830\nNgid:\t0\nPid:\t668830\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668830\nNSpid:\t668830\nNSpgid:\t668830\nNSsid:\t668830\nVmPeak:\t9127624828 kB\nVmSize:\t9127560860 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179948 kB\nVmRSS:\t  179948 kB\nRssAnon:\t   76660 kB\nRssFile:\t   90660 kB\nRssShmem:\t   12628 kB\nVmData:\t  139440 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     876 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t373\nnonvoluntary_ctxt_switches:\t332\n"
+          },
+          "shm_id": 55405,
+          "status": "pass"
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/006-event_record-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55406",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668857,
+        "returncode": 0,
+        "seconds": 4.023144554812461,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1263,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1263,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.0077478899620473385,
+          "init_rc": 0,
+          "pid": 668857,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704596520 kB\nMemAvailable:   1995409412 kB\nBuffers:         4129236 kB\nCached:         1360563388 kB\nSwapCached:         3832 kB\nActive:         313413392 kB\nInactive:       1060146352 kB\nActive(anon):    7646348 kB\nInactive(anon): 74919020 kB\nActive(file):   305767044 kB\nInactive(file): 985227332 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              2228 kB\nWriteback:             0 kB\nAnonPages:       8536980 kB\nMapped:           962700 kB\nShmem:          73698400 kB\nKReclaimable:    9612208 kB\nSlab:           16666784 kB\nSReclaimable:    9612208 kB\nSUnreclaim:      7054576 kB\nKernelStack:       76528 kB\nPageTables:        72300 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96965500 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671676 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5349376 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668857\nNgid:\t0\nPid:\t668857\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668857\nNSpid:\t668857\nNSpgid:\t668857\nNSsid:\t668857\nVmPeak:\t9127561344 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  180896 kB\nVmRSS:\t  180896 kB\nRssAnon:\t   77596 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     876 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t378\nnonvoluntary_ctxt_switches:\t276\n"
+          },
+          "shm_id": 55406,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "nvme_submit",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/007-nvme_submit-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55407",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "nvme_submit"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668878,
+        "returncode": 0,
+        "seconds": 2.971824421081692,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 1086,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 1086,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "nvme_submit",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007728360127657652,
+          "fault": {
+            "NPU_NVME_TEST_FAIL_NVME_SUBMIT": "1"
+          },
+          "init_rc": 0,
+          "operation_rc": -1,
+          "operation_seconds": 0.001304195262491703,
+          "pid": 668878,
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704585068 kB\nMemAvailable:   1995398112 kB\nBuffers:         4129236 kB\nCached:         1360576112 kB\nSwapCached:         3832 kB\nActive:         313413416 kB\nInactive:       1060157888 kB\nActive(anon):    7646348 kB\nInactive(anon): 74930484 kB\nActive(file):   305767068 kB\nInactive(file): 985227404 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              2544 kB\nWriteback:             0 kB\nAnonPages:       8535724 kB\nMapped:           962776 kB\nShmem:          73711048 kB\nKReclaimable:    9612264 kB\nSlab:           16666816 kB\nSReclaimable:    9612264 kB\nSUnreclaim:      7054552 kB\nKernelStack:       76512 kB\nPageTables:        72292 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96976184 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671676 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5347328 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668878\nNgid:\t0\nPid:\t668878\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668878\nNSpid:\t668878\nNSpgid:\t668878\nNSsid:\t668878\nVmPeak:\t9127561344 kB\nVmSize:\t9127560860 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179668 kB\nVmRSS:\t  179668 kB\nRssAnon:\t   76396 kB\nRssFile:\t   90644 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     872 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t350\nnonvoluntary_ctxt_switches:\t273\n"
+          },
+          "shm_id": 55407,
+          "status": "pass"
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/008-nvme_submit-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55408",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668896,
+        "returncode": 0,
+        "seconds": 3.0218217438086867,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1206,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1206,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007730619981884956,
+          "init_rc": 0,
+          "pid": 668896,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704574664 kB\nMemAvailable:   1995387908 kB\nBuffers:         4129240 kB\nCached:         1360588896 kB\nSwapCached:         3832 kB\nActive:         313413420 kB\nInactive:       1060170428 kB\nActive(anon):    7646348 kB\nInactive(anon): 74942892 kB\nActive(file):   305767072 kB\nInactive(file): 985227536 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              2548 kB\nWriteback:             0 kB\nAnonPages:       8535456 kB\nMapped:           962768 kB\nShmem:          73723696 kB\nKReclaimable:    9612328 kB\nSlab:           16666936 kB\nSReclaimable:    9612328 kB\nSUnreclaim:      7054608 kB\nKernelStack:       76416 kB\nPageTables:        72288 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96988868 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671660 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5347328 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668896\nNgid:\t0\nPid:\t668896\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668896\nNSpid:\t668896\nNSpgid:\t668896\nNSsid:\t668896\nVmPeak:\t9127561344 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179652 kB\nVmRSS:\t  179652 kB\nRssAnon:\t   76352 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     868 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t406\nnonvoluntary_ctxt_switches:\t363\n"
+          },
+          "shm_id": 55408,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "nvme_completion",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/009-nvme_completion-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55409",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "nvme_completion"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668924,
+        "returncode": 0,
+        "seconds": 2.9717648699879646,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 1,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 1,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 1,
+              "reactor_cpu_us": 1105,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 1,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 1,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 1,
+              "reactor_cpu_us": 1105,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "nvme_completion",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007729250006377697,
+          "fault": {
+            "NPU_NVME_TEST_FAIL_NVME_COMPLETION": "1"
+          },
+          "init_rc": 0,
+          "operation_rc": -1,
+          "operation_seconds": 0.0012842649593949318,
+          "pid": 668924,
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704557244 kB\nMemAvailable:   1995370576 kB\nBuffers:         4129240 kB\nCached:         1360601584 kB\nSwapCached:         3832 kB\nActive:         313413460 kB\nInactive:       1060182288 kB\nActive(anon):    7646348 kB\nInactive(anon): 74954752 kB\nActive(file):   305767112 kB\nInactive(file): 985227536 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1652 kB\nWriteback:           312 kB\nAnonPages:       8533396 kB\nMapped:           962792 kB\nShmem:          73736344 kB\nKReclaimable:    9612376 kB\nSlab:           16666948 kB\nSReclaimable:    9612376 kB\nSUnreclaim:      7054572 kB\nKernelStack:       76448 kB\nPageTables:        72292 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97005708 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671612 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5345280 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668924\nNgid:\t0\nPid:\t668924\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668924\nNSpid:\t668924\nNSpgid:\t668924\nNSsid:\t668924\nVmPeak:\t9127561344 kB\nVmSize:\t9127560860 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  180872 kB\nVmRSS:\t  180872 kB\nRssAnon:\t   77648 kB\nRssFile:\t   90596 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     872 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t414\nnonvoluntary_ctxt_switches:\t256\n"
+          },
+          "shm_id": 55409,
+          "status": "pass"
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/010-nvme_completion-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55410",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668942,
+        "returncode": 0,
+        "seconds": 3.021796093787998,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1220,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1220,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007703059818595648,
+          "init_rc": 0,
+          "pid": 668942,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704550040 kB\nMemAvailable:   1995363464 kB\nBuffers:         4129240 kB\nCached:         1360614300 kB\nSwapCached:         3832 kB\nActive:         313413488 kB\nInactive:       1060191576 kB\nActive(anon):    7646348 kB\nInactive(anon): 74964008 kB\nActive(file):   305767140 kB\nInactive(file): 985227568 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1320 kB\nWriteback:             0 kB\nAnonPages:       8529620 kB\nMapped:           962824 kB\nShmem:          73748992 kB\nKReclaimable:    9612408 kB\nSlab:           16666704 kB\nSReclaimable:    9612408 kB\nSUnreclaim:      7054296 kB\nKernelStack:       76336 kB\nPageTables:        72280 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97018224 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671596 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668942\nNgid:\t0\nPid:\t668942\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668942\nNSpid:\t668942\nNSpgid:\t668942\nNSsid:\t668942\nVmPeak:\t9127624824 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  177668 kB\nVmRSS:\t  177668 kB\nRssAnon:\t   74368 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     860 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t439\nnonvoluntary_ctxt_switches:\t356\n"
+          },
+          "shm_id": 55410,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "metadata_write",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/011-metadata_write-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55411",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "metadata_write"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668972,
+        "returncode": 0,
+        "seconds": 2.9718036111444235,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 0,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 904,
+              "request_ring_depth": 0,
+              "request_ring_peak": 0,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 0,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 904,
+              "request_ring_depth": 0,
+              "request_ring_peak": 0,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "metadata_write",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007744720205664635,
+          "fault": {
+            "NPU_NVME_TEST_FAIL_METADATA_WRITE": "1"
+          },
+          "init_rc": 0,
+          "operation_rc": -5,
+          "operation_seconds": 0.00012920983135700226,
+          "pid": 668972,
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704537960 kB\nMemAvailable:   1995351516 kB\nBuffers:         4129240 kB\nCached:         1360627012 kB\nSwapCached:         3832 kB\nActive:         313413488 kB\nInactive:       1060204916 kB\nActive(anon):    7646348 kB\nInactive(anon): 74977288 kB\nActive(file):   305767140 kB\nInactive(file): 985227628 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1636 kB\nWriteback:             0 kB\nAnonPages:       8530352 kB\nMapped:           962784 kB\nShmem:          73761640 kB\nKReclaimable:    9612480 kB\nSlab:           16666860 kB\nSReclaimable:    9612480 kB\nSUnreclaim:      7054380 kB\nKernelStack:       76352 kB\nPageTables:        72280 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97030876 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671628 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668972\nNgid:\t0\nPid:\t668972\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668972\nNSpid:\t668972\nNSpgid:\t668972\nNSsid:\t668972\nVmPeak:\t9127624828 kB\nVmSize:\t9127560860 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  177512 kB\nVmRSS:\t  177512 kB\nRssAnon:\t   74348 kB\nRssFile:\t   90536 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     860 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t372\nnonvoluntary_ctxt_switches:\t271\n"
+          },
+          "shm_id": 55411,
+          "status": "pass"
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/012-metadata_write-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55412",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 668996,
+        "returncode": 0,
+        "seconds": 3.0221491851843894,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1149,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1149,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007736699655652046,
+          "init_rc": 0,
+          "pid": 668996,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704525580 kB\nMemAvailable:   1995339292 kB\nBuffers:         4129240 kB\nCached:         1360639720 kB\nSwapCached:         3832 kB\nActive:         313413488 kB\nInactive:       1060219316 kB\nActive(anon):    7646348 kB\nInactive(anon): 74991628 kB\nActive(file):   305767140 kB\nInactive(file): 985227688 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1816 kB\nWriteback:             0 kB\nAnonPages:       8530088 kB\nMapped:           962880 kB\nShmem:          73774288 kB\nKReclaimable:    9612576 kB\nSlab:           16666964 kB\nSReclaimable:    9612576 kB\nSUnreclaim:      7054388 kB\nKernelStack:       76384 kB\nPageTables:        72276 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97041328 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671660 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5339136 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668996\nNgid:\t0\nPid:\t668996\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t668996\nNSpid:\t668996\nNSpgid:\t668996\nNSsid:\t668996\nVmPeak:\t9127561344 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179460 kB\nVmRSS:\t  177788 kB\nRssAnon:\t   74488 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     860 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t355\nnonvoluntary_ctxt_switches:\t322\n"
+          },
+          "shm_id": 55412,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "flush",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/013-flush-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55413",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "flush"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 669014,
+        "returncode": 0,
+        "seconds": 3.9728719419799745,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 1,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 1,
+              "reactor_cpu_us": 1163,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 1,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 1,
+              "reactor_cpu_us": 1163,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "flush",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007734979968518019,
+          "fault": {
+            "NPU_NVME_TEST_FAIL_FLUSH": "1"
+          },
+          "init_rc": 0,
+          "operation_rc": -5,
+          "operation_seconds": 0.0012681339867413044,
+          "pid": 669014,
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704515780 kB\nMemAvailable:   1995329612 kB\nBuffers:         4129240 kB\nCached:         1360652440 kB\nSwapCached:         3832 kB\nActive:         313413508 kB\nInactive:       1060230112 kB\nActive(anon):    7646348 kB\nInactive(anon): 75002356 kB\nActive(file):   305767160 kB\nInactive(file): 985227756 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1840 kB\nWriteback:             0 kB\nAnonPages:       8529804 kB\nMapped:           962908 kB\nShmem:          73786936 kB\nKReclaimable:    9612608 kB\nSlab:           16667216 kB\nSReclaimable:    9612608 kB\nSUnreclaim:      7054608 kB\nKernelStack:       76384 kB\nPageTables:        72288 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97053976 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671660 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5339136 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t669014\nNgid:\t0\nPid:\t669014\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t669014\nNSpid:\t669014\nNSpgid:\t669014\nNSsid:\t669014\nVmPeak:\t9127561340 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  177592 kB\nVmRSS:\t  177592 kB\nRssAnon:\t   74356 kB\nRssFile:\t   90608 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     872 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t394\nnonvoluntary_ctxt_switches:\t338\n"
+          },
+          "shm_id": 55413,
+          "status": "pass"
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/014-flush-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55414",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 669032,
+        "returncode": 0,
+        "seconds": 3.0218539242632687,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1184,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1184,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.0077163903042674065,
+          "init_rc": 0,
+          "pid": 669032,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704504260 kB\nMemAvailable:   1995318276 kB\nBuffers:         4129240 kB\nCached:         1360665152 kB\nSwapCached:         3832 kB\nActive:         313413508 kB\nInactive:       1060244164 kB\nActive(anon):    7646348 kB\nInactive(anon): 75016352 kB\nActive(file):   305767160 kB\nInactive(file): 985227812 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:               828 kB\nWriteback:             0 kB\nAnonPages:       8531344 kB\nMapped:           962928 kB\nShmem:          73799584 kB\nKReclaimable:    9612736 kB\nSlab:           16667148 kB\nSReclaimable:    9612736 kB\nSUnreclaim:      7054412 kB\nKernelStack:       76400 kB\nPageTables:        72680 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97054896 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671660 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t669032\nNgid:\t0\nPid:\t669032\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t669032\nNSpid:\t669032\nNSpgid:\t669032\nNSsid:\t669032\nVmPeak:\t9127561340 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179708 kB\nVmRSS:\t  179708 kB\nRssAnon:\t   76408 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     872 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t384\nnonvoluntary_ctxt_switches:\t333\n"
+          },
+          "shm_id": 55414,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "timeout",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/015-timeout-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55415",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "timeout"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 669057,
+        "returncode": 0,
+        "seconds": 2.971691091079265,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 0,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 2974,
+              "request_ring_depth": 0,
+              "request_ring_peak": 0,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 0,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 1337,
+              "request_ring_depth": 0,
+              "request_ring_peak": 0,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "timeout",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.40584497479721904,
+          "fault": {
+            "NPU_NVME_TEST_META_DELAY_MS": "500"
+          },
+          "init_rc": 0,
+          "operation_rc": -110,
+          "operation_seconds": 0.05074430489912629,
+          "pid": 669057,
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704493368 kB\nMemAvailable:   1995307520 kB\nBuffers:         4129240 kB\nCached:         1360677872 kB\nSwapCached:         3832 kB\nActive:         313413516 kB\nInactive:       1060258400 kB\nActive(anon):    7646348 kB\nInactive(anon): 75030524 kB\nActive(file):   305767168 kB\nInactive(file): 985227876 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1260 kB\nWriteback:             0 kB\nAnonPages:       8532704 kB\nMapped:           962888 kB\nShmem:          73812232 kB\nKReclaimable:    9612800 kB\nSlab:           16666696 kB\nSReclaimable:    9612800 kB\nSUnreclaim:      7053896 kB\nKernelStack:       76352 kB\nPageTables:        72296 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97082016 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671580 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t669057\nNgid:\t0\nPid:\t669057\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t669057\nNSpid:\t669057\nNSpgid:\t669057\nNSsid:\t669057\nVmPeak:\t9127692276 kB\nVmSize:\t9127626396 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179560 kB\nVmRSS:\t  179560 kB\nRssAnon:\t   76388 kB\nRssFile:\t   90544 kB\nRssShmem:\t   12628 kB\nVmData:\t  139424 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     876 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t902\nnonvoluntary_ctxt_switches:\t330\n"
+          },
+          "shm_id": 55415,
+          "short_close_rc": -110,
+          "short_close_seconds": 0.05062812613323331,
+          "status": "pass"
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/016-timeout-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55416",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 669075,
+        "returncode": 0,
+        "seconds": 3.0217738929204643,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1227,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1226,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.0078108105808496475,
+          "init_rc": 0,
+          "pid": 669075,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704481400 kB\nMemAvailable:   1995295680 kB\nBuffers:         4129240 kB\nCached:         1360690576 kB\nSwapCached:         3832 kB\nActive:         313413516 kB\nInactive:       1060271256 kB\nActive(anon):    7646348 kB\nInactive(anon): 75043324 kB\nActive(file):   305767168 kB\nInactive(file): 985227932 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1348 kB\nWriteback:             0 kB\nAnonPages:       8532860 kB\nMapped:           962972 kB\nShmem:          73824880 kB\nKReclaimable:    9612872 kB\nSlab:           16666784 kB\nSReclaimable:    9612872 kB\nSUnreclaim:      7053912 kB\nKernelStack:       76336 kB\nPageTables:        72288 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97094528 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671564 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t669075\nNgid:\t0\nPid:\t669075\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t669075\nNSpid:\t669075\nNSpgid:\t669075\nNSsid:\t669075\nVmPeak:\t9127561340 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179712 kB\nVmRSS:\t  179712 kB\nRssAnon:\t   76412 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     868 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t384\nnonvoluntary_ctxt_switches:\t325\n"
+          },
+          "shm_id": 55416,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "request_ring_busy",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/017-request_ring_busy-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55417",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--worker-case",
+          "request_ring_busy"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 669095,
+        "returncode": 0,
+        "seconds": 4.024004258681089,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 16,
+              "async_event_query_count": 16,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 16,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 16,
+              "reactor_cpu_us": 3157,
+              "request_ring_depth": 0,
+              "request_ring_peak": 16,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 16,
+              "async_event_query_count": 16,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 16,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 16,
+              "reactor_cpu_us": 3156,
+              "request_ring_depth": 0,
+              "request_ring_peak": 16,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "busy_rc": -16,
+          "case": "request_ring_busy",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007877749856561422,
+          "fault": {
+            "NPU_NVME_TEST_NVME_SUBMIT_DELAY_MS": "100"
+          },
+          "init_rc": 0,
+          "pid": 669095,
+          "request_codes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704469244 kB\nMemAvailable:   1995283668 kB\nBuffers:         4129240 kB\nCached:         1360703304 kB\nSwapCached:         3832 kB\nActive:         313413520 kB\nInactive:       1060285392 kB\nActive(anon):    7646344 kB\nInactive(anon): 75057396 kB\nActive(file):   305767176 kB\nInactive(file): 985227996 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1584 kB\nWriteback:             0 kB\nAnonPages:       8534080 kB\nMapped:           963000 kB\nShmem:          73837528 kB\nKReclaimable:    9612944 kB\nSlab:           16666832 kB\nSReclaimable:    9612944 kB\nSUnreclaim:      7053888 kB\nKernelStack:       76384 kB\nPageTables:        72300 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97110048 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671548 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t669095\nNgid:\t0\nPid:\t669095\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t669095\nNSpid:\t669095\nNSpgid:\t669095\nNSsid:\t669095\nVmPeak:\t9127692276 kB\nVmSize:\t9127626396 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179900 kB\nVmRSS:\t  179900 kB\nRssAnon:\t   76600 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139576 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     868 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t1842\nnonvoluntary_ctxt_switches:\t281\n"
+          },
+          "shm_id": 55417,
+          "status": "pass",
+          "submitted": 16
+        }
+      },
+      "scope": "H02-subset",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/018-request_ring_busy-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55418",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 669113,
+        "returncode": 0,
+        "seconds": 2.9716067709960043,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1204,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1204,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007714810315519571,
+          "init_rc": 0,
+          "pid": 669113,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704458568 kB\nMemAvailable:   1995273116 kB\nBuffers:         4129240 kB\nCached:         1360716008 kB\nSwapCached:         3832 kB\nActive:         313413556 kB\nInactive:       1060296416 kB\nActive(anon):    7646356 kB\nInactive(anon): 75068384 kB\nActive(file):   305767200 kB\nInactive(file): 985228032 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1940 kB\nWriteback:             0 kB\nAnonPages:       8532376 kB\nMapped:           962444 kB\nShmem:          73850176 kB\nKReclaimable:    9613008 kB\nSlab:           16667136 kB\nSReclaimable:    9613008 kB\nSUnreclaim:      7054128 kB\nKernelStack:       76240 kB\nPageTables:        72224 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97119932 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671532 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t669113\nNgid:\t0\nPid:\t669113\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t669113\nNSpid:\t669113\nNSpgid:\t669113\nNSsid:\t669113\nVmPeak:\t9127561340 kB\nVmSize:\t9127560856 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179712 kB\nVmRSS:\t  179712 kB\nRssAnon:\t   76412 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     868 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t401\nnonvoluntary_ctxt_switches:\t302\n"
+          },
+          "shm_id": 55418,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "before_data_complete",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/019-before_data_complete-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55419",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--crash-child",
+          "before_data_complete"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 86,
+        "pid": 669136,
+        "returncode": 86,
+        "seconds": 0.7689318861812353,
+        "status": "pass",
+        "worker": {
+          "before_crash": {
+            "retained_slots": [
+              {
+                "bytes": 4096,
+                "nvme_offset": 69256347648,
+                "reason": 0,
+                "request_id": 1,
+                "slot": 0
+              }
+            ],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 0,
+              "nvme_complete_count": 0,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 0,
+              "nvme_submit_count": 0,
+              "reactor_cpu_us": 940,
+              "request_ring_depth": 1,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "before_data_complete",
+          "cleanup_safe": false,
+          "crash_boundary": "host request accepted, before NVMe submit; no HBM DMA",
+          "init_rc": 0,
+          "pid": 669136,
+          "scope": "process-crash smoke only; no DMA-stop or power-loss proof",
+          "shm_id": 55419,
+          "status": "expected_crash",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      },
+      "metadata_unchanged": true,
+      "scope": "crash-smoke",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/020-before_data_complete-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55420",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 669149,
+        "returncode": 0,
+        "seconds": 3.2221079459413886,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1172,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1172,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007707499898970127,
+          "init_rc": 0,
+          "pid": 669149,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704428488 kB\nMemAvailable:   1995243280 kB\nBuffers:         4129240 kB\nCached:         1360741408 kB\nSwapCached:         3832 kB\nActive:         313413580 kB\nInactive:       1060322852 kB\nActive(anon):    7646360 kB\nInactive(anon): 75094724 kB\nActive(file):   305767220 kB\nInactive(file): 985228128 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              2020 kB\nWriteback:             0 kB\nAnonPages:       8532964 kB\nMapped:           963068 kB\nShmem:          73875472 kB\nKReclaimable:    9613136 kB\nSlab:           16667668 kB\nSReclaimable:    9613136 kB\nSUnreclaim:      7054532 kB\nKernelStack:       76288 kB\nPageTables:        72284 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97145124 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671548 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t669149\nNgid:\t0\nPid:\t669149\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t669149\nNSpid:\t669149\nNSpgid:\t669149\nNSsid:\t669149\nVmPeak:\t9127561344 kB\nVmSize:\t9127560860 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179644 kB\nVmRSS:\t  179644 kB\nRssAnon:\t   76344 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     872 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t387\nnonvoluntary_ctxt_switches:\t316\n"
+          },
+          "shm_id": 55420,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    },
+    {
+      "case": "before_metadata_commit",
+      "fault": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/021-before_metadata_commit-fault",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55421",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--crash-child",
+          "before_metadata_commit"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 87,
+        "pid": 669168,
+        "returncode": 87,
+        "seconds": 0.8199012619443238,
+        "status": "pass",
+        "worker": {
+          "case": "before_metadata_commit",
+          "cleanup_safe": false,
+          "crash_boundary": "scratch data flushed; no metadata publish invoked",
+          "init_rc": 0,
+          "pid": 669168,
+          "scope": "process-crash smoke only; no DMA-stop or power-loss proof",
+          "shm_id": 55421,
+          "status": "expected_crash",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      },
+      "metadata_unchanged": true,
+      "scope": "crash-smoke",
+      "status": "pass",
+      "verify": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/tests/hardware/stage4_fault_lifecycle.py",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/results/legacy-cleanup/acceptance-001/h02/022-before_metadata_commit-verify",
+          "--pci",
+          "0000:83:00.0",
+          "--npu",
+          "7",
+          "--depth",
+          "2",
+          "--shm-id",
+          "55422",
+          "--library",
+          "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup/build_out/lib/libnpu_nvme.so.2.0",
+          "--close-timeout-ms",
+          "5000",
+          "--timeout-bound",
+          "0.2",
+          "--verify"
+        ],
+        "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/legacy-cleanup",
+        "expected_rc": 0,
+        "pid": 669181,
+        "returncode": 0,
+        "seconds": 3.172094813082367,
+        "status": "pass",
+        "worker": {
+          "after_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1243,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "before_close": {
+            "retained_slots": [],
+            "stats": {
+              "async_dma_submit_count": 0,
+              "async_event_query_count": 0,
+              "async_event_query_error_count": 0,
+              "completion_error_count": 0,
+              "dma_inflight": 0,
+              "dma_inflight_peak": 1,
+              "nvme_complete_count": 2,
+              "nvme_outstanding": 0,
+              "nvme_outstanding_peak": 1,
+              "nvme_submit_count": 2,
+              "reactor_cpu_us": 1243,
+              "request_ring_depth": 0,
+              "request_ring_peak": 1,
+              "spdk_retry_count": 0,
+              "stream_sync_fallback_count": 0
+            }
+          },
+          "case": "verify",
+          "cleanup_safe": true,
+          "close_rc": 0,
+          "close_seconds": 0.007700060028582811,
+          "init_rc": 0,
+          "pid": 669181,
+          "readback_sha256": "f656faeed0cd9303bd19b2b1d40c2efee19c9ba7906c98277d53bbfbc9f134ae",
+          "resources": {
+            "fd_count": 92,
+            "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704403784 kB\nMemAvailable:   1995218796 kB\nBuffers:         4129240 kB\nCached:         1360766796 kB\nSwapCached:         3832 kB\nActive:         313413576 kB\nInactive:       1060349896 kB\nActive(anon):    7646356 kB\nInactive(anon): 75121684 kB\nActive(file):   305767220 kB\nInactive(file): 985228212 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1488 kB\nWriteback:             0 kB\nAnonPages:       8534584 kB\nMapped:           963112 kB\nShmem:          73900768 kB\nKReclaimable:    9613272 kB\nSlab:           16667404 kB\nSReclaimable:    9613272 kB\nSUnreclaim:      7054132 kB\nKernelStack:       76320 kB\nPageTables:        72324 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97173524 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1671516 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5341184 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+            "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t669181\nNgid:\t0\nPid:\t669181\nPPid:\t668691\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t669181\nNSpid:\t669181\nNSpgid:\t669181\nNSsid:\t669181\nVmPeak:\t9127561344 kB\nVmSize:\t9127560860 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  179712 kB\nVmRSS:\t  179712 kB\nRssAnon:\t   76412 kB\nRssFile:\t   90672 kB\nRssShmem:\t   12628 kB\nVmData:\t  139292 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115040 kB\nVmPTE:\t     864 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t371\nnonvoluntary_ctxt_switches:\t375\n"
+          },
+          "shm_id": 55422,
+          "status": "pass",
+          "superblock_sha256": "2a31b923a4a5a3ef5c183e078eb8e7130881cdf4b70d7be7228bba39481e50b6"
+        }
+      }
+    }
+  ],
+  "execution_status": "completed",
+  "resources_after": {
+    "fd_count": 4,
+    "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704507724 kB\nMemAvailable:   1995322808 kB\nBuffers:         4129240 kB\nCached:         1360766836 kB\nSwapCached:         3832 kB\nActive:         313413568 kB\nInactive:       1060274472 kB\nActive(anon):    7646352 kB\nInactive(anon): 75046248 kB\nActive(file):   305767216 kB\nInactive(file): 985228224 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1676 kB\nWriteback:             0 kB\nAnonPages:       8459280 kB\nMapped:           870956 kB\nShmem:          73900768 kB\nKReclaimable:    9613336 kB\nSlab:           16666380 kB\nSReclaimable:    9613336 kB\nSUnreclaim:      7053044 kB\nKernelStack:       76304 kB\nPageTables:        72044 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   97031752 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1666332 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5326848 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+    "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668691\nNgid:\t0\nPid:\t668691\nPPid:\t668690\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t256\nGroups:\t0 \nNStgid:\t668691\nNSpid:\t668691\nNSpgid:\t668643\nNSsid:\t668643\nVmPeak:\t   48380 kB\nVmSize:\t   47716 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t   23148 kB\nVmRSS:\t   21792 kB\nRssAnon:\t   11596 kB\nRssFile:\t   10196 kB\nRssShmem:\t       0 kB\nVmData:\t   12012 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t    9568 kB\nVmPTE:\t     100 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t1\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t0000000000000002\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\tffffffff,ffffffff,ffffffff,ffffffff,ffffffff,ffffffff\nCpus_allowed_list:\t0-191\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t1498\nnonvoluntary_ctxt_switches:\t19\n"
+  },
+  "resources_before": {
+    "fd_count": 4,
+    "meminfo": "MemTotal:       2107993572 kB\nMemFree:        704769656 kB\nMemAvailable:   1995581708 kB\nBuffers:         4129232 kB\nCached:         1360487068 kB\nSwapCached:         3832 kB\nActive:         313413376 kB\nInactive:       1059988136 kB\nActive(anon):    7646356 kB\nInactive(anon): 74761196 kB\nActive(file):   305767020 kB\nInactive(file): 985226940 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1412 kB\nWriteback:             0 kB\nAnonPages:       8462400 kB\nMapped:           870860 kB\nShmem:          73622512 kB\nKReclaimable:    9611784 kB\nSlab:           16666156 kB\nSReclaimable:    9611784 kB\nSUnreclaim:      7054372 kB\nKernelStack:       76400 kB\nPageTables:        71468 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   96759896 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1666604 kB\nVmallocChunk:          0 kB\nPercpu:          3530496 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   5332992 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5060 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+    "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t668691\nNgid:\t0\nPid:\t668691\nPPid:\t668690\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t256\nGroups:\t0 \nNStgid:\t668691\nNSpid:\t668691\nNSpgid:\t668643\nNSsid:\t668643\nVmPeak:\t   44600 kB\nVmSize:\t   44600 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t   19152 kB\nVmRSS:\t   19152 kB\nRssAnon:\t    9440 kB\nRssFile:\t    9712 kB\nRssShmem:\t       0 kB\nVmData:\t    9408 kB\nVmStk:\t     132 kB\nVmExe:\t    3056 kB\nVmLib:\t    9304 kB\nVmPTE:\t      92 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t1\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t0000000000000002\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\tffffffff,ffffffff,ffffffff,ffffffff,ffffffff,ffffffff\nCpus_allowed_list:\t0-191\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t2\nnonvoluntary_ctxt_switches:\t1\n"
+  },
+  "scope": "H02 existing fault/backpressure subset plus process-crash smoke",
+  "status": "pass",
+  "validation_status": "pass"
+}

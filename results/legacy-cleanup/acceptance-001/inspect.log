@@ -1,0 +1,50 @@
+EAL: '-c <coremask>' option is deprecated, and will be removed in a future release
+EAL: 	Use '-l <corelist>' or '--lcores=<corelist>' option instead
+[Diag] after spdk_env_init: rte_lcore_count=1 rte_socket_count=8 spdk_core_count=1
+[Diag] reactor: rings w=0x2000008fd600 r=0x2000008fd080 m=0x2000008fcb80 pollers w=0xfffedc001db0 r=0xfffedc001f50 m=0xfffedc0020f0
+[NPU-NVMe] Found matching controller at 0000:83:00.0
+[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528
+[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 1
+[Init] Initialisation complete.
+[Rank 0] FileSystem Mounted. V2 generation=28 Active Slot: A
+{
+  "status": "pass",
+  "validation": "metadata-and-manifest-only",
+  "payload_verified": false,
+  "strict_contract": "D1",
+  "metadata_generation": 28,
+  "active_meta_slot": 0,
+  "layout": {
+    "total_bytes": 3840755982336,
+    "full_base": 1048576,
+    "full_slot_bytes": 10737418240,
+    "full_slot_count": 3,
+    "delta_base": 3806396243968,
+    "delta_slot_bytes": 268435456,
+    "delta_slot_count": 128,
+    "generation": 28,
+    "active_meta_slot": 0
+  },
+  "retained_generations": [
+    13,
+    14
+  ],
+  "checkpoints": [
+    {
+      "generation": 13,
+      "step": 2,
+      "slot": 0,
+      "request_id": "f9ab2cb8-7a31-4fd2-a701-23fd06587516:1",
+      "manifest_sha256": "0899558056d78c5b141bfd85942ee2fad113b93cd512cd2db6836ad633811bc3",
+      "fields": 597
+    },
+    {
+      "generation": 14,
+      "step": 3,
+      "slot": 1,
+      "request_id": "02e5db50-2e37-4eff-a998-a78346aa8fe1:1",
+      "manifest_sha256": "3d396facccda136edb87e34cd2b6f2c0cb2aced923dd78434f3e359d7fa0f9ff",
+      "fields": 597
+    }
+  ]
+}

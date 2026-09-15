@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from python.full_checkpoint_protocol import CheckpointState, require_transition
+from experiments.baselines.repro.states import CheckpointState, require_transition
 
 
 TERMINAL = frozenset({"persisted", "failed"})
@@ -135,7 +135,8 @@ class Handle:
             "sha256": self.sha256,
             "state": self.state.value,
             "transitions": list(self.transitions),
-            "timestamps_ns": dict(self.timestamps_ns),
+            "persisted_ns": self.timestamps_ns.get("PERSISTED"),
+                "timestamps_ns": dict(self.timestamps_ns),
         }
 
 

@@ -1,0 +1,213 @@
+{
+  "adapter": "mindspore_native_save",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "adapter": "mindspore_native_save",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3308582837738533,
+      "request_id": "mindspore_native_save-000001",
+      "sha256": "c1bb400b0111a9ed3d0145bb0f9124c3e9879e52bab134d93eeea0e93d8e3493",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 3,
+      "submit_ns": 3308577104429042,
+      "timestamps_ns": {
+        "CREATED": 3308577105264735,
+        "DMA_COPYING": 3308578174385298,
+        "FLUSHING": 3308579709958670,
+        "METADATA_COMMITTING": 3308580331810568,
+        "NVME_WRITING": 3308578174483579,
+        "PERSISTED": 3308582837738533,
+        "QUEUED": 3308578174276608,
+        "SNAPSHOTTING": 3308577105811687,
+        "SNAPSHOT_READY": 3308578173975277,
+        "admitted": 3308577105305385,
+        "data_completed": 3308580331566178,
+        "input_buffer_released": 3308579709799880,
+        "source_released": 3308579709523769
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 3308577105811687,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "capture_ns": 1045470962,
+            "fields": 591
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 3308578173975277,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {},
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 3308578174276608,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "backend": "mindspore.save_checkpoint"
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 3308578174385298,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "backend": "mindspore.save_checkpoint"
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 3308578174483579,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "native_api_ns": 1534280507
+          },
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 3308579709958670,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 3308580331810568,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "capture_ns": 1045470962,
+            "file_sha256": "d36c69f250290c68640bb462ee98b6c3ed745a4c4825e303ccef172db33e8d57",
+            "flush_ns": 621562497,
+            "native_api_ns": 1534280507,
+            "sha256": "c1bb400b0111a9ed3d0145bb0f9124c3e9879e52bab134d93eeea0e93d8e3493"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 3308582837738533,
+          "request_id": "mindspore_native_save-000001"
+        }
+      ]
+    }
+  ],
+  "formal_steps": 2,
+  "fresh_restore_required": true,
+  "kind": "framework-native-save",
+  "mechanisms_preserved": [
+    "MindSpore save_checkpoint parameter serialization",
+    "MindSpore checkpoint protobuf file format",
+    "synchronous native API completion before source release"
+  ],
+  "model": "gpt2",
+  "native_save_metrics": {
+    "api": "mindspore.save_checkpoint(async_save=False)",
+    "native_api": {
+      "count": 1,
+      "max_ns": 1534280507,
+      "mean_ns": 1534280507,
+      "min_ns": 1534280507,
+      "p95_ns": 1534280507,
+      "values_ns": [
+        1534280507
+      ]
+    },
+    "post_write_file_flush": {
+      "count": 1,
+      "max_ns": 621562497,
+      "mean_ns": 621562497,
+      "min_ns": 621562497,
+      "p95_ns": 621562497,
+      "values_ns": [
+        621562497
+      ]
+    },
+    "pre_save_capture_oracle": {
+      "count": 1,
+      "max_ns": 1045470962,
+      "mean_ns": 1045470962,
+      "min_ns": 1045470962,
+      "p95_ns": 1045470962,
+      "values_ns": [
+        1045470962
+      ]
+    },
+    "storage_backend": "filesystem",
+    "submit_to_persist": {
+      "count": 1,
+      "max_ns": 5733309491,
+      "mean_ns": 5733309491,
+      "min_ns": 5733309491,
+      "p95_ns": 5733309491,
+      "values_ns": [
+        5733309491
+      ]
+    }
+  },
+  "platform_substitutions": [
+    "MindSpore native serializer writes the configured XFS filesystem",
+    "controls are encoded as a uint8 tensor plus a durable sidecar"
+  ],
+  "port_class": "framework-native-save",
+  "project_commit": "6a3c81d51b54aec5963f2cae28ba9991083f0b1d",
+  "schema_version": 2,
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.876251220703125,
+      "step": 4,
+      "step_begin_ns": 3308582879956846,
+      "step_end_ns": 3308582938879833
+    },
+    {
+      "loss": 10.873220443725586,
+      "step": 5,
+      "step_begin_ns": 3308582938942753,
+      "step_end_ns": 3308582983753106
+    },
+    {
+      "loss": 10.878211975097656,
+      "step": 6,
+      "step_begin_ns": 3308582983802026,
+      "step_end_ns": 3308583027152153
+    }
+  ],
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.850872039794922,
+      "step": 2,
+      "step_begin_ns": 3308576908139565,
+      "step_end_ns": 3308577058582875
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.85014533996582,
+      "step": 3,
+      "step_begin_ns": 3308577058609395,
+      "step_end_ns": 3308577104420692
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 6.119139539,
+  "upstream_core_invoked": true
+}

@@ -14,10 +14,7 @@ from typing import Dict, Iterable, Mapping
 
 import numpy as np
 
-from python.training_state import (capture_training_controls,
-                                   decode_control_value,
-                                   encode_control_value,
-                                   restore_training_controls)
+from npu_nvme.framework.training_state import capture_training_controls, decode_control_value, encode_control_value, restore_training_controls
 
 
 FORMAT = "npu-nvme-repro-raw-v1"

@@ -9,7 +9,7 @@ import threading
 import time
 from pathlib import Path
 
-from python.full_checkpoint_protocol import CheckpointState
+from experiments.baselines.repro.states import CheckpointState
 
 from ..host_bridge import SharedSnapshot, snapshot_from_descriptor
 from ..state_bridge import fsync_directory, write_json
