@@ -59,9 +59,28 @@ def save_phase(args, manifest_path):
         profiling_dir=os.path.join(run_dir, "profiling"))
     ckpt._meta_pkl = os.path.join(run_dir, "checkpoint_meta.pkl")
     try:
+        # The shared formatted namespace may already contain three retained
+        # checkpoints from earlier gates.  Saving a low/non-monotonic test
+        # step (the historical default was step_1) would be immediately
+        # evicted by keep_last_n, making the fresh-process load appear to
+        # fail even though the FULL payload was persisted correctly.  Choose
+        # a monotonic step when necessary and record that effective step in
+        # the manifest consumed by the load child.
+        existing_steps = []
+        for key in ckpt.meta_dict.get("checkpoints", {}):
+            if key.startswith("step_"):
+                try:
+                    existing_steps.append(int(key.split("_", 1)[1]))
+                except ValueError:
+                    pass
+        step = int(args.step)
+        if existing_steps and step <= max(existing_steps):
+            step = max(existing_steps) + 1
+            print(f"[G1/save] requested step_{args.step} is not retained by "
+                  f"keep_last_n; using monotonic step_{step}", flush=True)
         start = time.perf_counter()
         handle = ckpt.save(
-            model, step=args.step,
+            model, step=step,
             meta_path=os.path.join(run_dir, "checkpoint_meta.pkl"))
         if handle.status != handle.DISPATCHED:
             raise RuntimeError(f"save did not return DISPATCHED: {handle.status}")
@@ -73,7 +92,7 @@ def save_phase(args, manifest_path):
             "gate": "G1",
             "pci": args.pci,
             "npu": args.npu,
-            "step": args.step,
+            "step": step,
             "persist_seconds": persist_seconds,
             "generation": handle.generation,
             "parameter_count": len(expected),

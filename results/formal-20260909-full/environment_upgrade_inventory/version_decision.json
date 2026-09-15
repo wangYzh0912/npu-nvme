@@ -1,0 +1,31 @@
+{
+  "date": "2026-09-10",
+  "current_environment": {
+    "python": "3.9.25",
+    "mindspore": "2.5.0",
+    "mindformers": "1.3.2",
+    "cann_driver_observed": "npu-smi 24.1.rc3; 910B3",
+    "status": "preserved_and_regression_tested"
+  },
+  "candidate": {
+    "mindformers": "1.8.0",
+    "mindspore": "2.7.2",
+    "cann": "8.5.0",
+    "firmware_driver": "25.5.0",
+    "python": "3.11.4",
+    "installation": "isolated environment only; not installed in this run",
+    "official_support": "MindFormers 1.8.0 lists Qwen3 0.6B/1.7B/4B/8B/14B/32B; Qwen3 status is testing"
+  },
+  "decision": "defer_installation",
+  "reason": [
+    "Current host is running the older 910B3/24.1 stack; the official 1.8.0 tuple requires a different CANN and firmware/driver tuple.",
+    "A driver or firmware replacement cannot be safely performed on the only active validation node without a maintenance window and rollback path.",
+    "The current MindFormers 1.3.2 runtime rejects the local Qwen3 HuggingFace directory, so Qwen3 trainability is not established in the old environment."
+  ],
+  "next_gate": "Provision a separate node or isolated compatible host, then run E2/E3 (Qwen3 config/load/train/FULL recovery) before adding Qwen3 to the formal matrix.",
+  "sources": [
+    "https://www.mindspore.cn/mindformers/docs/zh-CN/r1.8.0/installation.html",
+    "https://www.mindspore.cn/mindformers/docs/zh-CN/r1.8.0/introduction/models.html",
+    "https://www.mindspore.cn/mindformers/docs/zh-CN/r1.8.0/guide/training.html"
+  ]
+}

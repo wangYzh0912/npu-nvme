@@ -1,0 +1,27 @@
+{
+  "gates": {
+    "G0_roundtrip": {
+      "status": "pass",
+      "log": "results/formal-20260909-full/gates_g0.log",
+      "scope": "host and NPU buffer write/read, alignment/capacity rejection, bounded metadata timeout/recovery"
+    },
+    "G1_full_restart": {
+      "status": "pass",
+      "log": "results/formal-20260909-full/gates_g1.log",
+      "manifest": "results/formal-20260909-full/g1_full_restart/g1_manifest.json",
+      "scope": "fresh-process FULL load with 772 per-parameter digest checks"
+    },
+    "G2_metadata": {
+      "status": "pass",
+      "log": "results/formal-20260909-full/gates_g2.log",
+      "result": "results/formal-20260909-full/g2_metadata.json",
+      "scope": "A/B metadata fallback, superblock corruption rejection, byte restoration"
+    }
+  },
+  "device": {
+    "npu": 7,
+    "raw_nvme": "0000:83:00.0",
+    "filesystem_nvme": "0000:84:00.0"
+  },
+  "status": "pass"
+}

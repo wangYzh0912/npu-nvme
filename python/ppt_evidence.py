@@ -121,7 +121,14 @@ def environment_snapshot(*, pci=None, npu=None, numa=None, repo_root=None,
     """Capture reproducibility metadata used by every new experiment."""
     repo_root = Path(repo_root or Path(__file__).resolve().parents[1])
     spdk_root = Path(spdk_root or repo_root / "third_party" / "spdk")
+    toolkit = Path(os.environ.get("ASCEND_HOME_PATH",
+                   "/usr/local/Ascend/ascend-toolkit/8.0.RC3/aarch64-linux"))
+    version_root = Path(os.environ.get("NPU_NVME_CANN_VERSION_ROOT",
+                        str(toolkit.parent if toolkit.name == "aarch64-linux" else toolkit)))
     return {
+        "environment_id": os.environ.get("NPU_NVME_ENVIRONMENT_ID"),
+        "toolkit_path": str(toolkit),
+        "library_path": os.environ.get("NPU_NVME_LIBRARY_PATH"),
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "software": {
             "python": platform.python_version(),
@@ -129,9 +136,7 @@ def environment_snapshot(*, pci=None, npu=None, numa=None, repo_root=None,
             "mindformers": package_version("mindformers"),
             "numpy": package_version("numpy"),
             "cann": _first_existing((
-                "/usr/local/Ascend/ascend-toolkit/latest/version.info",
-                "/usr/local/Ascend/ascend-toolkit/8.0.RC3/runtime/version.info",
-                "/usr/local/Ascend/version.info")),
+                toolkit / "version.info", version_root / "runtime/version.info")),
             "compiler": command(["cc", "--version"]),
         },
         "repo": {
@@ -173,6 +178,9 @@ class EvidenceBundle:
         self.samples = []
         self.failures = []
         self.config = dict(config)
+        self.config.setdefault("environment_id", os.environ.get("NPU_NVME_ENVIRONMENT_ID"))
+        self.config.setdefault("parent_run_id", os.environ.get("NPU_NVME_PARENT_RUN_ID"))
+        self.config.setdefault("run_role", "child" if self.config["parent_run_id"] else "primary")
         self.config.update({"experiment_id": experiment_id,
                             "run_id": self.run_id})
         self._write("config.json", self.config)
@@ -227,6 +235,10 @@ class EvidenceBundle:
             "status": status or result.get("status") or
                       ("pass" if not self.failures else "fail"),
             "run_id": self.run_id,
+            "experiment_id": self.config["experiment_id"],
+            "environment_id": self.config["environment_id"],
+            "parent_run_id": self.config["parent_run_id"],
+            "run_role": self.config["run_role"],
             "samples": len(self.samples),
             "failed_samples": len(self.failures),
             "sample_policy": "failed samples excluded from statistics",

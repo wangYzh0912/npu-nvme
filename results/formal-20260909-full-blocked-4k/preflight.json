@@ -1,0 +1,77 @@
+{
+  "blockers": [],
+  "driver_83": "uio_pci_generic",
+  "euid": 0,
+  "hugepages": "MemTotal:       2107993572 kB\nMemFree:        1655358668 kB\nMemAvailable:   1999902064 kB\nBuffers:         4042392 kB\nCached:         416871420 kB\nSwapCached:            0 kB\nActive:         77314756 kB\nInactive:       347372340 kB\nActive(anon):    7163236 kB\nInactive(anon): 69608072 kB\nActive(file):   70151520 kB\nInactive(file): 277764268 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        4194300 kB\nDirty:              1300 kB\nWriteback:             0 kB\nAnonPages:       3720192 kB\nMapped:           767448 kB\nShmem:          72998184 kB\nKReclaimable:    6421300 kB\nSlab:           12602216 kB\nSReclaimable:    6421300 kB\nSUnreclaim:      6180916 kB\nKernelStack:       68896 kB\nPageTables:        54380 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   89850632 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1658940 kB\nVmallocChunk:          0 kB\nPercpu:          6423552 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   1609728 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1663\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+  "library": "/home/user7/npu-nvme/build_out/lib/libnpu_nvme.so",
+  "library_exists": true,
+  "lspci_83": {
+    "argv": [
+      "lspci",
+      "-s",
+      "83:00.0",
+      "-nnk"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "83:00.0 Non-Volatile memory controller [0108]: Huawei Technologies Co., Ltd. ES3000 V6 NVMe PCIe SSD [19e5:3754]\n\tSubsystem: Huawei Technologies Co., Ltd. NVMe SSD ES3500P V6 3840GB 2.5\" U.2 [19e5:6213]\n\tKernel driver in use: uio_pci_generic\n\tKernel modules: nvme\n"
+  },
+  "lspci_84": {
+    "argv": [
+      "lspci",
+      "-s",
+      "84:00.0",
+      "-nnk"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "84:00.0 Non-Volatile memory controller [0108]: Huawei Technologies Co., Ltd. ES3000 V6 NVMe PCIe SSD [19e5:3754]\n\tSubsystem: Huawei Technologies Co., Ltd. NVMe SSD ES3500P V6 3840GB 2.5\" U.2 [19e5:6213]\n\tKernel driver in use: nvme\n\tKernel modules: nvme\n"
+  },
+  "models": {
+    "argv": [
+      "findmnt",
+      "-no",
+      "SOURCE,FSTYPE,OPTIONS",
+      "-T",
+      "/models"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "/dev/nvme1n1 xfs    rw,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota\n"
+  },
+  "npu_smi": {
+    "argv": [
+      "npu-smi",
+      "info"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "+------------------------------------------------------------------------------------------------+\n| npu-smi 24.1.rc3                 Version: 24.1.rc3                                             |\n+---------------------------+---------------+----------------------------------------------------+\n| NPU   Name                | Health        | Power(W)    Temp(C)           Hugepages-Usage(page)|\n| Chip                      | Bus-Id        | AICore(%)   Memory-Usage(MB)  HBM-Usage(MB)        |\n+===========================+===============+====================================================+\n| 0     910B3               | OK            | 93.3        32                0    / 0             |\n| 0                         | 0000:C1:00.0  | 0           0    / 0          3369 / 65536         |\n+===========================+===============+====================================================+\n| 1     910B3               | OK            | 90.1        31                0    / 0             |\n| 0                         | 0000:C2:00.0  | 0           0    / 0          3369 / 65536         |\n+===========================+===============+====================================================+\n| 2     910B3               | OK            | 90.3        31                0    / 0             |\n| 0                         | 0000:81:00.0  | 0           0    / 0          3373 / 65536         |\n+===========================+===============+====================================================+\n| 3     910B3               | OK            | 90.5        32                0    / 0             |\n| 0                         | 0000:82:00.0  | 0           0    / 0          3367 / 65536         |\n+===========================+===============+====================================================+\n| 4     910B3               | OK            | 88.0        37                0    / 0             |\n| 0                         | 0000:01:00.0  | 0           0    / 0          3367 / 65536         |\n+===========================+===============+====================================================+\n| 5     910B3               | OK            | 97.6        37                0    / 0             |\n| 0                         | 0000:02:00.0  | 0           0    / 0          3367 / 65536         |\n+===========================+===============+====================================================+\n| 6     910B3               | OK            | 90.8        36                0    / 0             |\n| 0                         | 0000:41:00.0  | 0           0    / 0          3372 / 65536         |\n+===========================+===============+====================================================+\n| 7     910B3               | OK            | 91.8        37                0    / 0             |\n| 0                         | 0000:42:00.0  | 0           0    / 0          3376 / 65536         |\n+===========================+===============+====================================================+\n+---------------------------+---------------+----------------------------------------------------+\n| NPU     Chip              | Process id    | Process name             | Process memory(MB)      |\n+===========================+===============+====================================================+\n| No running processes found in NPU 0                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 1                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 2                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 3                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 4                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 5                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 6                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 7                                                            |\n+===========================+===============+====================================================+\n"
+  },
+  "status": "pass",
+  "sudo_probe": {
+    "argv": [
+      "sudo",
+      "-n",
+      "true"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "sudo_stat": {
+    "argv": [
+      "stat",
+      "-c",
+      "uid=%u mode=%a",
+      "/usr/bin/sudo"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "uid=0 mode=4111\n"
+  },
+  "timestamp": "2026-09-09T21:20:03+0800",
+  "uio_nodes": [
+    "/dev/uio0"
+  ]
+}

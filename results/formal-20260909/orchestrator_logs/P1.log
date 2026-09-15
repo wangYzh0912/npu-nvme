@@ -1,0 +1,26 @@
+{"block_size": 4096, "operation": "write", "path": "buffered", "queue_depth": 1, "run_id": "P1_20260909_005342_2b837367", "status": "pass"}
+{"block_size": 4096, "operation": "write", "path": "buffered", "queue_depth": 4, "run_id": "P1_20260909_005704_4ee1517b", "status": "pass"}
+{"block_size": 65536, "operation": "write", "path": "buffered", "queue_depth": 1, "run_id": "P1_20260909_005809_a67080c4", "status": "pass"}
+{"block_size": 65536, "operation": "write", "path": "buffered", "queue_depth": 4, "run_id": "P1_20260909_005903_05bffaec", "status": "pass"}
+{"block_size": 1048576, "operation": "write", "path": "buffered", "queue_depth": 1, "run_id": "P1_20260909_005950_18c68901", "status": "pass"}
+{"block_size": 1048576, "operation": "write", "path": "buffered", "queue_depth": 4, "run_id": "P1_20260909_010037_c5445ab6", "status": "pass"}
+{"block_size": 4194304, "operation": "write", "path": "buffered", "queue_depth": 1, "run_id": "P1_20260909_010123_271f1d47", "status": "pass"}
+{"block_size": 4194304, "operation": "write", "path": "buffered", "queue_depth": 4, "run_id": "P1_20260909_010208_c2c714bc", "status": "pass"}
+{"block_size": 268435456, "operation": "write", "path": "buffered", "queue_depth": 1, "run_id": "P1_20260909_010255_096826aa", "status": "pass"}
+{"block_size": 268435456, "operation": "write", "path": "buffered", "queue_depth": 4, "run_id": "P1_20260909_010346_e2a303f3", "status": "pass"}
+Traceback (most recent call last):
+  File "/home/user7/npu-nvme/experiments/benchmarks/p1_fair_io.py", line 295, in <module>
+    main()
+  File "/home/user7/npu-nvme/experiments/benchmarks/p1_fair_io.py", line 291, in main
+    run_fs(args, path, operation, block, depth)
+  File "/home/user7/npu-nvme/experiments/benchmarks/p1_fair_io.py", line 213, in run_fs
+    completed = subprocess.run(argv, capture_output=True, text=True,
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/subprocess.py", line 507, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/subprocess.py", line 1134, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/subprocess.py", line 1995, in _communicate
+    ready = selector.select(timeout)
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/selectors.py", line 416, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt

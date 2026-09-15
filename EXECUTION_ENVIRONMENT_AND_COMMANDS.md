@@ -1,12 +1,36 @@
 # 项目执行环境与命令
 
-> 最近核对：2026-08-31。项目目录：`/home/user7/npu-nvme`；分支：
-> `exp/ppt-evidence-20260829`；最近提交：`ef01af9`。
+> 最近核对：2026-09-11（本轮只读环境/设备与 CPU 测试）。项目目录：
+> `/home/user7/npu-nvme`；分支 `exp/ppt-evidence-20260829`；HEAD `ef21f92`，
+> 工作树有未提交修改。已 fetch 的 `origin/master=5b164b6`，与本分支分叉 37/2；
+> 后续实施入口见 [长期计划](docs/LONG_TERM_DEVELOPMENT_PLAN.md)，
+> 核查范围见 [审查报告](docs/DEVELOPMENT_PROGRESS_REVIEW_20260911.md)。
 >
 > 本文件不保存 sudo 密码。密码只从根目录 `.sudo_pw` 读取，文件应保持 `0600`，
 > 不要将密码复制到命令行、日志或 Git 提交中。
 
 ## 1. 固定环境
+
+本节分别列出 candidate 与保留的 old 环境。候选栈现已配置，默认仍 old；环境阶段尚未完成恢复和回退验收。
+
+| 候选环境项 | 本机路径/身份 |
+|---|---|
+| Python | `/models/npu_nvme_exp/user7-stack/conda/bin/python`，3.11.4 |
+| CANN | `/models/npu_nvme_exp/user7-stack/cann-install/ascend-toolkit/8.3.RC1` |
+| 项目库 | `/models/npu_nvme_exp/user7-stack/project-lib/libnpu_nvme.so` |
+| 框架 | Qwen 历史报告为 MindSpore 2.7.1 / MindFormers 1.7.0 |
+| 配置/启动器 | `config/user_environments.json` / `scripts/run_user_environment.py`，本地尚未提交 |
+| Qwen 设备 | 历史 TP4 为设备 0–3；不是下表旧单卡默认 7 |
+
+可只读检查两套路径；不要把旧环境的 LD_LIBRARY_PATH 直接套给候选栈：
+
+```bash
+/home/user7/miniconda3/envs/ms_2.5/bin/python scripts/run_user_environment.py --profile old --inspect
+/home/user7/miniconda3/envs/ms_2.5/bin/python scripts/run_user_environment.py --profile candidate --inspect
+```
+
+两项本轮均退出 0，仅证明环境识别/依赖解析。候选环境的实际训练进程库路径、
+GPT-2/Ours 回归、Qwen 完整态 fresh restart 和 old→candidate→old 回退仍按长期计划验收。
 
 | 项目 | 当前值/约束 |
 |---|---|
@@ -106,7 +130,11 @@ PYTHONPATH=.:python:/home/user7/.local/lib/python3.9/site-packages \
   python -m pytest -q tests/python
 ```
 
-当前基线约为 `79 passed`。C SPDK smoke test 用 root：
+上述全集命令是历史入口，本轮未运行全集。当前干净 `5b164b6` 的可移植子集为
+`84 passed`，五个排除模块和精确命令见长期计划 §8.5；本地环境/证据/Qwen 三模块为
+`23 passed`，命令见长期计划 §9.7。这些数值不是硬编码验收门槛。
+
+以下 C SPDK smoke test 是需独立执行的历史命令，本轮未运行；使用前检查专用区域与占用，用 root：
 
 ```bash
 { cat .sudo_pw; printf '\n'; } | sudo -S -k bash -c '
@@ -116,6 +144,10 @@ PYTHONPATH=.:python:/home/user7/.local/lib/python3.9/site-packages \
 ```
 
 ## 7. 正式 P1--P9
+
+以下为旧实验工作树的既有入口，不是当前下一步自动执行顺序。新主线已整理历史
+PPT campaign；先按长期计划完成安全/正确性及比较口径门禁，再选择性迁入、重跑。
+G1 会写新 FULL 代并可能淘汰旧槽，G2 会改写 live metadata；两者都不能当只读检查。
 
 ```bash
 cd /home/user7/npu-nvme
@@ -231,3 +263,32 @@ git log -1 --oneline
 P2 残差超过 10% 时不得画精确百分比；P4 的 `throughput_overhead` 和 `step_overhead`
 不可互换；P5 RSS 含运行时基线；P6 PMU 投影不等于整机占用；短样本、单 seed、GPT-2
 只能报告趋势，不能替代 GPT-2 XL 多 seed 正式门禁。
+
+
+## C1 已验收入口（2026-09-14）
+
+实施目录 `/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry`，分支 `codex/c1-unified-entry`。硬件验收源码 `cb3e21d`：213 软件用例、12 次训练、9 次精确新进程恢复、27 次正式恢复计时通过。入口兼容补丁的 CPU 回归另记，不改变此硬件来源。证据见该工作树 `results/long-term-v1.3/C1/README.md`。原始用户工作树已有修改保留。
+
+CPU dry-run（使用未占用输出目录）：
+
+```bash
+cd /models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry
+/home/user7/miniconda3/envs/ms_2.5/bin/python tools/run_c1_acceptance.py --dry-run --out /models/npu_nvme_exp/user7-stack/c1-runs/new-dry-run
+```
+
+真实验收沿用上文 root 授权与 old 环境，在 root shell 中执行以下命令；只操作 raw PCI 0000:83:00.0，0000:84:00.0 保持 /models 挂载。命令不会格式化设备。库应使用已验收构建，SHA256 `0f521c87a95b18de2d87f48417abd45b603414e8586ff568c226fc4b36fc3c7d`。
+
+```bash
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
+source /home/user7/miniconda3/etc/profile.d/conda.sh
+conda activate ms_2.5
+cd /models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry
+export PYTHONUNBUFFERED=1
+export PYTHONPATH="$PWD:$PWD/python:${PYTHONPATH:-}"
+export NPU_NVME_LIBRARY_PATH="$PWD/build_out/lib/libnpu_nvme.so"
+export LD_LIBRARY_PATH="$PWD/build_out/lib:/usr/local/Ascend/ascend-toolkit/latest/lib64:$LD_LIBRARY_PATH"
+export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
+python tools/run_c1_acceptance.py --out /models/npu_nvme_exp/user7-stack/c1-runs/new-acceptance
+```
+
+helper 将实际 HEAD 写入外部配置，拒绝未提交源码用于正式验收。重复实验必须使用新目录；超时/未知设备进度保留 quarantine，不能把进程退出当作 DMA 停止。完整用法见 `docs/migrations/C1_UNIFIED_ENTRY.md`。

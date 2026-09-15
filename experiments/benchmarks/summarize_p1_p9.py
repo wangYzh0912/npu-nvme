@@ -1,42 +1,132 @@
 #!/usr/bin/env python3
-"""Generate the Chinese P1--P9 evidence report without inventing metrics."""
+"""Summarize primary experiments separately from nested workloads and smoke runs."""
 from __future__ import annotations
-import argparse, json, time
+
+import argparse
+from collections import Counter
+import json
 from pathlib import Path
+import time
 
-def newest_results(root,experiment):
-    candidates=[]
-    direct=root/experiment
-    if direct.exists():
-        candidates.extend(direct.rglob("result.json"))
-    for candidate in root.glob(experiment + "*"):
-        if candidate != direct and candidate.is_dir():
-            candidates.extend(candidate.rglob("result.json"))
-    paths=sorted(set(candidates),key=lambda p:p.stat().st_mtime)
-    return [(p,json.loads(p.read_text())) for p in paths]
 
-def value(item,key):
-    val=item.get(key)
-    if isinstance(val,dict) and "mean" in val:
-        return f"mean={val['mean']:.4g}"
-    return "未测" if val is None else (f"{val:.4g}" if isinstance(val,float) else str(val))
+def read_json(path):
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def collect_results(root):
+    root = Path(root)
+    records = {f"P{i}": {"primary": [], "auxiliary": []} for i in range(1, 10)}
+    for path in sorted(root.rglob("result.json")):
+        result = read_json(path)
+        config = read_json(path.with_name("config.json"))
+        experiment = (result.get("experiment_id") or config.get("experiment_id")
+                      or str(result.get("run_id", "")).split("_", 1)[0])
+        if experiment not in records:
+            continue
+        relative = path.relative_to(root)
+        nested = any((parent / "result.json").is_file()
+                     for parent in path.parent.parents
+                     if parent != root and root in parent.parents)
+        role = result.get("run_role", config.get("run_role", "primary"))
+        parent_id = result.get("parent_run_id", config.get("parent_run_id"))
+        auxiliary = (nested or bool(parent_id) or role != "primary"
+                     or relative.parts[0] != experiment)
+        record = {"path": str(relative), "result": result, "config": config,
+                  "reason": "nested workload" if nested or parent_id else
+                            "auxiliary directory or role" if auxiliary else None}
+        records[experiment]["auxiliary" if auxiliary else "primary"].append(record)
+    return records
+
+
+def newest_results(root, experiment):
+    """Compatibility helper: return only this experiment's primary records."""
+    return [(Path(root) / row["path"], row["result"])
+            for row in collect_results(root)[experiment]["primary"]]
+
+
+def summarize(root):
+    records = collect_results(root)
+    summary = {}
+    for experiment, groups in records.items():
+        counts = Counter(row["result"].get("status", "unknown") for row in groups["primary"])
+        summary[experiment] = {"runs": len(groups["primary"]), "statuses": dict(counts),
+                               "auxiliary_runs": len(groups["auxiliary"]),
+                               "primary_paths": [r["path"] for r in groups["primary"]],
+                               "auxiliary": [{"path": r["path"], "reason": r["reason"]}
+                                             for r in groups["auxiliary"]]}
+    return records, summary
+
+
+def render_report(root):
+    root = Path(root)
+    records, summary = summarize(root)
+    pre = read_json(root / "preflight.json")
+    state = read_json(root / "execution_state.json")
+    gates = read_json(root / "gates_summary.json").get("gates", {})
+    lines = ["# P1-P9 实验报告", "", f"生成时间：{time.strftime('%F %T %z')}", "",
+             f"编排器状态：`{state.get('status', 'unknown')}`；环境门禁：`{pre.get('status', 'unknown')}`。",
+             "主实验、嵌套负载和 smoke 分开统计；运行通过不代表完整实验矩阵或性能目标通过。",
+             "不同配置的延迟和吞吐不合并为一个数值。", "", "## 主实验汇总", "",
+             "| 实验 | 主运行数 | pass | degraded | fail/其他 | 辅助运行数 |",
+             "|---|---:|---:|---:|---:|---:|"]
+    for experiment, row in summary.items():
+        passed = row["statuses"].get("pass", 0)
+        degraded = row["statuses"].get("degraded", 0)
+        other = row["runs"] - passed - degraded
+        lines.append(f"| {experiment} | {row['runs']} | {passed} | {degraded} | {other} | {row['auxiliary_runs']} |")
+    lines.extend(["", "## 本轮证据与边界", ""])
+    for blocker in pre.get("blockers", []):
+        lines.append(f"- 环境阻塞：{blocker}")
+    if not gates:
+        lines.append("- 本目录没有独立正确性门禁汇总，不从历史结果推定 G0/G1/G2 通过。")
+    for gate, record in sorted(gates.items()):
+        lines.append(f"- {gate}：`{record.get('status', 'unknown')}`；{record.get('scope', '范围未记录')}。")
+    if any(r["config"].get("cross_disk_calibration") for r in records["P1"]["primary"]):
+        lines.append("- P1 包含跨物理盘配置，需按设备、请求规格和持久化边界解释；不直接推断严格软件加速比。")
+    p2 = records["P2"]["primary"]
+    if p2:
+        closed = sum(r["result"].get("status") == "pass" and
+                     r["result"].get("closure", {}).get("achieved") is True for r in p2)
+        lines.append(f"- P2 主实验时间闭合通过 {closed}/{len(p2)}；嵌套 P1 不构成 P2 分层验收。")
+        if closed != len(p2):
+            lines.append("- P2 未闭合配置不得绘制精确分层百分比。")
+    p3 = records["P3"]["primary"]
+    if p3:
+        modes = sorted({str(r["result"].get("mode") or r["config"].get("mode", "unknown")) for r in p3})
+        phase = state.get("phases", {}).get("P3", {})
+        lines.append(f"- P3 主运行 {len(p3)} 个，模式为 {', '.join(modes)}；阶段状态 `{phase.get('status', 'unknown')}`。")
+        lines.append("- P3 仅报告已完成配置；须在相同配置的 serial/queue/async 对照和真实时间线完整后判断重叠与收益。")
+    absent = [exp for exp in records if not records[exp]["primary"]]
+    if absent:
+        lines.append(f"- {', '.join(absent)} 无本轮主实验结果；不导入历史通过标志。")
+    env_ids = sorted({str(r["result"].get("environment_id") or
+                          r["config"].get("environment_id") or "legacy-unidentified")
+                      for group in records.values() for r in group["primary"]})
+    lines.append(f"- 环境标识：{', '.join(env_ids) or '无结果'}；不同环境分别解释，不混算性能。")
+    lines.extend(["", "## 辅助结果归属", ""])
+    for exp, row in summary.items():
+        for record in row["auxiliary"]:
+            lines.append(f"- {exp}: `{record['path']}`（{record['reason']}）。")
+    if not any(row["auxiliary_runs"] for row in summary.values()):
+        lines.append("无辅助结果。")
+    return "\n".join(lines) + "\n", summary
+
 
 def main():
-    p=argparse.ArgumentParser(); p.add_argument("--root",type=Path,default=Path("results/ppt-evidence-20260829")); p.add_argument("--output",type=Path,default=None); args=p.parse_args(); output=args.output or args.root/"P1_P9_REPORT.md"
-    pre=json.loads((args.root/"preflight.json").read_text()) if (args.root/"preflight.json").exists() else {}
-    state=json.loads((args.root/"execution_state.json").read_text()) if (args.root/"execution_state.json").exists() else {}
-    lines=["# P1-P9 实验报告", "",f"生成时间：{time.strftime('%F %T %z')}","",f"编排器状态：`{state.get('status','unknown')}`；实验结论按下表逐项判定。本报告只汇总 result.json 中已记录的观测值；缺失项标为“未测”。","","## 环境门禁","",f"状态：`{pre.get('status','unknown')}`",""]
-    blockers=pre.get("blockers",[]); lines.extend([f"- {x}" for x in blockers] or ["- 无前置阻塞"]); lines.extend(["","## 实验汇总","","| 实验 | 运行数 | pass | fail/degraded | 关键指标 |","|---|---:|---:|---:|---|"])
-    for exp in [f"P{i}" for i in range(1,10)]:
-        runs=newest_results(args.root,exp); passed=sum(r[1].get("status")=="pass" for r in runs); other=len(runs)-passed
-        latest=runs[-1][1] if runs else {}; throughput=latest.get("training_throughput_steps_s", latest.get("throughput"));
-        throughput_text=(f"mean={throughput.get('mean'):.4g}" if isinstance(throughput,dict) and throughput.get("mean") is not None else value({"v":throughput},"v"))
-        metric=(f"latency_p95={value(latest,'latency_p95')}, throughput={throughput_text}, " f"write_ratio={value(latest,'write_ratio')}, recovery_error={value(latest,'recovery_error')}")
-        if exp == "P7" and not runs and (args.root/"P7_summary.json").exists():
-            summary=json.loads((args.root/"P7_summary.json").read_text())
-            metric=f"trajectory coverage_rows={len(summary.get('coverage',[]))}, jaccard_rows={len(summary.get('adjacent_jaccard',[]))}"
-            runs=[(args.root/"P7_summary.json", {"status":"pass"})]; passed=1; other=0
-        lines.append(f"| {exp} | {len(runs)} | {passed} | {other} | {metric} |")
-    lines.extend(["", "## 审查后可支持的观察", "", "- P1 同型号双盘完成 A/B 校准，但两盘 O_DIRECT 读取均值相差约 19%；4 MiB 对照的请求规格一致，256 MiB 裸盘逻辑块实际拆成 4 MiB NVMe 命令。结果支持相对 buffered FS 的路径差异，不支持笼统宣称裸盘优于 O_DIRECT。", "- P2 六组均为 `degraded`：perf/strace/trace 已保存，但层间时间尚未闭合，禁止绘制精确百分比。", "- P3 仅完成 seed 41、4 MiB、depth 4、正常延迟的 serial/queue/async 各 30 样本；async 时间轴重叠率均值约 0.945，能够证明该配置存在真实重叠。CSV queue_depth 不是 NVMe 在途深度，延迟注入也不是设备服务延迟，不能外推完整矩阵。", "- P4 保存与恢复功能通过，但性能门槛不通过：原始 step_overhead=5.335 是比例，即约 533.5%，不是 5.3%。独立进程吞吐差3.6%受运行长度混杂，不作为验收结论。", "- P5 9 组 DMA ring 均完成；HugePages_Free 的增量随槽数和分块增长，但固定 SPDK hugepage 开销和 1 GiB payload 污染绝对 RSS，当前只能作为趋势证据。", "- P6 报告的 2.9%--3.1% 是 ArithmeticUtilization PMU issue ratio 按算子持续时间投影到设备 wall-clock 的值，不是整机 Vector 占用率；host/device 时钟无共同 epoch，step 对齐为估算。hbm.csv 设备平均约为读 19--21 GB/s、写 20--22 GB/s，但缺峰值分母，不能判断是否接近瓶颈。辅助注入只覆盖 seed 41 的 NPU serial/parallel，不能得出存在可免费利用空隙。", "- P7 GPT-2 XL seed 42 的 500 步训练中采样早/中/晚各 30 步，覆盖三种分块；缺 seed 41/43，结论仅为单 seed 描述性证据。", "- P8 的 25.6% 是对齐后的提交字节核算，不是 SSD SMART/NAND 实际写量，且只有 GPT-2 seed 41、10 步；未达到 `<20%`。P9 两个恢复点的 fresh-process 哈希与误差检查通过，但样本规模不足。", "", "## 验收判定", "", "- 当前可正式使用：P3 单配置真实重叠、P9 两个位置的功能正确性、单所有者压力与一次 NVMe 错误恢复。", "- 当前需降级使用：P1、P5、P7、P8。", "- 当前不可用于目标结论：P2 精确分层、P4 `<=5%`、P6 Vector 空闲算力、完整 P3/P4/P8/P9 矩阵。", "", "## 可复现入口", "", "```bash", "python experiments/benchmarks/run_ppt_p1_p9.py --dry-run", "python experiments/benchmarks/run_ppt_p1_p9.py", "python experiments/benchmarks/summarize_p1_p9.py", "```", ""])
-    output.parent.mkdir(parents=True,exist_ok=True); output.write_text("\n".join(lines),encoding="utf-8"); print(output)
-if __name__=="__main__": main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path("results/ppt-evidence-20260829"))
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--json-output", type=Path)
+    args = parser.parse_args()
+    report, summary = render_report(args.root)
+    output = args.output or args.root / "P1_P9_REPORT.md"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(report, encoding="utf-8")
+    if args.json_output:
+        args.json_output.parent.mkdir(parents=True, exist_ok=True)
+        args.json_output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    print(output)
+
+
+if __name__ == "__main__":
+    main()

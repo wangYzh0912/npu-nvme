@@ -1,0 +1,528 @@
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+[WARNING] ME(3864185:281473717350432,MainProcess):2026-09-10-01:10:14.308.231 [mindspore/context.py:1335] For 'context.set_context', the parameter 'device_target' will be deprecated and removed in a future version. Please use the api mindspore.set_device() instead.
+[WARNING] ME(3864185:281473717350432,MainProcess):2026-09-10-01:10:14.309.075 [mindspore/context.py:1335] For 'context.set_context', the parameter 'device_id' will be deprecated and removed in a future version. Please use the api mindspore.set_device() instead.
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/jieba/_compat.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+[Common] Building gpt2_xl model...
+[WARNING] ME(3864185:281473717350432,MainProcess):2026-09-10-01:10:15.499.503 [mindspore/ops/primitive.py:217] The in_strategy/in_layout of the operator in your network will not take effect in stand_alone mode. This means the the shard function called in the network is ignored. 
+If you want to enable it, please use semi auto or auto parallel mode by context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)
+[WARNING] ME(3864185:281473717350432,MainProcess):2026-09-10-01:10:16.351.112 [mindspore/common/parameter.py:851] This interface may be deleted in the future.
+2026-09-10 01:10:43,340 - mindformers[mindformers/models/modeling_utils.py:1502] - INFO - model built, but weights is unloaded, since the config has no checkpoint_name_or_path attribute or checkpoint_name_or_path is None.
+2026-09-10 01:10:47,115 - mindformers[mindformers/models/auto/auto_factory.py:362] - INFO - model built successfully!
+[WARNING] ME(3864185:281473717350432,MainProcess):2026-09-10-01:12:05.232.021 [mindspore/hal/stream.py:272] WARN_DEPRECATED: The usage of mindspore.hal.synchronize() is deprecated. Please use mindspore.runtime.synchronize()
+  [Common] Excluded training warmup complete — finite scalar loss 10.902868; device addresses allocated.
+[DirectCheckpoint] loading so from /home/user7/npu-nvme/build_out/lib/libnpu_nvme.so
+EAL: '-c <coremask>' option is deprecated, and will be removed in a future release
+EAL: 	Use '-l <corelist>' or '--lcores=<corelist>' option instead
+[Diag] after spdk_env_init: rte_lcore_count=1 rte_socket_count=8 spdk_core_count=1
+[Diag] reactor: rings w=0x2000008fd600 r=0x2000008fd080 m=0x2000008fcb80 pollers s=0xfffb1c001db0 w=0xfffb1c001f50 r=0xfffb1c0020f0 m=0xfffb1c002290
+[NPU-NVMe] Found matching controller at 0000:83:00.0
+[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528
+[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 1
+[Init] Initialisation complete.
+[DirectCheckpoint] init ok. chunk=1.00MB (effective=1.00MB), rank=0/1
+[Rank 0] FileSystem Mounted. V2 generation=3829 Active Slot: B
+[DirectCkpt] Rank 0 saving step 1 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 1 | Python save() dispatched to background thread. Layout cost: 2980.16ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 1 | Background SPDK Flush ENDED at 2909916.279s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2980.16ms | SPDK(H/W): 12021.08ms | Meta: 20.36ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 623.59 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.619s
+[DirectCkpt] Rank 0 saving step 2 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 2 | Python save() dispatched to background thread. Layout cost: 2287.18ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 2 | Background SPDK Flush ENDED at 2909949.056s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2287.18ms | SPDK(H/W): 12027.26ms | Meta: 23.46ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 653.33 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.629s
+[DirectCkpt] Rank 0 saving step 3 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 3 | Python save() dispatched to background thread. Layout cost: 2290.77ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 3 | Background SPDK Flush ENDED at 2909981.816s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2290.77ms | SPDK(H/W): 12031.29ms | Meta: 48.58ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 651.84 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.669s
+[DirectCkpt] Rank 0 saving step 4 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 4 | Python save() dispatched to background thread. Layout cost: 2756.03ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 4 | Background SPDK Flush ENDED at 2910015.092s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2756.03ms | SPDK(H/W): 12032.33ms | Meta: 48.47ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 631.36 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.659s
+[DirectCkpt] Rank 0 saving step 5 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 5 | Python save() dispatched to background thread. Layout cost: 2284.86ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 5 | Background SPDK Flush ENDED at 2910047.845s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2284.86ms | SPDK(H/W): 12033.31ms | Meta: 48.74ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 652.01 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.662s
+[DirectCkpt] Rank 0 saving step 6 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 6 | Python save() dispatched to background thread. Layout cost: 2738.32ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 6 | Background SPDK Flush ENDED at 2910081.091s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2738.32ms | SPDK(H/W): 12030.52ms | Meta: 48.81ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 632.18 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.659s
+[DirectCkpt] Rank 0 saving step 7 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 7 | Python save() dispatched to background thread. Layout cost: 2326.53ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 7 | Background SPDK Flush ENDED at 2910113.923s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2326.53ms | SPDK(H/W): 12030.01ms | Meta: 48.16ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.30 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.791s
+[DirectCkpt] Rank 0 saving step 8 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 8 | Python save() dispatched to background thread. Layout cost: 2294.70ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 8 | Background SPDK Flush ENDED at 2910146.868s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2294.70ms | SPDK(H/W): 12029.94ms | Meta: 67.93ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.85 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.677s
+[DirectCkpt] Rank 0 saving step 9 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 9 | Python save() dispatched to background thread. Layout cost: 2737.58ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 9 | Background SPDK Flush ENDED at 2910180.148s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2737.58ms | SPDK(H/W): 12027.13ms | Meta: 90.44ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 630.58 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.723s
+[DirectCkpt] Rank 0 saving step 10 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 10 | Python save() dispatched to background thread. Layout cost: 2307.96ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 10 | Background SPDK Flush ENDED at 2910212.988s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2307.96ms | SPDK(H/W): 12021.87ms | Meta: 89.97ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 649.62 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.691s
+[DirectCkpt] Rank 0 saving step 11 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 11 | Python save() dispatched to background thread. Layout cost: 2288.96ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 11 | Background SPDK Flush ENDED at 2910245.815s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2288.96ms | SPDK(H/W): 12026.93ms | Meta: 90.07ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.25 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.697s
+[DirectCkpt] Rank 0 saving step 12 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 12 | Python save() dispatched to background thread. Layout cost: 2734.83ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 12 | Background SPDK Flush ENDED at 2910279.170s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2734.83ms | SPDK(H/W): 12026.30ms | Meta: 90.22ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 630.74 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.696s
+[DirectCkpt] Rank 0 saving step 13 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 13 | Python save() dispatched to background thread. Layout cost: 2426.18ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 13 | Background SPDK Flush ENDED at 2910312.216s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2426.18ms | SPDK(H/W): 12023.97ms | Meta: 89.19ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 644.28 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.692s
+[DirectCkpt] Rank 0 saving step 14 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 14 | Python save() dispatched to background thread. Layout cost: 2744.68ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 14 | Background SPDK Flush ENDED at 2910345.589s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2744.68ms | SPDK(H/W): 12025.47ms | Meta: 90.06ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 630.37 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.731s
+[DirectCkpt] Rank 0 saving step 15 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 15 | Python save() dispatched to background thread. Layout cost: 2292.36ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 15 | Background SPDK Flush ENDED at 2910378.562s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2292.36ms | SPDK(H/W): 12025.99ms | Meta: 89.19ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.17 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.694s
+[DirectCkpt] Rank 0 saving step 16 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 16 | Python save() dispatched to background thread. Layout cost: 2310.40ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 16 | Background SPDK Flush ENDED at 2910411.497s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2310.40ms | SPDK(H/W): 12026.34ms | Meta: 89.34ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 649.34 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.695s
+[DirectCkpt] Rank 0 saving step 17 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 17 | Python save() dispatched to background thread. Layout cost: 2759.43ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 17 | Background SPDK Flush ENDED at 2910444.898s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2759.43ms | SPDK(H/W): 12026.42ms | Meta: 88.65ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 629.76 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.694s
+[DirectCkpt] Rank 0 saving step 18 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 18 | Python save() dispatched to background thread. Layout cost: 2284.18ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 18 | Background SPDK Flush ENDED at 2910477.811s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2284.18ms | SPDK(H/W): 12029.49ms | Meta: 88.30ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.43 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.707s
+[DirectCkpt] Rank 0 saving step 19 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 19 | Python save() dispatched to background thread. Layout cost: 2294.34ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 19 | Background SPDK Flush ENDED at 2910511.170s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2294.34ms | SPDK(H/W): 12025.22ms | Meta: 523.91ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 631.08 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 13.130s
+[DirectCkpt] Rank 0 saving step 20 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 20 | Python save() dispatched to background thread. Layout cost: 2489.57ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 20 | Background SPDK Flush ENDED at 2910544.266s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2489.57ms | SPDK(H/W): 12024.46ms | Meta: 88.42ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 641.50 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.692s
+[DirectCkpt] Rank 0 saving step 21 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 21 | Python save() dispatched to background thread. Layout cost: 2292.58ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 21 | Background SPDK Flush ENDED at 2910577.185s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2292.58ms | SPDK(H/W): 12030.04ms | Meta: 88.37ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.02 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.697s
+[DirectCkpt] Rank 0 saving step 22 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 22 | Python save() dispatched to background thread. Layout cost: 2742.87ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 22 | Background SPDK Flush ENDED at 2910610.554s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2742.87ms | SPDK(H/W): 12026.86ms | Meta: 88.87ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 630.44 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.695s
+[DirectCkpt] Rank 0 saving step 23 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 23 | Python save() dispatched to background thread. Layout cost: 2308.72ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 23 | Background SPDK Flush ENDED at 2910643.467s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2308.72ms | SPDK(H/W): 12024.13ms | Meta: 88.89ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 649.53 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.702s
+[DirectCkpt] Rank 0 saving step 24 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 24 | Python save() dispatched to background thread. Layout cost: 2292.09ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 24 | Background SPDK Flush ENDED at 2910676.409s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2292.09ms | SPDK(H/W): 12024.99ms | Meta: 87.56ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.30 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.691s
+[DirectCkpt] Rank 0 saving step 25 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 25 | Python save() dispatched to background thread. Layout cost: 2788.91ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 25 | Background SPDK Flush ENDED at 2910709.824s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2788.91ms | SPDK(H/W): 12027.26ms | Meta: 89.19ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 628.46 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.720s
+[DirectCkpt] Rank 0 saving step 26 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 26 | Python save() dispatched to background thread. Layout cost: 2327.86ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 26 | Background SPDK Flush ENDED at 2910742.829s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2327.86ms | SPDK(H/W): 12027.26ms | Meta: 88.18ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 648.56 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.718s
+[DirectCkpt] Rank 0 saving step 27 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 27 | Python save() dispatched to background thread. Layout cost: 2736.38ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 27 | Background SPDK Flush ENDED at 2910776.195s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2736.38ms | SPDK(H/W): 12024.62ms | Meta: 89.77ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 630.77 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.694s
+[DirectCkpt] Rank 0 saving step 28 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 28 | Python save() dispatched to background thread. Layout cost: 2285.00ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 28 | Background SPDK Flush ENDED at 2910809.136s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2285.00ms | SPDK(H/W): 12025.62ms | Meta: 88.58ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.55 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.693s
+[DirectCkpt] Rank 0 saving step 29 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 29 | Python save() dispatched to background thread. Layout cost: 2291.06ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 29 | Background SPDK Flush ENDED at 2910842.066s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2291.06ms | SPDK(H/W): 12024.26ms | Meta: 88.13ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.36 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.691s
+[DirectCkpt] Rank 0 saving step 30 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 30 | Python save() dispatched to background thread. Layout cost: 2873.27ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 30 | Background SPDK Flush ENDED at 2910875.597s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2873.27ms | SPDK(H/W): 12024.43ms | Meta: 87.63ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 625.10 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.691s
+[DirectCkpt] Rank 0 saving step 31 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 31 | Python save() dispatched to background thread. Layout cost: 2310.91ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 31 | Background SPDK Flush ENDED at 2910908.539s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2310.91ms | SPDK(H/W): 12019.17ms | Meta: 89.03ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 649.65 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.697s
+[DirectCkpt] Rank 0 saving step 32 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 32 | Python save() dispatched to background thread. Layout cost: 2309.55ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 32 | Background SPDK Flush ENDED at 2910941.938s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2309.55ms | SPDK(H/W): 12022.47ms | Meta: 527.25ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 630.41 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 13.130s
+[DirectCkpt] Rank 0 saving step 33 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 33 | Python save() dispatched to background thread. Layout cost: 2284.45ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 33 | Background SPDK Flush ENDED at 2910974.863s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2284.45ms | SPDK(H/W): 12024.08ms | Meta: 88.15ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 650.66 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.727s
+[DirectCkpt] Rank 0 saving step 34 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 34 | Python save() dispatched to background thread. Layout cost: 2295.65ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 34 | Background SPDK Flush ENDED at 2911007.831s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2295.65ms | SPDK(H/W): 12027.67ms | Meta: 89.47ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 649.94 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.696s
+[DirectCkpt] Rank 0 saving step 35 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 35 | Python save() dispatched to background thread. Layout cost: 2740.77ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 35 | Background SPDK Flush ENDED at 2911041.227s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2740.77ms | SPDK(H/W): 12026.96ms | Meta: 88.48ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 630.54 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.695s
+[DirectCkpt] Rank 0 saving step 36 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 36 | Python save() dispatched to background thread. Layout cost: 2315.62ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 36 | Background SPDK Flush ENDED at 2911074.183s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2315.62ms | SPDK(H/W): 12026.30ms | Meta: 89.23ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 649.11 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.728s
+[DirectCkpt] Rank 0 saving step 37 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 37 | Python save() dispatched to background thread. Layout cost: 2432.45ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 37 | Background SPDK Flush ENDED at 2911107.261s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2432.45ms | SPDK(H/W): 12012.29ms | Meta: 87.97ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 644.58 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.679s
+[DirectCkpt] Rank 0 saving step 38 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 38 | Python save() dispatched to background thread. Layout cost: 2735.45ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 38 | Background SPDK Flush ENDED at 2911140.619s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2735.45ms | SPDK(H/W): 12023.79ms | Meta: 89.41ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 630.86 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.692s
+[DirectCkpt] Rank 0 saving step 39 to offset 0.00 GB ...
+[Timeline][Rank 0] Step 39 | Python save() dispatched to background thread. Layout cost: 2327.45ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 39 | Background SPDK Flush ENDED at 2911173.597s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2327.45ms | SPDK(H/W): 12032.38ms | Meta: 88.25ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 648.35 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.699s
+[DirectCkpt] Rank 0 saving step 40 to offset 10.00 GB ...
+[Timeline][Rank 0] Step 40 | Python save() dispatched to background thread. Layout cost: 2777.93ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot B (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 40 | Background SPDK Flush ENDED at 2911206.996s
+[Breakdown][Rank 0] Prep: 0.00ms | Layout: 2777.93ms | SPDK(H/W): 12033.17ms | Meta: 88.75ms
+[DirectCkpt][Rank 0] Background Safe Write: 9367.58 MB | BW: 628.69 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 12.701s
+{"chunk": 1048576, "delay_ms": 0, "depth": 1, "mode": "serial", "run_id": "P3_20260910_011207_b39f1c24", "seed": 41, "status": "pass"}
+[WARNING] ME(3864185:281473717350432,MainProcess):2026-09-10-01:34:14.753.159 [mindspore/context.py:1282] For 'context.set_context' in Ascend backend, the backend is already initialized, please set it before the definition of any Tensor and Parameter, and the instantiation and execution of any operation and net, otherwise the settings may not take effect. 
+[WARNING] ME(3864185:281473717350432,MainProcess):2026-09-10-01:34:14.753.481 [mindspore/context.py:1335] For 'context.set_context', the parameter 'device_target' will be deprecated and removed in a future version. Please use the api mindspore.set_device() instead.
+[WARNING] ME(3864185:281473717350432,MainProcess):2026-09-10-01:34:14.754.326 [mindspore/context.py:1335] For 'context.set_context', the parameter 'device_id' will be deprecated and removed in a future version. Please use the api mindspore.set_device() instead.
+[Common] Building gpt2_xl model...
+2026-09-10 01:34:41,995 - mindformers[mindformers/models/modeling_utils.py:1502] - INFO - model built, but weights is unloaded, since the config has no checkpoint_name_or_path attribute or checkpoint_name_or_path is None.
+2026-09-10 01:34:41,997 - mindformers[mindformers/models/auto/auto_factory.py:362] - INFO - model built successfully!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 30 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

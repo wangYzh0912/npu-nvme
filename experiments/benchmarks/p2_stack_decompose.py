@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,11 +24,11 @@ sys.path.insert(0, str(ROOT / "python"))
 from ppt_evidence import EvidenceBundle, command, environment_snapshot
 
 
-def run(argv, timeout, output):
+def run(argv, timeout, output, env=None):
     started = time.perf_counter_ns()
     try:
         proc = subprocess.run(argv, text=True, capture_output=True,
-                              check=False, timeout=timeout)
+                              check=False, timeout=timeout, env=env)
         output.write_text(proc.stdout + ("\n[stderr]\n" + proc.stderr
                                          if proc.stderr else ""), encoding="utf-8")
         return {"argv": argv, "returncode": proc.returncode,
@@ -60,7 +61,14 @@ def trace_start(enabled):
     if not enabled:
         info["reason"] = "disabled by command line"
         return info
-    root = Path(info["root"])
+    # Named instances isolate buffers, switches and event enables from other
+    # users. Never clear or toggle the global tracefs root.
+    root = Path(info["root"]) / "instances" / f"npu_nvme_{uuid.uuid4().hex}"
+    try:
+        root.mkdir()
+    except OSError as error:
+        return {**info, "enabled": False, "reason": repr(error)}
+    instance_info = {**info, "root": str(root), "private_instance": True}
     try:
         (root / "tracing_on").write_text("0")
         (root / "trace").write_text("")
@@ -71,14 +79,33 @@ def trace_start(enabled):
             (root / "events" / group / event / "enable").write_text("1")
             selected.append(f"{group}:{event}")
         (root / "tracing_on").write_text("1")
-        return {**info, "enabled": True, "selected": selected,
+        return {**instance_info, "enabled": True, "selected": selected,
                 "reason": None}
     except OSError as error:
-        return {**info, "enabled": False, "reason": repr(error)}
+        trace_cleanup(instance_info)
+        return {**instance_info, "enabled": False, "reason": repr(error)}
+
+
+def trace_cleanup(info):
+    if not info.get("private_instance"):
+        return
+    root = Path(info["root"])
+    try:
+        (root / "tracing_on").write_text("0")
+        for event in info["available"]:
+            group = ("block" if event.startswith("block_") else
+                     "syscalls" if event.startswith("sys_") else "writeback")
+            (root / "events" / group / event / "enable").write_text("0")
+    except OSError as error:
+        info["cleanup_error"] = repr(error)
+    try:
+        root.rmdir()
+    except OSError as error:
+        info["cleanup_error"] = repr(error)
 
 
 def trace_stop(info, output):
-    if not info.get("enabled"):
+    if not info.get("enabled") or not info.get("private_instance"):
         return {"events": {}, "lines": 0}
     root = Path(info["root"])
     try:
@@ -88,13 +115,7 @@ def trace_stop(info, output):
         counts = {event: text.count(event) for event in info["available"]}
         return {"events": counts, "lines": len(text.splitlines())}
     finally:
-        for event in info["available"]:
-            group = ("block" if event.startswith("block_") else
-                     "syscalls" if event.startswith("sys_") else "writeback")
-            try:
-                (root / "events" / group / event / "enable").write_text("0")
-            except OSError:
-                pass
+        trace_cleanup(info)
 
 
 def one(args, mode, size):
@@ -104,7 +125,7 @@ def one(args, mode, size):
         "total_bytes": args.total_bytes, "queue_depth": args.depth,
         "persistence": "fsync/fdatasync" if mode != "spdk" else "flush+metadata",
         "representative_run": True,
-    }, repo_root=ROOT, environment=environment_snapshot(
+    }, root=args.output_root, repo_root=ROOT, environment=environment_snapshot(
         pci=args.pci if mode == "spdk" else "0000:84:00.0",
         npu=str(args.npu), repo_root=ROOT,
         npu_info=command(["npu-smi", "info"])))
@@ -125,17 +146,22 @@ def one(args, mode, size):
                     "--depths", str(args.depth), "--total-bytes", str(args.total_bytes),
                     "--warmups", "1", "--samples", "30", "--pci", args.pci,
                     "--npu", str(args.npu), "--offset", str(args.offset),
-                    "--timeout", str(args.timeout)]
+                    "--timeout", str(args.timeout),
+                    "--output-root", str(bundle.run_dir / "nested_p1"),
+                    "--fs-root", str(args.fs_root)]
     if perf:
         perf_argv = [perf, "stat", "-x,", "-o", str(raw / "perf_stat.csv"), "--"] + workload
     else:
         perf_argv = workload
     trace = trace_start(not args.no_tracefs)
-    perf_result = run(perf_argv, args.timeout, raw / "workload.txt")
-    trace_counts = trace_stop(trace, raw / "trace.txt")
+    child_env = {**os.environ, "NPU_NVME_PARENT_RUN_ID": bundle.run_id}
+    try:
+        perf_result = run(perf_argv, args.timeout, raw / "workload.txt", env=child_env)
+    finally:
+        trace_counts = trace_stop(trace, raw / "trace.txt")
     if strace:
         strace_result = run([strace, "-f", "-c", "-o", str(raw / "strace.txt"), "--"] + workload,
-                            args.timeout, raw / "strace_stdout.txt")
+                            args.timeout, raw / "strace_stdout.txt", env=child_env)
     else:
         strace_result = {"returncode": -1, "reason": "strace unavailable"}
     trace["counts"] = trace_counts
@@ -161,6 +187,7 @@ def one(args, mode, size):
         "instrumentation_note": "No unavailable layer time is represented as zero."}, status=status)
     print(json.dumps({"run_id": result["run_id"], "status": status,
                       "mode": mode, "size": size}, sort_keys=True), flush=True)
+    return status
 
 
 def main():
@@ -175,11 +202,14 @@ def main():
     parser.add_argument("--npu", type=int, default=7)
     parser.add_argument("--timeout", type=int, default=3600)
     parser.add_argument("--no-tracefs", action="store_true")
+    parser.add_argument("--output-root", type=Path, default=None)
     args = parser.parse_args()
+    statuses = []
     for mode in args.modes:
         for size in args.sizes:
-            one(args, mode, size)
+            statuses.append(one(args, mode, size))
+    return 1 if "fail" in statuses else 2 if "degraded" in statuses else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

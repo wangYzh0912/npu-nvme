@@ -1,0 +1,174 @@
+{
+  "retrieved_on": "2026-09-11",
+  "provider": "arXiv Atom API",
+  "note": "Metadata and abstracts; publication status independently checked where described in the review. Not an exhaustive literature search.",
+  "query_ids": [
+    "2406.10707",
+    "2406.13768",
+    "2306.11800",
+    "2406.11257",
+    "2411.05239",
+    "2506.12000",
+    "2509.04084",
+    "2511.12376",
+    "2511.07035",
+    "2602.22158",
+    "2601.16956",
+    "2605.17821",
+    "2607.01646",
+    "2412.15411",
+    "2608.02162"
+  ],
+  "entries": [
+    {
+      "title": "BitSnap: Checkpoint Sparsification and Quantization in LLM Training",
+      "id": "http://arxiv.org/abs/2511.12376v2",
+      "published": "2025-11-15T22:48:59Z",
+      "updated": "2025-11-18T02:44:24Z",
+      "summary": "As large language models (LLMs) continue to grow in size and complexity, efficient checkpoint saving\\&loading has become crucial for managing storage, memory usage, and fault tolerance in LLM training. The current works do not comprehensively take into account the optimization of these several aspects. This paper proposes a novel checkpoint sparsification and quantization method that adapts dynamically to different training stages and model architectures. We present a comprehensive analysis of existing lossy and lossless compression techniques, identify current limitations, and introduce our adaptive approach that balances compression ratio, speed, and precision impact throughout the training process. Experiments on different sizes of LLMs demonstrate that our bitmask-based sparsification method achieves 16x compression ratio without compromising model accuracy. Additionally, the cluster-based quantization method achieves 2x compression ratio with little precision loss.",
+      "comment": "12 pages, numerous figures",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "Lossless Tensor Compression as Program Synthesis",
+      "id": "http://arxiv.org/abs/2608.02162v1",
+      "published": "2026-08-03T12:42:55Z",
+      "updated": "2026-08-03T12:42:55Z",
+      "summary": "Model checkpoints are growing in both number and size, which makes archival, transfer, and deployment increasingly costly. General-purpose compressors can reduce storage requirements but ignore tensor structure, whereas existing tensor-specific compressors rely on fixed and format-specific pipelines. We present Brevis, which formulates lossless tensor compression as program synthesis. We design a typed domain-specific language (DSL) that captures recurring tensor structures, such as repeated regions and floating-point fields, through a set of reversible operators. Given a tensor, Brevis synthesizes a self-contained DSL program that reconstructs it bit-exactly. A checkpoint-specific production prior, learned from a small representative sample of tensors, guides a bounded A* search to synthesize compact programs, which can later be executed directly for bit-exact decompression. On 10 public checkpoints spanning language, audio, and image generation models, Brevis reduces 2.13 TB of checkpoint data to 1.41 TB, a 33.93% storage reduction. It produces archives up to 30.87% smaller than those of four general-purpose compressors, including zstd and gzip, and smaller archives than the tensor-specific compressors ZipNN and DFloat11. Under a practical concurrency configuration, Brevis achieves 3.60 GB/s compression and 6.61 GB/s decompression while preserving every source byte.",
+      "comment": "",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "Sparse Checkpointing for Fast and Reliable MoE Training",
+      "id": "http://arxiv.org/abs/2412.15411v5",
+      "published": "2024-12-19T21:34:44Z",
+      "updated": "2026-03-19T00:31:05Z",
+      "summary": "As large language models scale, training them requires thousands of GPUs over extended durations--making frequent failures an inevitable reality. While checkpointing remains the primary fault-tolerance mechanism, existing methods fall short when applied to Mixture-of-Experts (MoE) models. Due to their substantially larger training state, MoE models exacerbate checkpointing overheads, often causing costly stalls or prolonged recovery that severely degrade training efficiency. We present MoEvement, a distributed, in-memory checkpointing system tailored for MoE models. MoEvement is built on three key ideas: (1) sparse checkpointing, which incrementally snapshots subsets of experts across iterations to reduce overhead; (2) a sparse-to-dense checkpoint conversion mechanism that incrementally reconstructs consistent dense checkpoints from sparse snapshots; and (3) upstream logging of activations and gradients at pipeline-stage boundaries, enabling localized recovery without re-executing unaffected workers. Evaluations across diverse MoE models with up to 64 experts show that MoEvement reduces checkpointing overhead by up to $4\\times$ and recovery overhead by up to $31\\times$ compared to state-of-the-art approaches, sustaining ETTR $\\ge 0.94$ even under frequent failures (MTBF as low as 10 minutes) and delivering up to $8\\times$ overall training speedup, all without compromising synchronous training semantics. Overall, MoEvement offers a robust and scalable fault-tolerance solution for the next generation of sparsely activated models.",
+      "comment": "NSDI'26 | Camera-Ready",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "PHOENIX: Resilient LLM Training with Hot-Swapping via Zero-Overhead Checkpoint",
+      "id": "http://arxiv.org/abs/2607.01646v2",
+      "published": "2026-07-02T03:17:58Z",
+      "updated": "2026-07-06T23:06:49Z",
+      "summary": "State-of-the-art large language model (LLM) training takes tens of thousands of graphics processing units (GPUs) for months and encounters failures across the software and hardware stack. Existing fault-tolerance mechanisms either impose non-trivial overhead during failure-free execution or suffer from prolonged recovery latency, particularly under scenarios where a small subset of compute nodes experience permanent failures. %The tradeoff between failure-free overhead and recovery latency forms a space forms a Pareto frontier We present PHOENIX to simultaneously address both optimization objectives. PHOENIX incorporates a fault-tolerance mechanism that restores LLM training via hot-swapping, namely by replacing failed nodes with spare nodes without terminating the complete job. The hot-swapping of PHOENIX is enabled by two ideas: First, it exploits an off-critical-path in-memory checkpointing mechanism for spatial redundancy. Second, it introduces a communicator reconstruction protocol that replaces failed nodes with spare nodes at runtime. PHOENIX efficiently overlaps the in-memory checkpointing with computation, thus introducing zero overhead during error-free execution. Upon permanent node failures, PHOENIX can rebuild memory states with minimal recomputation by leveraging in-memory checkpoints. We evaluate PHOENIX across scales (up to 512 NVIDIA A100 GPUs) and LLMs (up to 65B parameters), and observe zero checkpoint overhead with hot-swapping recovery completing in under 40 seconds. These results show that PHOENIX simultaneously achieves both zero-overhead error-free execution and extremely low recovery cost.",
+      "comment": "",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "DataStates-LLM: Scalable Checkpointing for Transformer Models Using Composable State Providers",
+      "id": "http://arxiv.org/abs/2601.16956v1",
+      "published": "2026-01-23T18:26:14Z",
+      "updated": "2026-01-23T18:26:14Z",
+      "summary": "The rapid growth of Large Transformer-based models, specifically Large Language Models (LLMs), now scaling to trillions of parameters, has necessitated training across thousands of GPUs using complex hybrid parallelism strategies (e.g., data, tensor, and pipeline parallelism). Checkpointing this massive, distributed state is critical for a wide range of use cases, such as resilience, suspend-resume, investigating undesirable training trajectories, and explaining model evolution. However, existing checkpointing solutions typically treat model state as opaque binary blobs, ignoring the ``3D heterogeneity'' of the underlying data structures--varying by memory location (GPU vs. Host), number of ``logical'' objects sharded and split across multiple files, data types (tensors vs. Python objects), and their serialization requirements. This results in significant runtime overheads due to blocking device-to-host transfers, data-oblivious serialization, and storage I/O contention. In this paper, we introduce DataStates-LLM, a novel checkpointing architecture that leverages State Providers to decouple state abstraction from data movement. DataStates-LLM exploits the immutability of model parameters during the forward and backward passes to perform ``lazy'', non-blocking asynchronous snapshots. By introducing State Providers, we efficiently coalesce fragmented, heterogeneous shards and overlap the serialization of metadata with bulk tensor I/O. We evaluate DataStates-LLM on models up to 70B parameters on 256 A100-40GB GPUs. Our results demonstrate that DataStates-LLM achieves up to 4$\\times$ higher checkpointing throughput and reduces end-to-end training time by up to 2.2$\\times$ compared to state-of-the-art solutions, effectively mitigating the serialization and heterogeneity bottlenecks in extreme-scale LLM training.",
+      "comment": "",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "Optimizing Frequent Checkpointing via Low-Cost Differential for Distributed Training Systems",
+      "id": "http://arxiv.org/abs/2509.04084v4",
+      "published": "2025-09-04T10:27:30Z",
+      "updated": "2026-08-14T01:32:22Z",
+      "summary": "Distributed training of large deep-learning models often leads to failures, so checkpointing is commonly employed for recovery. State-of-the-art studies focus on frequent checkpointing for fast recovery from failures. However, frequent checkpointing generates numerous checkpoints, incurring substantial costs and thus degrading training performance. Recently, differential checkpointing has been proposed to reduce costs, but it is limited to recommendation systems, so its application to general distributed training systems remains unexplored. In this paper, we find that gradients generated during distributed training can be reused to construct differential checkpoints, while the former's size is smaller than the latter's, motivating us to reuse gradients for low-cost differential checkpointing. Based on this main idea, we propose \\sysname, a frequent checkpointing framework for compression-enabled training systems that reuses compressed gradients as differential checkpoints, eliminating redundant differential computation and reducing checkpoint transmission cost. Furthermore, we extend gradient reuse to scenarios without gradient compression and propose \\sysnameplus, which employs layer-wise-reuse snapshotting and incremental-merging persistence to overlap checkpointing with training execution. Experiments on diverse workloads, including billion-parameter-scale models, demonstrate that \\sysname and \\sysnameplus significantly reduce checkpointing overhead and enable checkpointing at frequencies as high as once per iteration, reducing training time by up to 89.2\\% and 81.2\\%, respectively.",
+      "comment": "",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "ExCP: Extreme LLM Checkpoint Compression via Weight-Momentum Joint Shrinking",
+      "id": "http://arxiv.org/abs/2406.11257v1",
+      "published": "2024-06-17T06:47:29Z",
+      "updated": "2024-06-17T06:47:29Z",
+      "summary": "Large language models (LLM) have recently attracted significant attention in the field of artificial intelligence. However, the training process of these models poses significant challenges in terms of computational and storage capacities, thus compressing checkpoints has become an urgent problem. In this paper, we propose a novel Extreme Checkpoint Compression (ExCP) framework, which significantly reduces the required storage of training checkpoints while achieving nearly lossless performance. We first calculate the residuals of adjacent checkpoints to obtain the essential but sparse information for higher compression ratio. To further excavate the redundancy parameters in checkpoints, we then propose a weight-momentum joint shrinking method to utilize another important information during the model optimization, i.e., momentum. In particular, we exploit the information of both model and optimizer to discard as many parameters as possible while preserving critical information to ensure optimal performance. Furthermore, we utilize non-uniform quantization to further compress the storage of checkpoints. We extensively evaluate our proposed ExCP framework on several models ranging from 410M to 7B parameters and demonstrate significant storage reduction while maintaining strong performance. For instance, we achieve approximately $70\\times$ compression for the Pythia-410M model, with the final performance being as accurate as the original model on various downstream tasks. Codes will be available at https://github.com/Gaffey/ExCP.",
+      "comment": "ICML 2024 oral",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "GoCkpt: Gradient-Assisted Multi-Step overlapped Checkpointing for Efficient LLM Training",
+      "id": "http://arxiv.org/abs/2511.07035v1",
+      "published": "2025-11-10T12:31:54Z",
+      "updated": "2025-11-10T12:31:54Z",
+      "summary": "The accuracy of large language models (LLMs) improves with increasing model size, but increasing model complexity also poses significant challenges to training stability. Periodic checkpointing is a key mechanism for fault recovery and is widely used in LLM training. However, traditional checkpointing strategies often pause or delay GPU computation during checkpoint saving for checkpoint GPU-CPU transfer, resulting in significant training interruptions and reduced training throughput. To address this issue, we propose GoCkpt, a method to overlap checkpoint saving with multiple training steps and restore the final checkpoint on the CPU. We transfer the checkpoint across multiple steps, each step transfers part of the checkpoint state, and we transfer some of the gradient data used for parameter updates. After the transfer is complete, each partial checkpoint state is updated to a consistent version on the CPU, thus avoiding the checkpoint state inconsistency problem caused by transferring checkpoints across multiple steps. Furthermore, we introduce a transfer optimization strategy to maximize GPU-CPU bandwidth utilization and SSD persistence throughput. This dual optimization overlapping saves across steps and maximizing I/O efficiency significantly reduces invalid training time. Experimental results show that GoCkpt can increase training throughput by up to 38.4% compared to traditional asynchronous checkpoint solutions in the industry. We also find that GoCkpt can reduce training interruption time by 86.7% compared to the state-of-the-art checkpoint transfer methods, which results in a 4.8% throughput improvement.",
+      "comment": "12 pages, 10 figures, 1 tables",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "An Efficient Compression of Deep Neural Network Checkpoints Based on Prediction and Context Modeling",
+      "id": "http://arxiv.org/abs/2506.12000v1",
+      "published": "2025-06-13T17:54:42Z",
+      "updated": "2025-06-13T17:54:42Z",
+      "summary": "This paper is dedicated to an efficient compression of weights and optimizer states (called checkpoints) obtained at different stages during a neural network training process. First, we propose a prediction-based compression approach, where values from the previously saved checkpoint are used for context modeling in arithmetic coding. Second, in order to enhance the compression performance, we also propose to apply pruning and quantization of the checkpoint values. Experimental results show that our approach achieves substantial bit size reduction, while enabling near-lossless training recovery from restored checkpoints, preserving the model's performance and making it suitable for storage-limited environments.",
+      "comment": "IEEE NW Russia Young Researchers in Electrical and Electronic Engineering Conference (EIConRusNW)",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "DataStates-LLM: Lazy Asynchronous Checkpointing for Large Language Models",
+      "id": "http://arxiv.org/abs/2406.10707v1",
+      "published": "2024-06-15T18:30:40Z",
+      "updated": "2024-06-15T18:30:40Z",
+      "summary": "LLMs have seen rapid adoption in all domains. They need to be trained on high-end high-performance computing (HPC) infrastructures and ingest massive amounts of input data. Unsurprisingly, at such a large scale, unexpected events (e.g., failures of components, instability of the software, undesirable learning patterns, etc.), are frequent and typically impact the training in a negative fashion. Thus, LLMs need to be checkpointed frequently so that they can be rolled back to a stable state and subsequently fine-tuned. However, given the large sizes of LLMs, a straightforward checkpointing solution that directly writes the model parameters and optimizer state to persistent storage (e.g., a parallel file system), incurs significant I/O overheads. To address this challenge, in this paper we study how to reduce the I/O overheads for enabling fast and scalable checkpointing for LLMs that can be applied at high frequency (up to the granularity of individual iterations) without significant impact on the training process. Specifically, we introduce a lazy asynchronous multi-level approach that takes advantage of the fact that the tensors making up the model and optimizer state shards remain immutable for extended periods of time, which makes it possible to copy their content in the background with minimal interference during the training process. We evaluate our approach at scales of up to 180 GPUs using different model sizes, parallelism settings, and checkpointing frequencies. The results show up to 48$\\times$ faster checkpointing and 2.2$\\times$ faster end-to-end training runtime compared with the state-of-art checkpointing approaches.",
+      "comment": "Published at HPDC '24: The 33rd International Symposium on High-Performance Parallel and Distributed Computing. Source code at https://github.com/DataStates/datastates-llm",
+      "journal_ref": "",
+      "doi": "10.1145/3625549.3658685"
+    },
+    {
+      "title": "FastPersist: Accelerating Model Checkpointing in Deep Learning",
+      "id": "http://arxiv.org/abs/2406.13768v1",
+      "published": "2024-06-19T18:31:23Z",
+      "updated": "2024-06-19T18:31:23Z",
+      "summary": "Model checkpoints are critical Deep Learning (DL) artifacts that enable fault tolerance for training and downstream applications, such as inference. However, writing checkpoints to persistent storage, and other I/O aspects of DL training, are mostly ignored by compute-focused optimization efforts for faster training of rapidly growing models and datasets. Towards addressing this imbalance, we propose FastPersist to accelerate checkpoint creation in DL training. FastPersist combines three novel techniques: (i) NVMe optimizations for faster checkpoint writes to SSDs, (ii) efficient write parallelism using the available SSDs in training environments, and (iii) overlapping checkpointing with independent training computations. Our evaluation using real world dense and sparse DL models shows that FastPersist creates checkpoints in persistent storage up to 116x faster than baseline, and enables per-iteration checkpointing with negligible overhead.",
+      "comment": "11 pages",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "Inshrinkerator: Compressing Deep Learning Training Checkpoints via Dynamic Quantization",
+      "id": "http://arxiv.org/abs/2306.11800v3",
+      "published": "2023-06-20T18:00:31Z",
+      "updated": "2024-10-12T03:51:25Z",
+      "summary": "With the increase in the scale of Deep Learning (DL) training workloads in terms of compute resources and time consumption, the likelihood of encountering in-training failures rises substantially, leading to lost work and resource wastage. Such failures are typically offset by a checkpointing mechanism, which comes at the cost of storage and network bandwidth overhead. State-of-the-art approaches involve lossy model compression mechanisms, which induce a tradeoff between the resulting model quality (accuracy) and compression ratio. Delta compression is then used to further reduce the overhead by only storing the difference between consecutive checkpoints. We make a key enabling observation that the sensitivity of model weights to compression varies during training, and different weights benefit from different quantization levels (ranging from retaining full precision to pruning). We propose (1) a non-uniform quantization scheme that leverages this variation, (2) an efficient search mechanism that dynamically finds the best quantization configurations, and (3) a quantization-aware delta compression mechanism that rearranges weights to minimize checkpoint differences, thereby maximizing compression. We instantiate these contributions in Inshrinkerator - a framework for DL workload checkpoint compression. Our experiments show that Inshrinkerator consistently achieves a better tradeoff between accuracy and compression ratios compared to prior works, enabling a compression ratio up to 39x and withstanding up to 10 restores with negligible accuracy impact for fault-tolerant training. Inshrinkerator achieves at least an order of magnitude reduction in checkpoint storage overhead for training failure recovery as well as transfer learning use cases without any loss of accuracy.",
+      "comment": "",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "ZipNN: Lossless Compression for AI Models",
+      "id": "http://arxiv.org/abs/2411.05239v2",
+      "published": "2024-11-07T23:28:23Z",
+      "updated": "2025-06-04T15:59:06Z",
+      "summary": "With the growth of model sizes and the scale of their deployment, their sheer size burdens the infrastructure requiring more network and more storage to accommodate these. While there is a vast model compression literature deleting parts of the model weights for faster inference, we investigate a more traditional type of compression - one that represents the model in a compact form and is coupled with a decompression algorithm that returns it to its original form and size - namely lossless compression. We present ZipNN a lossless compression tailored to neural networks. Somewhat surprisingly, we show that specific lossless compression can gain significant network and storage reduction on popular models, often saving 33% and at times reducing over 50% of the model size. We investigate the source of model compressibility and introduce specialized compression variants tailored for models that further increase the effectiveness of compression. On popular models (e.g. Llama 3) ZipNN shows space savings that are over 17% better than vanilla compression while also improving compression and decompression speeds by 62%. We estimate that these methods could save over an ExaByte per month of network traffic downloaded from a large model hub like Hugging Face.",
+      "comment": "IEEE Cloud. arXiv admin note: text overlap with arXiv:2404.15198",
+      "journal_ref": "",
+      "doi": ""
+    },
+    {
+      "title": "LLMTailor: A Layer-wise Tailoring Tool for Efficient Checkpointing of Large Language Models",
+      "id": "http://arxiv.org/abs/2602.22158v1",
+      "published": "2026-02-25T18:05:17Z",
+      "updated": "2026-02-25T18:05:17Z",
+      "summary": "Checkpointing is essential for fault tolerance in training large language models (LLMs). However, existing methods, regardless of their I/O strategies, periodically store the entire model and optimizer states, incurring substantial storage overhead and resource contention. Recent studies reveal that updates across LLM layers are highly non-uniform. Across training steps, some layers may undergo more significant changes, while others remain relatively stable or even unchanged. This suggests that selectively checkpointing only layers with significant updates could reduce overhead without harming training. Implementing such selective strategies requires fine-grained control over both weights and optimizer states, which no current tool provides. To address this gap, we propose \\texttt{LLMTailor}, a checkpoint-merging framework that filters and assembles layers from different checkpoints to form a composite checkpoint. Our evaluation indicates that LLMTailor can work with different selective checkpointing strategies and effectively reduce checkpoint size (e.g., 4.3 times smaller for Llama3.1-8B) and checkpoint time (e.g., 2.8 times faster for Qwen2.5-7B) while maintaining model quality.",
+      "comment": "9 pages, 3 figures, accepted at PDSW'25",
+      "journal_ref": "",
+      "doi": "10.1145/3731599.3767515"
+    },
+    {
+      "title": "TierCheck: Tiered Checkpointing for Fault Tolerance in Large Language Model Training",
+      "id": "http://arxiv.org/abs/2605.17821v1",
+      "published": "2026-05-18T03:48:32Z",
+      "updated": "2026-05-18T03:48:32Z",
+      "summary": "Large Language Model (LLM) training is frequently interrupted by a heterogeneous spectrum of failures, from common GPU crashes to catastrophic cluster-wide outages. Existing checkpointing systems rely on monolithic, single-tier storage backend, forcing a trade-off between state-saving overhead and recovery speed. We propose TierCheck, a cluster-aware tiered checkpointing system that aligns storage placement with failure heterogeneity. TierCheck adopts a three-tier design that maintains lightweight differential checkpoints in local and peer memory for fast localized recovery, while asynchronously migrating heavyweight base checkpoints to remote persistent storage. It also ensures strict global consistency across tiers without stalling training, and achieves fast cluster-aware checkpoint restoration during recovery. Evaluations on models up to 40 billion parameters show that TierCheck achieves low training overhead, reduces end-to-end checkpointing time to under 10s, and supports high-frequency checkpointing, ultimately striking an optimal balance between low-overhead persistence and fast recovery.",
+      "comment": "",
+      "journal_ref": "",
+      "doi": ""
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "phase": "P3",
+  "requested_matrix": {
+    "model": "gpt2_xl",
+    "modes": ["serial", "queue", "async"],
+    "chunks": [1048576, 4194304, 16777216],
+    "depths": [1, 2, 4, 8],
+    "delays_ms": [0, 100, 1000, 5000],
+    "seeds": [41, 42, 43],
+    "warmups": 10,
+    "samples": 30
+  },
+  "configuration_count": 432,
+  "completed_configurations": 1,
+  "completed": [
+    {
+      "run_id": "P3_20260910_011207_b39f1c24",
+      "mode": "serial",
+      "chunk_size": 1048576,
+      "pipeline_depth": 1,
+      "delay_ms": 0,
+      "seed": 41,
+      "status": "pass"
+    }
+  ],
+  "observed_elapsed_minutes": 24.5,
+  "estimated_full_matrix_hours": 176.4,
+  "status": "interrupted_runtime_budget",
+  "interruption": "SIGINT after the first completed configuration; no NPU/NVMe error was observed.",
+  "raw_log": "results/formal-20260909-full/orchestrator_logs/P3.log",
+  "result_root": "results/formal-20260909-full/P3"
+}

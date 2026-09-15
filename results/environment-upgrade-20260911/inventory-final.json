@@ -1,0 +1,349 @@
+{
+  "blockers": [
+    "no NPU device nodes are visible in this execution environment",
+    "no UIO device nodes are visible; raw NVMe gates cannot run",
+    "NPU runtime health could not be verified",
+    "firmware version is not readable",
+    "model config is not readable: /models/Qwen3-8B",
+    "official compatibility references or Git remote are inaccessible"
+  ],
+  "build": {
+    "dpdk_fixed_ring": {
+      "exists": true,
+      "path": "/home/user7/npu-nvme/build/dpdk_fix/librte_mempool_ring_fixed.a",
+      "resolved": "/home/user7/npu-nvme/build/dpdk_fix/librte_mempool_ring_fixed.a",
+      "size": 14536
+    },
+    "library": {
+      "exists": true,
+      "path": "/home/user7/npu-nvme/build_out/lib/libnpu_nvme.so",
+      "resolved": "/home/user7/npu-nvme/build_out/lib/libnpu_nvme.so.1.0",
+      "size": 7283856
+    },
+    "spdk": {
+      "exists": true,
+      "path": "/home/user7/npu-nvme/third_party/spdk",
+      "resolved": "/home/user7/npu-nvme/third_party/spdk",
+      "size": null
+    }
+  },
+  "collector_python_version": "3.9.25",
+  "compatibility": "not_determined",
+  "devices": {
+    "drivers": {
+      "0000:83:00.0": {
+        "exists": true,
+        "path": "/sys/bus/pci/devices/0000:83:00.0/driver",
+        "resolved": "/sys/bus/pci/drivers/uio_pci_generic",
+        "size": null
+      },
+      "0000:84:00.0": {
+        "exists": true,
+        "path": "/sys/bus/pci/devices/0000:84:00.0/driver",
+        "resolved": "/sys/bus/pci/drivers/nvme",
+        "size": null
+      }
+    },
+    "npu": {
+      "reason": "no NPU devices exposed",
+      "returncode": null,
+      "status": "blocked"
+    },
+    "npu_nodes": [],
+    "nvme_fs": {
+      "argv": [
+        "lspci",
+        "-s",
+        "84:00.0",
+        "-nnk"
+      ],
+      "error": "FileNotFoundError(2, 'No such file or directory')",
+      "returncode": -1
+    },
+    "nvme_raw": {
+      "argv": [
+        "lspci",
+        "-s",
+        "83:00.0",
+        "-nnk"
+      ],
+      "error": "FileNotFoundError(2, 'No such file or directory')",
+      "returncode": -1
+    },
+    "uio": {
+      "argv": [
+        "bash",
+        "-lc",
+        "ls -l /dev/uio* 2>&1"
+      ],
+      "returncode": 2,
+      "stderr": "Cannot open netlink socket: Operation not permitted\n",
+      "stdout": "ls: cannot access '/dev/uio*': No such file or directory\n"
+    },
+    "uio_nodes": []
+  },
+  "environment": {
+    "ASCEND_HOME_PATH": "/usr/local/Ascend/ascend-toolkit/latest",
+    "ASCEND_OPP_PATH": "/usr/local/Ascend/ascend-toolkit/latest/opp",
+    "ASCEND_TOOLKIT_HOME": "/usr/local/Ascend/ascend-toolkit/latest",
+    "LD_LIBRARY_PATH": "/home/user7/npu-nvme/build_out/lib:/usr/local/Ascend/ascend-toolkit/latest/lib64:/usr/local/Ascend/ascend-toolkit/latest/lib64/plugin/opskernel:/usr/local/Ascend/ascend-toolkit/latest/lib64/plugin/nnengine:/usr/local/Ascend/ascend-toolkit/latest/tools/aml/lib64:/usr/local/Ascend/ascend-toolkit/latest/tools/aml/lib64/plugin:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver",
+    "NPU_NVME_DPDK_ARGS": null,
+    "PATH": "/home/user7/miniconda3/envs/ms_2.5/bin:/usr/local/Ascend/ascend-toolkit/latest/bin:/usr/local/Ascend/ascend-toolkit/latest/compiler/ccec_compiler/bin:/usr/local/Ascend/ascend-toolkit/latest/tools/ccec_compiler/bin:/usr/local/Ascend/ascend-toolkit/8.0.RC3/compiler/ccec_compiler/bin:/usr/local/bin:/usr/bin:/bin",
+    "PYTHONPATH": "/home/user7/npu-nvme/python:/home/user7/npu-nvme:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/8.0.RC3/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe",
+    "SOC_VERSION": null,
+    "SPDK_ROOT_DIR": null
+  },
+  "environment_id": "68c956c5283bb4c682e3f481bc029fe6cb2c9b81ea9c2cc0ceeb5e35937be12d",
+  "git": {
+    "head": {
+      "argv": [
+        "git",
+        "-C",
+        "/home/user7/npu-nvme",
+        "log",
+        "-1",
+        "--oneline"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "83e8e9c docs: persist experiment execution environment\n"
+    },
+    "status": {
+      "argv": [
+        "git",
+        "-C",
+        "/home/user7/npu-nvme",
+        "status",
+        "--short"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": " M README.md\n M experiments/benchmarks/model_compatibility.py\n M experiments/benchmarks/p1_fair_io.py\n M experiments/benchmarks/p2_stack_decompose.py\n M experiments/benchmarks/run_ppt_p1_p9.py\n M experiments/benchmarks/summarize_p1_p9.py\n M python/c_bindings.py\n M python/ppt_evidence.py\n M src/npu_nvme.c\n M tests/hardware/g1_full_restart.py\n M tests/hardware/g2_metadata.py\n?? config/user_environments.json\n?? docs/USER_ENVIRONMENT_UPGRADE_PLAN.md\n?? experiments/benchmarks/environment_upgrade_inventory.py\n?? python/user_environment.py\n?? results/environment-upgrade-20260911/\n?? results/formal-20260909-full-blocked-4k/\n?? results/formal-20260909-full/\n?? results/formal-20260909/\n?? results/ppt-evidence-20260829/P1/P1_20260909_005342_2b837367/\n?? results/ppt-evidence-20260829/P1/P1_20260909_005704_4ee1517b/\n?? results/ppt-evidence-20260829/P1/P1_20260909_005809_a67080c4/\n?? results/ppt-evidence-20260829/P1/P1_20260909_005903_05bffaec/\n?? results/ppt-evidence-20260829/P1/P1_20260909_005950_18c68901/\n?? results/ppt-evidence-20260829/P1/P1_20260909_010037_c5445ab6/\n?? results/ppt-evidence-20260829/P1/P1_20260909_010123_271f1d47/\n?? results/ppt-evidence-20260829/P1/P1_20260909_010208_c2c714bc/\n?? results/ppt-evidence-20260829/P1/P1_20260909_010255_096826aa/\n?? results/ppt-evidence-20260829/P1/P1_20260909_010346_e2a303f3/\n?? results/ppt-evidence-20260829/P1/P1_20260909_010451_0005c987/\n?? results/ppt-evidence-20260829/P1/P1_20260909_211717_bf07e1bd/\n?? scripts/run_user_environment.py\n?? tests/python/test_environment_upgrade.py\n?? tests/python/test_evidence_reporting.py\n"
+    },
+    "submodules": {
+      "argv": [
+        "git",
+        "-C",
+        "/home/user7/npu-nvme",
+        "submodule",
+        "status"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": " 030bdcc0b71e59dda5a216c82ef2e37ee03fa819 third_party/spdk (heads/master)\n"
+    }
+  },
+  "memory": {
+    "hugepages": {
+      "argv": [
+        "grep",
+        "-E",
+        "Huge(Page|pages)",
+        "/proc/meminfo"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "AnonHugePages:   1611776 kB\nShmemHugePages:        0 kB\nFileHugePages:         0 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\n"
+    },
+    "meminfo": "MemTotal:       2107993572 kB\nMemFree:        1596904940 kB\nMemAvailable:   1999329704 kB\nBuffers:         4073688 kB\nCached:         473599524 kB\nSwapCached:            0 kB\nActive:         83248044 kB\nInactive:       398359924 kB\nActive(anon):    7195648 kB\nInactive(anon): 69712148 kB\nActive(file):   76052396 kB\nInactive(file): 328647776 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        4194300 kB\nDirty:              1808 kB\nWriteback:             0 kB\nAnonPages:       3717252 kB\nMapped:           631420 kB\nShmem:          72973112 kB\nKReclaimable:    7518284 kB\nSlab:           13933492 kB\nSReclaimable:    7518284 kB\nSUnreclaim:      6415208 kB\nKernelStack:       68432 kB\nPageTables:        43992 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   90187544 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1658844 kB\nVmallocChunk:          0 kB\nPercpu:          6302976 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   1611776 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n"
+  },
+  "network": {
+    "mindformers_install": {
+      "argv": [
+        "curl",
+        "--fail",
+        "--silent",
+        "--show-error",
+        "--location",
+        "--max-time",
+        "10",
+        "https://www.mindspore.cn/mindformers/docs/zh-CN/r1.8.0/installation.html"
+      ],
+      "returncode": 7,
+      "stderr": "curl: (7) Couldn't connect to server\n",
+      "stdout": ""
+    },
+    "remote": {
+      "argv": [
+        "git",
+        "-C",
+        "/home/user7/npu-nvme",
+        "-c",
+        "core.sshCommand=ssh -F /dev/null -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=8",
+        "ls-remote",
+        "origin",
+        "HEAD"
+      ],
+      "returncode": 128,
+      "stderr": "ssh: Could not resolve hostname github.com: Name or service not known\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.\n",
+      "stdout": ""
+    }
+  },
+  "packages": {
+    "argv": [
+      "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+      "-c",
+      "import importlib.metadata as m, json; names=['mindspore','mindformers','numpy','torch','spdk']; out={}; \nfor n in names:\n  try: out[n]=m.version(n)\n  except m.PackageNotFoundError: out[n]=None\nprint(json.dumps(out, sort_keys=True))"
+    ],
+    "python": "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "{\"mindformers\": \"1.3.2\", \"mindspore\": \"2.5.0\", \"numpy\": \"1.26.4\", \"spdk\": null, \"torch\": null}\n"
+  },
+  "platform": {
+    "machine": "aarch64",
+    "release": "5.10.0-60.18.0.50.oe2203.aarch64",
+    "system": "Linux"
+  },
+  "python": {
+    "exists": true,
+    "path": "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+    "resolved": "/home/user7/miniconda3/envs/ms_2.5/bin/python3.9",
+    "size": 15536824
+  },
+  "python_version": {
+    "argv": [
+      "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+      "-I",
+      "-c",
+      "import platform; print(platform.python_version())"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "3.9.25\n"
+  },
+  "repo": "/home/user7/npu-nvme",
+  "runtime_paths": {
+    "command_line": "experiments/benchmarks/environment_upgrade_inventory.py --check-network --models /models/Qwen3-8B --output results/environment-upgrade-20260911/inventory-final.json",
+    "ldd_library": {
+      "argv": [
+        "ldd",
+        "/home/user7/npu-nvme/build_out/lib/libnpu_nvme.so"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "\tlinux-vdso.so.1 (0x0000ffffbc036000)\n\tlibascendcl.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libascendcl.so (0x0000ffffbb8f0000)\n\tlibacl_op_compiler.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libacl_op_compiler.so (0x0000ffffbb890000)\n\tlibruntime.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libruntime.so (0x0000ffffbb330000)\n\tlibge_runner.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libge_runner.so (0x0000ffffbb270000)\n\tlibnuma.so.1 => /usr/lib64/libnuma.so.1 (0x0000ffffbb240000)\n\tlibuuid.so.1 => /usr/lib64/libuuid.so.1 (0x0000ffffbb210000)\n\tlibssl.so.3 => /usr/lib64/libssl.so.3 (0x0000ffffbb150000)\n\tlibcrypto.so.3 => /usr/lib64/libcrypto.so.3 (0x0000ffffbad30000)\n\tlibm.so.6 => /usr/lib64/libm.so.6 (0x0000ffffbac90000)\n\tlibstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x0000ffffbaa90000)\n\tlibfuse3.so.3 => /usr/lib64/libfuse3.so.3 (0x0000ffffbaa30000)\n\tlibc.so.6 => /usr/lib64/libc.so.6 (0x0000ffffba880000)\n\t/lib/ld-linux-aarch64.so.1 (0x0000ffffbbff9000)\n\tlibmsprofiler.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libmsprofiler.so (0x0000ffffba460000)\n\tlibgert.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libgert.so (0x0000ffffb9c00000)\n\tlibrt.so.1 => /usr/lib64/librt.so.1 (0x0000ffffb9bd0000)\n\tlibdl.so.2 => /usr/lib64/libdl.so.2 (0x0000ffffb9ba0000)\n\tlibge_executor.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libge_executor.so (0x0000ffffb9a50000)\n\tlibascend_dump.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libascend_dump.so (0x0000ffffb9950000)\n\tlibexe_graph.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libexe_graph.so (0x0000ffffb9820000)\n\tlibgraph.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libgraph.so (0x0000ffffb9510000)\n\tlibascend_watchdog.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libascend_watchdog.so (0x0000ffffb94f0000)\n\tlibprofapi.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libprofapi.so (0x0000ffffb94c0000)\n\tlibascendalog.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libascendalog.so (0x0000ffffb9490000)\n\tliberror_manager.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/liberror_manager.so (0x0000ffffb9390000)\n\tlibc_sec.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libc_sec.so (0x0000ffffb9360000)\n\tlibgcc_s.so.1 => /usr/lib64/libgcc_s.so.1 (0x0000ffffb9320000)\n\tlibpthread.so.0 => /usr/lib64/libpthread.so.0 (0x0000ffffb92f0000)\n\tlibascend_protobuf.so.3.13.0.0 => /usr/local/Ascend/ascend-toolkit/latest/lib64/libascend_protobuf.so.3.13.0.0 (0x0000ffffb8fb0000)\n\tlibascend_trace.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libascend_trace.so (0x0000ffffb8da0000)\n\tlibplatform.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libplatform.so (0x0000ffffb8c20000)\n\tlibmmpa.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libmmpa.so (0x0000ffffb8c00000)\n\tlibascend_hal.so => /usr/local/Ascend/driver/lib64/driver/libascend_hal.so (0x0000ffffb87b0000)\n\tlibge_compiler.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libge_compiler.so (0x0000ffffb70a0000)\n\tlibhybrid_executor.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libhybrid_executor.so (0x0000ffffb6bf0000)\n\tlibdavinci_executor.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libdavinci_executor.so (0x0000ffffb6680000)\n\tlibge_common.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libge_common.so (0x0000ffffb6500000)\n\tlibge_common_base.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libge_common_base.so (0x0000ffffb5f10000)\n\tlibqos_manager.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libqos_manager.so (0x0000ffffb5e70000)\n\tlibregister.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libregister.so (0x0000ffffb5200000)\n\tlibgraph_base.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libgraph_base.so (0x0000ffffb4a20000)\n\tlibz.so.1 => /usr/lib64/libz.so.1 (0x0000ffffb49e0000)\n\tlibflow_graph.so => /usr/local/Ascend/ascend-toolkit/latest/lib64/libflow_graph.so (0x0000ffffb4950000)\n"
+    }
+  },
+  "status": "blocked",
+  "storage": {
+    "home_df": {
+      "argv": [
+        "df",
+        "-h",
+        "/home"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "Filesystem                  Size  Used Avail Use% Mounted on\n/dev/mapper/openeuler-home  236G  210G   14G  94% /home\n"
+    },
+    "models": [
+      {
+        "config": {
+          "exists": true,
+          "path": "/models/Qwen3-8B/config.json",
+          "read_error": "PermissionError(13, 'Permission denied')",
+          "resolved": "/models/Qwen3-8B/config.json",
+          "size": 728
+        },
+        "exists": true,
+        "path": "/models/Qwen3-8B",
+        "resolved": "/models/Qwen3-8B",
+        "size": null
+      }
+    ],
+    "models_df": {
+      "argv": [
+        "df",
+        "-h",
+        "/models"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/nvme1n1    3.5T  1.2T  2.4T  34% /models\n"
+    },
+    "models_mount": {
+      "argv": [
+        "findmnt",
+        "-no",
+        "TARGET,SOURCE,FSTYPE,OPTIONS",
+        "-T",
+        "/models"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "/models /dev/nvme1n1 xfs    ro,nosuid,nodev,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota\n"
+    }
+  },
+  "timestamp": "2026-09-11T01:05:23+0800",
+  "toolkit": {
+    "ascend_root": {
+      "exists": true,
+      "path": "/usr/local/Ascend/ascend-toolkit",
+      "resolved": "/usr/local/Ascend/ascend-toolkit",
+      "size": null
+    },
+    "driver_version": {
+      "content": "Version=24.1.rc3\nascendhal_version=7.35.23\naicpu_version=1.0\ntdt_version=1.0\nlog_version=1.0\nprof_version=2.0\ndvppkernels_version=1.1\ntsfw_version=1.0\nInnerversion=V100R001C19SPC001B124\ncompatible_version=[V100R001C13],[V100R001C15],[V100R001C17],[V100R001C18],[V100R001C19]\ncompatible_version_fw=[7.0.0,7.5.99]\npackage_version=24.1.rc3\n",
+      "exists": true,
+      "path": "/usr/local/Ascend/driver/version.info",
+      "resolved": "/usr/local/Ascend/driver/version.info",
+      "sha256": "fdb4e9d9c658d5e935f8be57f4f235d4d00e68f69d2e710a77448f2bee639709",
+      "size": 337
+    },
+    "firmware_version": {
+      "exists": null,
+      "path": "/usr/local/Ascend/firmware/version.info",
+      "read_error": "PermissionError(13, 'Permission denied')",
+      "stat_error": "PermissionError(13, 'Permission denied')"
+    },
+    "hccl_version": {
+      "content": "Version=7.5.0.1.129\nversion_dir=8.0.RC3\ntimestamp=20241026_152044625\nrequired_opp_abi_version=\">=6.3, <=7.5\"\nrequired_package_amct_acl_version=\"7.5\"\nrequired_package_aoe_version=\"7.5\"\nrequired_package_compiler_version=\"7.5\"\nrequired_package_fwkplugin_version=\"7.5\"\nrequired_package_nca_version=\"7.5\"\nrequired_package_ncs_version=\"7.5\"\nrequired_package_opp_version=\"7.5\"\nrequired_package_opp_kernel_version=\">=7.3, <=7.5\"\nrequired_package_runtime_version=\"7.5\"\nrequired_package_toolkit_version=\"7.5\"\n",
+      "exists": true,
+      "path": "/usr/local/Ascend/ascend-toolkit/8.0.RC3/hccl/version.info",
+      "resolved": "/usr/local/Ascend/ascend-toolkit/8.0.RC3/hccl/version.info",
+      "sha256": "d70c121e3ff72dd5aeca08567f03e3adae0664478283741df01897ccd64d2e18",
+      "size": 499
+    },
+    "latest_lib": {
+      "exists": true,
+      "path": "/usr/local/Ascend/ascend-toolkit/latest/lib64",
+      "resolved": "/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64",
+      "size": null
+    },
+    "opp": {
+      "exists": true,
+      "path": "/usr/local/Ascend/ascend-toolkit/latest/opp",
+      "resolved": "/usr/local/Ascend/ascend-toolkit/8.0.RC3/opp",
+      "size": null
+    },
+    "runtime_version": {
+      "content": "Version=7.5.0.1.129\nversion_dir=8.0.RC3\ntimestamp=20241026_152044625\nruntime_acl_version=1.0\nruntime_dvpp_version=1.0\nrequired_driver_ascendhal_version=4.0.0\nrequired_driver_dvppkernels_version=1.1\nrequired_driver_tsfw_version=1.0\nrequired_opp_abi_version=\">=6.3, <=7.5\"\nrequired_package_amct_acl_version=\"7.5\"\nrequired_package_aoe_version=\"7.5\"\nrequired_package_compiler_version=\"7.5\"\nrequired_package_fwkplugin_version=\"7.5\"\nrequired_package_hccl_version=\"7.5\"\nrequired_package_nca_version=\"7.5\"\nrequired_package_ncs_version=\"7.5\"\nrequired_package_opp_version=\"7.5\"\nrequired_package_opp_kernel_version=\">=7.3, <=7.5\"\nrequired_package_toolkit_version=\"7.5\"\n",
+      "exists": true,
+      "path": "/usr/local/Ascend/ascend-toolkit/8.0.RC3/runtime/version.info",
+      "resolved": "/usr/local/Ascend/ascend-toolkit/8.0.RC3/runtime/version.info",
+      "sha256": "18ca7110a1c6bdb5de7e2cd75d613d84778a5a615ad5ca38e74eac64e81340b9",
+      "size": 658
+    },
+    "selected": {
+      "exists": true,
+      "path": "/usr/local/Ascend/ascend-toolkit/latest",
+      "resolved": "/usr/local/Ascend/ascend-toolkit/latest",
+      "size": null
+    },
+    "set_env": {
+      "exists": true,
+      "path": "/usr/local/Ascend/ascend-toolkit/set_env.sh",
+      "resolved": "/usr/local/Ascend/ascend-toolkit/set_env.sh",
+      "size": 1054
+    },
+    "system_env": {
+      "content": "export LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:$LD_LIBRARY_PATH\nexport ASCEND_TOOLKIT_HOME=/usr/local/Ascend/ascend-toolkit/latest\nexport LD_LIBRARY_PATH=${ASCEND_TOOLKIT_HOME}/lib64:${ASCEND_TOOLKIT_HOME}/lib64/plugin/opskernel:${ASCEND_TOOLKIT_HOME}/lib64/plugin/nnengine:${ASCEND_TOOLKIT_HOME}/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/$(arch):$LD_LIBRARY_PATH\nexport LD_LIBRARY_PATH=${ASCEND_TOOLKIT_HOME}/tools/aml/lib64:${ASCEND_TOOLKIT_HOME}/tools/aml/lib64/plugin:$LD_LIBRARY_PATH\nexport PYTHONPATH=${ASCEND_TOOLKIT_HOME}/python/site-packages:${ASCEND_TOOLKIT_HOME}/opp/built-in/op_impl/ai_core/tbe:$PYTHONPATH\nexport PATH=${ASCEND_TOOLKIT_HOME}/bin:${ASCEND_TOOLKIT_HOME}/compiler/ccec_compiler/bin:${ASCEND_TOOLKIT_HOME}/tools/ccec_compiler/bin:$PATH\nexport ASCEND_AICPU_PATH=${ASCEND_TOOLKIT_HOME}\nexport ASCEND_OPP_PATH=${ASCEND_TOOLKIT_HOME}/opp\nexport TOOLCHAIN_HOME=${ASCEND_TOOLKIT_HOME}/toolkit\nexport ASCEND_HOME_PATH=${ASCEND_TOOLKIT_HOME}\n\n",
+      "exists": true,
+      "path": "/usr/local/Ascend/ascend-toolkit/set_env.sh",
+      "resolved": "/usr/local/Ascend/ascend-toolkit/set_env.sh",
+      "sha256": "0e3920f0e69ca075583cddc214db23d0464e9446c46179ef467cd263afcff6d4",
+      "size": 1054
+    }
+  }
+}

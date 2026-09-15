@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/python/test_environment_upgrade.py",
+    "tests/python/test_evidence_reporting.py",
+    "tests/python/test_qwen_training_entry.py"
+  ],
+  "cwd": "/home/user7/npu-nvme",
+  "exit_code": 2,
+  "elapsed_seconds": 0.5742277419194579,
+  "stdout": "\n==================================== ERRORS ====================================\n__________ ERROR collecting tests/python/test_environment_upgrade.py ___________\nImportError while importing test module '/home/user7/npu-nvme/tests/python/test_environment_upgrade.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../miniconda3/envs/ms_2.5/lib/python3.9/importlib/__init__.py:127: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\ntests/python/test_environment_upgrade.py:10: in <module>\n    from user_environment import isolated_environment, read_profile, verify_library_paths, with_python_identity\nE   ModuleNotFoundError: No module named 'user_environment'\n=========================== short test summary info ============================\nERROR tests/python/test_environment_upgrade.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.23s\n",
+  "stderr": "",
+  "scope": "local uncommitted environment/report/Qwen CPU tests; no device training"
+}

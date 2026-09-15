@@ -1,0 +1,40 @@
+[Common] Building gpt2_xl model...
+2026-09-10 01:41:18,055 - mindformers[mindformers/models/auto/configuration_auto.py:335] - INFO - default yaml config in ./checkpoint_download/gpt2/gpt2_xl.yaml is used.
+2026-09-10 01:41:43,819 - mindformers[mindformers/models/modeling_utils.py:1502] - INFO - model built, but weights is unloaded, since the config has no checkpoint_name_or_path attribute or checkpoint_name_or_path is None.
+2026-09-10 01:41:47,369 - mindformers[mindformers/models/auto/auto_factory.py:362] - INFO - model built successfully!
+...  [Common] Excluded training warmup complete — finite scalar loss 10.879754; device addresses allocated.
+[DirectCheckpoint] loading so from /home/user7/npu-nvme/build_out/lib/libnpu_nvme.so
+[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528
+[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 8
+[Init] Initialisation complete.
+[DirectCheckpoint] init ok. chunk=4.00MB (effective=4.00MB), rank=0/1
+[Rank 0] FileSystem Mounted. V2 generation=3869 Active Slot: B
+[G1/save] requested step_1 is not retained by keep_last_n; using monotonic step_41
+[DirectCkpt] Rank 0 building parameter registry...
+[DirectCkpt] Rank 0 registry: 772 valid params.
+[DirectCkpt] Rank 0 saving step 41 to offset 20.00 GB ...
+[Timeline][Rank 0] Step 41 | Python save() dispatched to background thread. Layout cost: 759.50ms
+[Timeline][Rank 0] I/O Barrier: Waiting for background SPDK flush to finish...
+[DirectCkpt] Rank 0 Meta committed safely to Slot A (Superblock updated).
+
+======================================================
+[Timeline][Rank 0] Step 41 | Background SPDK Flush ENDED at 2911780.373s
+[Breakdown][Rank 0] Prep: 98.04ms | Layout: 759.50ms | SPDK(H/W): 739.15ms | Meta: 58.54ms
+[DirectCkpt][Rank 0] Background Safe Write: 3128.00 MB | BW: 1889.44 MB/s
+======================================================
+
+[Timeline][Rank 0] I/O Barrier Cleared! Wait time: 0.989s
+[G1/save] PERSISTED generation=1 parameters=772 time=1.847s
+[Common] Building gpt2_xl model...
+2026-09-10 01:44:30,481 - mindformers[mindformers/models/modeling_utils.py:1502] - INFO - model built, but weights is unloaded, since the config has no checkpoint_name_or_path attribute or checkpoint_name_or_path is None.
+2026-09-10 01:44:34,148 - mindformers[mindformers/models/auto/auto_factory.py:362] - INFO - model built successfully!
+....  [Common] Excluded training warmup complete — finite scalar loss 10.879754; device addresses allocated.
+[DirectCheckpoint] loading so from /home/user7/npu-nvme/build_out/lib/libnpu_nvme.so
+[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528
+[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 8
+[Init] Initialisation complete.
+[DirectCheckpoint] init ok. chunk=4.00MB (effective=4.00MB), rank=0/1
+[Rank 0] FileSystem Mounted. V2 generation=3870 Active Slot: A
+[Rank 0] FileSystem Mounted. V2 generation=3870 Active Slot: A
+[G1/load] PASS restart load; verified 772 parameters
+[G1] PASS FULL save -> exited save process -> fresh load process -> per-parameter verification

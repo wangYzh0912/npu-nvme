@@ -67,10 +67,14 @@ int npu_nvme_read_batch_host (ctx, void **ptrs, uint64_t *offsets, size_t *sizes
 
 C 测试与硬件使用边界见 `tests/c/README.md`。
 
-近期的研发、实验与增量检查点路线见
-[`docs/NEAR_TERM_WORK_PLAN.md`](docs/NEAR_TERM_WORK_PLAN.md)。
-真实训练增量检查点的固定语义、实施门禁与正式实验矩阵见
-[`docs/INCREMENTAL_CHECKPOINT_REAL_TRAINING_EXECUTION_PLAN.md`](docs/INCREMENTAL_CHECKPOINT_REAL_TRAINING_EXECUTION_PLAN.md)。
+后续开发、架构契约和阶段验收统一维护在
+[长期开发与验收计划](docs/LONG_TERM_DEVELOPMENT_PLAN.md)。
+本地与远端进展、可行性判断和本轮验证见
+[2026-09-11 审查报告](docs/DEVELOPMENT_PROGRESS_REVIEW_20260911.md)；
+实际机器路径、双环境和权限命令见
+[执行环境与命令](EXECUTION_ENVIRONMENT_AND_COMMANDS.md)。
+历史工作包、增量实验和环境升级文档保留为细分协议与历史证据入口，
+实施顺序和状态以长期计划为准。
 
 ### Python 层
 

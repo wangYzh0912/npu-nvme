@@ -1,0 +1,56 @@
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ------------------
+ 34.58    0.187081       31180         6           pselect6
+ 33.28    0.180056        1731       104           wait4
+ 29.32    0.158614       79307         2           fadvise64
+  0.59    0.003187           7       451       360 openat
+  0.57    0.003096           6       472       105 newfstatat
+  0.44    0.002398           4       512           io_uring_enter
+  0.24    0.001274          11       114         1 clock_nanosleep
+  0.19    0.001024        1024         1           setsid
+  0.17    0.000912           5       161           mmap
+  0.17    0.000908          10        83         6 read
+  0.07    0.000386           5        68           mprotect
+  0.07    0.000356           3        95           close
+  0.06    0.000346           3       102           munmap
+  0.06    0.000341           6        56           getdents64
+  0.06    0.000329         329         1           clone
+  0.03    0.000182          11        16         2 futex
+  0.02    0.000083          83         1           clone3
+  0.01    0.000080          80         1           io_uring_setup
+  0.01    0.000049           8         6           timerfd_settime
+  0.01    0.000041           5         8           rt_sigprocmask
+  0.01    0.000036           4         8           brk
+  0.00    0.000027          13         2           statfs
+  0.00    0.000019           3         6           rt_sigaction
+  0.00    0.000016           5         3         2 faccessat
+  0.00    0.000015          15         1           shmget
+  0.00    0.000014          14         1           timerfd_create
+  0.00    0.000013          13         1           shmat
+  0.00    0.000013           6         2           rseq
+  0.00    0.000010          10         1           sysinfo
+  0.00    0.000009           9         1           pipe2
+  0.00    0.000009           3         3           set_robust_list
+  0.00    0.000009           4         2           sched_getaffinity
+  0.00    0.000009           4         2           membarrier
+  0.00    0.000007           2         3           getpid
+  0.00    0.000006           6         1         1 mkdirat
+  0.00    0.000006           6         1           get_mempolicy
+  0.00    0.000005           2         2           getpriority
+  0.00    0.000005           2         2         1 shmctl
+  0.00    0.000005           5         1           io_uring_register
+  0.00    0.000004           4         1           fcntl
+  0.00    0.000004           4         1           prlimit64
+  0.00    0.000004           4         1           getrandom
+  0.00    0.000003           3         1           set_tid_address
+  0.00    0.000003           3         1           setpriority
+  0.00    0.000003           1         2           getrusage
+  0.00    0.000003           3         1         1 set_mempolicy
+  0.00    0.000000           0         1           lseek
+  0.00    0.000000           0       115           write
+  0.00    0.000000           0         1           restart_syscall
+  0.00    0.000000           0         1           shmdt
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           madvise
+------ ----------- ----------- --------- --------- ------------------
+100.00    0.541000         222      2431       479 total

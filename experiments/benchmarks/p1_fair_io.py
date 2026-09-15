@@ -55,6 +55,32 @@ def _arrays(address, total, block, offset):
     return ptrs, offsets, sizes, count
 
 
+def _array_batches(address, total, block, offset, max_items):
+    """Yield bounded host-batch arrays for very fine-grained requests.
+
+    A 1 GiB/4 KiB formal sample contains 262,144 items.  Passing that whole
+    array through one C request overwhelms the reactor/request bookkeeping
+    and can hit the API timeout before the device has drained it.  Keep the
+    logical sample and timing boundary unchanged while limiting each API
+    submission to a bounded number of items.
+    """
+    if max_items <= 0:
+        raise ValueError("max_items must be positive")
+    count = (total + block - 1) // block
+    for first in range(0, count, max_items):
+        batch_count = min(max_items, count - first)
+        ptrs = (ctypes.c_void_p * batch_count)()
+        offsets = (ctypes.c_uint64 * batch_count)()
+        sizes = (ctypes.c_size_t * batch_count)()
+        for local in range(batch_count):
+            index = first + local
+            size = min(block, total - index * block)
+            ptrs[local] = address + index * block
+            offsets[local] = offset + index * block
+            sizes[local] = size
+        yield ptrs, offsets, sizes, batch_count
+
+
 def _cpu_sample(before):
     after = resource.getrusage(resource.RUSAGE_SELF)
     return ((after.ru_utime - before.ru_utime) +
@@ -77,6 +103,7 @@ def run_spdk(args, operation, block, depth):
         "logical_block_size": block, "spdk_command_size": command_block,
         "queue_depth": depth, "warmups": args.warmups,
         "formal_samples": args.samples, "persist_boundary": "nvme_flush",
+        "spdk_batch_items": args.spdk_batch_items,
         "target_pci": args.pci, "raw_offset": args.offset,
         "cross_disk_calibration": True,
     }
@@ -97,23 +124,35 @@ def run_spdk(args, operation, block, depth):
             raise RuntimeError(f"npu_nvme_init rc={rc}")
         for index in range(args.warmups + args.samples):
             sample_offset = args.offset + (index + 1) * args.total_bytes
-            ptrs, offsets, sizes, count = _arrays(address, args.total_bytes,
-                                                    command_block,
-                                                    sample_offset)
+            batches = lambda: _array_batches(
+                address, args.total_bytes, command_block, sample_offset,
+                args.spdk_batch_items)
             # Reads are preconditioned outside the timed interval.
             if operation == "read":
-                if lib.npu_nvme_write_batch_host(ctx, ptrs, offsets, sizes, count) != 0:
-                    raise RuntimeError("read precondition write failed")
+                for ptrs, offsets, sizes, count in batches():
+                    if lib.npu_nvme_write_batch_host(
+                            ctx, ptrs, offsets, sizes, count) != 0:
+                        raise RuntimeError("read precondition write failed")
                 if lib.npu_nvme_flush(ctx) != 0:
                     raise RuntimeError("read precondition flush failed")
             before_cpu = resource.getrusage(resource.RUSAGE_SELF)
             started = time.perf_counter_ns()
             if operation == "write":
-                rc = lib.npu_nvme_write_batch_host(ctx, ptrs, offsets, sizes, count)
+                rc = 0
+                for ptrs, offsets, sizes, count in batches():
+                    rc = lib.npu_nvme_write_batch_host(
+                        ctx, ptrs, offsets, sizes, count)
+                    if rc != 0:
+                        break
                 if rc == 0:
                     rc = lib.npu_nvme_flush(ctx)
             else:
-                rc = lib.npu_nvme_read_batch_host(ctx, ptrs, offsets, sizes, count)
+                rc = 0
+                for ptrs, offsets, sizes, count in batches():
+                    rc = lib.npu_nvme_read_batch_host(
+                        ctx, ptrs, offsets, sizes, count)
+                    if rc != 0:
+                        break
             elapsed = (time.perf_counter_ns() - started) / 1e6
             cpu_s = _cpu_sample(before_cpu)
             if rc != 0:
@@ -155,6 +194,7 @@ def run_spdk(args, operation, block, depth):
         "operation": operation,
         "logical_bytes": args.total_bytes, "physical_bytes": args.total_bytes * len(timings),
         "chunk_size": block, "spdk_command_size": command_block,
+        "spdk_batch_items": args.spdk_batch_items,
         "pipeline_depth": depth, "slot_count": depth,
         "latency_mean": latency.get("mean"), "latency_p50": latency.get("median"),
         "latency_p95": latency.get("p95"),
@@ -271,6 +311,8 @@ def main():
     parser.add_argument("--pci", default="0000:83:00.0")
     parser.add_argument("--spdk-io-unit", type=int, default=4 * 1024 * 1024,
                         help="maximum physical NVMe command size; larger logical blocks are segmented")
+    parser.add_argument("--spdk-batch-items", type=int, default=4096,
+                        help="maximum host API items per SPDK submission")
     parser.add_argument("--offset", type=int, default=SAFE_OFFSET)
     parser.add_argument("--fs-root", type=Path, default=Path("/models/npu_nvme_exp/ppt-evidence-20260829"))
     parser.add_argument("--output-root", type=Path, default=None)

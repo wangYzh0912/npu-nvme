@@ -846,7 +846,19 @@ static void *reactor_loop(void *arg) {
            ctx->read_fsm.state != READ_FSM_IDLE ||
            ctx->meta_req != NULL) {
         spdk_thread_poll(ctx->reactor_thread, 0, 0);
-        usleep(100);
+        /* SPDK completion latency depends on continuous polling while work
+         * is active.  An unconditional sleep adds at least 100 us to every
+         * small I/O and turns a 1 GiB/4 KiB request into a multi-minute
+         * operation.  Retain the idle backoff so an unused context does not
+         * consume a core, but busy-poll whenever an FSM or request ring has
+         * work to drain. */
+        bool idle = ctx->write_fsm.state == WRITE_FSM_IDLE &&
+                    ctx->read_fsm.state == READ_FSM_IDLE &&
+                    ctx->meta_req == NULL &&
+                    spdk_ring_count(ctx->write_ring) == 0 &&
+                    spdk_ring_count(ctx->read_ring) == 0 &&
+                    spdk_ring_count(ctx->meta_ring) == 0;
+        if (idle) usleep(100);
     }
 
 reactor_cleanup:
@@ -1842,6 +1854,16 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
             struct spdk_env_opts env_opts;
             spdk_env_opts_init(&env_opts);
             env_opts.name = "npu_nvme_app";
+
+            /* The raw test device is bound to uio_pci_generic rather than
+             * vfio-pci.  DPDK therefore cannot infer a physical IOVA mode
+             * reliably and otherwise defaults to VA, making NVMe probe fail
+             * with "Expecting 'PA' IOVA mode".  Keep PA as the safe default
+             * for this deployment; callers may override it explicitly for a
+             * different binding through NPU_NVME_DPDK_ARGS. */
+            const char *dpdk_args = getenv("NPU_NVME_DPDK_ARGS");
+            env_opts.env_context = (dpdk_args && dpdk_args[0])
+                ? (void *)dpdk_args : (void *)"--iova-mode=pa";
 
             const char *shm = getenv("SPDK_SHM_ID");
             if (shm) { env_opts.shm_id = atoi(shm); }

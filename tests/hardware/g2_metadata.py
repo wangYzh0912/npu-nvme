@@ -56,6 +56,8 @@ def main():
         nvme_addr=args.pci, npu_device_id=args.npu, pipeline_depth=4,
         requested_chunk_size=4 * 1024 * 1024, rank_id=0, world_size=1,
         keep_last_n=3, slot_size_gb=10, spdk_shm_id=args.shm_id)
+    original_sb = original_a = original_b = None
+    active_offset = inactive_offset = None
     try:
         original_sb = read_region(ckpt, SUPERBLOCK_OFFSET, 4096)
         original_a = read_region(ckpt, META_SLOT_A_OFFSET, META_SLOT_BYTES)
@@ -66,6 +68,9 @@ def main():
         inactive_offset = META_SLOT_B_OFFSET if active_slot == 0 else META_SLOT_A_OFFSET
         active_original = original_a if active_slot == 0 else original_b
         inactive_original = original_b if active_slot == 0 else original_a
+        expected_checkpoints = set(ckpt.meta_dict.get("checkpoints", {}))
+        if not expected_checkpoints:
+            raise AssertionError("metadata has no checkpoint index to validate")
 
         corrupted_active = bytearray(active_original)
         corrupted_active[40] ^= 0x01  # first metadata JSON byte, CRC must fail
@@ -75,8 +80,9 @@ def main():
         if fallback_generation >= before_generation:
             raise AssertionError(
                 f"corrupted active replica was not rejected: {fallback_generation}")
-        if "step_1" not in ckpt.meta_dict.get("checkpoints", {}):
-            raise AssertionError("fallback replica lost the FULL checkpoint index")
+        fallback_checkpoints = set(ckpt.meta_dict.get("checkpoints", {}))
+        if not (fallback_checkpoints & expected_checkpoints):
+            raise AssertionError("fallback replica lost all known FULL checkpoints")
         write_region(ckpt, active_offset, active_original)
         ckpt._mount_filesystem()
         if ckpt.metadata_generation != before_generation:
@@ -111,6 +117,14 @@ def main():
         print(f"[G2] PASS A/B fallback generation={fallback_generation}; "
               "superblock corruption rejected and repaired", flush=True)
     finally:
+        # A failed assertion must not leave the active replica corrupted.
+        if active_offset is not None and original_a is not None:
+            try:
+                write_region(ckpt, META_SLOT_A_OFFSET, original_a)
+                write_region(ckpt, META_SLOT_B_OFFSET, original_b)
+                write_region(ckpt, SUPERBLOCK_OFFSET, original_sb)
+            except Exception:
+                pass
         ckpt.cleanup()
 
 

@@ -5,6 +5,8 @@ import argparse, json, os, subprocess, sys, time
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]; BENCH=ROOT/"experiments/benchmarks"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 def run(argv,timeout=15):
     try:
@@ -15,6 +17,9 @@ def run(argv,timeout=15):
 def preflight(args):
     driver=Path("/sys/bus/pci/devices/0000:83:00.0/driver")
     info={"timestamp":time.strftime("%FT%T%z"),"euid":os.geteuid(),"uio_nodes":[str(x) for x in Path("/dev").glob("uio*")],"driver_83":driver.resolve().name if driver.exists() else None,"models":run(["findmnt","-no","SOURCE,FSTYPE,OPTIONS","-T","/models"]),"lspci_83":run(["lspci","-s","83:00.0","-nnk"]),"lspci_84":run(["lspci","-s","84:00.0","-nnk"]),"npu_smi":run(["npu-smi","info"]),"sudo_probe":run(["sudo","-n","true"]),"sudo_stat":run(["stat","-c","uid=%u mode=%a","/usr/bin/sudo"]),"hugepages":Path("/proc/meminfo").read_text() if Path("/proc/meminfo").exists() else None,"library":str(ROOT/"build_out/lib/libnpu_nvme.so"),"library_exists":(ROOT/"build_out/lib/libnpu_nvme.so").exists()}
+    library = Path(os.environ.get("NPU_NVME_LIBRARY_PATH", str(ROOT / "build_out/lib/libnpu_nvme.so")))
+    info.update(library=str(library), library_exists=library.is_file(),
+                environment_id=os.environ.get("NPU_NVME_ENVIRONMENT_ID"))
     mount=info["models"].get("stdout",""); blockers=[]
     if os.geteuid()!=0: blockers.append("hardware phases require root EUID")
     if info["sudo_probe"].get("returncode") != 0: blockers.append("sudo cannot elevate in this container")
@@ -28,9 +33,13 @@ def command_matrix(args):
     py=args.python; out=str(args.output_root)
     return {
       "P1_calibration":[str(ROOT/"scripts/calibrate_same_ssd_readonly.sh"),py,str(args.output_root/"P1"/"calibration.json")],
-      "P1":[py,str(BENCH/"p1_fair_io.py"),"--path","all","--npu",str(args.npu)],
+      "P1":[py,str(BENCH/"p1_fair_io.py"),"--path","all","--npu",str(args.npu),
+             "--output-root",str(args.output_root/"P1"),
+             "--fs-root",str(Path("/models/npu_nvme_exp") / (args.output_root.name + "_fs"))],
       "P1_aggregate":[py,str(BENCH/"p1_aggregate.py"),"--root",str(args.output_root/"P1"),"--output",str(args.output_root/"P1"/"summary.json")],
-      "P2":[py,str(BENCH/"p2_stack_decompose.py"),"--npu",str(args.npu)],
+      "P2":[py,str(BENCH/"p2_stack_decompose.py"),"--npu",str(args.npu),
+             "--output-root",str(args.output_root/"P2"),
+             "--fs-root",str(Path("/models/npu_nvme_exp") / (args.output_root.name + "_fs"))],
       "P3":[py,str(BENCH/"p3_async_pipeline.py"),"--npu",str(args.npu),"--output-root",out],
       "P3_aggregate":[py,str(BENCH/"p3_aggregate.py"),"--root",str(args.output_root/"P3"),"--output",str(args.output_root/"P3"/"summary.json")],
       "P4":[py,str(BENCH/"p4_training_e2e.py"),"--npu",str(args.npu),"--output-root",out],
@@ -48,8 +57,23 @@ def command_matrix(args):
       "scale13b":[py,str(BENCH/"e5_model_owner_pressure.py"),"--model","gpt2_13b","--npu",str(args.npu),"--producers","1","--output-root",str(args.output_root/"scale13b")],
     }
 
+def p2_evidence_status(output_root):
+    # Validate persisted evidence when resuming older campaigns, whose P2
+    # process exited zero even though every time-closure run was degraded.
+    from experiments.benchmarks.summarize_p1_p9 import collect_results
+    rows = collect_results(output_root)["P2"]["primary"]
+    if not rows:
+        return "fail"
+    statuses = {row["result"].get("status", "unknown") for row in rows}
+    if statuses - {"pass", "degraded"}:
+        return "fail"
+    if "degraded" in statuses or not all(
+            row["result"].get("closure", {}).get("achieved") is True for row in rows):
+        return "degraded"
+    return "pass"
+
 def main():
-    default_python=(Path("/home/user7/miniconda3/envs/ms_2.5/bin/python") if Path("/home/user7/miniconda3/envs/ms_2.5/bin/python").exists() else Path(sys.executable))
+    default_python = Path(sys.executable)
     p=argparse.ArgumentParser(); p.add_argument("--phases",nargs="+",default=("P1_calibration","P1","P1_aggregate","P2","P3","P3_aggregate","P4","P4_aggregate","P5","P6_profile","P6_analyze","P6_aux","P7_seed41","P7_seed42","P7_seed43","P7_analyze","P8_P9","reliability")); p.add_argument("--npu",type=int,default=7); p.add_argument("--python",default=str(default_python)); p.add_argument("--output-root",type=Path,default=ROOT/"results/ppt-evidence-20260829"); p.add_argument("--timeout",type=int,default=86400); p.add_argument("--dry-run",action="store_true"); p.add_argument("--allow-blocked",action="store_true"); p.add_argument("--rerun",action="store_true"); args=p.parse_args(); args.output_root.mkdir(parents=True,exist_ok=True)
     pre=preflight(args); (args.output_root/"preflight.json").write_text(json.dumps(pre,indent=2,sort_keys=True)+"\n")
     matrix=command_matrix(args); unknown=set(args.phases)-set(matrix)
@@ -59,15 +83,31 @@ def main():
     if pre["blockers"] and not (args.allow_blocked or args.dry_run):
         state["status"]="blocked"; state_path.write_text(json.dumps(state,indent=2,sort_keys=True)+"\n"); print(json.dumps(pre,sort_keys=True)); raise SystemExit(2)
     for name in args.phases:
-        if not args.rerun and state["phases"].get(name,{}).get("status")=="pass": continue
+        if not args.rerun and state["phases"].get(name,{}).get("status")=="pass":
+            if name == "P2" and not args.dry_run:
+                status = p2_evidence_status(args.output_root)
+                if status != "pass":
+                    state["phases"][name]["status"] = status
+                    state["phases"][name]["evidence_review"] = "cached exit status failed time-closure review"
+                    state["status"] = status
+                    state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")
+                    raise SystemExit(2 if status == "degraded" else 1)
+            continue
         record={"argv":matrix[name],"started":time.strftime("%FT%T%z")}
         if args.dry_run: record.update({"status":"planned","returncode":None})
         else:
             log=args.output_root/"orchestrator_logs"/f"{name}.log"; log.parent.mkdir(parents=True,exist_ok=True)
             with log.open("w") as stream: proc=subprocess.run(matrix[name],cwd=ROOT,text=True,stdout=stream,stderr=subprocess.STDOUT,check=False,timeout=args.timeout)
-            record.update({"returncode":proc.returncode,"status":"pass" if proc.returncode==0 else "fail","log":str(log)})
+            phase_status = ("degraded" if name == "P2" and proc.returncode == 2 else
+                            "pass" if proc.returncode == 0 else "fail")
+            if name == "P2" and phase_status == "pass":
+                phase_status = p2_evidence_status(args.output_root)
+            record.update({"returncode":proc.returncode,"status":phase_status,"log":str(log)})
         record["ended"]=time.strftime("%FT%T%z"); state["phases"][name]=record; state_path.write_text(json.dumps(state,indent=2,sort_keys=True)+"\n")
         print(json.dumps({"phase":name,**record},sort_keys=True),flush=True)
-        if record["status"]=="fail": state["status"]="fail"; state_path.write_text(json.dumps(state,indent=2,sort_keys=True)+"\n"); raise SystemExit(1)
+        if record["status"] in ("fail", "degraded"):
+            state["status"] = record["status"]
+            state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")
+            raise SystemExit(2 if record["status"] == "degraded" else 1)
     state["status"]="planned" if args.dry_run else "pass"; state_path.write_text(json.dumps(state,indent=2,sort_keys=True)+"\n")
 if __name__=="__main__": main()

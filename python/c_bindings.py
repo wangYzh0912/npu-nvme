@@ -12,7 +12,10 @@ import os
 
 # -- Library path --
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_LIB_PATH = os.path.join(_REPO_ROOT, "build_out", "lib", "libnpu_nvme.so")
+_LIB_PATH = os.environ.get("NPU_NVME_LIBRARY_PATH") or os.path.join(
+    _REPO_ROOT, "build_out", "lib", "libnpu_nvme.so")
+if not os.path.isabs(_LIB_PATH):
+    raise ValueError("NPU_NVME_LIBRARY_PATH must be an absolute path")
 
 
 # -- ACL runtime (Ascend) --

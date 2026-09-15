@@ -1,0 +1,113 @@
+{
+  "phases": {
+    "P1_calibration": {
+      "argv": [
+        "/home/user7/npu-nvme/scripts/calibrate_same_ssd_readonly.sh",
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/results/formal-20260909/P1/calibration.json"
+      ],
+      "ended": "2026-09-09T00:53:40+0800",
+      "log": "/home/user7/npu-nvme/results/formal-20260909/orchestrator_logs/P1_calibration.log",
+      "returncode": 0,
+      "started": "2026-09-09T00:53:13+0800",
+      "status": "pass"
+    }
+  },
+  "preflight": {
+    "blockers": [],
+    "driver_83": "uio_pci_generic",
+    "euid": 0,
+    "hugepages": "MemTotal:       2107993572 kB\nMemFree:        1655333240 kB\nMemAvailable:   1995981816 kB\nBuffers:         4027420 kB\nCached:         417814572 kB\nSwapCached:            0 kB\nActive:         77858720 kB\nInactive:       346734720 kB\nActive(anon):    7070468 kB\nInactive(anon): 73793096 kB\nActive(file):   70788252 kB\nInactive(file): 272941624 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        4194300 kB\nDirty:              1952 kB\nWriteback:             0 kB\nAnonPages:       2655612 kB\nMapped:           586348 kB\nShmem:          78112176 kB\nKReclaimable:    6712392 kB\nSlab:           12891800 kB\nSReclaimable:    6712392 kB\nSUnreclaim:      6179408 kB\nKernelStack:       61488 kB\nPageTables:        39148 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   92579856 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1651844 kB\nVmallocChunk:          0 kB\nPercpu:          6276864 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   1069056 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+    "library": "/home/user7/npu-nvme/build_out/lib/libnpu_nvme.so",
+    "library_exists": true,
+    "lspci_83": {
+      "argv": [
+        "lspci",
+        "-s",
+        "83:00.0",
+        "-nnk"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "83:00.0 Non-Volatile memory controller [0108]: Huawei Technologies Co., Ltd. ES3000 V6 NVMe PCIe SSD [19e5:3754]\n\tSubsystem: Huawei Technologies Co., Ltd. NVMe SSD ES3500P V6 3840GB 2.5\" U.2 [19e5:6213]\n\tKernel driver in use: uio_pci_generic\n\tKernel modules: nvme\n"
+    },
+    "lspci_84": {
+      "argv": [
+        "lspci",
+        "-s",
+        "84:00.0",
+        "-nnk"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "84:00.0 Non-Volatile memory controller [0108]: Huawei Technologies Co., Ltd. ES3000 V6 NVMe PCIe SSD [19e5:3754]\n\tSubsystem: Huawei Technologies Co., Ltd. NVMe SSD ES3500P V6 3840GB 2.5\" U.2 [19e5:6213]\n\tKernel driver in use: nvme\n\tKernel modules: nvme\n"
+    },
+    "models": {
+      "argv": [
+        "findmnt",
+        "-no",
+        "SOURCE,FSTYPE,OPTIONS",
+        "-T",
+        "/models"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "/dev/nvme1n1 xfs    rw,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota\n"
+    },
+    "npu_smi": {
+      "argv": [
+        "npu-smi",
+        "info"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "+------------------------------------------------------------------------------------------------+\n| npu-smi 24.1.rc3                 Version: 24.1.rc3                                             |\n+---------------------------+---------------+----------------------------------------------------+\n| NPU   Name                | Health        | Power(W)    Temp(C)           Hugepages-Usage(page)|\n| Chip                      | Bus-Id        | AICore(%)   Memory-Usage(MB)  HBM-Usage(MB)        |\n+===========================+===============+====================================================+\n| 0     910B3               | OK            | 93.4        32                0    / 0             |\n| 0                         | 0000:C1:00.0  | 0           0    / 0          3369 / 65536         |\n+===========================+===============+====================================================+\n| 1     910B3               | OK            | 90.4        32                0    / 0             |\n| 0                         | 0000:C2:00.0  | 0           0    / 0          3368 / 65536         |\n+===========================+===============+====================================================+\n| 2     910B3               | OK            | 90.3        32                0    / 0             |\n| 0                         | 0000:81:00.0  | 0           0    / 0          3373 / 65536         |\n+===========================+===============+====================================================+\n| 3     910B3               | OK            | 90.7        32                0    / 0             |\n| 0                         | 0000:82:00.0  | 0           0    / 0          3367 / 65536         |\n+===========================+===============+====================================================+\n| 4     910B3               | OK            | 88.2        37                0    / 0             |\n| 0                         | 0000:01:00.0  | 0           0    / 0          3367 / 65536         |\n+===========================+===============+====================================================+\n| 5     910B3               | OK            | 97.9        37                0    / 0             |\n| 0                         | 0000:02:00.0  | 0           0    / 0          3366 / 65536         |\n+===========================+===============+====================================================+\n| 6     910B3               | OK            | 91.2        36                0    / 0             |\n| 0                         | 0000:41:00.0  | 0           0    / 0          3372 / 65536         |\n+===========================+===============+====================================================+\n| 7     910B3               | OK            | 92.0        37                0    / 0             |\n| 0                         | 0000:42:00.0  | 0           0    / 0          3377 / 65536         |\n+===========================+===============+====================================================+\n+---------------------------+---------------+----------------------------------------------------+\n| NPU     Chip              | Process id    | Process name             | Process memory(MB)      |\n+===========================+===============+====================================================+\n| No running processes found in NPU 0                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 1                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 2                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 3                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 4                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 5                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 6                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 7                                                            |\n+===========================+===============+====================================================+\n"
+    },
+    "status": "pass",
+    "sudo_probe": {
+      "argv": [
+        "sudo",
+        "-n",
+        "true"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "sudo_stat": {
+      "argv": [
+        "stat",
+        "-c",
+        "uid=%u mode=%a",
+        "/usr/bin/sudo"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "uid=0 mode=4111\n"
+    },
+    "timestamp": "2026-09-09T00:53:12+0800",
+    "uio_nodes": [
+      "/dev/uio0"
+    ]
+  },
+  "requested_phases": [
+    "P1_calibration",
+    "P1",
+    "P1_aggregate",
+    "P2",
+    "P3",
+    "P3_aggregate",
+    "P4",
+    "P4_aggregate",
+    "P5",
+    "P6_profile",
+    "P6_analyze",
+    "P6_aux",
+    "P7_seed41",
+    "P7_seed42",
+    "P7_seed43",
+    "P7_analyze",
+    "P8_P9",
+    "reliability"
+  ]
+}
