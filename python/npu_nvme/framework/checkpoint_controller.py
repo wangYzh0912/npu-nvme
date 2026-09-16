@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import struct
 import time
 
 from npu_nvme.runtime import training_catalog as catalog
@@ -53,8 +54,28 @@ class CheckpointController:
         ms.hal.synchronize()
         if self.method=='mindspore_native_save':
             payload=rank_dir/'native';payload.mkdir()
-            ms.save_checkpoint(network,str(payload/'full.safetensors'),integrated_save=False,
+            # Cell serialization filters graph parameters using sliced/has_init.
+            # set_data during restore changes these flags for small parameters.
+            # Save the explicit, observed rank-local FULL inventory instead.
+            entries=[];seen=set()
+            for _,parameter in network.parameters_and_names():
+                if id(parameter) in seen:continue
+                seen.add(id(parameter))
+                entries.append(dict(name=parameter.name,data=ms.Tensor(parameter.data)))
+            if len(entries)!=len(state) or {entry['name'] for entry in entries}!=set(state):
+                raise ValueError('native FULL source inventory differs')
+            ms.save_checkpoint(entries,str(payload/'full.safetensors'),integrated_save=False,
                                async_save=False,format='safetensors')
+            with (payload/'full.safetensors').open('rb') as stream:
+                header_bytes=struct.unpack('<Q',stream.read(8))[0]
+                if header_bytes>16<<20:raise ValueError('native FULL header exceeds budget')
+                header=json.loads(stream.read(header_bytes))
+            if set(header)-{'__metadata__'}!=set(state):
+                raise ValueError('native FULL serialized inventory differs')
+            for name,spec in state.items():
+                entry=header[name]
+                if entry['shape']!=spec['shape'] or entry['data_offsets'][1]-entry['data_offsets'][0]!=spec['bytes']:
+                    raise ValueError('native FULL serialized geometry differs: '+name)
             for item in payload.iterdir():
                 with item.open('rb') as stream:os.fsync(stream.fileno())
             catalog.fsync_directory(payload)

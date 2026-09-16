@@ -34,6 +34,7 @@ def verified_runs(previous,config,repo):
             for name in filter(None,names):
                 if name in ('python/npu_nvme/runtime/training_benchmark.py',
                             'python/npu_nvme/runtime/training_reuse.py'):continue
+                if method=='none' and name=='python/npu_nvme/framework/checkpoint_controller.py':continue
                 if name=='python/npu_nvme/cli/qwen_training.py':
                     def supervisor(path):
                         tree=ast.parse(path.read_text())
