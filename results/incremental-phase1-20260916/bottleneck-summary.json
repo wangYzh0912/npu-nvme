@@ -85,6 +85,75 @@
           "total_seconds": 132.541958838
         }
       },
+      "callback_stage_seconds_by_rank": {
+        "source_stable_ns": [
+          0.001683744,
+          0.001687058,
+          0.001655128,
+          0.001557965
+        ],
+        "score_ns": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "device_score_and_score_d2h_ns": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "host_fragment_reduce_ns": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "select_ns": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "capture_ns": [
+          19.752346936,
+          21.117661664,
+          27.000450881,
+          26.356171693
+        ],
+        "pack_stream_ns": [
+          0.25174428,
+          0.24950624,
+          0.24937114,
+          0.24929502
+        ],
+        "d2h_stream_ns": [
+          7.141236859,
+          8.413773747,
+          13.668553815,
+          13.715728286
+        ],
+        "checksum_ns": [
+          112.554860866,
+          112.263376771,
+          110.442031917,
+          114.190724506
+        ],
+        "wait_previous_ns": [
+          1155.589202542,
+          1157.465545039,
+          1163.430959527,
+          1163.300494537
+        ],
+        "critical_ns": [
+          1344.570722207,
+          1348.313707827,
+          1358.931229828,
+          1358.887589082
+        ]
+      },
+      "serialized_stage_interpretation": "Score, selection, capture, checksum and previous-save wait run inside the post-optimizer callback before the next optimizer step. Their wall times occupy this implementation critical path; they are not independently measured counterfactual slowdown contributions.",
       "checkpoint_lifetime_overlap_training_callback_seconds_by_rank": [
         29.675620494,
         26.090872228,
@@ -261,6 +330,75 @@
           "total_seconds": 19.877555463
         }
       },
+      "callback_stage_seconds_by_rank": {
+        "source_stable_ns": [
+          0.001526894,
+          0.001590785,
+          0.001518305,
+          0.001475525
+        ],
+        "score_ns": [
+          57.983309321,
+          59.746825685,
+          60.623331438,
+          59.196596881
+        ],
+        "device_score_and_score_d2h_ns": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "host_fragment_reduce_ns": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "select_ns": [
+          33.847761857,
+          30.840189391,
+          30.12364588,
+          31.464830811
+        ],
+        "capture_ns": [
+          5.312058168,
+          5.603791846,
+          5.549037287,
+          5.36005393
+        ],
+        "pack_stream_ns": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "d2h_stream_ns": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "checksum_ns": [
+          11.205707996,
+          11.106151851,
+          10.861202957,
+          10.909637234
+        ],
+        "wait_previous_ns": [
+          140.509458172,
+          140.494345732,
+          140.390710308,
+          140.526968713
+        ],
+        "critical_ns": [
+          256.197263037,
+          254.81603566,
+          254.502957814,
+          254.473685918
+        ]
+      },
+      "serialized_stage_interpretation": "Score, selection, capture, checksum and previous-save wait run inside the post-optimizer callback before the next optimizer step. Their wall times occupy this implementation critical path; they are not independently measured counterfactual slowdown contributions.",
       "checkpoint_lifetime_overlap_training_callback_seconds_by_rank": [
         12.101443252,
         13.461822239,
@@ -371,6 +509,75 @@
           "total_seconds": 34.793859649
         }
       },
+      "callback_stage_seconds_by_rank": {
+        "source_stable_ns": [
+          0.00167429,
+          0.001660908,
+          0.001643445,
+          0.001470824
+        ],
+        "score_ns": [
+          59.331333012,
+          60.256173835,
+          60.70286396,
+          58.493753793
+        ],
+        "device_score_and_score_d2h_ns": [
+          5.477310277,
+          5.436392965,
+          5.339934542,
+          5.103230112
+        ],
+        "host_fragment_reduce_ns": [
+          53.854022735,
+          54.81978087,
+          55.362929418,
+          53.390523681
+        ],
+        "select_ns": [
+          33.741684989,
+          31.740928411,
+          31.560317376,
+          33.787754025
+        ],
+        "capture_ns": [
+          7.324456503,
+          7.943976899,
+          7.33947802,
+          7.352644105
+        ],
+        "pack_stream_ns": [
+          0.696892568,
+          0.330653342,
+          0.31913456,
+          0.31746026
+        ],
+        "d2h_stream_ns": [
+          1.610987918,
+          1.57624464,
+          1.51126762,
+          1.592399518
+        ],
+        "checksum_ns": [
+          22.354608192,
+          22.690450673,
+          21.895781508,
+          21.721431158
+        ],
+        "wait_previous_ns": [
+          264.455520668,
+          264.428157351,
+          264.306476443,
+          264.431799506
+        ],
+        "critical_ns": [
+          400.977701959,
+          400.279871516,
+          399.046930708,
+          398.62430137
+        ]
+      },
+      "serialized_stage_interpretation": "Score, selection, capture, checksum and previous-save wait run inside the post-optimizer callback before the next optimizer step. Their wall times occupy this implementation critical path; they are not independently measured counterfactual slowdown contributions.",
       "checkpoint_lifetime_overlap_training_callback_seconds_by_rank": [
         13.401822534,
         13.973646351,
@@ -567,6 +774,75 @@
           "total_seconds": 10.869022024
         }
       },
+      "callback_stage_seconds_by_rank": {
+        "source_stable_ns": [
+          0.001379446,
+          0.001553266,
+          0.001440536,
+          0.001558988
+        ],
+        "score_ns": [
+          58.603801244,
+          59.441756048,
+          61.227497437,
+          58.76641075
+        ],
+        "device_score_and_score_d2h_ns": [
+          4.905633773,
+          5.202036225,
+          5.000264494,
+          5.032083396
+        ],
+        "host_fragment_reduce_ns": [
+          53.698167471,
+          54.239719823,
+          56.227232943,
+          53.734327354
+        ],
+        "select_ns": [
+          32.472283774,
+          30.401630971,
+          28.692528697,
+          31.13981368
+        ],
+        "capture_ns": [
+          3.785621619,
+          3.811110031,
+          4.07296998,
+          3.921498154
+        ],
+        "pack_stream_ns": [
+          0.3965927,
+          0.349702399,
+          0.360996479,
+          0.375643819
+        ],
+        "d2h_stream_ns": [
+          0.315096159,
+          0.405842619,
+          0.573847299,
+          0.575898044
+        ],
+        "checksum_ns": [
+          5.528589435,
+          5.594005365,
+          5.553080223,
+          5.512572371
+        ],
+        "wait_previous_ns": [
+          66.286750889,
+          66.194594129,
+          66.109073013,
+          66.06314773
+        ],
+        "critical_ns": [
+          170.522817376,
+          169.122848048,
+          169.392539026,
+          169.042946984
+        ]
+      },
+      "serialized_stage_interpretation": "Score, selection, capture, checksum and previous-save wait run inside the post-optimizer callback before the next optimizer step. Their wall times occupy this implementation critical path; they are not independently measured counterfactual slowdown contributions.",
       "checkpoint_lifetime_overlap_training_callback_seconds_by_rank": [
         11.315758965,
         12.678836917,
