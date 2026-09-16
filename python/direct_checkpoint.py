@@ -28,7 +28,7 @@ Sub-modules (importable independently):
 
 import ctypes
 import copy
-from dataclasses import replace
+from dataclasses import replace, dataclass
 import hashlib
 import math
 import os
@@ -48,7 +48,7 @@ import atexit
 # -- Re-exports from sub-modules (backward-compatible surface) ---------------
 import c_bindings  # keep module reference for _LIB_PATH
 from c_bindings import (lib, acl_lib, NPUNVMEContext, NPUNVMERequest,
-                        NPUNVMEStats)
+                        NPUNVMEStats, NPUNVMERetainedSlot)
 from disk_layout import (SUPERBLOCK_OFFSET, SUPERBLOCK_HEADER_BYTES,
                           META_SLOT_A_OFFSET, META_SLOT_B_OFFSET,
                           META_SLOT_BYTES, MAGIC_NUMBER, UINT32_BYTES,
@@ -57,7 +57,7 @@ from disk_layout import (SUPERBLOCK_OFFSET, SUPERBLOCK_HEADER_BYTES,
                           unpack_metadata, pack_superblock,
                           unpack_superblock)
 from chunk_helpers import (build_chunks, build_chunks_host,
-                            build_ctypes_arrays, rebuild_chunks_from_meta)
+                            build_ctypes_arrays, rebuild_chunks_from_meta, validate_descriptors)
 from delta_protocol import (pack_delta_frame, pack_lossless_delta_frame,
                              pack_s2_replacement_frame,
                              unpack_delta_frame, unpack_delta_frame_with_meta,
@@ -77,6 +77,22 @@ class CheckpointBusyError(RuntimeError):
 
 class CheckpointQueuePoisonedError(RuntimeError):
     """A previous accepted generation failed and poisoned the queue."""
+
+
+# Strong owners survive Python cyclic GC if native DMA may still touch a buffer.
+_QUARANTINED_CONTEXTS = set()
+
+
+@dataclass(eq=False)
+class _CheckpointLease:
+    sequence: int
+    generation: int
+    handle: object = None
+    params: object = None
+    live: bool = False
+    started: bool = False
+    released: bool = False
+    quarantined: bool = False
 
 
 # -- Device pointer helper (single entry point for all MS pointer access) ----
@@ -299,16 +315,15 @@ class CheckpointHandle:
 
     def wait(self, timeout=None):
         """Wait for durable completion and raise the original failure."""
+        if timeout is None:
+            timeout = self.timeout if self.timeout is not None else 120.0
+        if not math.isfinite(timeout) or timeout < 0:
+            raise ValueError("wait timeout must be finite and nonnegative")
         if not self._done.wait(timeout=timeout):
-            error = TimeoutError("checkpoint did not reach a terminal state")
-            with self._lock:
-                if self.state not in TERMINAL_STATES:
-                    require_transition(self.state, CheckpointState.TIMED_OUT)
-                    self.state = CheckpointState.TIMED_OUT
-                    self._record_event(self.state)
-            self.status = self.TIMED_OUT
-            self.error = error
-            raise
+            # Observation timeout neither cancels DMA nor poisons the request.
+            raise TimeoutError("checkpoint did not reach a terminal state")
+        if self.status == self.CANCELLED:
+            raise RuntimeError("checkpoint cancelled before execution")
         if self.status == self.FAILED:
             raise RuntimeError("checkpoint persistence failed") from self.error
         if self.status != self.PERSISTED:
@@ -369,12 +384,12 @@ class DirectCheckpoint:
         os.environ.setdefault("SPDK_SHM_ID", str(spdk_shm_id))
 
         self.keep_last_n = keep_last_n
-        if int(checkpoint_slots) <= 0:
-            raise ValueError("checkpoint_slots must be positive")
+        if not 0 < int(checkpoint_slots) <= 16:
+            raise ValueError("checkpoint_slots must be in [1, 16]")
         if request_slots is None:
             request_slots = checkpoint_slots
-        if int(request_slots) <= 0:
-            raise ValueError("request_slots must be positive")
+        if not 0 < int(request_slots) <= 64:
+            raise ValueError("request_slots must be in [1, 64]")
         if admission not in ("block", "try"):
             raise ValueError("admission must be block or try")
         self.checkpoint_slots = int(checkpoint_slots)
@@ -383,6 +398,9 @@ class DirectCheckpoint:
         self._slot_sem = threading.BoundedSemaphore(self.checkpoint_slots)
         self._request_sem = threading.BoundedSemaphore(self.request_slots)
         self._admission_lock = threading.Lock()
+        self._admission_changed = threading.Condition(self._admission_lock)
+        self._leases = set()
+        self._closing = False
         self._handles_lock = threading.Lock()
         self._active_handles = set()
         self._handle_threads = {}
@@ -456,40 +474,53 @@ class DirectCheckpoint:
         self._mount_filesystem()
         self._accepted_generation = self.metadata_generation
 
-    def _admit_checkpoint(self):
-        """Reserve the bounded FULL checkpoint admission slot."""
-        with self._admission_lock:
-            if self._queue_poisoned:
-                raise CheckpointQueuePoisonedError(
-                    "checkpoint queue is poisoned; reopen the context")
-        blocking = self.admission == "block"
-        request_acquired = self._request_sem.acquire(blocking=blocking)
-        if not request_acquired:
-            raise CheckpointBusyError("checkpoint admission is BUSY")
-        snapshot_acquired = self._slot_sem.acquire(blocking=blocking)
-        if not snapshot_acquired:
-            self._request_sem.release()
-            raise CheckpointBusyError("snapshot admission is BUSY")
-        with self._admission_lock:
-            if self._queue_poisoned:
-                self._slot_sem.release()
-                self._request_sem.release()
-                raise CheckpointQueuePoisonedError(
-                    "checkpoint queue is poisoned; reopen the context")
+    def _admit_checkpoint(self, timeout=None, admission=None, commit_meta=True):
+        """Atomically reserve both budgets; close wakes all blocked submitters."""
+        mode = self.admission if admission is None else admission
+        if mode not in ("block", "try"):
+            raise ValueError("admission must be block or try")
+        timeout = 120.0 if timeout is None else float(timeout)
+        if not math.isfinite(timeout) or timeout < 0:
+            raise ValueError("timeout must be finite and nonnegative")
+        deadline = time.monotonic() + timeout
+        with self._admission_changed:
+            while True:
+                if self._closing or self._closed:
+                    raise RuntimeError("checkpoint admission is closed")
+                if self._queue_poisoned:
+                    raise CheckpointQueuePoisonedError(
+                        "checkpoint queue is poisoned; reopen the context")
+                if self._request_sem.acquire(blocking=False):
+                    if self._slot_sem.acquire(blocking=False):
+                        self._request_counter += 1
+                        if commit_meta:
+                            self._accepted_generation += 1
+                        lease = _CheckpointLease(self._request_counter,
+                            self._accepted_generation if commit_meta else self._request_counter)
+                        self._leases.add(lease)
+                        return lease
+                    self._request_sem.release()
+                if mode == "try":
+                    raise CheckpointBusyError("request or snapshot admission is BUSY")
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("checkpoint admission timed out")
+                self._admission_changed.wait(remaining)
 
-    def _release_checkpoint_slot(self, handle=None):
-        if handle is not None:
-            with self._handles_lock:
-                self._active_handles.discard(handle)
-                self._handle_threads.pop(handle.request_id, None)
-        try:
+    def _release_checkpoint_slot(self, lease):
+        with self._admission_changed:
+            if lease not in self._leases or lease.released:
+                raise RuntimeError("checkpoint lease already released or not owned")
+            handle = lease.handle
+            if handle is not None:
+                with self._handles_lock:
+                    self._active_handles.discard(handle)
+                    self._handle_threads.pop(handle.request_id, None)
             self._slot_sem.release()
-        except ValueError:
-            pass
-        try:
             self._request_sem.release()
-        except ValueError:
-            pass
+            lease.released = True
+            self._leases.remove(lease)
+            self._admission_changed.notify_all()
 
     def _advance_io_sequence(self, sequence):
         with self._io_order:
@@ -499,14 +530,17 @@ class DirectCheckpoint:
 
     def reset_checkpoint_queue(self):
         """Reopen admission after all handles are terminal."""
+        acknowledged_error = self._io_error
         try:
             self.wait_for_io_completion()
         except RuntimeError:
             # Reset is the explicit acknowledgement point for the recorded
             # fail-stop error after all workers have reached a terminal state.
             pass
-        with self._admission_lock:
-            if self._active_handles:
+        with self._admission_changed:
+            if self._closing:
+                raise RuntimeError("cannot reset closed admission")
+            if self._leases:
                 raise RuntimeError("cannot reset checkpoint queue while active")
             self._queue_poisoned = False
             self._io_error = None
@@ -514,14 +548,16 @@ class DirectCheckpoint:
         with self._io_order:
             self._next_io_sequence = self._request_counter + 1
             self._io_order.notify_all()
+        return acknowledged_error
 
     def _poison_checkpoint_queue(self, failed_handle):
-        with self._admission_lock:
+        with self._admission_changed:
             self._queue_poisoned = True
+            self._admission_changed.notify_all()
         with self._handles_lock:
             pending = [h for h in self._active_handles if h is not failed_handle]
         for handle in pending:
-            if not handle.done():
+            if handle.state == CheckpointState.QUEUED:
                 handle.status = CheckpointHandle.CANCELLED
                 try:
                     handle.transition(CheckpointState.CANCELLED)
@@ -835,34 +871,71 @@ class DirectCheckpoint:
 
     # -- Cleanup / lifecycle -------------------------------------------------
 
-    def cleanup(self):
-        io_error = None
-        try:
-            self.wait_for_io_completion()
-            if self.ctx and hasattr(lib, "npu_nvme_wait_quiescent"):
-                # A timed-out public batch call can leave a detached request
-                # owned by the Reactor.  Do not release ACL context/HBM until
-                # that request has reached a terminal state.
-                rc = lib.npu_nvme_wait_quiescent(self.ctx, 600000)
-                if rc != 0:
-                    raise RuntimeError(
-                        f"Reactor did not become quiescent (rc={rc})")
-        except RuntimeError as error:
-            io_error = error
-        finally:
-            for handle in list(getattr(self, "_live_handles", ())):
-                if handle._live_post_event:
-                    try:
-                        handle.collect_update_wait()
-                    except Exception:
-                        pass
-                self._release_live_resources(handle)
-            if getattr(self, '_spdk_initialized', False) and self.ctx:
-                lib.npu_nvme_cleanup(self.ctx)
-                self.ctx = None
-                self._spdk_initialized = False
-        if io_error is not None:
-            raise io_error
+    def cleanup(self, timeout=120.0):
+        timeout = float(timeout)
+        if not math.isfinite(timeout) or timeout < 0:
+            raise ValueError("timeout must be finite and nonnegative")
+        deadline = time.monotonic() + timeout
+        with self._admission_changed:
+            self._closing = True
+            self._admission_changed.notify_all()
+        if getattr(self, "_quarantined_live_resources", None):
+            raise RuntimeError("live DMA stop is unproven; context retained")
+        # On incomplete drain retain context, snapshots and live DMA resources.
+        self.wait_for_io_completion(timeout=max(0.0, deadline-time.monotonic()))
+        if self.ctx and hasattr(lib, "npu_nvme_wait_quiescent"):
+            milliseconds = max(1, int(max(0.0, deadline-time.monotonic()) * 1000))
+            rc = lib.npu_nvme_wait_quiescent(self.ctx, milliseconds)
+            if rc != 0:
+                raise RuntimeError(f"Reactor did not become quiescent (rc={rc})")
+        for handle in list(getattr(self, "_live_handles", ())):
+            if handle._live_post_event:
+                handle.collect_update_wait()
+            self._release_live_resources(handle)
+        if getattr(self, '_spdk_initialized', False) and self.ctx:
+            if not hasattr(lib, "npu_nvme_close"):
+                raise RuntimeError("bounded native close unavailable; context retained")
+            milliseconds = max(1, int(max(0.0, deadline-time.monotonic()) * 1000))
+            rc = lib.npu_nvme_close(self.ctx, milliseconds)
+            if rc != 0:
+                _QUARANTINED_CONTEXTS.add(self)
+                raise RuntimeError(f"native close incomplete (rc={rc}); context retained")
+            lib.npu_nvme_cleanup(self.ctx)
+            self.ctx = None
+            self._spdk_initialized = False
+
+    def retained_resource_report(self):
+        """Diagnostics only: a returned record is never a DMA-stop proof."""
+        with self._admission_changed:
+            leases = list(self._leases)
+        records = []
+        for lease in leases:
+            if not lease.quarantined:
+                continue
+            records.append({
+                "request_id": lease.handle.request_id if lease.handle else f"sequence-{lease.sequence}",
+                "generation": lease.generation, "owner": "DirectCheckpoint",
+                "bytes": sum(int(p["size"]) for p in lease.params or []),
+                "reason": str(lease.handle.error) if lease.handle else "preparation outcome unknown",
+                "release_condition": "proven native and live DMA stop, then no remaining borrowers",
+            })
+        for resource in getattr(self, "_quarantined_live_resources", []):
+            records.append({"request_id": resource.get("request_id"), "owner": "DirectCheckpoint.live",
+                "bytes": sum(int(p["size"]) for p in resource["params"]),
+                "reason": "live staging failed after an accepted copy",
+                "release_condition": "proven live stream stop"})
+        slots = []
+        if self.ctx and hasattr(lib, "npu_nvme_get_retained_slots"):
+            raw = (NPUNVMERetainedSlot * 16)()
+            count = ctypes.c_uint32()
+            rc = lib.npu_nvme_get_retained_slots(self.ctx, raw, 16, ctypes.byref(count))
+            if rc != 0:
+                raise RuntimeError(f"retained-slot query failed: {rc}")
+            for value in raw[:count.value]:
+                slots.append({name: getattr(value, name) for name, _ in NPUNVMERetainedSlot._fields_})
+        return {"snapshots": records, "native_slots": slots,
+                "native_release_condition": "request completion or proven native quiescence",
+                "is_stop_proof": False}
 
     def get_last_io_us(self, is_read: bool = False) -> int:
         """C-layer I/O latency in microseconds (DMA + SPDK only, no Python overhead).
@@ -885,10 +958,8 @@ class DirectCheckpoint:
         if not getattr(self, '_closed', False) and hasattr(self, 'ctx') and self.ctx:
             print(f"[DirectCkpt] Rank {self.rank_id} safely tearing down "
                   f"NPUNVME context...", flush=True)
-            try:
-                self.cleanup()
-            finally:
-                self._closed = True
+            self.cleanup()
+            self._closed = True
 
     def __del__(self):
         try:
@@ -1020,6 +1091,8 @@ class DirectCheckpoint:
                 item["snapshot_dev_ptr"] = ctypes.c_void_p()
 
     def _release_live_resources(self, handle):
+        if any(lease.handle is handle and lease.quarantined for lease in self._leases):
+            return
         with self._live_resource_lock:
             resources = list(handle._live_buffers)
             handle._live_buffers = []
@@ -1052,7 +1125,7 @@ class DirectCheckpoint:
     def _align_live_offset(value, alignment=64):
         return (int(value) + alignment - 1) // alignment * alignment
 
-    def _stage_live_params(self, params):
+    def _stage_live_params(self, params, request_id=None):
         if acl_lib is None:
             raise RuntimeError("ACL library is required for live staging")
         rc = acl_lib.aclrtSetDevice(self.npu_device_id)
@@ -1120,6 +1193,13 @@ class DirectCheckpoint:
                             "event": event, "dma_chunks": dma_chunks, "bytes": total,
                             "dma_submit_ns": dma_submit_ns}
         except BaseException:
+            if dma_chunks:
+                resources = getattr(self, "_quarantined_live_resources", [])
+                resources.append(dict(request_id=request_id, buffer=buffer_ptr, stream=stream, event=event,
+                                      params=params, dma_chunks=dma_chunks))
+                self._quarantined_live_resources = resources
+                _QUARANTINED_CONTEXTS.add(self)
+                raise
             if event.value:
                 acl_lib.aclrtDestroyEvent(event)
             if stream.value:
@@ -1131,28 +1211,19 @@ class DirectCheckpoint:
     # -- I/O synchronisation -------------------------------------------------
 
     def wait_for_io_completion(self, timeout=None):
-        with self._handles_lock:
-            threads = list(self._handle_threads.values())
-        if not threads:
-            thread = getattr(self, 'io_thread', None)
-            threads = [thread] if thread is not None else []
-        for thread in threads:
-            t_wait_start = time.perf_counter()
-            if thread.is_alive():
-                print(f"[Timeline][Rank {self.rank_id}] I/O Barrier: Waiting for "
-                      f"background SPDK flush to finish...", flush=True)
-            thread.join(timeout=timeout)
-            if thread.is_alive():
-                raise TimeoutError("background checkpoint I/O timed out")
-            self.io_thread = None
-            t_wait_end = time.perf_counter()
-            print(f"[Timeline][Rank {self.rank_id}] I/O Barrier Cleared! "
-                  f"Wait time: {(t_wait_end - t_wait_start):.3f}s", flush=True)
-
+        timeout = 120.0 if timeout is None else float(timeout)
+        if not math.isfinite(timeout) or timeout < 0:
+            raise ValueError("timeout must be finite and nonnegative")
+        deadline = time.monotonic() + timeout
+        with self._admission_changed:
+            watermark = set(self._leases)
+            while watermark & self._leases:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("background checkpoint I/O timed out")
+                self._admission_changed.wait(remaining)
         if self._io_error is not None:
-            error = self._io_error
-            self._io_error = None
-            raise RuntimeError("Background checkpoint persistence failed") from error
+            raise RuntimeError("Background checkpoint persistence failed") from self._io_error
 
     # DEPRECATED: kept as no-op for backward compatibility.
     def wait_async_io(self):
@@ -1410,7 +1481,37 @@ class DirectCheckpoint:
     def save(self, model: ms.nn.Cell, step: int,
              meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True,
              _prepared_params=None, _checkpoint_meta=None, io_mode="queue",
-             timeout=None, _api_enter_ns=None, _live_staging=None):
+             timeout=None, _api_enter_ns=None, _live_staging=None, _admission=None):
+        if _api_enter_ns is None:
+            _api_enter_ns = time.monotonic_ns()
+        lease = self._admit_checkpoint(timeout, _admission, commit_meta)
+        try:
+            return self._save_admitted(model, step, meta_path, commit_meta,
+                _prepared_params, _checkpoint_meta, io_mode, timeout,
+                _api_enter_ns, _live_staging, lease)
+        except BaseException as error:
+            if not lease.started:
+                self._io_error = error
+                if lease.handle is not None:
+                    lease.handle._fail(error)
+                self._poison_checkpoint_queue(lease.handle)
+                try:
+                    if lease.params is not None:
+                        if lease.live:
+                            lease.quarantined = True
+                            _QUARANTINED_CONTEXTS.add(self)
+                        else:
+                            self._release_snapshot(lease.params)
+                finally:
+                    if not lease.quarantined:
+                        self._advance_io_sequence(lease.sequence)
+                        self._release_checkpoint_slot(lease)
+            raise
+
+    def _save_admitted(self, model: ms.nn.Cell, step: int,
+             meta_path: str = "checkpoint_meta.pkl", commit_meta: bool = True,
+             _prepared_params=None, _checkpoint_meta=None, io_mode="queue",
+             timeout=None, _api_enter_ns=None, _live_staging=None, lease=None):
         if io_mode not in ("queue", "async", "serial", "frozen_async",
                            "live_async"):
             raise ValueError(
@@ -1425,42 +1526,38 @@ class DirectCheckpoint:
         if self._queue_poisoned:
             raise CheckpointQueuePoisonedError(
                 "checkpoint queue is poisoned; reopen the context")
-        # A previous generation owns its snapshot buffers until it reaches a
-        # terminal state.  Never overwrite/reuse those buffers implicitly.
-        if self.checkpoint_slots == 1 and self.admission == "block":
-            self.wait_for_io_completion()
-        admission_started_ns = time.monotonic_ns()
-        self._admit_checkpoint()
-        admission_wait_ns = time.monotonic_ns() - admission_started_ns
+        admission_wait_ns = time.monotonic_ns() - api_enter_ns
         t_start = time.perf_counter()
 
         # -- T_Prep --
         t_prep_start = time.perf_counter()
         try:
-            params = (_prepared_params if _prepared_params is not None
+            params = ((_prepared_params() if callable(_prepared_params) else _prepared_params) if _prepared_params is not None
                       else self._prepare_params(model))
         except BaseException:
-            self._release_checkpoint_slot()
             raise
+        # Reject malformed or excessive input before any snapshot allocation.
+        descriptors = []
+        for item in params:
+            ptr = item["ptr"]
+            if not ptr and item.get("np_arr") is not None:
+                array = item["np_arr"]
+                if array.nbytes != item["size"] or not array.flags.c_contiguous:
+                    raise ValueError("host buffer length/contiguity differs from descriptor")
+                ptr = int(array.ctypes.data)
+            if "shape" in item and "dtype" in item:
+                dtype = np.dtype(item["dtype"])
+                if dtype.hasobject or math.prod(item["shape"]) * dtype.itemsize != item["size"]:
+                    raise ValueError("snapshot shape/dtype differs from descriptor")
+            descriptors.append(dict(item, ptr=ptr, offset=0))
+        validate_descriptors(descriptors, self.chunk_size)
         t_prep_end = time.perf_counter()
         T_Prep = t_prep_end - t_prep_start
 
-        self._request_counter += 1
-        self._snapshot_generation += 1
-        request_id = (f"rank{self.rank_id}-pid{os.getpid()}-"
-                      f"request{self._request_counter}")
-        snapshot_generation = self._snapshot_generation
-        # A FULL request's public generation is the generation it will publish
-        # in the durable metadata commit.  Keep the local snapshot counter as
-        # a separate diagnostic so requests can still be correlated before
-        # the commit occurs.
-        with self._sequence_lock:
-            io_sequence = self._request_counter
-            if commit_meta:
-                self._accepted_generation += 1
-                generation = self._accepted_generation
-            else:
-                generation = snapshot_generation
+        io_sequence = lease.sequence
+        snapshot_generation = lease.sequence
+        generation = lease.generation
+        request_id = f"rank{self.rank_id}-pid{os.getpid()}-request{io_sequence}"
         # Freeze the graph before copying any parameter address.  A D2D copy
         # submitted while the optimizer is still running would otherwise
         # produce a mixed-step checkpoint.
@@ -1476,27 +1573,23 @@ class DirectCheckpoint:
             self, request_id, generation, step, rank_id=self.rank_id,
             snapshot_slot=snapshot_slot,
             snapshot_generation=snapshot_generation, timeout=timeout)
+        lease.handle = handle
         handle.api_enter_ns = api_enter_ns
         handle.admission_wait_ns = admission_wait_ns
         handle.transition(CheckpointState.SNAPSHOTTING)
         if _live_staging is None:
             try:
                 params = self._snapshot_params(params, generation)
+                lease.params = params
             except BaseException as error:
-                handle._fail(error)
-                self._poison_checkpoint_queue(handle)
-                self._advance_io_sequence(io_sequence)
-                self._release_checkpoint_slot()
                 raise
         else:
             try:
-                params, live_resource = self._stage_live_params(params)
+                params, live_resource = self._stage_live_params(params, request_id=handle.request_id)
             except BaseException as error:
-                handle._fail(error)
-                self._poison_checkpoint_queue(handle)
-                self._advance_io_sequence(io_sequence)
-                self._release_checkpoint_slot()
                 raise
+            lease.params = params
+            lease.live = True
             handle._live_event = live_resource["event"]
             handle._live_buffers = [live_resource]
             handle.dma_submit_ns = live_resource["dma_submit_ns"]
@@ -1514,6 +1607,9 @@ class DirectCheckpoint:
                 checksum.update(item["name"].encode("utf-8"))
                 checksum.update(str(item.get("sha256") or "").encode("ascii"))
             handle.checksum = checksum.hexdigest()
+
+        lease.params = params
+        lease.live = _live_staging is not None
 
         # -- T_Layout --
         try:
@@ -1548,15 +1644,6 @@ class DirectCheckpoint:
 
                 current_offset += aligned_bytes
         except BaseException as error:
-            handle._fail(error)
-            self._poison_checkpoint_queue(handle)
-            self._advance_io_sequence(io_sequence)
-            if _live_staging is None:
-                self._release_snapshot(params)
-            else:
-                handle._live_fence_consumed = True
-                self._release_live_resources(handle)
-            self._release_checkpoint_slot()
             raise
 
         total_written = 0
@@ -1615,6 +1702,7 @@ class DirectCheckpoint:
                 if rc != 0:
                     raise RuntimeError(f"write_batch failed (rc={rc})")
 
+            owns_io_mutex = False
             try:
                 with self._io_order:
                     while (io_sequence != self._next_io_sequence and
@@ -1628,6 +1716,7 @@ class DirectCheckpoint:
                         handle._done.set()
                     return
                 self._io_mutex.acquire()
+                owns_io_mutex = True
                 if self._queue_poisoned or handle.state == CheckpointState.CANCELLED:
                     return
                 if _live_staging is not None:
@@ -1754,24 +1843,31 @@ class DirectCheckpoint:
                 self._io_error = error
                 handle._fail(error)
                 self._poison_checkpoint_queue(handle)
+                if (_live_staging is not None or
+                        (self.ctx and (not hasattr(lib, "npu_nvme_wait_quiescent") or
+                         lib.npu_nvme_wait_quiescent(self.ctx, 1) != 0))):
+                    lease.quarantined = True
+                    _QUARANTINED_CONTEXTS.add(self)
                 print(f"[Fatal][Rank {self.rank_id}] Background checkpoint "
                       f"failed: {error}", flush=True)
             finally:
-                if self._io_mutex.locked():
+                if owns_io_mutex:
                     self._io_mutex.release()
-                if _live_staging is None:
-                    self._release_snapshot(params)
-                else:
-                    self._maybe_release_live(handle)
-                self._advance_io_sequence(io_sequence)
-                self._release_checkpoint_slot(handle)
+                if not lease.quarantined:
+                    try:
+                        if _live_staging is None:
+                            self._release_snapshot(params)
+                        else:
+                            self._maybe_release_live(handle)
+                    finally:
+                        self._advance_io_sequence(io_sequence)
+                        self._release_checkpoint_slot(lease)
 
         num_dev_val = len(dev_chunks) if dev_chunks else 0
         dev_sz_val = dev_sz if dev_chunks else 0
         num_host_val = len(host_chunks) if host_chunks else 0
         host_sz_val = host_sz if host_chunks else 0
 
-        self._io_error = None
         self._active_handle = handle
         with self._handles_lock:
             self._active_handles.add(handle)
@@ -1781,15 +1877,18 @@ class DirectCheckpoint:
                                  "request_id": request_id,
                                  "generation": generation}
 
-        self.io_thread = threading.Thread(
+        worker = threading.Thread(
             target=background_io_worker,
             args=(c_ptrs_dev, c_offs_dev, c_sizes_dev, num_dev_val, dev_sz_val,
                   c_ptrs_host, c_offs_host, c_sizes_host, num_host_val, host_sz_val))
         with self._handles_lock:
-            self._handle_threads[request_id] = self.io_thread
+            self._handle_threads[request_id] = worker
+            self.io_thread = worker
         if _live_staging is None:
             handle.transition(CheckpointState.QUEUED)
-        self.io_thread.start()
+        # If start fails the wrapper still owns the lease and all snapshots.
+        worker.start()
+        lease.started = True
 
         if requested_mode == "frozen_async":
             freeze_started_ns = time.monotonic_ns()
@@ -1897,33 +1996,30 @@ class DirectCheckpoint:
         if self._queue_poisoned:
             raise CheckpointQueuePoisonedError(
                 "checkpoint queue is poisoned; reopen the context")
-        if requested_admission == "try":
-            with self._handles_lock:
-                if len(self._active_handles) >= min(
-                        self.checkpoint_slots, self.request_slots):
-                    raise CheckpointBusyError("checkpoint admission is BUSY")
-        validate_state_names(components, control_state)
-        if io_mode != "live_async" and hasattr(ms.hal, "synchronize"):
-            ms.hal.synchronize()
-        params = self._prepare_state_components(
-            components, with_checksums=(verify_checksums and io_mode != "live_async"))
-        for name in sorted(control_state):
-            payload, control_meta = encode_control_value(control_state[name])
-            params.append({
-                "name": f"control/{name}",
-                "source_name": name,
-                "component": "control",
-                "category": "control",
-                "placement": "host",
-                "ptr": 0,
-                "size": int(payload.nbytes),
-                "shape": [int(payload.nbytes)],
-                "dtype": "uint8",
-                "np_arr": payload,
-                "param_ref": None,
-                "codec": control_meta["codec"],
-                "sha256": control_meta["sha256"],
-            })
+        def prepare():
+            validate_state_names(components, control_state)
+            if io_mode != "live_async" and hasattr(ms.hal, "synchronize"):
+                ms.hal.synchronize()
+            params = self._prepare_state_components(
+                components, with_checksums=(verify_checksums and io_mode != "live_async"))
+            for name in sorted(control_state):
+                payload, control_meta = encode_control_value(control_state[name])
+                params.append({
+                    "name": f"control/{name}",
+                    "source_name": name,
+                    "component": "control",
+                    "category": "control",
+                    "placement": "host",
+                    "ptr": 0,
+                    "size": int(payload.nbytes),
+                    "shape": [int(payload.nbytes)],
+                    "dtype": "uint8",
+                    "np_arr": payload,
+                    "param_ref": None,
+                    "codec": control_meta["codec"],
+                    "sha256": control_meta["sha256"],
+                })
+            return params
         checkpoint_meta = {
             "type": "TRAINING_STATE_FULL",
             "schema_version": TRAINING_STATE_SCHEMA_VERSION,
@@ -1932,17 +2028,12 @@ class DirectCheckpoint:
             "components": self._ordered_components(components),
             "control_names": sorted(control_state),
         }
-        previous_admission = self.admission
-        if admission is not None:
-            self.admission = admission
-        try:
-            return self.save(
-                None, step=step, meta_path=meta_path, commit_meta=commit_meta,
-                _prepared_params=params, _checkpoint_meta=checkpoint_meta,
-                io_mode=io_mode, timeout=timeout, _api_enter_ns=api_enter_ns,
-                _live_staging=(True if io_mode == "live_async" else None))
-        finally:
-            self.admission = previous_admission
+        return self.save(
+            None, step=step, meta_path=meta_path, commit_meta=commit_meta,
+            _prepared_params=prepare, _checkpoint_meta=checkpoint_meta,
+            io_mode=io_mode, timeout=timeout, _api_enter_ns=api_enter_ns,
+            _live_staging=(True if io_mode == "live_async" else None),
+            _admission=requested_admission)
 
     def try_save_state(self, components, control_state, step: int, **kwargs):
         """Submit a FULL generation or raise an explicit BUSY/poison error."""

@@ -23,6 +23,9 @@ def manager(admission="try"):
     value.checkpoint_slots = 1
     value.request_slots = 1
     value._admission_lock = threading.Lock()
+    value._admission_changed = threading.Condition(value._admission_lock)
+    value._leases = set()
+    value._closing = value._closed = False
     value._handles_lock = threading.Lock()
     value._active_handles = set()
     value._handle_threads = {}
@@ -49,7 +52,8 @@ def test_snapshot_admission_returns_explicit_busy_and_releases_request():
     assert value._request_sem.acquire(blocking=False)
     with pytest.raises(CheckpointBusyError):
         value._admit_checkpoint()
-    value._release_checkpoint_slot()
+    value._request_sem.release()
+    value._slot_sem.release()
     value._admit_checkpoint()
 
 

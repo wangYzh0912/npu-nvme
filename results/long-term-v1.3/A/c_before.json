@@ -1,0 +1,48 @@
+{
+  "sanitizers": false,
+  "compiler": "GCC 10.3.1",
+  "cases": [
+    {
+      "case": "delta_overflow",
+      "exit_code": -6,
+      "stdout": "",
+      "stderr": "[NPU-NVMe] Delta area: offset=0 (0 GB) slots=2 x 8796093022208 MB = 0 MB\nhost_safety_test: tests/c/host_safety_test.c:45: main: Assertion `npu_nvme_delta_init(&ctx, 0, UINT64_C(1) << 63, 2) != 0' failed.\n"
+    },
+    {
+      "case": "batch_bound",
+      "exit_code": 0,
+      "stdout": "PASS\n",
+      "stderr": "[NPU-NVMe] Invalid I/O item 1: ptr=(nil) size=0\n"
+    },
+    {
+      "case": "geometry_overflow",
+      "exit_code": -6,
+      "stdout": "",
+      "stderr": "host_safety_test: tests/c/host_safety_test.c:51: main: Assertion `validate_io_batch(&ctx, ptrs, offsets, sizes, 1) != 0' failed.\n"
+    },
+    {
+      "case": "metadata_capacity",
+      "exit_code": -6,
+      "stdout": "",
+      "stderr": "[NPU-NVMe] meta_ring full\nhost_safety_test: tests/c/host_safety_test.c:55: main: Assertion `enqueues == 0' failed.\n"
+    },
+    {
+      "case": "legal_bounds",
+      "exit_code": 0,
+      "stdout": "PASS\n",
+      "stderr": "[NPU-NVMe] Delta area: offset=0 (0 GB) slots=1024 x 0 MB = 4 MB\n"
+    },
+    {
+      "case": "dma_quarantine",
+      "exit_code": -6,
+      "stdout": "",
+      "stderr": "host_safety_test: tests/c/host_safety_test.c:70: main: Assertion `ring_is_empty(&ctx.dma.free_ring)' failed.\n"
+    },
+    {
+      "case": "dma_stopped",
+      "exit_code": 0,
+      "stdout": "PASS\n",
+      "stderr": ""
+    }
+  ]
+}

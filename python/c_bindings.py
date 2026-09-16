@@ -71,6 +71,12 @@ class NPUNVMERequest(ctypes.Structure):
     pass
 
 
+class NPUNVMERetainedSlot(ctypes.Structure):
+    _fields_ = [("slot", ctypes.c_uint32), ("reason", ctypes.c_uint32),
+                ("request_id", ctypes.c_uint64), ("bytes", ctypes.c_uint64),
+                ("nvme_offset", ctypes.c_uint64)]
+
+
 class NPUNVMEStats(ctypes.Structure):
     _fields_ = [
         ("nvme_submit_count", ctypes.c_uint64),
@@ -131,6 +137,13 @@ try:
 
     lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
     lib.npu_nvme_cleanup.restype = None
+    if hasattr(lib, "npu_nvme_get_retained_slots"):
+        lib.npu_nvme_get_retained_slots.argtypes = [ctypes.POINTER(NPUNVMEContext),
+            ctypes.POINTER(NPUNVMERetainedSlot), ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)]
+        lib.npu_nvme_get_retained_slots.restype = ctypes.c_int
+    if hasattr(lib, "npu_nvme_close"):
+        lib.npu_nvme_close.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.c_uint32]
+        lib.npu_nvme_close.restype = ctypes.c_int
 
     if hasattr(lib, "npu_nvme_submit_write_batch"):
         lib.npu_nvme_submit_write_batch.argtypes = [

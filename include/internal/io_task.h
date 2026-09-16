@@ -14,6 +14,9 @@
 typedef struct {
     void *buf;
     uint64_t phys_addr;
+    atomic_ullong owner_request_id;
+    atomic_ullong owned_bytes;
+    atomic_ullong owned_offset;
 } dma_buf_t;
 
 /* --- Chunk lifecycle state --- */
@@ -24,12 +27,14 @@ typedef enum {
     CHUNK_SPDK_WRITING,     /* write path: SPDK NVMe write in flight */
     CHUNK_SPDK_READING,     /* read path:  SPDK NVMe read in flight */
     CHUNK_SPDK_DONE,        /* read path:  NVMe -> DMA buffer complete */
-    CHUNK_DONE
+    CHUNK_DONE,
+    CHUNK_QUARANTINED      /* no proof that DMA stopped; never reusable */
 } chunk_state_t;
 
 /* --- Per-chunk I/O descriptor --- */
 typedef struct {
     int task_idx;
+    uint64_t request_id;
     int buf_idx;            /* ring buffer slot index, -1 = unassigned */
     chunk_state_t state;
     void *npu_ptr;          /* source (write) or dest (read) address */
@@ -86,9 +91,11 @@ typedef struct NPUNVMERequest {
     int num_tasks;              /* number of chunks in this write */
     bool is_host;               /* true → memcpy, false → aclrtMemcpy D2H */
     bool async_dma;             /* true → aclrtMemcpyAsync + event polling */
+    atomic_uint refs;          /* caller + queue/reactor references */
     atomic_int done;            /* set to 1 when all chunks complete */
     atomic_int detached;        /* reserved for legacy internal requests */
     int result;                 /* 0 = success, -1 = any chunk failed */
+    uint32_t timeout_ms;        /* finite default survives context shutdown */
     bool compute_crc;           /* calculate CRC after async DMA completion */
     uint32_t *crc32_out;        /* optional caller-owned per-task CRC array */
     uint64_t ts_batch_start;    /* C-layer: first DMA submit time (us) */
@@ -115,7 +122,9 @@ typedef enum {
 typedef struct {
     io_task_t *tasks;           /* array of per-chunk descriptors */
     int num_tasks;              /* number of chunks in this read */
+    struct NPUNVMEContext *ctx;
     bool is_host;               /* true → memcpy, false → aclrtMemcpy H2D */
+    atomic_uint refs;          /* caller + queue/reactor references */
     atomic_int done;            /* set to 1 when all chunks complete */
     atomic_int detached;        /* reserved for legacy internal requests */
     int result;                 /* 0 = success, -1 = any chunk failed */
@@ -145,6 +154,7 @@ typedef enum {
 } meta_owner_state_t;
 
 typedef struct {
+    struct NPUNVMEContext *ctx;
     uint64_t byte_offset;       /* absolute byte offset on NVMe */
     uint32_t total_bytes;       /* number of bytes to read/write */
     int is_read;                /* 1 = read, 0 = write */
@@ -153,6 +163,7 @@ typedef struct {
     void *owned_buffer;         /* reactor-owned DMA staging copy */
     uint64_t submit_not_before_us; /* test hook; zero in normal operation */
     int submitted;              /* NVMe command has been submitted */
+    atomic_uint refs;          /* caller + queue/reactor references */
     atomic_int done;            /* set only after reactor publication */
     atomic_int io_done;         /* set by NVMe callback */
     atomic_int owner_state;     /* meta_owner_state_t */
