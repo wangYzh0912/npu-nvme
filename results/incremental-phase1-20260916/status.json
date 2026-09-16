@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-16T17:28:07.011871+00:00",
+  "updated_at": "2026-09-16T17:31:46.479783+00:00",
   "status": "running",
   "local_campaign": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
   "runs": [
@@ -378,34 +378,35 @@
     },
     {
       "run": "main-k10-canonical-attempt4",
-      "execution_status": "running",
-      "validation_status": "not_run",
+      "execution_status": "completed",
+      "validation_status": "fail",
       "method": "none",
+      "error": "RuntimeError('training or owner failed / descendants retained')",
       "source_manifest_sha256": "3b455f860517b7f07b6b13f1f9e35ca9ade9aa71b87290f4a44266310c82a251",
       "ranks": [
         {
           "rank": 0,
-          "status": "running",
-          "recorded_steps": 4,
-          "error": null
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ValueError('cannot reshape array of size 155582464 into shape (151936,4096)')"
         },
         {
           "rank": 1,
-          "status": "running",
-          "recorded_steps": 4,
-          "error": null
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ValueError('cannot reshape array of size 155582464 into shape (151936,4096)')"
         },
         {
           "rank": 2,
-          "status": "running",
-          "recorded_steps": 4,
-          "error": null
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ValueError('cannot reshape array of size 155582464 into shape (151936,4096)')"
         },
         {
           "rank": 3,
-          "status": "running",
-          "recorded_steps": 4,
-          "error": null
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ValueError('cannot reshape array of size 155582464 into shape (151936,4096)')"
         }
       ],
       "commits": 1,
@@ -420,6 +421,43 @@
           "maximum_block_age": null
         }
       ]
+    },
+    {
+      "run": "main-k10-canonical-attempt5",
+      "execution_status": "running",
+      "validation_status": "not_run",
+      "method": "none",
+      "source_manifest_sha256": "8e93b3c196bca47414d3d203cf73671cd62eb167043e2638976fd7ca146e4a63",
+      "ranks": [
+        {
+          "rank": 0,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 1,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 2,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 3,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        }
+      ],
+      "commits": 0,
+      "media_verified_commits": 0,
+      "fidelity_steps": 0,
+      "fidelity_observations": []
     },
     {
       "run": "main-k10-rep0",

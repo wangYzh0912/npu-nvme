@@ -41,6 +41,8 @@ def compare(controller, network):
     original={name:parameter.asnumpy().copy() for name,parameter in controller.parameters.items()}
     if not hasattr(controller,'evaluation_aliases'):
         from mindspore.parallel import _utils as parallel_utils
+        from npu_nvme.experiments.initial_state import registry
+        training_parameters=registry(network)
         original_slice=parallel_utils._slice_parameter
         aliases={name:[parameter] for name,parameter in controller.parameters.items()}
         diagnostics=[]
@@ -59,6 +61,22 @@ def compare(controller, network):
                                             shape=list(candidate.shape),is_registered=candidate is controller.parameters[name]))
                     candidate.sliced=True
                     if all(candidate is not other for other in aliases[name]):aliases[name].append(candidate)
+            else:
+                # MindSpore revisits local Adam/control parameters during the
+                # forward compile. Only preserve tensors from the train registry.
+                if name not in training_parameters:
+                    raise ValueError('unrecognized non-model parameter in forward compilation: '+name)
+                existing=training_parameters[name]
+                candidates=[parameter]
+                if parameter.inited_param is not None:candidates.append(parameter.inited_param)
+                for candidate in candidates:
+                    if tuple(candidate.shape)!=tuple(existing.shape):
+                        raise ValueError('non-model parameter geometry changed: '+name)
+                    if candidate is not existing and not np.array_equal(candidate.asnumpy(),existing.asnumpy()):
+                        raise ValueError('non-model parameter content changed: '+name)
+                    candidate.sliced=True
+                diagnostics.append(dict(name=name,local_non_model=True,
+                                        reason='existing compiled-training parameter; forward result and next training loss are independently checked'))
             return original_slice(parameter,phase,layout)
         parallel_utils._slice_parameter=preserve_local_slice
         try:true_loss=loss()

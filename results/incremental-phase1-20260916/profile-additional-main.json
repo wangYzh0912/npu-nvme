@@ -1,0 +1,180 @@
+{
+  "ranks": [
+    {
+      "rank": 0,
+      "clock_alignment": {
+        "source": "same op_summary wall-clock domain; no callback clock conversion",
+        "callback_alignment": null
+      },
+      "phase_boundary_rule": "GetNext; first Gradients-named kernel; first and last optimizer-named kernel. These are inferred boundaries and include scheduler gaps, not semantic framework markers.",
+      "communication_scope": "hcom kernel task envelopes on the same clock; TensorMove is listed separately and does not imply an independently active DMA engine.",
+      "stable_neither_covered_by_communication_us": 9599962.0,
+      "instruction_activity": {
+        "aic_mac_ratio": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.0,
+          "maximum": 0.802
+        },
+        "aiv_vec_ratio": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.04,
+          "maximum": 0.681
+        },
+        "cube_utilization(%)": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.0,
+          "maximum": 98.462
+        }
+      },
+      "hbm_summary": [
+        {
+          "Device_id": "0",
+          "Metric": "Average",
+          "Read(MB/s)": "24873.584",
+          "Write(MB/s)": "22010.855"
+        }
+      ],
+      "task_counts": {
+        "aicore_tasks": 10279,
+        "aivector_tasks": 203471,
+        "mixed_tasks": 10507
+      },
+      "vector_task_active_fraction_during_cube": 0.33096411588205865
+    },
+    {
+      "rank": 1,
+      "clock_alignment": {
+        "source": "same op_summary wall-clock domain; no callback clock conversion",
+        "callback_alignment": null
+      },
+      "phase_boundary_rule": "GetNext; first Gradients-named kernel; first and last optimizer-named kernel. These are inferred boundaries and include scheduler gaps, not semantic framework markers.",
+      "communication_scope": "hcom kernel task envelopes on the same clock; TensorMove is listed separately and does not imply an independently active DMA engine.",
+      "stable_neither_covered_by_communication_us": 12186436.0,
+      "instruction_activity": {
+        "aic_mac_ratio": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.0,
+          "maximum": 0.806
+        },
+        "aiv_vec_ratio": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.04,
+          "maximum": 0.681
+        },
+        "cube_utilization(%)": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.0,
+          "maximum": 98.506
+        }
+      },
+      "hbm_summary": [
+        {
+          "Device_id": "1",
+          "Metric": "Average",
+          "Read(MB/s)": "24906.215",
+          "Write(MB/s)": "22033.547"
+        }
+      ],
+      "task_counts": {
+        "aicore_tasks": 10279,
+        "aivector_tasks": 203471,
+        "mixed_tasks": 10507
+      },
+      "vector_task_active_fraction_during_cube": 0.3310655693407213
+    },
+    {
+      "rank": 2,
+      "clock_alignment": {
+        "source": "same op_summary wall-clock domain; no callback clock conversion",
+        "callback_alignment": null
+      },
+      "phase_boundary_rule": "GetNext; first Gradients-named kernel; first and last optimizer-named kernel. These are inferred boundaries and include scheduler gaps, not semantic framework markers.",
+      "communication_scope": "hcom kernel task envelopes on the same clock; TensorMove is listed separately and does not imply an independently active DMA engine.",
+      "stable_neither_covered_by_communication_us": 2704050.25,
+      "instruction_activity": {
+        "aic_mac_ratio": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.0,
+          "maximum": 0.802
+        },
+        "aiv_vec_ratio": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.04,
+          "maximum": 0.679
+        },
+        "cube_utilization(%)": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.0,
+          "maximum": 98.495
+        }
+      },
+      "hbm_summary": [
+        {
+          "Device_id": "2",
+          "Metric": "Average",
+          "Read(MB/s)": "24867.149",
+          "Write(MB/s)": "22007.616"
+        }
+      ],
+      "task_counts": {
+        "aicore_tasks": 10279,
+        "aivector_tasks": 203471,
+        "mixed_tasks": 10507
+      },
+      "vector_task_active_fraction_during_cube": 0.330810807482428
+    },
+    {
+      "rank": 3,
+      "clock_alignment": {
+        "source": "same op_summary wall-clock domain; no callback clock conversion",
+        "callback_alignment": null
+      },
+      "phase_boundary_rule": "GetNext; first Gradients-named kernel; first and last optimizer-named kernel. These are inferred boundaries and include scheduler gaps, not semantic framework markers.",
+      "communication_scope": "hcom kernel task envelopes on the same clock; TensorMove is listed separately and does not imply an independently active DMA engine.",
+      "stable_neither_covered_by_communication_us": 12640735.75,
+      "instruction_activity": {
+        "aic_mac_ratio": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.0,
+          "maximum": 0.804
+        },
+        "aiv_vec_ratio": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.04,
+          "maximum": 0.68
+        },
+        "cube_utilization(%)": {
+          "samples": 236060,
+          "minimum": 0.0,
+          "median": 0.0,
+          "maximum": 98.696
+        }
+      },
+      "hbm_summary": [
+        {
+          "Device_id": "3",
+          "Metric": "Average",
+          "Read(MB/s)": "24944.514",
+          "Write(MB/s)": "22074.286"
+        }
+      ],
+      "task_counts": {
+        "aicore_tasks": 10279,
+        "aivector_tasks": 203471,
+        "mixed_tasks": 10507
+      },
+      "vector_task_active_fraction_during_cube": 0.3308675756460229
+    }
+  ]
+}
