@@ -31,7 +31,7 @@
   "small_bytes": 1232896,
   "score_scalar_ops": 24572206080,
   "score_scan_bytes": 65523417088,
-  "full_state_scan_bytes": 196599845888,
+  "full_state_scan_bytes": 196599845664,
   "outputs": [
     {
       "ratio": 0.05,
@@ -59,5 +59,64 @@
     "workspace_bytes": null,
     "snapshot_bytes": 0
   },
-  "note": "Output estimates exclude metadata; actual selected tails determine exact bytes. Workspace and framework temporaries require measurement."
+  "note": "Output estimates exclude metadata; actual selected tails determine exact bytes. Workspace and framework temporaries require measurement.",
+  "full_state_physical_bytes": 98299922832,
+  "full_state_physical_scopes_by_rank": [
+    {
+      "model": 8191660032,
+      "adam_m": 8191660032,
+      "adam_v": 8191660032,
+      "other": 612
+    },
+    {
+      "model": 8191660032,
+      "adam_m": 8191660032,
+      "adam_v": 8191660032,
+      "other": 612
+    },
+    {
+      "model": 8191660032,
+      "adam_m": 8191660032,
+      "adam_v": 8191660032,
+      "other": 612
+    },
+    {
+      "model": 8191660032,
+      "adam_m": 8191660032,
+      "adam_v": 8191660032,
+      "other": 612
+    }
+  ],
+  "full_state_output_estimates": [
+    {
+      "ratio": 0.05,
+      "payload_bytes": 4914998467.2,
+      "metadata_bytes": null,
+      "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."
+    },
+    {
+      "ratio": 0.1,
+      "payload_bytes": 9829994486.4,
+      "metadata_bytes": null,
+      "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."
+    },
+    {
+      "ratio": 0.2,
+      "payload_bytes": 19659986524.8,
+      "metadata_bytes": null,
+      "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."
+    }
+  ],
+  "full_state_extra_reference_bytes_by_rank": [
+    24574980708,
+    24574980708,
+    24574980708,
+    24574980708
+  ],
+  "control_metadata_bytes_by_rank": [
+    205858,
+    205858,
+    205858,
+    205858
+  ]
 }

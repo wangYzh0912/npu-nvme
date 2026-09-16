@@ -99,6 +99,10 @@ HBM 导出表只有本次采集汇总：[{"Device_id": "0", "Metric": "Average",
 
 完整训练状态对应扫描量约 196.600 GB，仅为预算，未扩展实际检测范围。
 
+完整状态各卡实存大小（字节）：[{"model": 8191660032, "adam_m": 8191660032, "adam_v": 8191660032, "other": 612}, {"model": 8191660032, "adam_m": 8191660032, "adam_v": 8191660032, "other": 612}, {"model": 8191660032, "adam_m": 8191660032, "adam_v": 8191660032, "other": 612}, {"model": 8191660032, "adam_m": 8191660032, "adam_v": 8191660032, "other": 612}]。
+
+完整状态输出近似量（包含常驻副本，元数据待定）：[{"ratio": 0.05, "payload_bytes": 4914998467.2, "metadata_bytes": null, "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."}, {"ratio": 0.1, "payload_bytes": 9829994486.4, "metadata_bytes": null, "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."}, {"ratio": 0.2, "payload_bytes": 19659986524.8, "metadata_bytes": null, "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."}]。
+
 ## 图表
 
 ![Main timeline](figures/phase-timeline-main.png)
