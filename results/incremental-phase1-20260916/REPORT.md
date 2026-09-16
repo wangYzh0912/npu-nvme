@@ -40,7 +40,7 @@
 | 组 | 校验 step 数 | 末步相对 L2 | 末步 loss 差 | 最大块年龄 |
 |---|---:|---:|---:|---:|
 
-影子状态由实际媒体读回的数据更新；逐块检查映射、覆盖范围及选中值，与设备参考状态交叉核验。误差按真实完整权重计算。未指定质量预算，故只报告误差及组间差异，不宣布质量通过。
+影子状态由实际媒体读回的数据更新；逐块检查映射、覆盖范围及选中值，与设备参考状态交叉核验。误差按真实完整权重计算。固定评估 batch 与训练固定样本相同，衡量状态数值差异，不作为留出集泛化质量指标。未指定质量预算，故只报告误差及组间差异，不宣布质量通过。
 
 ## 成本与空间
 
@@ -102,7 +102,7 @@ HBM 导出表只有本次采集汇总：[{"Device_id": "0", "Metric": "Average",
 
 完整状态各卡实存大小（字节）：[{"model": 8191660032, "adam_m": 8191660032, "adam_v": 8191660032, "other": 612}, {"model": 8191660032, "adam_m": 8191660032, "adam_v": 8191660032, "other": 612}, {"model": 8191660032, "adam_m": 8191660032, "adam_v": 8191660032, "other": 612}, {"model": 8191660032, "adam_m": 8191660032, "adam_v": 8191660032, "other": 612}]。
 
-完整状态输出近似量（包含常驻副本，元数据待定）：[{"ratio": 0.05, "payload_bytes": 4914998467.2, "metadata_bytes": null, "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."}, {"ratio": 0.1, "payload_bytes": 9829994486.4, "metadata_bytes": null, "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."}, {"ratio": 0.2, "payload_bytes": 19659986524.8, "metadata_bytes": null, "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."}]。
+完整状态输出近似量（包含常驻副本，元数据待定）：[{"ratio": 0.05, "payload_bytes": 4929053481.6, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}, {"ratio": 0.1, "payload_bytes": 9843309763.2, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}, {"ratio": 0.2, "payload_bytes": 19671822326.4, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}]。
 
 ## 图表
 
