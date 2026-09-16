@@ -1,0 +1,47 @@
+{
+  "status": "pass",
+  "commit": "590fab4da87d85f45d933a4142b35954337a3d69",
+  "library_sha256": "0f521c87a95b18de2d87f48417abd45b603414e8586ff568c226fc4b36fc3c7d",
+  "software_cases": 135,
+  "h01_seeds": [
+    41,
+    42,
+    43
+  ],
+  "h02_cases": 11,
+  "lifecycle_cases": [
+    "repeat",
+    "submit-close",
+    "lost-completion",
+    "query-quarantine",
+    "record-quarantine"
+  ],
+  "limitations": [
+    "Controlled software fault injection; no production quarantine recovery or power-failure guarantee.",
+    "H01 covers this GPT-2 single-card workload and fixed tolerances."
+  ],
+  "evidence": [
+    {
+      "path": "results/long-term-v1.3/retirement/software-002",
+      "result_sha256": "4629080ceaa0a9d90b616ed8b18ce1ada96677d4e6beff41093ae84c1e770e93"
+    },
+    {
+      "path": "results/long-term-v1.3/retirement/h01-002",
+      "result_sha256": "fab8db65eda74d5bab0f25f8785f00396a0ce715ab8b8479c387d6772445bbb3"
+    },
+    {
+      "path": "results/long-term-v1.3/retirement/h02-002",
+      "result_sha256": "914dc9ac89b2c57ac84ad9940a8d5ec3220dc4da48bbdc5fd60c9b8c9de4eb20"
+    },
+    {
+      "path": "results/long-term-v1.3/retirement/lifecycle-002",
+      "result_sha256": "8d036f9ff60f847e5ba07c8167d88adabed00b58950046d2acdb6e04eb39ebdf"
+    }
+  ],
+  "stage": "legacy-retirement",
+  "callers": {
+    "status": "pass",
+    "path": "results/long-term-v1.3/retirement/callers-002",
+    "result_sha256": "8921a8e464ef8de8282dd5f655e1201d9cf25fcc690b6f79fa0a770b32ab9558"
+  }
+}
