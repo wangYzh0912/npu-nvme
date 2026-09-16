@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "profile_id": "A",
+  "profile_sha256": "2c657ea960118ff29fd1f5167f5be1cef2fee41e66a1f6445ed9f096e76f826c",
+  "execution_status": "completed",
+  "validation_status": "pass",
+  "cases": [
+    {
+      "id": "A-admission",
+      "required": true,
+      "tier": "FAKE",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/regression/test_admission_lifetime.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/A/gate-002/case-000/junit.xml"
+      ],
+      "counts": {
+        "tests": 13,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-000/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 7.384785016067326,
+      "stdout": "case-000/stdout.txt",
+      "stderr": "case-000/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "A-wait-input-result",
+      "required": true,
+      "tier": "FAKE",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/regression/test_full_safety.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/A/gate-002/case-001/junit.xml"
+      ],
+      "counts": {
+        "tests": 19,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-001/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 7.191561716143042,
+      "stdout": "case-001/stdout.txt",
+      "stderr": "case-001/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "A-protocol",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/python/test_full_checkpoint_protocol.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/A/gate-002/case-002/junit.xml"
+      ],
+      "counts": {
+        "tests": 4,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-002/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.3559797783382237,
+      "stdout": "case-002/stdout.txt",
+      "stderr": "case-002/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "A-evidence",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/regression/test_gate_evidence.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/A/gate-002/case-003/junit.xml"
+      ],
+      "counts": {
+        "tests": 17,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-003/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 8.102299415972084,
+      "stdout": "case-003/stdout.txt",
+      "stderr": "case-003/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "A-c-safety",
+      "required": true,
+      "tier": "C_IMPL",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/regression/test_c_host_safety.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/A/gate-002/case-004/junit.xml"
+      ],
+      "counts": {
+        "tests": 17,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-004/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 92.15808864636347,
+      "stdout": "case-004/stdout.txt",
+      "stderr": "case-004/stderr.txt",
+      "binary_artifacts": [
+        "case-004/compiled/host.elf"
+      ]
+    }
+  ],
+  "case_count": 70,
+  "environment": {
+    "commit": "88ecc9156dde967bbf1b3ce1f0a2984932ea675f",
+    "python": "3.9.25 (main, Nov  3 2025, 22:33:42) \n[GCC 11.2.0]",
+    "executable": "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+    "binary_sha256": null,
+    "source_manifest_sha256": "20ff283f6d1eb1ab3503a43114f68e4dc08c138a99dd46f29b46b4a11ff8e70b"
+  },
+  "invocation": {
+    "argv": [
+      "tools/run_gate.py",
+      "--profile",
+      "A",
+      "--out",
+      "results/long-term-v1.3/A/gate-002"
+    ],
+    "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3",
+    "script_sha256": "b349ea0a5200a4cdf7d66cccd184a2b5348554f04cd49a4bc2da6cbf53ccbcc8"
+  },
+  "metrics": {},
+  "faults_injected": [],
+  "changed_sources": [],
+  "boundaries": {
+    "can_prove": [
+      "declared host test outcomes"
+    ],
+    "cannot_prove": [
+      "device behavior",
+      "hardware DMA stop",
+      "C binary identity unless reported by C_IMPL test output"
+    ]
+  }
+}

@@ -22,7 +22,9 @@ from c_bindings import lib, NPUNVMEContext
 
 def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
                 keep_last_n=3, full_slot_gb=10, delta_slot_mb=256,
-                delta_slot_count=128):
+                delta_slot_count=128, strict=False):
+    if strict and (world_size != 1 or keep_last_n != 3):
+        raise ValueError('D1 initialization requires exactly three physical FULL slots')
     print(f"\n{'='*60}")
     print(f"!!! WARNING: NPUNVME DISK FORMAT UTILITY !!!")
     print(f"{'='*60}")
@@ -75,6 +77,8 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
             "delta_head": 0,
             "delta_tail": 0,
         }
+        if strict:
+            empty_meta = {'strict_contract':'D1', 'catalog_revision':0, 'checkpoints':{}}
         meta_buf = ctypes.create_string_buffer(
             pack_metadata(empty_meta, generation=0), META_SLOT_BYTES)
 
@@ -118,6 +122,7 @@ def format_disk(pci_addr, npu_id=0, force=False, world_size=1,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NPUNVME Disk Formatting Tool")
     parser.add_argument("--pci_addr", type=str, default="0000:83:00.0")
+    parser.add_argument('--strict', action='store_true', help='initialize a strict D1 catalog in the V2 container')
     parser.add_argument("--npu_id", type=int, default=0)
     parser.add_argument("--yes", action="store_true",
                         help="Skip interactive confirmation")
@@ -131,4 +136,4 @@ if __name__ == "__main__":
                 world_size=args.world_size, keep_last_n=args.keep_last_n,
                 full_slot_gb=args.full_slot_gb,
                 delta_slot_mb=args.delta_slot_mb,
-                delta_slot_count=args.delta_slot_count)
+                delta_slot_count=args.delta_slot_count, strict=args.strict)
