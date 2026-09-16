@@ -39,13 +39,42 @@ def compare(controller, network):
     # Compile the forward path before changing storage addresses, then refresh
     # pointers: graph compilation is allowed to alter allocation ownership.
     original={name:parameter.asnumpy().copy() for name,parameter in controller.parameters.items()}
-    true_loss=loss()
+    if not hasattr(controller,'evaluation_aliases'):
+        from mindspore.parallel import _utils as parallel_utils
+        original_slice=parallel_utils._slice_parameter
+        aliases={name:[parameter] for name,parameter in controller.parameters.items()}
+        diagnostics=[]
+        def preserve_local_slice(parameter,phase,layout):
+            name=parameter.name
+            if name in original:
+                candidates=[parameter]
+                if parameter.inited_param is not None:candidates.append(parameter.inited_param)
+                for candidate in candidates:
+                    if tuple(candidate.shape)!=original[name].shape:
+                        raise ValueError('evaluation compilation changed TP geometry: '+name)
+                    if not np.array_equal(candidate.asnumpy(),original[name]):
+                        raise ValueError('evaluation compilation changed TP content: '+name)
+                    diagnostics.append(dict(name=name,python_id=id(candidate),sliced_before=candidate.sliced,
+                                            shape=list(candidate.shape),is_registered=candidate is controller.parameters[name]))
+                    candidate.sliced=True
+                    if all(candidate is not other for other in aliases[name]):aliases[name].append(candidate)
+            return original_slice(parameter,phase,layout)
+        parallel_utils._slice_parameter=preserve_local_slice
+        try:true_loss=loss()
+        finally:
+            parallel_utils._slice_parameter=original_slice
+            (Path(controller.output)/f'rank_{controller.rank}'/'evaluation-compile-aliases.json').write_text(json.dumps(diagnostics)+'\n')
+        controller.evaluation_aliases=aliases
+    else:true_loss=loss()
     for name,array in original.items():
         if not np.array_equal(controller.parameters[name].asnumpy(),array):raise ValueError('forward evaluation changed training weights: '+name)
     from npu_nvme.framework.parameters import get_dev_ptr
     ms.runtime.synchronize()
     controller.pointers={name:get_dev_ptr(parameter,expected_device=controller.rank)
                          for name,parameter in controller.parameters.items()}
+    targets={name:sorted({get_dev_ptr(parameter,expected_device=controller.rank)
+                         for parameter in parameters})
+             for name,parameters in controller.evaluation_aliases.items()}
     pinned=ctypes.c_void_p()
     if controller.acl.aclrtMallocHost(ctypes.byref(pinned),controller.staging_bytes):raise MemoryError("evaluation pinned staging")
     def copy(pointer,raw):
@@ -62,12 +91,13 @@ def compare(controller, network):
                 raise RuntimeError('evaluation weight copy failed')
     try:
         for name in controller.parameters:
-            copy(controller.pointers[name],controller.media_shadow(name))
+            for pointer in targets[name]:copy(pointer,controller.media_shadow(name))
         restore_control(ms,network,state)
         shadow_loss=loss()
     finally:
         if not controller.failed:
-            for name,array in original.items():copy(controller.pointers[name],array)
+            for name,array in original.items():
+                for pointer in targets[name]:copy(pointer,array)
             restore_control(ms,network,state)
             ms.runtime.synchronize()
             for name,array in original.items():

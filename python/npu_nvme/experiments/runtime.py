@@ -87,6 +87,9 @@ class IncrementalController:
         self.staging_bytes = options["hbm_staging_bytes"]
         if self.acl.aclrtMalloc(ctypes.byref(self.staging), self.staging_bytes, 0):
             raise MemoryError("incremental HBM staging allocation failed")
+        from npu_nvme.experiments.capture_timing import CaptureTiming
+        chunks=2*math.ceil(sum(int(p.size)*4 for p in self.parameters.values())/self.staging_bytes)+2
+        self.capture_timing=CaptureTiming(self.acl,self.stream,chunks)
         self.socket = socket.socket(socket.AF_UNIX); self.socket.connect(options["socket"])
         wire.send(self.socket, {"kind": "hello", "rank": rank}, b"",
                   deadline=self.deadline, max_payload=0)
@@ -168,14 +171,18 @@ class IncrementalController:
         if self.acl.aclrtMallocHost(ctypes.byref(host), total):
             raise MemoryError("incremental pinned output allocation failed")
         records = []; host_cursor = staging_cursor = 0
+        self.capture_timing.reset()
         try:
             for row in chosen:
                 byte_count = row["element_count"] * row["itemsize"]
                 if staging_cursor and staging_cursor + byte_count > self.staging_bytes:
+                    self.capture_timing.mark()
                     if self.acl.aclrtMemcpyAsync(ctypes.c_void_p(host.value + host_cursor - staging_cursor),
                             staging_cursor, self.staging, staging_cursor, 2, self.stream):
                         raise RuntimeError("incremental staged D2H failed")
+                    self.capture_timing.mark()
                     staging_cursor = 0
+                if not staging_cursor:self.capture_timing.mark()
                 source = self.pointers[row["name"]] + row["element_offset"] * row["itemsize"]
                 if self.acl.aclrtMemcpyAsync(ctypes.c_void_p(self.staging.value + staging_cursor),
                         byte_count, ctypes.c_void_p(source), byte_count, 3, self.stream):
@@ -183,16 +190,21 @@ class IncrementalController:
                 records.append(dict(row, payload_offset=host_cursor, payload_bytes=byte_count))
                 staging_cursor += byte_count; host_cursor += byte_count
                 if staging_cursor == self.staging_bytes:
+                    self.capture_timing.mark()
                     if self.acl.aclrtMemcpyAsync(ctypes.c_void_p(host.value + host_cursor - staging_cursor),
                             staging_cursor, self.staging, staging_cursor, 2, self.stream):
                         raise RuntimeError("incremental staged D2H failed")
+                    self.capture_timing.mark()
                     staging_cursor = 0
             if staging_cursor:
+                self.capture_timing.mark()
                 if self.acl.aclrtMemcpyAsync(ctypes.c_void_p(host.value + host_cursor - staging_cursor),
                         staging_cursor, self.staging, staging_cursor, 2, self.stream):
                     raise RuntimeError("incremental final D2H failed")
+                self.capture_timing.mark()
             if self.acl.aclrtSynchronizeStream(self.stream):
                 raise RuntimeError("incremental capture synchronization failed")
+            self.capture_detail=self.capture_timing.result()
             view = memoryview((ctypes.c_ubyte * total).from_address(host.value)).cast('B')
             return host, view, records
         except BaseException:
@@ -314,6 +326,7 @@ class IncrementalController:
         row['hbm_output_bytes']=self.staging_bytes
         row['memory_budget']=self.memory
         row.update(getattr(self,"score_detail",{}))
+        row.update(getattr(self,"capture_detail",{}))
         self.timings.append(row)
         if self.options.get('canonical'):
             self.last_selected=selected
@@ -379,5 +392,6 @@ class IncrementalController:
         finally:
             self.socket.close()
             if not self.failed:
+                self.capture_timing.close()
                 if self.staging.value: self.acl.aclrtFree(self.staging)
                 if self.stream.value: self.acl.aclrtDestroyStream(self.stream)

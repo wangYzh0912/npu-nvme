@@ -1,8 +1,42 @@
 {
-  "updated_at": "2026-09-16T15:54:38.092711+00:00",
+  "updated_at": "2026-09-16T15:59:42.990522+00:00",
   "status": "running",
   "local_campaign": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
   "runs": [
+    {
+      "run": "main-b0-rep0",
+      "execution_status": "running",
+      "validation_status": "not_run",
+      "method": "none",
+      "ranks": [
+        {
+          "rank": 0,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 1,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 2,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 3,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        }
+      ],
+      "fidelity_steps": 0,
+      "fidelity_observations": []
+    },
     {
       "run": "main-k10-canonical",
       "execution_status": "completed",
@@ -132,33 +166,34 @@
     },
     {
       "run": "main-k10-canonical-attempt3",
-      "execution_status": "running",
-      "validation_status": "not_run",
+      "execution_status": "completed",
+      "validation_status": "fail",
       "method": "none",
+      "error": "RuntimeError('training or owner failed / descendants retained')",
       "ranks": [
         {
           "rank": 0,
-          "status": "running",
-          "recorded_steps": 4,
-          "error": null
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ValueError('cannot reshape array of size 155582464 into shape (151936,4096)')"
         },
         {
           "rank": 1,
-          "status": "running",
-          "recorded_steps": 4,
-          "error": null
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ValueError('cannot reshape array of size 155582464 into shape (151936,4096)')"
         },
         {
           "rank": 2,
-          "status": "running",
-          "recorded_steps": 4,
-          "error": null
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ValueError('cannot reshape array of size 155582464 into shape (151936,4096)')"
         },
         {
           "rank": 3,
-          "status": "running",
-          "recorded_steps": 4,
-          "error": null
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ValueError('cannot reshape array of size 155582464 into shape (151936,4096)')"
         }
       ],
       "commits": 1,
