@@ -245,6 +245,187 @@
         416.485782182
       ],
       "readback": null
+    },
+    {
+      "run": "main-k5-rep0",
+      "group": "K5",
+      "role": "main",
+      "stage_times": {
+        "source_stable_ns": {
+          "samples": 80,
+          "median_ms": 0.0722255,
+          "maximum_ms": 0.12711
+        },
+        "score_ns": {
+          "samples": 80,
+          "median_ms": 2953.0146655,
+          "maximum_ms": 3139.500044
+        },
+        "device_score_and_score_d2h_ns": {
+          "samples": 80,
+          "median_ms": 248.1304225,
+          "maximum_ms": 307.12346
+        },
+        "host_fragment_reduce_ns": {
+          "samples": 80,
+          "median_ms": 2705.0731835,
+          "maximum_ms": 2863.652818
+        },
+        "select_ns": {
+          "samples": 80,
+          "median_ms": 1512.175571,
+          "maximum_ms": 2039.489178
+        },
+        "capture_ns": {
+          "samples": 80,
+          "median_ms": 193.279771,
+          "maximum_ms": 241.3824
+        },
+        "pack_stream_ns": {
+          "samples": 80,
+          "median_ms": 17.09759,
+          "maximum_ms": 28.357999
+        },
+        "d2h_stream_ns": {
+          "samples": 80,
+          "median_ms": 20.48624,
+          "maximum_ms": 40.23592
+        },
+        "checksum_ns": {
+          "samples": 80,
+          "median_ms": 276.591865,
+          "maximum_ms": 376.439581
+        },
+        "wait_previous_ns": {
+          "samples": 80,
+          "median_ms": 3309.7736425,
+          "maximum_ms": 4263.109454
+        },
+        "critical_ns": {
+          "samples": 80,
+          "median_ms": 8452.900414,
+          "maximum_ms": 9479.130544
+        }
+      },
+      "transport": {},
+      "owner": {
+        "request_ready": {
+          "median_ms": 6337.903949,
+          "total_seconds": 212.268771886
+        },
+        "prefix_write": {
+          "median_ms": 31.8294375,
+          "total_seconds": 0.623129844
+        },
+        "payload_receive_and_write": {
+          "median_ms": 2449.733494,
+          "total_seconds": 48.950475061
+        },
+        "flush_commit_descriptor_encoding": {
+          "median_ms": 530.838906,
+          "total_seconds": 10.869022024
+        }
+      },
+      "checkpoint_lifetime_overlap_training_callback_seconds_by_rank": [
+        11.315758965,
+        12.678836917,
+        12.418447956,
+        12.698073205
+      ],
+      "overlap_interpretation": "Wall-clock checkpoint lifetime intersected with optimizer-step callback interval. It does not prove device instruction concurrency.",
+      "checkpoint_lifetime_seconds_by_rank": [
+        251.929730644,
+        251.906610481,
+        251.938267389,
+        251.870756046
+      ],
+      "readback": {
+        "generation": 20,
+        "step": 20,
+        "ranks": [
+          {
+            "rank": 0,
+            "payload_bytes": 412823552,
+            "verified": true
+          },
+          {
+            "rank": 1,
+            "payload_bytes": 415842304,
+            "verified": true
+          },
+          {
+            "rank": 2,
+            "payload_bytes": 399142912,
+            "verified": true
+          },
+          {
+            "rank": 3,
+            "payload_bytes": 411561984,
+            "verified": true
+          }
+        ],
+        "status": "pass",
+        "descriptor_encoding_probe": [
+          {
+            "rank": 0,
+            "descriptor_bytes": 6024080,
+            "encode_ns": [
+              124989562,
+              122754103
+            ],
+            "sha256_ns": [
+              3655735,
+              3700435
+            ],
+            "packed_ranges": 3350,
+            "fragments": 21728
+          },
+          {
+            "rank": 1,
+            "descriptor_bytes": 6154175,
+            "encode_ns": [
+              125973166,
+              126354297
+            ],
+            "sha256_ns": [
+              3731315,
+              3838665
+            ],
+            "packed_ranges": 3197,
+            "fragments": 22462
+          },
+          {
+            "rank": 2,
+            "descriptor_bytes": 6120537,
+            "encode_ns": [
+              126350467,
+              125465244
+            ],
+            "sha256_ns": [
+              3770135,
+              3784825
+            ],
+            "packed_ranges": 3165,
+            "fragments": 22354
+          },
+          {
+            "rank": 3,
+            "descriptor_bytes": 5945296,
+            "encode_ns": [
+              121951500,
+              122151170
+            ],
+            "sha256_ns": [
+              3631804,
+              3629055
+            ],
+            "packed_ranges": 3198,
+            "fragments": 21540
+          }
+        ],
+        "scope": "Last committed step only; prior steps are not claimed as readback verified.",
+        "run": "main-k5-rep0"
+      }
     }
   ],
   "note": "Stage execution durations overlap and are not summed as critical-path overhead; cumulative fixed-input ablations provide additional evidence."

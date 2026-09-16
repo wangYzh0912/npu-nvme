@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-16T16:47:30.576609+00:00",
+  "updated_at": "2026-09-16T16:51:17.050627+00:00",
   "status": "running",
   "local_campaign": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
   "runs": [
@@ -489,39 +489,127 @@
     },
     {
       "run": "main-k5-rep0",
-      "execution_status": "running",
-      "validation_status": "not_run",
+      "execution_status": "completed",
+      "validation_status": "pass",
       "method": "none",
+      "final_step": 24,
       "ranks": [
         {
           "rank": 0,
-          "status": "running",
-          "recorded_steps": 7,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 1,
-          "status": "running",
-          "recorded_steps": 7,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 2,
-          "status": "running",
-          "recorded_steps": 7,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 3,
-          "status": "running",
-          "recorded_steps": 7,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         }
       ],
-      "commits": 3,
+      "commits": 20,
       "media_verified_commits": 0,
       "fidelity_steps": 0,
-      "fidelity_observations": []
+      "fidelity_observations": [],
+      "last_media_verification": {
+        "generation": 20,
+        "step": 20,
+        "ranks": [
+          {
+            "rank": 0,
+            "payload_bytes": 412823552,
+            "verified": true
+          },
+          {
+            "rank": 1,
+            "payload_bytes": 415842304,
+            "verified": true
+          },
+          {
+            "rank": 2,
+            "payload_bytes": 399142912,
+            "verified": true
+          },
+          {
+            "rank": 3,
+            "payload_bytes": 411561984,
+            "verified": true
+          }
+        ],
+        "status": "pass",
+        "descriptor_encoding_probe": [
+          {
+            "rank": 0,
+            "descriptor_bytes": 6024080,
+            "encode_ns": [
+              124989562,
+              122754103
+            ],
+            "sha256_ns": [
+              3655735,
+              3700435
+            ],
+            "packed_ranges": 3350,
+            "fragments": 21728
+          },
+          {
+            "rank": 1,
+            "descriptor_bytes": 6154175,
+            "encode_ns": [
+              125973166,
+              126354297
+            ],
+            "sha256_ns": [
+              3731315,
+              3838665
+            ],
+            "packed_ranges": 3197,
+            "fragments": 22462
+          },
+          {
+            "rank": 2,
+            "descriptor_bytes": 6120537,
+            "encode_ns": [
+              126350467,
+              125465244
+            ],
+            "sha256_ns": [
+              3770135,
+              3784825
+            ],
+            "packed_ranges": 3165,
+            "fragments": 22354
+          },
+          {
+            "rank": 3,
+            "descriptor_bytes": 5945296,
+            "encode_ns": [
+              121951500,
+              122151170
+            ],
+            "sha256_ns": [
+              3631804,
+              3629055
+            ],
+            "packed_ranges": 3198,
+            "fragments": 21540
+          }
+        ],
+        "scope": "Last committed step only; prior steps are not claimed as readback verified.",
+        "run": "main-k5-rep0"
+      }
     }
   ],
   "scope": "Weights only; 20 optimizer steps; one effective run per configuration, maximum two when inconclusive.",
