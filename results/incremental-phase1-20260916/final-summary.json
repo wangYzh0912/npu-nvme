@@ -31,7 +31,7 @@
     "p5-ablation-2": true,
     "p5-ablation-3": true,
     "p5-ablation-4": true,
-    "p5-ablation-5": false,
+    "p5-ablation-5": true,
     "p5-ablation-6": false,
     "main-profile": true,
     "auxiliary-profile": false,
@@ -238,6 +238,47 @@
     }
   ],
   "training_probes": [
+    {
+      "run": "main-b0-rep0-ablation-5",
+      "name": "ablation-5",
+      "kind": "ablation",
+      "spec": {
+        "granularity": 4194304,
+        "kind": "ablation",
+        "name": "ablation-5",
+        "output_bytes": 819077120,
+        "stage": 5,
+        "target_elements": 2047683840
+      },
+      "training_seconds": 133.485720801,
+      "baseline_seconds": 20.5064345905,
+      "baseline_range_seconds": [
+        18.621201905,
+        22.391667276
+      ],
+      "slowdown": 5.509455371770958,
+      "slowdown_baseline_sensitivity": [
+        4.961401585493977,
+        6.168480395734156
+      ],
+      "auxiliary_critical_median_ms": 5453.1550265,
+      "synchronized": true,
+      "suite": false,
+      "memory_peak_bytes_by_rank": [
+        42203972608,
+        42203972608,
+        42203973632,
+        42203973632
+      ],
+      "stage_median_ms": {
+        "score_ns": 994.3122135,
+        "selection_ns": 0.601493,
+        "pack_ns": 1.9550445,
+        "d2h_ns": 47.4556635,
+        "wait_previous_ns": 3818.7732375,
+        "checksum_ns": 551.32436
+      }
+    },
     {
       "run": "main-p2-suite/suite/main-b0-suite-copy-0.5-262144",
       "name": "copy-0.5-262144",
@@ -868,6 +909,16 @@
       "observed_extra_range_seconds": [
         21.395540497,
         21.395540497
+      ]
+    },
+    {
+      "stage": 5,
+      "repeats": 1,
+      "calibrated_extra_seconds": 112.97928621050002,
+      "incremental_seconds": 91.58374571350002,
+      "observed_extra_range_seconds": [
+        112.97928621050002,
+        112.97928621050002
       ]
     }
   ],
