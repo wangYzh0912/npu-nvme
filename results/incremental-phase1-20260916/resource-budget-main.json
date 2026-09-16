@@ -90,21 +90,21 @@
   "full_state_output_estimates": [
     {
       "ratio": 0.05,
-      "payload_bytes": 4914998467.2,
+      "payload_bytes": 4929053481.6,
       "metadata_bytes": null,
-      "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."
+      "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."
     },
     {
       "ratio": 0.1,
-      "payload_bytes": 9829994486.4,
+      "payload_bytes": 9843309763.2,
       "metadata_bytes": null,
-      "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."
+      "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."
     },
     {
       "ratio": 0.2,
-      "payload_bytes": 19659986524.8,
+      "payload_bytes": 19671822326.4,
       "metadata_bytes": null,
-      "policy": "Conservative physical state estimate with replicas; controls always full, tensor tails and small-state policy require exact inventory before extension."
+      "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."
     }
   ],
   "full_state_extra_reference_bytes_by_rank": [
@@ -118,5 +118,17 @@
     205858,
     205858,
     205858
+  ],
+  "full_state_small_physical_bytes_by_rank": [
+    3699300,
+    3699300,
+    3699300,
+    3699300
+  ],
+  "full_state_local_candidate_block_counts_by_rank": [
+    93732,
+    93732,
+    93732,
+    93732
   ]
 }
