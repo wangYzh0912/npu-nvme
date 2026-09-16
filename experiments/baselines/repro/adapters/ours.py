@@ -20,6 +20,7 @@ class _DirectHandle:
         self.request_id = str(native.request_id)
         self.events = events
         self.expected_state_digest = expected_state_digest
+        self.expected_spec = None
         self._source_released = False
 
     def wait_source_release(self, timeout):
@@ -49,6 +50,7 @@ class _DirectHandle:
             (event.get("monotonic_ns") for event in events
              if event.get("state") == "PERSISTED"), None)
         row.update({
+            "expected_spec": self.expected_spec,
             "adapter": self.adapter.name,
             "request_id": self.request_id,
             "generation": self.generation,
@@ -99,6 +101,7 @@ class OursAdapter(Adapter):
                     "runtime_attach": "failed", "reason": repr(error)}
 
     def __init__(self, config, run_dir):
+        from npu_nvme.storage.bindings import BackendUnavailable
         super().__init__(config, run_dir)
         try:
             from direct_checkpoint import DirectCheckpoint
@@ -106,13 +109,15 @@ class OursAdapter(Adapter):
                 nvme_addr=config["raw_pci"],
                 npu_device_id=int(config["npu_device"]),
                 pipeline_depth=int(config.get("pipeline_depth", 4)),
-                requested_chunk_size=int(config.get("chunk_bytes", 4 * 1024 * 1024)),
+                requested_chunk_size=int(config.get("ours_chunk_bytes", config.get("chunk_bytes", 1024 * 1024))),
                 spdk_shm_id=int(config.get("spdk_shm_id", 1)),
-                keep_last_n=int(config.get("keep_last_n", 3)),
+                keep_last_n=int(config.get("ours_keep_last_n", config.get("keep_last_n", 2))),
                 slot_size_gb=int(config.get("slot_size_gb", 10)),
-                checkpoint_slots=int(config.get("max_inflight", 2)),
-                request_slots=int(config.get("max_inflight", 2)),
+                checkpoint_slots=int(config.get("ours_max_inflight", config.get("max_inflight", 1))),
+                request_slots=int(config.get("ours_max_inflight", config.get("max_inflight", 1))),
                 admission="block")
+        except BackendUnavailable as error:
+            raise DependencyBlocked(str(error)) from error
         except PermissionError as error:
             raise DependencyBlocked(f"SPDK permission denied: {error}") from error
         except Exception as error:
@@ -127,33 +132,37 @@ class OursAdapter(Adapter):
         snapshot_factory = payload.get("snapshot")
         expected_state_digest = (snapshot_factory().digest()
                                  if snapshot_factory is not None else None)
+        from npu_nvme.framework.full_state import training_spec
+        from npu_nvme.storage.bindings import load_backend
+        import mindspore as ms
+        spec = training_spec(components, control_state, self.training_identity(self.config, ms),
+            framework=ms, acl=load_backend().acl_lib, npu=int(self.config['npu_device']))
         native = self.ckpt.save_state(
             components, control_state, step=int(payload["step"]),
             meta_path=str(self.run_dir / f"metadata_{int(generation):06d}.pkl"),
-            io_mode="serial", timeout=float(self.config["timeout_seconds"]))
+            io_mode="frozen_async", expected_spec=spec, timeout=float(self.config.get("admission_timeout_seconds", self.config["timeout_seconds"])))
         handle = _DirectHandle(
             self, native, self.events,
             expected_state_digest=expected_state_digest)
+        handle.expected_spec = spec
         self.handles.append(handle)
         return handle
 
+    @staticmethod
+    def training_identity(config, ms):
+        return dict(workload=config['model'], seq_len=int(config['input_tokens']),
+                    dropout=float(config['dropout']), optimizer='AdamWeightDecay', loss_scale=1.0,
+                    framework=ms.__version__, world_size=1, deterministic='ON')
+
     def restore(self, generation, destination):
-        if not destination:
-            raise ValueError("native restore requires model and optimizer destination")
-        step = destination.get("_step")
-        key = f"step_{int(step)}"
-        record = self.ckpt.meta_dict.get("checkpoints", {}).get(key)
-        if record is None:
-            raise FileNotFoundError(f"checkpoint for {key} is not visible")
-        if int(record.get("generation", -1)) != int(generation):
-            raise ValueError(
-                f"generation mismatch for {key}: requested={generation} "
-                f"committed={record.get('generation')}")
-        controls = self.ckpt.load_state(
-            {"model": destination["model"], "optimizer": destination["optimizer"]},
-            step=step,
-            verify_checksums=bool(destination.get("_verify_checksums", True)))
-        return controls
+        if not destination or not callable(destination.get('target_factory')) or 'expected_spec' not in destination:
+            raise ValueError('strict native restore requires target_factory and expected_spec')
+        step = int(destination['_step'])
+        record = self.ckpt.meta_dict.get('checkpoints', {}).get(f'generation_{int(generation)}')
+        if record is None or record['state_step'] != step:
+            raise ValueError('requested generation/step is not retained')
+        return self.ckpt.restore_full_state(destination['target_factory'], destination['expected_spec'],
+            step=step, deadline=time.monotonic()+float(self.config['timeout_seconds']))
 
     def drain(self, timeout):
         for handle in self.handles:
@@ -161,5 +170,5 @@ class OursAdapter(Adapter):
 
     def close(self):
         if getattr(self, "ckpt", None) is not None:
-            self.ckpt.close()
+            self.ckpt.close(timeout=float(self.config.get("close_timeout_seconds", 120)))
             self.ckpt = None

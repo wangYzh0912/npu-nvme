@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "profile_id": "D1",
+  "scope": "D1 software; acceptance additionally requires H01, H02 subset and lifecycle extensions at the same source/binary",
+  "cases": [
+    {
+      "id": "D1-core",
+      "tier": "CPU",
+      "nodeid": "tests/d1",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "D1-C-safety",
+      "tier": "C_IMPL",
+      "nodeid": "tests/regression/test_c_host_safety.py",
+      "timeout_seconds": 720,
+      "required": true
+    },
+    {
+      "id": "D1-controls",
+      "tier": "FAKE",
+      "nodeid": "tests/python/test_training_state.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "G15-imports",
+      "tier": "CPU",
+      "nodeid": "tests/gates/test_module_boundaries.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "ABI",
+      "tier": "CPU",
+      "nodeid": "tests/gates/test_abi_layout.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "G14-evidence",
+      "tier": "CPU",
+      "nodeid": "tests/regression/test_gate_evidence.py",
+      "timeout_seconds": 120,
+      "required": true
+    },
+    {
+      "id": "H02-orchestration",
+      "tier": "CPU",
+      "nodeid": "tests/regression/test_h02_orchestration.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "D1-retirement",
+      "tier": "CPU",
+      "nodeid": "tests/acceptance",
+      "timeout_seconds": 60,
+      "required": true
+    }
+  ],
+  "hardware_contract": {
+    "required": true,
+    "h01_seeds": [
+      41,
+      42,
+      43
+    ],
+    "continuation_steps": 3,
+    "h02_subset": true,
+    "lifecycle_cases": [
+      "repeat",
+      "submit-close",
+      "lost-completion",
+      "query-quarantine",
+      "record-quarantine"
+    ],
+    "repeat_cycles": 32
+  },
+  "bounds": {
+    "retained_generations": 2,
+    "physical_slots": 3,
+    "pending_full": 1,
+    "active_restore": 1,
+    "chunk_bytes": 1048576,
+    "control_bytes": 1048576,
+    "manifest_bytes": 16777216,
+    "terminal_results": 1024,
+    "loss_rtol": 1e-05,
+    "loss_atol": 1e-06
+  }
+}

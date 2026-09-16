@@ -1,0 +1,13 @@
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==218962==ERROR: AddressSanitizer: SEGV on unknown address 0xffff96ce5000 (pc 0x0000004c8700 bp 0xffffd27e8600 sp 0xffffd27e8600 T0)
+==218962==The signal is caused by a READ memory access.
+    #0 0x4c8700  (/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/build/host-safety/host_safety_sanitized+0x4c8700)
+    #1 0x4ccab0  (/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/build/host-safety/host_safety_sanitized+0x4ccab0)
+    #2 0xffff96a876c0  (/usr/lib64/libc.so.6+0x276c0)
+    #3 0xffff96a877a4  (/usr/lib64/libc.so.6+0x277a4)
+    #4 0x40906c  (/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/build/host-safety/host_safety_sanitized+0x40906c)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/build/host-safety/host_safety_sanitized+0x4c8700) 
+==218962==ABORTING

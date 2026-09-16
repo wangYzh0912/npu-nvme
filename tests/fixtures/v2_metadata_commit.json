@@ -1,0 +1,155 @@
+{
+  "source_commit": "5b7ef43",
+  "cases": {
+    "none": {
+      "trace": [
+        {
+          "operation": "write",
+          "offset": 413696,
+          "size": 409600,
+          "sha256": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51"
+        },
+        {
+          "operation": "flush"
+        },
+        {
+          "operation": "write",
+          "offset": 0,
+          "size": 4096,
+          "sha256": "9186496a232b23885f10dced98d580ffa5e28a50a54dd0383fd3ffa2365eeb03"
+        },
+        {
+          "operation": "flush"
+        }
+      ],
+      "error": null,
+      "blocks": {
+        "413696": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51",
+        "0": "9186496a232b23885f10dced98d580ffa5e28a50a54dd0383fd3ffa2365eeb03"
+      },
+      "metadata": {
+        "checkpoints": {
+          "step_8": {
+            "type": "FULL",
+            "generation": 1,
+            "chunk_size": 4096,
+            "rank_id": 0,
+            "world_size": 1,
+            "params": {
+              "model/x": {
+                "offset": 1073741824,
+                "size": 4,
+                "shape": [
+                  1
+                ],
+                "dtype": "float32",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          }
+        }
+      },
+      "generation": 1,
+      "slot": 1
+    },
+    "metadata_write": {
+      "trace": [
+        {
+          "operation": "write",
+          "offset": 413696,
+          "size": 409600,
+          "sha256": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51"
+        }
+      ],
+      "error": "metadata replica write failed (rc=-5)",
+      "blocks": {},
+      "metadata": {
+        "checkpoints": {}
+      },
+      "generation": 0,
+      "slot": 0
+    },
+    "superblock_write": {
+      "trace": [
+        {
+          "operation": "write",
+          "offset": 413696,
+          "size": 409600,
+          "sha256": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51"
+        },
+        {
+          "operation": "flush"
+        },
+        {
+          "operation": "write",
+          "offset": 0,
+          "size": 4096,
+          "sha256": "9186496a232b23885f10dced98d580ffa5e28a50a54dd0383fd3ffa2365eeb03"
+        }
+      ],
+      "error": "superblock commit failed (rc=-5)",
+      "blocks": {
+        "413696": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51"
+      },
+      "metadata": {
+        "checkpoints": {}
+      },
+      "generation": 0,
+      "slot": 0
+    },
+    "flush1": {
+      "trace": [
+        {
+          "operation": "write",
+          "offset": 413696,
+          "size": 409600,
+          "sha256": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51"
+        },
+        {
+          "operation": "flush"
+        }
+      ],
+      "error": "NVMe flush failed (rc=-5)",
+      "blocks": {
+        "413696": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51"
+      },
+      "metadata": {
+        "checkpoints": {}
+      },
+      "generation": 0,
+      "slot": 0
+    },
+    "flush2": {
+      "trace": [
+        {
+          "operation": "write",
+          "offset": 413696,
+          "size": 409600,
+          "sha256": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51"
+        },
+        {
+          "operation": "flush"
+        },
+        {
+          "operation": "write",
+          "offset": 0,
+          "size": 4096,
+          "sha256": "9186496a232b23885f10dced98d580ffa5e28a50a54dd0383fd3ffa2365eeb03"
+        },
+        {
+          "operation": "flush"
+        }
+      ],
+      "error": "NVMe flush failed (rc=-5)",
+      "blocks": {
+        "413696": "f030d421affe0f4fb156a6a14003cf96f883d390dd507b15ce19a544b3b27d51",
+        "0": "9186496a232b23885f10dced98d580ffa5e28a50a54dd0383fd3ffa2365eeb03"
+      },
+      "metadata": {
+        "checkpoints": {}
+      },
+      "generation": 0,
+      "slot": 0
+    }
+  }
+}

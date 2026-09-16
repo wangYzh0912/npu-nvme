@@ -1,0 +1,81 @@
+{
+  "implementation_commit": "8c82189",
+  "evidence_commit": "41615eb",
+  "canonical_plan": "/home/user7/npu-nvme/docs/LONG_TERM_DEVELOPMENT_PLAN.md",
+  "canonical_plan_sha256": "fdae2c54544551bf59fea0cb901d5d43cc59800663116a3d569e4caff7fa479d",
+  "software": {
+    "status": "pass",
+    "tests": 35,
+    "cpu_orchestration": 17,
+    "c_impl_sanitizers": 18,
+    "binary_source": "/tmp/pytest-of-user7/pytest-127/c-host0/host.elf",
+    "binary_sha256": "d77150355e6ae0f48cdb2c8c66f62808035ed5051944beefe758ac53cff973e1"
+  },
+  "runs": [
+    {
+      "run_id": "h02-isolated-r1",
+      "result": "results/hw-v13/h02-isolated-r1/result.json",
+      "h02_cases": 9,
+      "crash_smoke_cases": 2,
+      "case_count": 11,
+      "operation_rc": -110,
+      "operation_seconds": 0.05075076501816511,
+      "short_close_rc": -110,
+      "close_rc": 0,
+      "close_seconds": 0.40593524975702167,
+      "artifact_hashes_verified": true
+    },
+    {
+      "run_id": "h02-isolated-r2",
+      "result": "results/hw-v13/h02-isolated-r2/result.json",
+      "h02_cases": 9,
+      "crash_smoke_cases": 2,
+      "case_count": 11,
+      "operation_rc": -110,
+      "operation_seconds": 0.0507404450327158,
+      "short_close_rc": -110,
+      "close_rc": 0,
+      "close_seconds": 0.4057120690122247,
+      "artifact_hashes_verified": true
+    },
+    {
+      "run_id": "h02-isolated-r3",
+      "result": "results/hw-v13/h02-isolated-r3/result.json",
+      "h02_cases": 9,
+      "crash_smoke_cases": 2,
+      "case_count": 11,
+      "operation_rc": -110,
+      "operation_seconds": 0.05076965503394604,
+      "short_close_rc": -110,
+      "close_rc": 0,
+      "close_seconds": 0.4056828301399946,
+      "artifact_hashes_verified": true
+    }
+  ],
+  "full_io": {
+    "status": "pass",
+    "evidence": "results/hw-v13/full-io-rerun-001.txt",
+    "source": "initial rerun stdout contains FULL-IO PASS; structured final rerun is recorded separately"
+  },
+  "full_io_final": {
+    "argv": [
+      "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+      "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/full_io_roundtrip.py",
+      "--pci",
+      "0000:83:00.0",
+      "--npu",
+      "7",
+      "--shm-id",
+      "313101",
+      "--output",
+      "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/H02/full-io-final/profiling"
+    ],
+    "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3",
+    "script_sha256": "e165ea7385ae819aac7e20f4266e5f3fe3d9e3eb74ca877804d39c1dd7bd45a7",
+    "binary_sha256": "a92f0a0e2200b51918906de079d871ef61be5861126c82c64b5472c88a944a99",
+    "returncode": 0,
+    "status": "pass",
+    "seconds": 18.237582119647413,
+    "evidence": "results/long-term-v1.3/H02/full-io-final/result.json"
+  }
+}
