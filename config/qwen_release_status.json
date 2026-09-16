@@ -5,7 +5,12 @@
   "workload": {
     "model": "Qwen3-8B",
     "topology": "TP4/DP1/PP1",
-    "devices": [0, 1, 2, 3],
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
     "state_scope": "FULL model, Adam, training position and RNG controls"
   },
   "accepted": {
@@ -41,5 +46,11 @@
     "mode": "fast-forward",
     "archive_branches_verified": 27,
     "local_primary_worktree": "clean"
+  },
+  "incremental_phase1": {
+    "status": "running",
+    "branch": "incremental-phase1-results",
+    "results": "results/incremental-phase1-20260916",
+    "completed_runs": 1
   }
 }

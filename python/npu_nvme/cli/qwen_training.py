@@ -68,6 +68,10 @@ def run_fit(config, output, *, restore='latest', resume=False):
             sources=source_snapshot(snapshot_plan)
             extensions={str(path.relative_to(ROOT)):catalog.digest_file(path)
                         for path in (ROOT/'python/npu_nvme/framework').glob('_address_native*.so')}
+            if config.get('incremental_experiment'):
+                extra=list((ROOT/'python/npu_nvme/experiments').glob('*.py'))+list((ROOT/'tools').glob('incremental_*.py'))
+                extra += [ROOT/'python/npu_nvme/cli/incremental_feasibility.py',ROOT/'config/incremental_feasibility.json']
+                extensions.update({str(path.relative_to(ROOT)):catalog.digest_file(path) for path in extra})
             write(output/'source-identity.json',dict(sources=sources,extensions=extensions))
             audit=preflight(config);write(output/'preflight.json',audit)
             if not audit['devices_idle']:raise RuntimeError('TP4 devices are occupied')
@@ -90,11 +94,25 @@ def run_fit(config, output, *, restore='latest', resume=False):
             prefix=[sys.executable,str(ROOT/'scripts/run_user_environment.py'),'--manifest',config['environment_manifest'],
                     '--profile','candidate','--','python']
             env=dict(os.environ,ASCEND_RT_VISIBLE_DEVICES='0,1,2,3',RUN_MODE='finetune',PYTHONUNBUFFERED='1',
-                HCCL_CONNECT_TIMEOUT='300',MS_COMPILER_CACHE_PATH=str(output/'compiler-cache'))
+                HCCL_CONNECT_TIMEOUT='300',MS_COMPILER_CACHE_PATH=str(output/'compiler-cache'),
+                LOCAL_DEFAULT_PATH=str(output/'framework-output'))
             deadline=time.monotonic()+config['timeout_seconds']
             owned_lease=dict(status='running',run=str(output),pid=os.getpid(),children=[])
             write(lease,owned_lease);lease_owned=True
             def launch(argv,name):
+                experiment=config.get('incremental_experiment',{})
+                if name=='training' and experiment.get('profile') and os.geteuid()==0:
+                    import pwd
+                    uid=Path(audit['profile']['version_root']).stat().st_uid
+                    user=pwd.getpwuid(uid)
+                    if experiment.get('owner_connection'):raise ValueError('profile UID delegation requires a non-raw worker run')
+                    os.chown(output,uid,user.pw_gid)
+                    initial=Path(experiment['initial_full'])
+                    if not initial.exists():
+                        initial.mkdir(parents=True);os.chown(initial,uid,user.pw_gid)
+                    argv=['runuser','-u',user.pw_name,'--',*argv]
+                    write(output/'profiler-worker-identity.json',dict(uid=uid,user=user.pw_name,
+                          reason='CANN profiling worker must match toolkit installation owner'))
                 log=stack.enter_context((output/f'{name}.log').open('w'))
                 child=subprocess.Popen(argv,cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT,
                     start_new_session=True,pass_fds=(lock.fileno(),))
@@ -102,6 +120,14 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 write(lease,owned_lease);write(output/f'{name}-command.json',argv)
                 return child
             owner=None
+            experiment=config.get('incremental_experiment')
+            if experiment and experiment.get('owner_connection'):
+                owner=launch(prefix+[str(ROOT/'tools/incremental_raw_owner.py'),'--connection',experiment['owner_connection'],
+                    '--out',experiment['owner_output']],'incremental-owner')
+                while not (Path(experiment['owner_output'])/'ready.json').exists():
+                    if owner.poll() is not None:raise RuntimeError('incremental owner initialization failed')
+                    if time.monotonic()>deadline:raise TimeoutError('incremental owner readiness timeout')
+                    time.sleep(.1)
             if config['method']=='ours':
                 if os.geteuid()!=0:raise PermissionError('raw SPDK owner requires root execution')
                 epoch=uuid.uuid4().hex
@@ -118,7 +144,7 @@ def run_fit(config, output, *, restore='latest', resume=False):
                     if time.monotonic()>deadline:raise TimeoutError('owner readiness timeout')
                     time.sleep(.1)
             try:
-                receipts=json.loads((output/'owner/ready.json').read_text())['receipts'] if owner else None
+                receipts=json.loads((output/'owner/ready.json').read_text())['receipts'] if owner and config['method']=='ours' else None
                 select_restore(receipts)
                 if config['start_step']>=config['stop_step']:raise ValueError('stop_step must exceed restored step')
             except BaseException:
@@ -149,7 +175,8 @@ def run_fit(config, output, *, restore='latest', resume=False):
             if any(row['status']!='pass' or row['final_step']!=config['stop_step'] for row in reports):
                 raise RuntimeError('rank training completion differs')
             if owner:
-                owner_report=json.loads((output/'owner/result.json').read_text())
+                owner_result=Path(experiment['owner_output'])/'result.json' if experiment and experiment.get('owner_output') else output/'owner/result.json'
+                owner_report=json.loads(owner_result.read_text())
                 if owner_report['status']!='pass' or not owner_report['closed']:raise RuntimeError('owner close not verified')
             if source_snapshot(snapshot_plan)!=sources or any(catalog.digest_file(ROOT/name)!=digest for name,digest in extensions.items()):
                 raise RuntimeError('training source or allocation extension changed during execution')

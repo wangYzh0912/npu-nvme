@@ -1,0 +1,1 @@
+Formal source-freeze campaign. Shared initial FULL from phase1-002. Main profiling evidence from phase1-004. Original scheduler integration run and boundary evidence preserved in phase1-005. Native scheduler settings recorded in each run. No completion claim until run audits finish.

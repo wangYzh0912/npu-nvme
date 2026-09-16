@@ -1,0 +1,266 @@
+{
+  "updated_at": "2026-09-16T15:37:34.625369+00:00",
+  "status": "running",
+  "local_campaign": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
+  "runs": [
+    {
+      "run": "main-k10-canonical",
+      "execution_status": "completed",
+      "validation_status": "fail",
+      "method": "none",
+      "error": "RuntimeError('training or owner failed / descendants retained')",
+      "ranks": [
+        {
+          "rank": 0,
+          "status": "failed",
+          "recorded_steps": 0,
+          "error": "RuntimeError('The total number of timed out node is 1. Timed out node list is: [const vector]{3}, worker 3 is the first one timed out, please check its log.\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/cluster/topology/meta_server_node.cc:549 UpdateTopoState\\n')"
+        },
+        {
+          "rank": 1,
+          "status": "running",
+          "recorded_steps": 3,
+          "error": null
+        },
+        {
+          "rank": 2,
+          "status": "running",
+          "recorded_steps": 3,
+          "error": null
+        },
+        {
+          "rank": 3,
+          "status": "running",
+          "recorded_steps": 3,
+          "error": null
+        }
+      ],
+      "commits": 0,
+      "media_verified_commits": 0,
+      "fidelity_steps": 0
+    },
+    {
+      "run": "main-k10-canonical-attempt1",
+      "execution_status": "completed",
+      "validation_status": "fail",
+      "method": "none",
+      "error": "RuntimeError('training or owner failed / descendants retained')",
+      "ranks": [
+        {
+          "rank": 0,
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ImportError(\"cannot import name 'AutoParallel' from 'mindspore.parallel' (/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/parallel/__init__.py)\")"
+        },
+        {
+          "rank": 1,
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ImportError(\"cannot import name 'AutoParallel' from 'mindspore.parallel' (/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/parallel/__init__.py)\")"
+        },
+        {
+          "rank": 2,
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ImportError(\"cannot import name 'AutoParallel' from 'mindspore.parallel' (/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/parallel/__init__.py)\")"
+        },
+        {
+          "rank": 3,
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "ImportError(\"cannot import name 'AutoParallel' from 'mindspore.parallel' (/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/parallel/__init__.py)\")"
+        }
+      ],
+      "commits": 1,
+      "media_verified_commits": 1,
+      "fidelity_steps": 1
+    },
+    {
+      "run": "main-k10-canonical-attempt2",
+      "execution_status": "running",
+      "validation_status": "not_run",
+      "method": "none",
+      "ranks": [
+        {
+          "rank": 0,
+          "status": "running",
+          "recorded_steps": 3,
+          "error": null
+        },
+        {
+          "rank": 1,
+          "status": "running",
+          "recorded_steps": 3,
+          "error": null
+        },
+        {
+          "rank": 2,
+          "status": "running",
+          "recorded_steps": 3,
+          "error": null
+        },
+        {
+          "rank": 3,
+          "status": "running",
+          "recorded_steps": 3,
+          "error": null
+        }
+      ],
+      "commits": 0,
+      "media_verified_commits": 0,
+      "fidelity_steps": 0
+    },
+    {
+      "run": "main-k10-rep0",
+      "execution_status": "completed",
+      "validation_status": "fail",
+      "method": "none",
+      "error": "RuntimeError('training or owner failed / descendants retained')",
+      "ranks": [
+        {
+          "rank": 0,
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "RuntimeError('\\n----------------------------------------------------\\n- Kernel error:\\n----------------------------------------------------\\nLaunch kernel failed: Default/Reshape-op440\\n\\n----------------------------------------------------\\n- Ascend Error Message:\\n----------------------------------------------------\\n[PID: 2139667] 2026-09-16-22:29:56.744.348 Invalid_Argument(EE1001): The argument is invalid.Reason: Invalid cnt, current cnt=25165824(bytes), valid cnt range is (0, 6291456]!\\n        Solution: 1.Check the input parameter range of the function. 2.Check the function invocation relationship.\\n        TraceBack (most recent call last):\\n        The argument is invalid.Reason: rtMemcpyAsync execute failed, reason=[invalid value]\\n        [Call][Rts]call rts api [rtMemcpyAsync] failed, retCode is 107000[FUNC:ReportCallError][FILE:log_inner.cpp][LINE:162]\\n\\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn/en for error code description)\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/runtime/core/actors/base/kernel_runner.cc:1343 ExecuteLaunchKernelTaskHP\\n')"
+        },
+        {
+          "rank": 1,
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "RuntimeError('\\n----------------------------------------------------\\n- Kernel error:\\n----------------------------------------------------\\nLaunch kernel failed: Default/Reshape-op440\\n\\n----------------------------------------------------\\n- Ascend Error Message:\\n----------------------------------------------------\\n[PID: 2139670] 2026-09-16-22:29:56.785.974 Invalid_Argument(EE1001): The argument is invalid.Reason: Invalid cnt, current cnt=25165824(bytes), valid cnt range is (0, 6291456]!\\n        Solution: 1.Check the input parameter range of the function. 2.Check the function invocation relationship.\\n        TraceBack (most recent call last):\\n        The argument is invalid.Reason: rtMemcpyAsync execute failed, reason=[invalid value]\\n        [Call][Rts]call rts api [rtMemcpyAsync] failed, retCode is 107000[FUNC:ReportCallError][FILE:log_inner.cpp][LINE:162]\\n\\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn/en for error code description)\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/runtime/core/actors/base/kernel_runner.cc:1343 ExecuteLaunchKernelTaskHP\\n')"
+        },
+        {
+          "rank": 2,
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "RuntimeError('\\n----------------------------------------------------\\n- Kernel error:\\n----------------------------------------------------\\nLaunch kernel failed: Default/Reshape-op440\\n\\n----------------------------------------------------\\n- Ascend Error Message:\\n----------------------------------------------------\\n[PID: 2139673] 2026-09-16-22:29:56.936.031 Invalid_Argument(EE1001): The argument is invalid.Reason: Invalid cnt, current cnt=25165824(bytes), valid cnt range is (0, 6291456]!\\n        Solution: 1.Check the input parameter range of the function. 2.Check the function invocation relationship.\\n        TraceBack (most recent call last):\\n        The argument is invalid.Reason: rtMemcpyAsync execute failed, reason=[invalid value]\\n        [Call][Rts]call rts api [rtMemcpyAsync] failed, retCode is 107000[FUNC:ReportCallError][FILE:log_inner.cpp][LINE:162]\\n\\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn/en for error code description)\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/runtime/core/actors/base/kernel_runner.cc:1343 ExecuteLaunchKernelTaskHP\\n')"
+        },
+        {
+          "rank": 3,
+          "status": "failed",
+          "recorded_steps": 5,
+          "error": "RuntimeError('\\n----------------------------------------------------\\n- Kernel error:\\n----------------------------------------------------\\nLaunch kernel failed: Default/Reshape-op440\\n\\n----------------------------------------------------\\n- Ascend Error Message:\\n----------------------------------------------------\\n[PID: 2139676] 2026-09-16-22:29:56.701.910 Invalid_Argument(EE1001): The argument is invalid.Reason: Invalid cnt, current cnt=25165824(bytes), valid cnt range is (0, 6291456]!\\n        Solution: 1.Check the input parameter range of the function. 2.Check the function invocation relationship.\\n        TraceBack (most recent call last):\\n        The argument is invalid.Reason: rtMemcpyAsync execute failed, reason=[invalid value]\\n        [Call][Rts]call rts api [rtMemcpyAsync] failed, retCode is 107000[FUNC:ReportCallError][FILE:log_inner.cpp][LINE:162]\\n\\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn/en for error code description)\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/runtime/core/actors/base/kernel_runner.cc:1343 ExecuteLaunchKernelTaskHP\\n')"
+        }
+      ],
+      "commits": 0,
+      "media_verified_commits": 0,
+      "fidelity_steps": 0
+    },
+    {
+      "run": "main-k10-rep0-attempt1",
+      "execution_status": "completed",
+      "validation_status": "fail",
+      "method": "none",
+      "error": "KeyboardInterrupt()",
+      "alive": [
+        {
+          "pid": 2154160,
+          "members": [
+            {
+              "pid": 2154160,
+              "start_ticks": 350504818
+            }
+          ]
+        },
+        {
+          "pid": 2154182,
+          "members": [
+            {
+              "pid": 2154182,
+              "start_ticks": 350504958
+            },
+            {
+              "pid": 2154334,
+              "start_ticks": 350505618
+            },
+            {
+              "pid": 2154337,
+              "start_ticks": 350505623
+            },
+            {
+              "pid": 2154340,
+              "start_ticks": 350505627
+            },
+            {
+              "pid": 2154343,
+              "start_ticks": 350505632
+            },
+            {
+              "pid": 2154346,
+              "start_ticks": 350505638
+            }
+          ]
+        }
+      ],
+      "retained": [],
+      "reconciled": true,
+      "ranks": [
+        {
+          "rank": 0,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 1,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 2,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        },
+        {
+          "rank": 3,
+          "status": "running",
+          "recorded_steps": 0,
+          "error": null
+        }
+      ],
+      "commits": 0,
+      "media_verified_commits": 0,
+      "fidelity_steps": 0
+    },
+    {
+      "run": "main-k10-rep0-attempt2",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "method": "none",
+      "final_step": 24,
+      "ranks": [
+        {
+          "rank": 0,
+          "status": "pass",
+          "recorded_steps": 24,
+          "error": null
+        },
+        {
+          "rank": 1,
+          "status": "pass",
+          "recorded_steps": 24,
+          "error": null
+        },
+        {
+          "rank": 2,
+          "status": "pass",
+          "recorded_steps": 24,
+          "error": null
+        },
+        {
+          "rank": 3,
+          "status": "pass",
+          "recorded_steps": 24,
+          "error": null
+        }
+      ],
+      "commits": 20,
+      "media_verified_commits": 0,
+      "fidelity_steps": 0
+    }
+  ],
+  "scope": "Weights only; 20 optimizer steps; one effective run per configuration, maximum two when inconclusive.",
+  "note": "A completed hardware run is not automatically a fidelity pass; only audited results enter conclusions."
+}

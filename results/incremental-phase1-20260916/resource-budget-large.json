@@ -1,0 +1,19 @@
+{
+  "model": "Qwen3.5-27B-original",
+  "elements": 27781427952,
+  "scope": "all locally stored tensors; hypothetical FP32 params/Adam and TP4",
+  "weights_bytes": 111125711808,
+  "adam_bytes": 222251423616,
+  "gradients_bytes": 111125711808,
+  "minimum_training_bytes_per_rank": 111125711808,
+  "weight_reference_bytes_per_rank": 27781427952,
+  "weight_scan_bytes": 222251423616,
+  "full_weight_adam_scan_bytes": 666754270848,
+  "top_payload_bytes": {
+    "0.05": 5556285590.400001,
+    "0.1": 11112571180.800001,
+    "0.2": 22225142361.600002
+  },
+  "status": "not_run",
+  "reason": "different qwen3_5 multimodal architecture is outside validated Qwen3 training entry; FP32 Adam+gradients exceeds 64 GiB per rank before activations"
+}

@@ -1,0 +1,7 @@
+# 增量检查点第一阶段：实时结果
+
+实验尚未全部完成，当前状态见 [status.json](status.json)，已核验数据见 [validation-summary.json](validation-summary.json)。
+
+默认每配置一次，必要时最多两次；所有 demo 保留连续 20 个优化器 step。主模型 Qwen3-8B，辅模型 Qwen3-4B，状态范围限权重。原始权重和性能日志保留在状态文件所列本机目录。
+
+资源图展示任务区间，不能解释为核占用；目前 standalone 边界图不是训练减速曲线。保真度未指定质量预算，不预先宣称通过。

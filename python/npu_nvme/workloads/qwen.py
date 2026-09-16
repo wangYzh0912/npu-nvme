@@ -17,7 +17,7 @@ def run(options):
     directory=out/f'rank_{rank}';directory.mkdir(parents=True,exist_ok=True)
     report=dict(status='running',rank=rank,pid=os.getpid(),losses=[],checkpoints=[],
                 method=options['method'],begin_ns=time.monotonic_ns())
-    controller=None
+    controller=None;incremental=None;profiler=None
     def record():write_checked(directory/'training.json',report)
     record()
     try:
@@ -36,8 +36,12 @@ def run(options):
         if ms.__version__!='2.7.1' or not mindformers.__version__.startswith('1.7.'):
             raise RuntimeError('baseline requires validated MindSpore 2.7.1 / MindFormers 1.7')
         source=Path(options['model']);model=json.loads((source/'config.json').read_text())
-        if (model.get('model_type'),model.get('hidden_size'),model.get('num_hidden_layers'))!=('qwen3',4096,36):
-            raise ValueError('baseline requires full Qwen3-8B')
+        supported={4096:'main',2560:'auxiliary'}
+        if (model.get('model_type')!='qwen3' or model.get('num_hidden_layers')!=36 or
+                model.get('hidden_size') not in supported):
+            raise ValueError('incremental workload requires Qwen3-8B or Qwen3-4B')
+        if options.get('incremental_experiment') and supported[model['hidden_size']]!=options['incremental_experiment']['model_role']:
+            raise ValueError('incremental model role differs')
         start=options['start_step'];stop=options['stop_step'];horizon=options['lr_horizon']
         sequence=options['seq_length'];period=options['checkpoint_interval']
         template=Path(mindformers.__file__).parent.parent/'configs/qwen3/finetune_qwen3.yaml'
@@ -79,8 +83,30 @@ def run(options):
         controller=CheckpointController(options,rank=rank,npu_id=rank,output=out)
 
         class Progress(ms.Callback):
+            def on_train_step_begin(self,context):
+                self.step_begin_ns=time.monotonic_ns()
+
             def on_train_begin(self,context):
                 network=context.original_args().train_network
+                experiment=options.get('incremental_experiment')
+                if experiment and experiment.get('initial_full'):
+                    from npu_nvme.experiments.initial_state import capture
+                    initial_dir=Path(experiment['initial_full'])/f'rank_{rank}'
+                    initial_dir.parent.mkdir(parents=True,exist_ok=True)
+                    capture(ms,network,initial_dir,identity=experiment['initial_identity'],
+                            data_sha256=data_hash,horizon=horizon)
+                    barrier()
+                if experiment and experiment['model_role']=='auxiliary':
+                    schema_path=out/'auxiliary-weight-schema.json'
+                    if rank==0:
+                        from npu_nvme.experiments.derive_schema import derive_model_schema
+                        template=json.loads(Path(experiment['strategy']).read_text())
+                        names={row['name'] for row in template['tensors'] if row['role']=='model'}
+                        shapes={p.name:list(p.shape) for _,p in network.parameters_and_names() if p.name in names}
+                        schema=derive_model_schema(template,shapes,source_run=experiment['run_id'],tied_embeddings=model.get('tie_word_embeddings',False))
+                        temporary=schema_path.with_suffix('.tmp');temporary.write_text(json.dumps(schema)+'\n');temporary.replace(schema_path)
+                    barrier()
+                    experiment['strategy']=str(schema_path)
                 if options['method']=='ours':controller._d2()._open()
                 if options.get('restore_checkpoint'):
                     restored=controller.restore(ms,network,data_sha256=data_hash,lr_horizon=horizon,barrier=barrier)
@@ -104,7 +130,56 @@ def run(options):
                 if not np.isfinite(loss) or overflow:raise RuntimeError('nonfinite loss or skipped optimizer update')
                 step=start+int(cb.cur_step_num)
                 if step!=start+len(report['losses'])+1:raise ValueError('callback optimizer step is not sequential')
-                report['losses'].append(dict(step=step,loss=loss,overflow=overflow))
+                row=dict(step=step,loss=loss,overflow=overflow,
+                         begin_ns=getattr(self,'step_begin_ns',None),end_ns=time.monotonic_ns())
+                report['losses'].append(row)
+                experiment=options.get('incremental_experiment')
+                nonlocal incremental
+                if experiment and step==experiment['warmup_steps']:
+                    if experiment.get('initial_full'):
+                        from npu_nvme.experiments.initial_state import restore
+                        before=time.monotonic_ns()
+                        restored=restore(ms,cb.train_network,Path(experiment['initial_full'])/f'rank_{rank}',
+                                         identity=experiment['initial_identity'])
+                        barrier()
+                        report['initial_full_restore']=dict(restored,elapsed_ns=time.monotonic_ns()-before)
+                    report['incremental']=dict(group=experiment['group'],warmup_steps=step,
+                                               formal_begin_ns=time.monotonic_ns(),steps=[])
+                    if experiment['group']!='B0' or experiment.get('probe'):
+                        from npu_nvme.experiments.runtime import IncrementalController
+                        from npu_nvme.experiments.injection import ProbeController
+                        factory=ProbeController if experiment.get('probe') else IncrementalController
+                        incremental=factory(ms,cb.train_network,experiment,
+                            rank=rank,output=out)
+                        incremental.warmup()
+                        report['incremental']['formal_begin_ns']=time.monotonic_ns()
+                    if experiment.get('profile'):
+                        nonlocal profiler
+                        from mindspore.profiler import ProfilerLevel, AicoreMetrics
+                        profiler=ms.Profiler(start_profile=False,output_path=str(directory/'profiler'),
+                            profiler_level=ProfilerLevel.Level1,aic_metrics=AicoreMetrics.PipeUtilization,
+                            hbm_ddr=True,data_simplification=False)
+                        profiler.start()
+                        report['incremental']['profiled']=True
+                    ms.runtime.reset_peak_memory_stats()
+                    report['incremental']['memory_start_bytes']=ms.runtime.memory_allocated()
+                elif experiment and step>experiment['warmup_steps']:
+                    logical=step-experiment['warmup_steps']
+                    if incremental:
+                        report['incremental']['steps'].append(incremental.save(logical))
+                    if logical==experiment['formal_steps']:
+                        report['incremental']['formal_end_ns']=time.monotonic_ns()
+                        report['incremental']['memory_peak_bytes']=ms.runtime.max_memory_allocated()
+                        if profiler:
+                            profiler.stop()
+                        if incremental:
+                            report['incremental']['pending_at_formal_end']=int(incremental.pending is not None)
+                            report['incremental']['drain_ns']=incremental.close()
+                            incremental=None
+                            report['incremental']['all_done_ns']=time.monotonic_ns()
+                        else:
+                            report['incremental']['all_done_ns']=report['incremental']['formal_end_ns']
+                            report['incremental'].setdefault('drain_ns',0)
                 if step%period==0 or step==stop:
                     ms.hal.synchronize();state,small=parameter_manifest(cb.train_network)
                     controls=capture_control(ms,step=step,data_sha256=data_hash,lr_horizon=horizon,small=small)
@@ -119,7 +194,12 @@ def run(options):
 
         trainer=Trainer(args=config,train_dataset=dataset,callbacks=[Progress()])
         trainer.finetune(resume_from_checkpoint=str(source),auto_trans_ckpt=True)
+        if profiler:
+            profiler.analyse()
         if len(report['losses'])!=stop-start:raise RuntimeError('training stopped before requested optimizer step')
+        if options.get('incremental_experiment') and options['incremental_experiment']['group']=='B0':
+            report['incremental'].setdefault('drain_ns',0)
+            report['incremental'].setdefault('all_done_ns',time.monotonic_ns())
         report.update(status='pass',end_ns=time.monotonic_ns(),final_step=stop)
         record()
         return 0
@@ -129,6 +209,15 @@ def run(options):
         record();traceback.print_exc()
         return 1
     finally:
+        if incremental:
+            try:
+                drain=incremental.close()
+                report['incremental']['drain_ns']=drain
+                report['incremental']['all_done_ns']=time.monotonic_ns()
+                record()
+            except BaseException as error:
+                report.update(status='failed',incremental_close_error=repr(error))
+                record()
         if controller:controller.close()
 
 
