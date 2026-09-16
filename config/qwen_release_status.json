@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "status": "usable_baseline_ready",
+  "date": "2026-09-16",
+  "workload": {
+    "model": "Qwen3-8B",
+    "topology": "TP4/DP1/PP1",
+    "devices": [0, 1, 2, 3],
+    "state_scope": "FULL model, Adam, training position and RNG controls"
+  },
+  "accepted": {
+    "training_entry_preflight": "pass",
+    "native_two_restart_chain": "pass",
+    "ours_tp4_save_fresh_restore_continue_save": "pass",
+    "ours_tp4_source_oracle_comparison": "pass",
+    "single_npu_async_acl_spdk_byte_roundtrip": "pass",
+    "tp2_tp4_host_bridge_fresh_process_save_restore": "pass",
+    "abi_major": 2,
+    "software_tests_passed": 394
+  },
+  "ours_data_path": {
+    "device_copy": "aclrtMemcpyAsync D2H and H2D",
+    "rank_owner_bridge": "bounded Host socket bridge",
+    "storage": "SPDK raw NVMe",
+    "restore_process": "fresh"
+  },
+  "acceptance_scope": {
+    "single_npu": "transport only; no single-NPU Qwen workload claim",
+    "multi_npu": "Qwen TP4 and deterministic TP2/TP4 checkpoint fixtures",
+    "full_campaign": "deferred by scope decision; not a pass"
+  },
+  "deferred_register": "docs/plans/DEFERRED_VALIDATION.md",
+  "primary_campaign": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004",
+  "primary_campaign_status": "deferred",
+  "primary_campaign_completed_runs": 6,
+  "primary_campaign_passing_comparisons": 5,
+  "runtime_sha256": "ba6dc8156be8d1f9c353d309e881afe6e0391916471be6152df390aa13c4d2b7"
+}

@@ -53,12 +53,15 @@ configuration. SPDK and the patched DPDK ring archive are external build
 dependencies; the build records their paths and the archive hash. The native
 MindSpore allocation extension must be built in each checkout.
 
-Acceptance compares all four methods against uninterrupted training, including
-multiple saves and fresh restores. It checks exact state/control equality and
-loss tolerance, then records repeated restore timings. A successful pilot is
-not a substitute for this full campaign.
+The published baseline has passed the Qwen TP4 training entry, Native restart
+chain, Ours periodic save, and Ours fresh-process restore/continue/save path.
+The exhaustive four-method matrix and repeated timing campaign remain available
+through `benchmark`; they are explicitly deferred and are not claimed as passed.
+See [the deferred validation register](docs/plans/DEFERRED_VALIDATION.md).
 
 Current progress and evidence locations are recorded in
 [the delivery plan](docs/plans/QWEN_TRAINING_BASELINE.md). Historical experiments
 are preserved in remote `archive/qwen-baseline-20260916/*` branches; large
 payloads and original history remain in the hash-verified external archive.
+Host-specific environment paths and complete command examples are in
+[the execution guide](EXECUTION_ENVIRONMENT_AND_COMMANDS.md).

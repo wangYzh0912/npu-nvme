@@ -1,10 +1,12 @@
 # Qwen training baseline delivery — 2026-09-16
 
-Approved objective: deliver a working Qwen3-8B TP4 training entry on the candidate
+Original exhaustive objective: deliver a working Qwen3-8B TP4 training entry on the candidate
 environment, with none / Native / Ours / ByteCheckpoint Host, configurable steps,
 periodic FULL checkpoints, explicit/latest restore, and save after restore.
 Use the fixed local sample only. GPT-2/XL compatibility and live do not block
-this delivery. Incremental checkpoints, Qwen live and reshard are deferred.
+this delivery. Incremental checkpoints, Qwen live and reshard are deferred. The
+final publication boundary below keeps the usable Native/Ours mainline and
+defers the unfinished exhaustive four-method statistics matrix.
 
 Implementation order:
 1. Preserve pilot failure evidence, recover all eight NPUs, fix Host/device pointer
@@ -42,86 +44,44 @@ three-source comparison with one warmup and three measured fresh restores per
 persistence method. Loss tolerances remain rtol=1e-5 / atol=1e-6. Performance
 is measured and disclosed without the cancelled five-percent regression gate.
 
-## Execution status (2026-09-16)
+## Release status (2026-09-16)
 
-- Release software gate: 389 tests passed, junit and logs in
-  release-software-20260916-003. Attempt 002 has passed the seeded 24-step
-  oracle, Native source8 and explicit step4-to8 restart with exact state/control.
-- ByteCheckpoint independent-process probe reproduced producer shared-memory
-  unlink on worker exit. The worker now disables its own tracking for attached
-  segments; producer retains unlink ownership. Save/fresh-load probe passed
-  (bytecheckpoint-worker-probe-20260916-002), plus process lifecycle regression.
-  Reference: https://docs.python.org/3.14/library/multiprocessing.shared_memory.html
-- Complete unchanged method groups can be verified and reused across repaired
-  campaigns. Repeated performance samples always run anew. The original source
-  worktree remains frozen so its recorded tracked-byte identity can be checked.
+The usable Qwen3 baseline is ready for publication. The supported training
+topology is TP4/DP1/PP1 on NPU 0--3 with fixed local text and explicit
+MindSpore 2.7.1, MindFormers 1.7 and CANN 8.3.RC1 identities. `train.py`
+provides preflight, fit, explicit/latest restore, restart verification,
+inspection and the optional exhaustive benchmark.
 
-- Acceptance attempt qwen-training-acceptance-20260916-001 failed after the
-  Native source run: only default MindSpore RNG differed from the 24-step
-  oracle. set_seed does not initialize that generator. The release adds
-  manual_seed(42), restores its exact state and includes that seed in identity.
-  A new complete campaign must pass before publication. No acceptance process
-  from the first attempt remains running.
-- The release uses qwen-release-runtime-20260916-001. Timings cover worker
-  entry through global restore readiness, including initialization, compilation
-  and integrity checks; they are not storage-only restore latency.
+Validated behavior:
 
-- Allocation classification fix: commit 556b757. Real MindSpore 2.7.1 Host
-  scalar probe passed. Direct NPU hugepage probes passed on devices 0–3 after recovery.
-- Training entry and periodic catalog: commit 369436b. Persistent owner/rank
-  sessions, explicit/latest generation selection, reader pins, four backends,
-  multicycle and repeated-restart campaign entry implemented; TP4 execution
-  and final acceptance remain pending.
-- Software gate: 398 tests passed (Python, D2, campaign, regression and E1).
-  Real Native CPU model/Adam/control save and restore passed. Candidate entry
-  preflight passed and reported the unreconciled hardware lease.
-- Authorized eight-device reset completed without a host reboot (boot ID unchanged).
-  Eight-rank HCCL all-reduce and device 0–3 direct hugepage DMA probes passed.
-  The failed pilot lease was reconciled after these checks; old hugepage evidence remains.
-- Real Qwen Ours source saved FULL at step 4. A fresh process restored it,
-  continued to step 8 and saved FULL again; both runs passed with owner close verified.
-  Evidence: qwen-entry-pilot-source-20260916-001 and
-  qwen-entry-pilot-resume-20260916-001 under /models/npu_nvme_exp/user7-stack.
-- Twenty-one additional historical worktree snapshots were pushed and remote-verified;
-  archive-qwen-baseline-20260916/stage-snapshots.json records their exact refs.
-- Main dirty workspace archived and remote verified at
-  `archive/qwen-baseline-20260916/main-dirty`, commit a7eaab5.
-  Dirty legacy-cleanup and long-term-v1.3 archives are also remote-verified;
-  exact refs and external payload manifests are in config/qwen_archive_inventory.json.
-  GitHub rejected the original history push at its 2 GiB pack limit. Those two
-  remote snapshots use origin/master as their parent; all original history is
-  preserved in the verified external original-history.bundle. Local main remains unchanged.
-- Formal four-method training acceptance, release-tree cleanup and publication
-  to master are NOT complete. CPU results must not be substituted for them.
+- The 24-step uninterrupted oracle passed. Native passed source8, explicit
+  step4-to8, latest step8-to16 and a second fresh latest step16-to24 restore.
+  Model, Adam and control state were exact; loss used rtol=1e-5/atol=1e-6.
+- Ours passed a real Qwen TP4 save, fresh-process restore, continuation and
+  subsequent save in `qwen-entry-pilot-{source,resume}-20260916-001`.
+  Attempt 004 also passed step4/8 periodic Ours saves and exact source8 oracle
+  comparison. All four rank sessions and the storage owner closed cleanly.
+- Candidate D2 fresh-process fixtures passed save and restore for TP2 and TP4.
+  Candidate ABI2 also passed a real single-NPU HBM-to-SPDK-to-HBM byte-exact
+  round trip through `aclrtMemcpyAsync`; MindSpore device/Host placement and
+  direct hugepage transfer probes passed on NPU 0--3. These fixtures validate
+  the transport and rank protocol; the public Qwen entry remains fixed to TP4
+  rather than advertising arbitrary topology.
+- The ByteCheckpoint attached-shared-memory lifetime fix passed a real
+  independent worker save/fresh-load probe. The full Qwen ByteCheckpoint matrix
+  is deferred.
+- The final software gate passed 394 tests. A clean rebuild at `ef5d113a`
+  produced the same `libnpu_nvme.so.2.0` SHA256 as the hardware-tested runtime:
+  `ba6dc8156be8d1f9c353d309e881afe6e0391916471be6152df390aa13c4d2b7`.
 
-Current entry commands (run from the implementation checkout):
+The user approved publishing this usable baseline before the exhaustive
+four-method statistics campaign. Attempt 004 is therefore recorded as
+`deferred`, with 6 completed runs and 5 passing oracle comparisons. It was
+stopped after a safe checkpoint boundary with all eight NPUs idle. The exact
+remaining matrix is maintained in `docs/plans/DEFERRED_VALIDATION.md` and must
+not be described as passed.
 
-```bash
-python3 train.py preflight --config config/qwen_training.json
-python3 train.py fit --config config/qwen_training.json --output /models/NEW_RUN
-python3 train.py fit --config config/qwen_training.json --output /models/NEW_RESUME \
-  --resume --checkpoint-root /models/NEW_RUN/checkpoints --generation latest --stop-step 24
-python3 train.py verify-restart --config config/qwen_training.json \
-  --output /models/NEW_VERIFY --checkpoint-root /models/NEW_RUN/checkpoints \
-  --oracle-run /models/ORACLE_RUN --stop-step 24
-python3 train.py benchmark --config config/qwen_training.json \
-  --output /models/NEW_CAMPAIGN --profile all
-python3 train.py inspect --config /models/CONFIG_WITH_CHECKPOINT_ROOT.json
-```
-
-Ours requires root for SPDK access. Commands intentionally reject an existing
-unreconciled hardware lease. Example paths are placeholders for new directories.
-
-Candidate-only build entry (validated without initializing devices):
-
-```bash
-python3 tools/build_training_runtime.py \
-  --manifest /models/npu_nvme_exp/user7-stack/final-env-20260915-002/environments.json \
-  --out /models/npu_nvme_exp/user7-stack/NEW_RUNTIME \
-  --spdk /home/user7/npu-nvme/third_party/spdk \
-  --dpdk-ring /home/user7/npu-nvme/build/dpdk_fix/librte_mempool_ring_fixed.a
-```
-
-The current successful build is qwen-training-runtime-20260916-001. Its generated
-manifest is selected by config/qwen_training.json. Source/build dependencies
-must be preserved or relocated before eventual workspace cleanup.
+Historical worktrees and superseded attempts are preserved under remote
+`archive/qwen-baseline-20260916/*` refs. Large model/checkpoint payloads and the
+original history bundle remain in the hash-verified external archive. Commands
+and selected host paths are documented in `EXECUTION_ENVIRONMENT_AND_COMMANDS.md`.

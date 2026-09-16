@@ -1422,3 +1422,25 @@ config/execution_status.json on codex/final-validation. C2 old has passed;
 D2 separate-process TP2/TP4 fixtures and F1 Host-array persistence passed but do
 not close Qwen or H06. The current Qwen none pilot runs a frozen a680740 checkout.
 No Qwen primary promotion, E1/H06 completion, merge or push has occurred.
+
+## Usable Qwen baseline publication, 2026-09-16
+
+The publication boundary changed after the training entry and required transfer
+path became usable. Qwen3-8B TP4 now has a unified candidate-environment entry,
+periodic FULL save and fresh-process restore. Native completed the complete
+24-step two-restart chain. Ours completed real TP4 save, restore, continuation
+and subsequent save; a later source run also published step4/8 and matched the
+uninterrupted oracle exactly. Candidate TP2/TP4 small-state fresh-process D2
+fixtures and NPU 0--3 direct transfer probes passed.
+
+The exhaustive four-method and repeated-timing campaign was stopped at a safe
+checkpoint boundary by explicit scope decision. Attempt 004 is `deferred`, not
+`pass`: it contains 6 completed runs and 5 passing comparisons. All Ours rank
+sessions and the storage owner closed, the lease was reconciled, and all eight
+NPUs were idle. Remaining verification is maintained in
+`docs/plans/DEFERRED_VALIDATION.md`; no deferred item is promoted by inference.
+
+The mainline supported workload is fixed Qwen TP4 on NPU 0--3. Single-device
+transport evidence does not advertise a single-device Qwen workload. Incremental,
+Qwen live, reshard, candidate GPT-2/XL, multi-owner and power-loss claims remain
+outside this publication.
