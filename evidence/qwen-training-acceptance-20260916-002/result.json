@@ -1,0 +1,129 @@
+{
+  "validation_status": "fail",
+  "profile": "all",
+  "runs": [
+    {
+      "name": "trajectory-none",
+      "method": "none",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none"
+    },
+    {
+      "name": "mindspore_native_save-source8",
+      "method": "mindspore_native_save",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/mindspore_native_save-source8"
+    },
+    {
+      "name": "mindspore_native_save-explicit4",
+      "method": "mindspore_native_save",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/mindspore_native_save-explicit4"
+    },
+    {
+      "name": "mindspore_native_save-latest8-to16",
+      "method": "mindspore_native_save",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/mindspore_native_save-latest8-to16"
+    }
+  ],
+  "comparisons": [
+    {
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 8
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact",
+      "oracle": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "run": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/mindspore_native_save-source8"
+    },
+    {
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 1,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 2,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 3,
+          "steps": 4,
+          "final_step": 8
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact",
+      "oracle": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "run": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/mindspore_native_save-explicit4"
+    },
+    {
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 16
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact",
+      "oracle": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "run": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/mindspore_native_save-latest8-to16"
+    }
+  ],
+  "timings": {},
+  "error": "RuntimeError('campaign run failed: mindspore_native_save-latest16-to24')"
+}

@@ -1,0 +1,35 @@
+{
+  "validation_status": "fail",
+  "profile": "all",
+  "runs": [
+    {
+      "name": "trajectory-none",
+      "method": "none",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "reused": true
+    }
+  ],
+  "comparisons": [],
+  "timings": {},
+  "reuse": {
+    "source": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002",
+    "accepted": [
+      "trajectory-none"
+    ],
+    "rejected": [
+      {
+        "method": "mindspore_native_save",
+        "reason": "run is not complete"
+      },
+      {
+        "method": "ours",
+        "reason": "[Errno 2] No such file or directory: '/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/ours-source8/result.json'"
+      },
+      {
+        "method": "bytecheckpoint_host",
+        "reason": "[Errno 2] No such file or directory: '/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/bytecheckpoint_host-source8/result.json'"
+      }
+    ]
+  },
+  "error": "KeyboardInterrupt()"
+}
