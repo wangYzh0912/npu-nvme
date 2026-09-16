@@ -78,10 +78,15 @@ int npu_nvme_submit_write_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
 /** @brief Poll a submitted request; result is returned once done is true. */
 int npu_nvme_poll_request(NPUNVMERequest *request, int *done);
 
-/** @brief Wait up to timeout_ms (zero means unbounded). */
+/** @brief Observe for timeout_ms; zero selects the finite request default.
+ * Timeout does not cancel I/O or prove source/destination buffers are safe.
+ */
 int npu_nvme_wait_request(NPUNVMERequest *request, uint32_t timeout_ms);
 
-/** @brief Release a terminal request.  Non-terminal requests are retained. */
+/** @brief Drop caller's request reference, including before completion.
+ * The queue/reactor retains its reference. This never transfers ownership of
+ * caller data buffers: retain those until completion or proven quiescence.
+ */
 void npu_nvme_release_request(NPUNVMERequest *request);
 
 /** @brief Return total NVMe capacity in bytes. */
@@ -209,6 +214,27 @@ uint32_t npu_nvme_get_io_timeout_ms(NPUNVMEContext *ctx);
  * @return 0 when no request remains, -ETIMEDOUT when the bound expires.
  */
 int npu_nvme_wait_quiescent(NPUNVMEContext *ctx, uint32_t timeout_ms);
+
+/** Diagnostic ownership snapshot; no entry authorizes freeing a buffer.
+ * reason: 0 active, 1 event record stop unproven, 2 event query stop unproven,
+ * 3 observation timeout. Free only after request completion/proven quiescence.
+ */
+typedef struct {
+    uint32_t slot;
+    uint32_t reason;
+    uint64_t request_id;
+    uint64_t bytes;
+    uint64_t nvme_offset;
+} NPUNVMERetainedSlot;
+int npu_nvme_get_retained_slots(NPUNVMEContext *ctx, NPUNVMERetainedSlot *slots,
+                                 uint32_t capacity, uint32_t *count);
+
+/** Close admission and wait for reactor exit, retaining context on failure.
+ *  0 timeout selects the finite default. May be retried; does not free ctx.
+ *  -EIO means DMA stop is unproven; buffers and context must remain alive.
+ *  After successful close and joined submitters, cleanup releases the owner.
+ */
+int npu_nvme_close(NPUNVMEContext *ctx, uint32_t timeout_ms);
 
 /* Delta frame I/O: migrated to Python side via build_chunks_host +
  * write_batch_host / read_batch.  The SPSC ring-buffer pipeline handles
