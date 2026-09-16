@@ -1,0 +1,112 @@
+{
+  "status": "pass",
+  "acceptance_commit": "cb3e21d70bf8a83f2e395603fc47691829fd2f01",
+  "software_cases": 213,
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "training_runs": 12,
+  "correctness_restores": 9,
+  "timing_restores": {
+    "warmup": 9,
+    "measured": 27
+  },
+  "methods": {
+    "none": {
+      "comparison_group": "training-only",
+      "training_seconds_by_seed": {
+        "41": 2.210711778,
+        "42": 1.447440705,
+        "43": 1.418114184
+      },
+      "sampled_host_peak_bytes": 11305897984,
+      "sampled_hbm_peak_bytes": 6071255040,
+      "restore_seconds": null
+    },
+    "mindspore_native_save": {
+      "comparison_group": "filesystem-84",
+      "training_seconds_by_seed": {
+        "41": 60.85781383,
+        "42": 60.895123992,
+        "43": 60.954138015
+      },
+      "sampled_host_peak_bytes": 13725908992,
+      "sampled_hbm_peak_bytes": 7556038656,
+      "restore_seconds": {
+        "raw_values": [
+          36.988621292,
+          37.194767589,
+          36.401435452,
+          36.715787046,
+          37.09309256,
+          37.121745931,
+          38.018758052,
+          36.513878024,
+          36.334287096
+        ],
+        "mean": 36.93137478244444,
+        "min": 36.334287096,
+        "max": 38.018758052
+      }
+    },
+    "ours": {
+      "comparison_group": "raw-83",
+      "training_seconds_by_seed": {
+        "41": 109.251543111,
+        "42": 108.69292761,
+        "43": 108.794964228
+      },
+      "sampled_host_peak_bytes": 13754093568,
+      "sampled_hbm_peak_bytes": 7904165888,
+      "restore_seconds": {
+        "raw_values": [
+          49.66189477,
+          49.491916364,
+          50.68895894,
+          49.20268679,
+          48.436172423,
+          48.714322059,
+          48.865629076,
+          49.260701773,
+          51.108530741
+        ],
+        "mean": 49.492312548444445,
+        "min": 48.436172423,
+        "max": 51.108530741
+      }
+    },
+    "bytecheckpoint_host": {
+      "comparison_group": "filesystem-84",
+      "training_seconds_by_seed": {
+        "41": 53.320111089,
+        "42": 52.386553238,
+        "43": 51.530615985
+      },
+      "sampled_host_peak_bytes": 16669081600,
+      "sampled_hbm_peak_bytes": 7556038656,
+      "restore_seconds": {
+        "raw_values": [
+          45.068769644,
+          45.094580212,
+          45.194087775,
+          44.167115701,
+          44.919849814,
+          44.480212035,
+          44.211169469,
+          44.698705362,
+          45.025624648
+        ],
+        "mean": 44.76223496222222,
+        "min": 44.167115701,
+        "max": 45.194087775
+      }
+    }
+  },
+  "raw_root": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002",
+  "initial_failures_retained": [
+    "pilot-001: Native control summary mistaken for full control state",
+    "acceptance-001: root pytest path missing; hardware not started"
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "workload": {
+    "model_id": "gpt2",
+    "model_revision": "sha256:132237ff20be59328e0ff606a4010357a659bb9b75ad9d235f15499c5ef150f5",
+    "task": "causal_lm",
+    "dtype": "fp32",
+    "training_mode": "single_rank",
+    "batch": 1,
+    "seq_len": 129,
+    "seeds": [
+      41,
+      42,
+      43
+    ],
+    "dataset_revision": "fixed-arithmetic-tokens-v1",
+    "dropout": 0,
+    "learning_rate": 1e-05
+  },
+  "checkpoint": {
+    "methods": [
+      "none",
+      "mindspore_native_save",
+      "ours",
+      "bytecheckpoint_host"
+    ],
+    "state_scope": "full_state",
+    "capture": "frozen",
+    "transport": "async",
+    "admission": "block",
+    "wait_policy": "source_safe",
+    "interval": 3,
+    "retention": 2
+  },
+  "runtime": {
+    "admission_ms": 120000,
+    "wait_ms": 120000,
+    "drain_ms": 120000,
+    "close_ms": 120000,
+    "phase_ms": 900000,
+    "max_requests": 1,
+    "max_batch_items": 65536,
+    "max_batch_bytes": 68719476736,
+    "max_metadata_bytes": 1048576,
+    "host_budget_bytes": 34359738368,
+    "hbm_budget_bytes": 34359738368,
+    "chunk_bytes": 1048576,
+    "dma_depth": 4
+  },
+  "storage": {
+    "pci": "0000:83:00.0",
+    "namespace": 1,
+    "offset": 0,
+    "length": "device_capacity_bytes",
+    "media_version": "V2",
+    "owner": "single",
+    "mode": "read_write",
+    "fs_root": "/models/npu_nvme_exp/user7-stack/c1-data",
+    "authorization_file": "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/config/raw_test_region.json",
+    "slot_size_gb": 10,
+    "shm_id": 51401
+  },
+  "measurement": {
+    "mode": "correctness_and_timing",
+    "timing_schema": 1,
+    "integrity": "mandatory",
+    "warmup": 5,
+    "formal_steps": 30,
+    "continue_steps": 3,
+    "restore_repetitions": 3,
+    "cache_policy": "warm",
+    "run_order": "rotating_serial",
+    "loss_rtol": 1e-05,
+    "loss_atol": 1e-06
+  },
+  "output": {
+    "root": "/models/npu_nvme_exp/user7-stack/c1-runs"
+  },
+  "identity": {
+    "expected_commit": "ed43b2ed7c071ea7f719147e043080a892032531",
+    "allow_dirty": true
+  }
+}

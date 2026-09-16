@@ -155,6 +155,7 @@ def verify_phase(args, run_dir):
 
 
 def main():
+    raise RuntimeError("Legacy raw caller retired; use strict single-rank FULL; Delta/multirank awaits D2")
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=("orchestrate", "write", "verify"),
                         default="orchestrate")

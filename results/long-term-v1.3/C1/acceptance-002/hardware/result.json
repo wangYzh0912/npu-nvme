@@ -1,0 +1,5143 @@
+{
+  "command": "benchmark",
+  "execution_status": "completed",
+  "observed_commit": "cb3e21d70bf8a83f2e395603fc47691829fd2f01",
+  "runs": [
+    {
+      "comparison": {
+        "comparable": false,
+        "comparison_group": "training-only",
+        "reasons": [
+          "No checkpoint or recovery"
+        ]
+      },
+      "method": "none",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/none",
+            "--method",
+            "none",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 49.16204872401431,
+          "phase": "source",
+          "pid": 781910,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15859712,
+              "monotonic_ns": 3313371253048638
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2041540608,
+              "monotonic_ns": 3313377459285860
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9023778816,
+              "monotonic_ns": 3313383758922181
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9265610752,
+              "monotonic_ns": 3313389959421350
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9374081024,
+              "monotonic_ns": 3313396223085691
+            },
+            {
+              "hbm_bytes": 5762973696,
+              "host_bytes": 9703075840,
+              "monotonic_ns": 3313402438942314
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11305897984,
+              "monotonic_ns": 3313408670727533
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 6099533824,
+              "monotonic_ns": 3313414865056836
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/source-563ace34.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/source-563ace34.stdout.log"
+        }
+      ],
+      "restore_status": "not_applicable",
+      "seed": 41,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/none/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "filesystem-84",
+        "reasons": []
+      },
+      "method": "mindspore_native_save",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 110.40159307094291,
+          "phase": "source",
+          "pid": 785057,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3313420375217136
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2070818816,
+              "monotonic_ns": 3313426567992042
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9007652864,
+              "monotonic_ns": 3313432739370750
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9248927744,
+              "monotonic_ns": 3313438989703766
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9357430784,
+              "monotonic_ns": 3313445210388299
+            },
+            {
+              "hbm_bytes": 5599395840,
+              "host_bytes": 9630269440,
+              "monotonic_ns": 3313451411482880
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11266080768,
+              "monotonic_ns": 3313457642386245
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13539311616,
+              "monotonic_ns": 3313463830491203
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13539586048,
+              "monotonic_ns": 3313470023529381
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13539745792,
+              "monotonic_ns": 3313476212021329
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13539782656,
+              "monotonic_ns": 3313482481836236
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13539819520,
+              "monotonic_ns": 3313488722551652
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13539852288,
+              "monotonic_ns": 3313494961622391
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13539913728,
+              "monotonic_ns": 3313501187398935
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13539917824,
+              "monotonic_ns": 3313507405498927
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13539926016,
+              "monotonic_ns": 3313513621787482
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13548580864,
+              "monotonic_ns": 3313519860880501
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 6103089152,
+              "monotonic_ns": 3313526018662002
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/source-968a69db.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/source-968a69db.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save/restore.json"
+          ],
+          "elapsed_seconds": 54.131587447132915,
+          "phase": "restore",
+          "pid": 788511,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3313530812269504
+            },
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 2037821440,
+              "monotonic_ns": 3313537034295362
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8989597696,
+              "monotonic_ns": 3313543175464925
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9197924352,
+              "monotonic_ns": 3313549394096799
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9343422464,
+              "monotonic_ns": 3313555611161836
+            },
+            {
+              "hbm_bytes": 5539627008,
+              "host_bytes": 9592397824,
+              "monotonic_ns": 3313561847560285
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12246765568,
+              "monotonic_ns": 3313568081233091
+            },
+            {
+              "hbm_bytes": 6545211392,
+              "host_bytes": 12452786176,
+              "monotonic_ns": 3313574282202922
+            },
+            {
+              "hbm_bytes": 7554990080,
+              "host_bytes": 7581544448,
+              "monotonic_ns": 3313580502551423
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-9e2d4ca0.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-9e2d4ca0.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save/timing-0.json"
+          ],
+          "elapsed_seconds": 49.39056938374415,
+          "phase": "restore",
+          "pid": 791712,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3313584957513458
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2008231936,
+              "monotonic_ns": 3313591175659940
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8965632000,
+              "monotonic_ns": 3313597366770170
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9207410688,
+              "monotonic_ns": 3313603653609528
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9315778560,
+              "monotonic_ns": 3313609880038944
+            },
+            {
+              "hbm_bytes": 5758779392,
+              "host_bytes": 9643507712,
+              "monotonic_ns": 3313616024209779
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12149604352,
+              "monotonic_ns": 3313622252365123
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6103904256,
+              "monotonic_ns": 3313628443803784
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-8d7ae9b8.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-8d7ae9b8.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save/timing-1.json"
+          ],
+          "elapsed_seconds": 50.76765411673114,
+          "phase": "restore",
+          "pid": 794890,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15851520,
+              "monotonic_ns": 3313634283419463
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2044751872,
+              "monotonic_ns": 3313640541759382
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9003843584,
+              "monotonic_ns": 3313646754743973
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9246138368,
+              "monotonic_ns": 3313652965477604
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9354760192,
+              "monotonic_ns": 3313659145782389
+            },
+            {
+              "hbm_bytes": 5598347264,
+              "host_bytes": 9622753280,
+              "monotonic_ns": 3313665284874743
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12187824128,
+              "monotonic_ns": 3313671487257890
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6081347584,
+              "monotonic_ns": 3313677696856426
+            },
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 4092940288,
+              "monotonic_ns": 3313683882007641
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-877f03ad.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-877f03ad.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save/timing-2.json"
+          ],
+          "elapsed_seconds": 51.00784932496026,
+          "phase": "restore",
+          "pid": 798061,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3313685127189216
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2043478016,
+              "monotonic_ns": 3313691342940298
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8993714176,
+              "monotonic_ns": 3313697535008512
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9228120064,
+              "monotonic_ns": 3313703798333452
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9344618496,
+              "monotonic_ns": 3313710043736478
+            },
+            {
+              "hbm_bytes": 5598347264,
+              "host_bytes": 9618112512,
+              "monotonic_ns": 3313716270533386
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12178370560,
+              "monotonic_ns": 3313722498919230
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6102102016,
+              "monotonic_ns": 3313728684733358
+            },
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 4113211392,
+              "monotonic_ns": 3313734891150912
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-470bbf71.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-470bbf71.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save/timing-3.json"
+          ],
+          "elapsed_seconds": 48.02938978699967,
+          "phase": "restore",
+          "pid": 801233,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3313736185841962
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2048446464,
+              "monotonic_ns": 3313742328944683
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8975130624,
+              "monotonic_ns": 3313748554526556
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9216929792,
+              "monotonic_ns": 3313754849164276
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9325477888,
+              "monotonic_ns": 3313761045326837
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9597128704,
+              "monotonic_ns": 3313767244457140
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12160204800,
+              "monotonic_ns": 3313773442545489
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6104084480,
+              "monotonic_ns": 3313779654730306
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-698dd3cf.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-698dd3cf.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save/restore.json",
+      "restore_seconds": {
+        "max": 37.194767589,
+        "mean": 36.861608111,
+        "min": 36.401435452,
+        "raw_values": [
+          36.988621292,
+          37.194767589,
+          36.401435452
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 36.821857619
+      },
+      "seed": 41,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/mindspore_native_save/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "raw-83",
+        "reasons": [
+          "Different physical devices: do not rank raw-83 against filesystem-84"
+        ]
+      },
+      "method": "ours",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 158.55000274209306,
+          "phase": "source",
+          "pid": 804381,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 16302080,
+              "monotonic_ns": 3313784178828768
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2071670784,
+              "monotonic_ns": 3313790375533951
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9016623104,
+              "monotonic_ns": 3313796637857497
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9257570304,
+              "monotonic_ns": 3313802888232863
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9366036480,
+              "monotonic_ns": 3313809097622889
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9698357248,
+              "monotonic_ns": 3313815333985946
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 11630886912,
+              "monotonic_ns": 3313821578474308
+            },
+            {
+              "hbm_bytes": 7897874432,
+              "host_bytes": 12128591872,
+              "monotonic_ns": 3313827840651093
+            },
+            {
+              "hbm_bytes": 7897874432,
+              "host_bytes": 12129746944,
+              "monotonic_ns": 3313834093380669
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12130971648,
+              "monotonic_ns": 3313840371163699
+            },
+            {
+              "hbm_bytes": 6124732416,
+              "host_bytes": 12134965248,
+              "monotonic_ns": 3313846605420598
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12133654528,
+              "monotonic_ns": 3313852846144634
+            },
+            {
+              "hbm_bytes": 6124732416,
+              "host_bytes": 13598818304,
+              "monotonic_ns": 3313859112141935
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12134912000,
+              "monotonic_ns": 3313865383497379
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12135505920,
+              "monotonic_ns": 3313871640532362
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12135505920,
+              "monotonic_ns": 3313877889899604
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12135870464,
+              "monotonic_ns": 3313884134700187
+            },
+            {
+              "hbm_bytes": 6124732416,
+              "host_bytes": 12434599936,
+              "monotonic_ns": 3313890394253532
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12136476672,
+              "monotonic_ns": 3313896651545646
+            },
+            {
+              "hbm_bytes": 6125780992,
+              "host_bytes": 13754093568,
+              "monotonic_ns": 3313902914567305
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12136570880,
+              "monotonic_ns": 3313909142015946
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12136890368,
+              "monotonic_ns": 3313915392866644
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12136890368,
+              "monotonic_ns": 3313921655338810
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12137508864,
+              "monotonic_ns": 3313927890762704
+            },
+            {
+              "hbm_bytes": 6125780992,
+              "host_bytes": 12137324544,
+              "monotonic_ns": 3313934051930010
+            },
+            {
+              "hbm_bytes": 3609198592,
+              "host_bytes": 5613797376,
+              "monotonic_ns": 3313940260106658
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/source-6e97f5a6.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/source-6e97f5a6.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours/restore.json"
+          ],
+          "elapsed_seconds": 64.36051539890468,
+          "phase": "restore",
+          "pid": 808108,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3313942765668595
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 4364410880,
+              "monotonic_ns": 3313949023280931
+            },
+            {
+              "hbm_bytes": 3619684352,
+              "host_bytes": 7829299200,
+              "monotonic_ns": 3313955240372118
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8441307136,
+              "monotonic_ns": 3313961435332314
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8648826880,
+              "monotonic_ns": 3313967704315847
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8793636864,
+              "monotonic_ns": 3313973984355967
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8854147072,
+              "monotonic_ns": 3313980215395812
+            },
+            {
+              "hbm_bytes": 5545918464,
+              "host_bytes": 9124319232,
+              "monotonic_ns": 3313986454240110
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9151700992,
+              "monotonic_ns": 3313992677015792
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 10619293696,
+              "monotonic_ns": 3313998913236009
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 3746398208,
+              "monotonic_ns": 3314005134282843
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-605c4d6a.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-605c4d6a.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours/timing-0.json"
+          ],
+          "elapsed_seconds": 63.487131578847766,
+          "phase": "restore",
+          "pid": 811362,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15859712,
+              "monotonic_ns": 3314007093602109
+            },
+            {
+              "hbm_bytes": 3607101440,
+              "host_bytes": 3637567488,
+              "monotonic_ns": 3314013261963134
+            },
+            {
+              "hbm_bytes": 3619684352,
+              "host_bytes": 7812870144,
+              "monotonic_ns": 3314019421479362
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8448593920,
+              "monotonic_ns": 3314025654919468
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8599834624,
+              "monotonic_ns": 3314031971296648
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8802267136,
+              "monotonic_ns": 3314038222397927
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8822747136,
+              "monotonic_ns": 3314044502782498
+            },
+            {
+              "hbm_bytes": 5109710848,
+              "host_bytes": 8945041408,
+              "monotonic_ns": 3314050744408308
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9158676480,
+              "monotonic_ns": 3314056952813819
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 4406362112,
+              "monotonic_ns": 3314063122368089
+            },
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 21987328,
+              "monotonic_ns": 3314069337315268
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-295c0597.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-295c0597.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours/timing-1.json"
+          ],
+          "elapsed_seconds": 62.23258050298318,
+          "phase": "restore",
+          "pid": 814302,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3314070585228346
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 5074923520,
+              "monotonic_ns": 3314076770077870
+            },
+            {
+              "hbm_bytes": 3619684352,
+              "host_bytes": 7809798144,
+              "monotonic_ns": 3314082982308927
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8418234368,
+              "monotonic_ns": 3314089230864106
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8623656960,
+              "monotonic_ns": 3314095465895378
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8768876544,
+              "monotonic_ns": 3314101715562231
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8820797440,
+              "monotonic_ns": 3314107932118496
+            },
+            {
+              "hbm_bytes": 5539627008,
+              "host_bytes": 9004777472,
+              "monotonic_ns": 3314114208183949
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9126027264,
+              "monotonic_ns": 3314120475556386
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 3815632896,
+              "monotonic_ns": 3314126651392282
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-7831af4b.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-7831af4b.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours/timing-2.json"
+          ],
+          "elapsed_seconds": 61.24837180087343,
+          "phase": "restore",
+          "pid": 817214,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3314132769699189
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 4235829248,
+              "monotonic_ns": 3314139000657014
+            },
+            {
+              "hbm_bytes": 3618635776,
+              "host_bytes": 7815614464,
+              "monotonic_ns": 3314145246132920
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8434642944,
+              "monotonic_ns": 3314151478853593
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8640299008,
+              "monotonic_ns": 3314157746988002
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8785178624,
+              "monotonic_ns": 3314164008334314
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8840208384,
+              "monotonic_ns": 3314170242460793
+            },
+            {
+              "hbm_bytes": 5545918464,
+              "host_bytes": 8992747520,
+              "monotonic_ns": 3314176523451016
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9141710848,
+              "monotonic_ns": 3314182753822989
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 3826110464,
+              "monotonic_ns": 3314188952672761
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-c87619c3.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-c87619c3.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours/timing-3.json"
+          ],
+          "elapsed_seconds": 63.7163654519245,
+          "phase": "restore",
+          "pid": 820152,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 16310272,
+              "monotonic_ns": 3314194056353219
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 4194521088,
+              "monotonic_ns": 3314200325729784
+            },
+            {
+              "hbm_bytes": 3619684352,
+              "host_bytes": 7802474496,
+              "monotonic_ns": 3314206557271652
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8420143104,
+              "monotonic_ns": 3314212836348437
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8598470656,
+              "monotonic_ns": 3314219101072653
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8770912256,
+              "monotonic_ns": 3314225334069607
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8800014336,
+              "monotonic_ns": 3314231586115870
+            },
+            {
+              "hbm_bytes": 5109710848,
+              "host_bytes": 8934293504,
+              "monotonic_ns": 3314237817875128
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9126297600,
+              "monotonic_ns": 3314244058971746
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 4008677376,
+              "monotonic_ns": 3314250260796560
+            },
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 0,
+              "monotonic_ns": 3314256539986146
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-de96566f.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-de96566f.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours/restore.json",
+      "restore_seconds": {
+        "max": 50.68895894,
+        "mean": 49.94759002466666,
+        "min": 49.491916364,
+        "raw_values": [
+          49.66189477,
+          49.491916364,
+          50.68895894
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 50.52069984
+      },
+      "seed": 41,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/ours/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "filesystem-84",
+        "reasons": []
+      },
+      "method": "bytecheckpoint_host",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 102.08049981109798,
+          "phase": "source",
+          "pid": 823088,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3314257810891810
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2079596544,
+              "monotonic_ns": 3314263995549302
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9019015168,
+              "monotonic_ns": 3314270242774315
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9259548672,
+              "monotonic_ns": 3314276513167035
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9368059904,
+              "monotonic_ns": 3314282742105382
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9696088064,
+              "monotonic_ns": 3314288896385508
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11530432512,
+              "monotonic_ns": 3314295104682489
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 15978864640,
+              "monotonic_ns": 3314301321317155
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 16645758976,
+              "monotonic_ns": 3314307585347888
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13748502528,
+              "monotonic_ns": 3314313778851307
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 14195195904,
+              "monotonic_ns": 3314319986406685
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 15144808448,
+              "monotonic_ns": 3314326149484678
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 16146927616,
+              "monotonic_ns": 3314332349270954
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 16649564160,
+              "monotonic_ns": 3314338541575319
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13047472128,
+              "monotonic_ns": 3314344772557454
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12072099840,
+              "monotonic_ns": 3314350933773799
+            },
+            {
+              "hbm_bytes": 3695181824,
+              "host_bytes": 5599834112,
+              "monotonic_ns": 3314357109529305
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/source-809401a3.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/source-809401a3.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host/restore.json"
+          ],
+          "elapsed_seconds": 63.25035574520007,
+          "phase": "restore",
+          "pid": 826951,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 16236544,
+              "monotonic_ns": 3314359801990559
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2069270528,
+              "monotonic_ns": 3314366022891253
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8980967424,
+              "monotonic_ns": 3314372216588423
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9222717440,
+              "monotonic_ns": 3314378418428567
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9331228672,
+              "monotonic_ns": 3314384624065457
+            },
+            {
+              "hbm_bytes": 5598347264,
+              "host_bytes": 9645072384,
+              "monotonic_ns": 3314390871192370
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9945255936,
+              "monotonic_ns": 3314397068924367
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11843334144,
+              "monotonic_ns": 3314403290369523
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12445925376,
+              "monotonic_ns": 3314409491548244
+            },
+            {
+              "hbm_bytes": 7556038656,
+              "host_bytes": 7588110336,
+              "monotonic_ns": 3314415682499683
+            },
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 21987328,
+              "monotonic_ns": 3314421880075210
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-2772f6cb.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-2772f6cb.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host/timing-0.json"
+          ],
+          "elapsed_seconds": 58.05306033603847,
+          "phase": "restore",
+          "pid": 830806,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3314423126263871
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2070380544,
+              "monotonic_ns": 3314429327519883
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9026379776,
+              "monotonic_ns": 3314435528504133
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9266704384,
+              "monotonic_ns": 3314441688071112
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9375166464,
+              "monotonic_ns": 3314447884255182
+            },
+            {
+              "hbm_bytes": 5762973696,
+              "host_bytes": 9722232832,
+              "monotonic_ns": 3314454130443181
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 10107854848,
+              "monotonic_ns": 3314460328228058
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11876077568,
+              "monotonic_ns": 3314466546610351
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12653355008,
+              "monotonic_ns": 3314472836182380
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5562773504,
+              "monotonic_ns": 3314479070292309
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-e77f9652.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-e77f9652.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host/timing-1.json"
+          ],
+          "elapsed_seconds": 58.01321561122313,
+          "phase": "restore",
+          "pid": 834649,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 16310272,
+              "monotonic_ns": 3314481159081263
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2059460608,
+              "monotonic_ns": 3314487358540267
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8998801408,
+              "monotonic_ns": 3314493555604092
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9240498176,
+              "monotonic_ns": 3314499786045665
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9349255168,
+              "monotonic_ns": 3314506014801281
+            },
+            {
+              "hbm_bytes": 5758779392,
+              "host_bytes": 9656999936,
+              "monotonic_ns": 3314512218645074
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9970442240,
+              "monotonic_ns": 3314518407329903
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11890823168,
+              "monotonic_ns": 3314524620263943
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12661436416,
+              "monotonic_ns": 3314530844470271
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5562044416,
+              "monotonic_ns": 3314537084751545
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-74cfc913.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-74cfc913.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host/timing-2.json"
+          ],
+          "elapsed_seconds": 57.479675143025815,
+          "phase": "restore",
+          "pid": 838477,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3314539161994241
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2022645760,
+              "monotonic_ns": 3314545357473429
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9049788416,
+              "monotonic_ns": 3314551601910230
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9293651968,
+              "monotonic_ns": 3314557805827913
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9402310656,
+              "monotonic_ns": 3314564022424918
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9731350528,
+              "monotonic_ns": 3314570168211560
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 10025852928,
+              "monotonic_ns": 3314576353057883
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 11901710336,
+              "monotonic_ns": 3314582586659860
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12617699328,
+              "monotonic_ns": 3314588807692084
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5136060416,
+              "monotonic_ns": 3314595016738408
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-f31743d7.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-f31743d7.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host/timing-3.json"
+          ],
+          "elapsed_seconds": 58.28980279993266,
+          "phase": "restore",
+          "pid": 842309,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15859712,
+              "monotonic_ns": 3314596679192870
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2042236928,
+              "monotonic_ns": 3314602895489744
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9035182080,
+              "monotonic_ns": 3314609111374437
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9277071360,
+              "monotonic_ns": 3314615321604346
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9385684992,
+              "monotonic_ns": 3314621526363702
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9650962432,
+              "monotonic_ns": 3314627732205983
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 10002980864,
+              "monotonic_ns": 3314633914740717
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 11876339712,
+              "monotonic_ns": 3314640136965836
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12604026880,
+              "monotonic_ns": 3314646340828289
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5555994624,
+              "monotonic_ns": 3314652557399084
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-6c088338.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/restore-6c088338.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host/restore.json",
+      "restore_seconds": {
+        "max": 45.194087775,
+        "mean": 45.119145876999994,
+        "min": 45.068769644,
+        "raw_values": [
+          45.068769644,
+          45.094580212,
+          45.194087775
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 44.468149007
+      },
+      "seed": 41,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-41/bytecheckpoint_host/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "filesystem-84",
+        "reasons": []
+      },
+      "method": "mindspore_native_save",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 107.12410135008395,
+          "phase": "source",
+          "pid": 849296,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15740928,
+              "monotonic_ns": 3314699937549057
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2049753088,
+              "monotonic_ns": 3314706137930876
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9041702912,
+              "monotonic_ns": 3314712395210720
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9282662400,
+              "monotonic_ns": 3314718629334449
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9391153152,
+              "monotonic_ns": 3314724863828599
+            },
+            {
+              "hbm_bytes": 5761925120,
+              "host_bytes": 9723486208,
+              "monotonic_ns": 3314731109428435
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11308965888,
+              "monotonic_ns": 3314737295437613
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13570826240,
+              "monotonic_ns": 3314743565883863
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13571321856,
+              "monotonic_ns": 3314749783412552
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13571375104,
+              "monotonic_ns": 3314756002057627
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13571432448,
+              "monotonic_ns": 3314762235524232
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13571444736,
+              "monotonic_ns": 3314768445323140
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13725888512,
+              "monotonic_ns": 3314774657533667
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13571522560,
+              "monotonic_ns": 3314780881469103
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13571522560,
+              "monotonic_ns": 3314787102267486
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13725908992,
+              "monotonic_ns": 3314793271036683
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13571674112,
+              "monotonic_ns": 3314799494489967
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5134520320,
+              "monotonic_ns": 3314805699919756
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/source-0ab2ef30.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/source-0ab2ef30.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save/restore.json"
+          ],
+          "elapsed_seconds": 52.98445589421317,
+          "phase": "restore",
+          "pid": 852719,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15900672,
+              "monotonic_ns": 3314807105882221
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2047434752,
+              "monotonic_ns": 3314813291666089
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9045934080,
+              "monotonic_ns": 3314819449986742
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9285738496,
+              "monotonic_ns": 3314825674767912
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9397964800,
+              "monotonic_ns": 3314831895001982
+            },
+            {
+              "hbm_bytes": 5598347264,
+              "host_bytes": 9656872960,
+              "monotonic_ns": 3314838056608099
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12230209536,
+              "monotonic_ns": 3314844261204085
+            },
+            {
+              "hbm_bytes": 7445938176,
+              "host_bytes": 12396433408,
+              "monotonic_ns": 3314850471779516
+            },
+            {
+              "hbm_bytes": 3695181824,
+              "host_bytes": 4919508992,
+              "monotonic_ns": 3314856684323084
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-6b326f5c.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-6b326f5c.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save/timing-0.json"
+          ],
+          "elapsed_seconds": 50.85953187942505,
+          "phase": "restore",
+          "pid": 855909,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3314859997452979
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2072850432,
+              "monotonic_ns": 3314866203524981
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8998535168,
+              "monotonic_ns": 3314872429806977
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9240150016,
+              "monotonic_ns": 3314878688177006
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9348808704,
+              "monotonic_ns": 3314884920826748
+            },
+            {
+              "hbm_bytes": 5596250112,
+              "host_bytes": 9642102784,
+              "monotonic_ns": 3314891125300303
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12183851008,
+              "monotonic_ns": 3314897353056545
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 6105784320,
+              "monotonic_ns": 3314903528944842
+            },
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 21983232,
+              "monotonic_ns": 3314909711099344
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-459c3dec.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-459c3dec.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save/timing-1.json"
+          ],
+          "elapsed_seconds": 49.12968204729259,
+          "phase": "restore",
+          "pid": 859087,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15855616,
+              "monotonic_ns": 3314910984334397
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2088783872,
+              "monotonic_ns": 3314917165323025
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8987398144,
+              "monotonic_ns": 3314923417040747
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9231687680,
+              "monotonic_ns": 3314929606452789
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9337077760,
+              "monotonic_ns": 3314935803901965
+            },
+            {
+              "hbm_bytes": 5761925120,
+              "host_bytes": 9683136512,
+              "monotonic_ns": 3314942015161929
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12169400320,
+              "monotonic_ns": 3314948261385787
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 6100242432,
+              "monotonic_ns": 3314954473988336
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-37caf9ce.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-37caf9ce.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save/timing-2.json"
+          ],
+          "elapsed_seconds": 49.211362939327955,
+          "phase": "restore",
+          "pid": 862229,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15818752,
+              "monotonic_ns": 3314959990544762
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2006257664,
+              "monotonic_ns": 3314966165881476
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9037844480,
+              "monotonic_ns": 3314972337149843
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9279942656,
+              "monotonic_ns": 3314978506005398
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9388294144,
+              "monotonic_ns": 3314984719568960
+            },
+            {
+              "hbm_bytes": 5596250112,
+              "host_bytes": 9681715200,
+              "monotonic_ns": 3314990865462414
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12223389696,
+              "monotonic_ns": 3314997005224813
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 6103642112,
+              "monotonic_ns": 3315003185991115
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-a290d17c.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-a290d17c.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save/timing-3.json"
+          ],
+          "elapsed_seconds": 49.14768529171124,
+          "phase": "restore",
+          "pid": 865386,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3315009208539829
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2011123712,
+              "monotonic_ns": 3315015404256400
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9003192320,
+              "monotonic_ns": 3315021574273380
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9247453184,
+              "monotonic_ns": 3315027732973884
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9356091392,
+              "monotonic_ns": 3315033903838537
+            },
+            {
+              "hbm_bytes": 5597298688,
+              "host_bytes": 9610407936,
+              "monotonic_ns": 3315040133031952
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12185022464,
+              "monotonic_ns": 3315046315786782
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 6101159936,
+              "monotonic_ns": 3315052483312562
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-c342bc03.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-c342bc03.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save/restore.json",
+      "restore_seconds": {
+        "max": 37.121745931,
+        "mean": 36.976875179,
+        "min": 36.715787046,
+        "raw_values": [
+          36.715787046,
+          37.09309256,
+          37.121745931
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 37.668727558
+      },
+      "seed": 42,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/mindspore_native_save/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "raw-83",
+        "reasons": [
+          "Different physical devices: do not rank raw-83 against filesystem-84"
+        ]
+      },
+      "method": "ours",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 157.537383755669,
+          "phase": "source",
+          "pid": 868568,
+          "resources": [
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 15818752,
+              "monotonic_ns": 3315058383079217
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2055479296,
+              "monotonic_ns": 3315064611183998
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9016860672,
+              "monotonic_ns": 3315070830016201
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9258680320,
+              "monotonic_ns": 3315077031048444
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9367572480,
+              "monotonic_ns": 3315083192878011
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9694932992,
+              "monotonic_ns": 3315089412762999
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11369562112,
+              "monotonic_ns": 3315095669591153
+            },
+            {
+              "hbm_bytes": 7896825856,
+              "host_bytes": 12127379456,
+              "monotonic_ns": 3315101905459295
+            },
+            {
+              "hbm_bytes": 7343177728,
+              "host_bytes": 12128571392,
+              "monotonic_ns": 3315108157196849
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12129738752,
+              "monotonic_ns": 3315114435861451
+            },
+            {
+              "hbm_bytes": 6124732416,
+              "host_bytes": 12541304832,
+              "monotonic_ns": 3315120696686071
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12131233792,
+              "monotonic_ns": 3315126931322008
+            },
+            {
+              "hbm_bytes": 7467958272,
+              "host_bytes": 13596381184,
+              "monotonic_ns": 3315133319978466
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12132401152,
+              "monotonic_ns": 3315139543806930
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12133007360,
+              "monotonic_ns": 3315145776376778
+            },
+            {
+              "hbm_bytes": 6319767552,
+              "host_bytes": 12133007360,
+              "monotonic_ns": 3315152066934117
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12133363712,
+              "monotonic_ns": 3315158315968770
+            },
+            {
+              "hbm_bytes": 6125780992,
+              "host_bytes": 13252726784,
+              "monotonic_ns": 3315164577406753
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12133961728,
+              "monotonic_ns": 3315170783491736
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12134060032,
+              "monotonic_ns": 3315177094666987
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12134060032,
+              "monotonic_ns": 3315183327446336
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12134387712,
+              "monotonic_ns": 3315189585610106
+            },
+            {
+              "hbm_bytes": 6125780992,
+              "host_bytes": 12134387712,
+              "monotonic_ns": 3315195897717530
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12135006208,
+              "monotonic_ns": 3315202141161902
+            },
+            {
+              "hbm_bytes": 6125780992,
+              "host_bytes": 12134821888,
+              "monotonic_ns": 3315208295021587
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5174259712,
+              "monotonic_ns": 3315214484497314
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/source-3a0f360c.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/source-3a0f360c.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours/restore.json"
+          ],
+          "elapsed_seconds": 64.4232514007017,
+          "phase": "restore",
+          "pid": 872232,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3315216038134221
+            },
+            {
+              "hbm_bytes": 3607101440,
+              "host_bytes": 4747636736,
+              "monotonic_ns": 3315222265217287
+            },
+            {
+              "hbm_bytes": 3619684352,
+              "host_bytes": 7825367040,
+              "monotonic_ns": 3315228510863517
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8430567424,
+              "monotonic_ns": 3315234722472432
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8638607360,
+              "monotonic_ns": 3315240989353927
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8782647296,
+              "monotonic_ns": 3315247240093437
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8846610432,
+              "monotonic_ns": 3315253417303345
+            },
+            {
+              "hbm_bytes": 5596250112,
+              "host_bytes": 9117466624,
+              "monotonic_ns": 3315259809137987
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9138700288,
+              "monotonic_ns": 3315266025395070
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 10606411776,
+              "monotonic_ns": 3315272273791481
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 3724656640,
+              "monotonic_ns": 3315278477595605
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-4dc9279c.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-4dc9279c.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours/timing-0.json"
+          ],
+          "elapsed_seconds": 61.63598558027297,
+          "phase": "restore",
+          "pid": 875463,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15859712,
+              "monotonic_ns": 3315280355930292
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 4209811456,
+              "monotonic_ns": 3315286557175686
+            },
+            {
+              "hbm_bytes": 3619684352,
+              "host_bytes": 7816335360,
+              "monotonic_ns": 3315292762670957
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8425345024,
+              "monotonic_ns": 3315298999947974
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8633036800,
+              "monotonic_ns": 3315305253086144
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8777895936,
+              "monotonic_ns": 3315311493366332
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8835178496,
+              "monotonic_ns": 3315317750941860
+            },
+            {
+              "hbm_bytes": 5545918464,
+              "host_bytes": 9027579904,
+              "monotonic_ns": 3315323972155923
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9134567424,
+              "monotonic_ns": 3315330211472318
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 3811844096,
+              "monotonic_ns": 3315336410927235
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-39383fab.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-39383fab.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours/timing-1.json"
+          ],
+          "elapsed_seconds": 60.43005501618609,
+          "phase": "restore",
+          "pid": 878375,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15855616,
+              "monotonic_ns": 3315342052316343
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 4323295232,
+              "monotonic_ns": 3315348254016248
+            },
+            {
+              "hbm_bytes": 3618635776,
+              "host_bytes": 7793111040,
+              "monotonic_ns": 3315354522043447
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8411107328,
+              "monotonic_ns": 3315360757444967
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8616747008,
+              "monotonic_ns": 3315367026863031
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8761614336,
+              "monotonic_ns": 3315373271608288
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8819372032,
+              "monotonic_ns": 3315379525780992
+            },
+            {
+              "hbm_bytes": 5545918464,
+              "host_bytes": 9010085888,
+              "monotonic_ns": 3315385746480573
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9115684864,
+              "monotonic_ns": 3315391974438373
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 3779178496,
+              "monotonic_ns": 3315398192809645
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-79bf601e.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-79bf601e.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours/timing-2.json"
+          ],
+          "elapsed_seconds": 60.33752345805988,
+          "phase": "restore",
+          "pid": 881291,
+          "resources": [
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3315402474100676
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 3938885632,
+              "monotonic_ns": 3315408665238969
+            },
+            {
+              "hbm_bytes": 3618635776,
+              "host_bytes": 7840550912,
+              "monotonic_ns": 3315414901656673
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8453918720,
+              "monotonic_ns": 3315421151348769
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8662466560,
+              "monotonic_ns": 3315427407876882
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8806526976,
+              "monotonic_ns": 3315433656952516
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8872140800,
+              "monotonic_ns": 3315439823671003
+            },
+            {
+              "hbm_bytes": 5596250112,
+              "host_bytes": 9100304384,
+              "monotonic_ns": 3315446080732868
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9162944512,
+              "monotonic_ns": 3315452347320892
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 3813265408,
+              "monotonic_ns": 3315458582891202
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-62b6a492.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-62b6a492.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours/timing-3.json"
+          ],
+          "elapsed_seconds": 60.30847809230909,
+          "phase": "restore",
+          "pid": 884195,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3315462861272551
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 4205903872,
+              "monotonic_ns": 3315469046661851
+            },
+            {
+              "hbm_bytes": 3618635776,
+              "host_bytes": 7827218432,
+              "monotonic_ns": 3315475287315392
+            },
+            {
+              "hbm_bytes": 3621781504,
+              "host_bytes": 8440373248,
+              "monotonic_ns": 3315481593112381
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8648921088,
+              "monotonic_ns": 3315487849034232
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8792981504,
+              "monotonic_ns": 3315494109207080
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8855588864,
+              "monotonic_ns": 3315500350691854
+            },
+            {
+              "hbm_bytes": 5596250112,
+              "host_bytes": 9086656512,
+              "monotonic_ns": 3315506688191799
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9147256832,
+              "monotonic_ns": 3315512898562919
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 3807686656,
+              "monotonic_ns": 3315519143825168
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-a3ac7f6c.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-a3ac7f6c.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours/restore.json",
+      "restore_seconds": {
+        "max": 49.20268679,
+        "mean": 48.78439375733333,
+        "min": 48.436172423,
+        "raw_values": [
+          49.20268679,
+          48.436172423,
+          48.714322059
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 49.127559971
+      },
+      "seed": 42,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/ours/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "filesystem-84",
+        "reasons": []
+      },
+      "method": "bytecheckpoint_host",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 100.6455219569616,
+          "phase": "source",
+          "pid": 887099,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3315523176824341
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 1999720448,
+              "monotonic_ns": 3315529437961033
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8996515840,
+              "monotonic_ns": 3315535614112207
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9238794240,
+              "monotonic_ns": 3315541860055008
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9347117056,
+              "monotonic_ns": 3315548052625168
+            },
+            {
+              "hbm_bytes": 5598347264,
+              "host_bytes": 9614331904,
+              "monotonic_ns": 3315554273689060
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 11501133824,
+              "monotonic_ns": 3315560448474829
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 14978031616,
+              "monotonic_ns": 3315566673233036
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 16178032640,
+              "monotonic_ns": 3315572946087754
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 16667459584,
+              "monotonic_ns": 3315579126516405
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13489205248,
+              "monotonic_ns": 3315585280908092
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 14778093568,
+              "monotonic_ns": 3315591445059459
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 16004145152,
+              "monotonic_ns": 3315597686598472
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 16669081600,
+              "monotonic_ns": 3315603925826267
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13436182528,
+              "monotonic_ns": 3315610123407736
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12132925440,
+              "monotonic_ns": 3315616336173816
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5140668416,
+              "monotonic_ns": 3315622563414823
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/source-00fa32f9.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/source-00fa32f9.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host/restore.json"
+          ],
+          "elapsed_seconds": 61.3569970712997,
+          "phase": "restore",
+          "pid": 890953,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3315623763148892
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2039779328,
+              "monotonic_ns": 3315629959668117
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9045491712,
+              "monotonic_ns": 3315636172236426
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9287163904,
+              "monotonic_ns": 3315642379605684
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9395707904,
+              "monotonic_ns": 3315648562006083
+            },
+            {
+              "hbm_bytes": 5598347264,
+              "host_bytes": 9702903808,
+              "monotonic_ns": 3315654729803143
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 10008408064,
+              "monotonic_ns": 3315660958257435
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12045651968,
+              "monotonic_ns": 3315667111460038
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12553195520,
+              "monotonic_ns": 3315673272806053
+            },
+            {
+              "hbm_bytes": 7554990080,
+              "host_bytes": 7581040640,
+              "monotonic_ns": 3315679455318522
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-bfca1c3f.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-bfca1c3f.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host/timing-0.json"
+          ],
+          "elapsed_seconds": 58.09677658928558,
+          "phase": "restore",
+          "pid": 894788,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3315685176536438
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2046320640,
+              "monotonic_ns": 3315691343101483
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8973991936,
+              "monotonic_ns": 3315697497308620
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9196068864,
+              "monotonic_ns": 3315703674083126
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9323368448,
+              "monotonic_ns": 3315709915519270
+            },
+            {
+              "hbm_bytes": 5597298688,
+              "host_bytes": 9621479424,
+              "monotonic_ns": 3315716244390401
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9917718528,
+              "monotonic_ns": 3315722408523067
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12086083584,
+              "monotonic_ns": 3315728616467007
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12424298496,
+              "monotonic_ns": 3315734813232813
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5560164352,
+              "monotonic_ns": 3315741009833168
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-449156f7.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-449156f7.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host/timing-1.json"
+          ],
+          "elapsed_seconds": 57.10573035897687,
+          "phase": "restore",
+          "pid": 898616,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 16285696,
+              "monotonic_ns": 3315743317808434
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2138869760,
+              "monotonic_ns": 3315749511621168
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8998969344,
+              "monotonic_ns": 3315755753394383
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9243631616,
+              "monotonic_ns": 3315762002414167
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9349173248,
+              "monotonic_ns": 3315768199634604
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9708703744,
+              "monotonic_ns": 3315774370956799
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 10153603072,
+              "monotonic_ns": 3315780591746630
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11760816128,
+              "monotonic_ns": 3315786818000633
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12318363648,
+              "monotonic_ns": 3315792982032369
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5110652928,
+              "monotonic_ns": 3315799133134623
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-bb4199e1.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-bb4199e1.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host/timing-2.json"
+          ],
+          "elapsed_seconds": 58.02717552194372,
+          "phase": "restore",
+          "pid": 902453,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15859712,
+              "monotonic_ns": 3315800358059173
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2044030976,
+              "monotonic_ns": 3315806582552619
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8992600064,
+              "monotonic_ns": 3315812841167311
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9234411520,
+              "monotonic_ns": 3315819057544105
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9343094784,
+              "monotonic_ns": 3315825273501107
+            },
+            {
+              "hbm_bytes": 5758779392,
+              "host_bytes": 9609768960,
+              "monotonic_ns": 3315831476725549
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9970941952,
+              "monotonic_ns": 3315837688027992
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11989630976,
+              "monotonic_ns": 3315843899665077
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12576473088,
+              "monotonic_ns": 3315850079042584
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5556248576,
+              "monotonic_ns": 3315856297741287
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-487995e0.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-487995e0.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host/timing-3.json"
+          ],
+          "elapsed_seconds": 57.26506342412904,
+          "phase": "restore",
+          "pid": 906288,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3315858326246052
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2099892224,
+              "monotonic_ns": 3315864528382969
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9002565632,
+              "monotonic_ns": 3315870746236969
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9247035392,
+              "monotonic_ns": 3315876940144283
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9352421376,
+              "monotonic_ns": 3315883209711498
+            },
+            {
+              "hbm_bytes": 5761925120,
+              "host_bytes": 9702203392,
+              "monotonic_ns": 3315889427373367
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 10087223296,
+              "monotonic_ns": 3315895611175552
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 10386866176,
+              "monotonic_ns": 3315901911256268
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12321103872,
+              "monotonic_ns": 3315908180574003
+            },
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 5136433152,
+              "monotonic_ns": 3315914429028204
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-0c862991.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/restore-0c862991.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host/restore.json",
+      "restore_seconds": {
+        "max": 44.919849814,
+        "mean": 44.52239251666666,
+        "min": 44.167115701,
+        "raw_values": [
+          44.167115701,
+          44.919849814,
+          44.480212035
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 45.698072757
+      },
+      "seed": 42,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/bytecheckpoint_host/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": false,
+        "comparison_group": "training-only",
+        "reasons": [
+          "No checkpoint or recovery"
+        ]
+      },
+      "method": "none",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/none",
+            "--method",
+            "none",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 50.796707776840776,
+          "phase": "source",
+          "pid": 910127,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15859712,
+              "monotonic_ns": 3315915658789993
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2061225984,
+              "monotonic_ns": 3315921858708541
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8974917632,
+              "monotonic_ns": 3315928087462694
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9216552960,
+              "monotonic_ns": 3315934274286871
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9325002752,
+              "monotonic_ns": 3315940461034597
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9621331968,
+              "monotonic_ns": 3315946637901074
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11238776832,
+              "monotonic_ns": 3315952834593249
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6101078016,
+              "monotonic_ns": 3315959028999836
+            },
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 21979136,
+              "monotonic_ns": 3315965234268465
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/source-e945dda5.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/source-e945dda5.stdout.log"
+        }
+      ],
+      "restore_status": "not_applicable",
+      "seed": 42,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-42/none/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "raw-83",
+        "reasons": [
+          "Different physical devices: do not rank raw-83 against filesystem-84"
+        ]
+      },
+      "method": "ours",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 157.7524949926883,
+          "phase": "source",
+          "pid": 916469,
+          "resources": [
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3316011474910620
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2038538240,
+              "monotonic_ns": 3316017690400650
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8981770240,
+              "monotonic_ns": 3316023884862625
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9223233536,
+              "monotonic_ns": 3316030085516155
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9331920896,
+              "monotonic_ns": 3316036279077607
+            },
+            {
+              "hbm_bytes": 5762973696,
+              "host_bytes": 9648173056,
+              "monotonic_ns": 3316042437992711
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11285745664,
+              "monotonic_ns": 3316048688919111
+            },
+            {
+              "hbm_bytes": 7897874432,
+              "host_bytes": 12129071104,
+              "monotonic_ns": 3316054914433169
+            },
+            {
+              "hbm_bytes": 6124732416,
+              "host_bytes": 12130435072,
+              "monotonic_ns": 3316061175976651
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12131143680,
+              "monotonic_ns": 3316067417920704
+            },
+            {
+              "hbm_bytes": 6125780992,
+              "host_bytes": 12575379456,
+              "monotonic_ns": 3316073645837452
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12132995072,
+              "monotonic_ns": 3316079905080045
+            },
+            {
+              "hbm_bytes": 7780433920,
+              "host_bytes": 13597925376,
+              "monotonic_ns": 3316086256922584
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12133752832,
+              "monotonic_ns": 3316092522342571
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12134617088,
+              "monotonic_ns": 3316098794823456
+            },
+            {
+              "hbm_bytes": 6125780992,
+              "host_bytes": 12134617088,
+              "monotonic_ns": 3316105078211764
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12134981632,
+              "monotonic_ns": 3316111337297285
+            },
+            {
+              "hbm_bytes": 6125780992,
+              "host_bytes": 13367660544,
+              "monotonic_ns": 3316117590797175
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12135321600,
+              "monotonic_ns": 3316123820316869
+            },
+            {
+              "hbm_bytes": 7903117312,
+              "host_bytes": 12135776256,
+              "monotonic_ns": 3316130085518255
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12135776256,
+              "monotonic_ns": 3316136372156066
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12136099840,
+              "monotonic_ns": 3316142628747338
+            },
+            {
+              "hbm_bytes": 6124732416,
+              "host_bytes": 12136099840,
+              "monotonic_ns": 3316148880599911
+            },
+            {
+              "hbm_bytes": 7904165888,
+              "host_bytes": 12136714240,
+              "monotonic_ns": 3316155127411084
+            },
+            {
+              "hbm_bytes": 6124732416,
+              "host_bytes": 12146102272,
+              "monotonic_ns": 3316161344598929
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5176508416,
+              "monotonic_ns": 3316167522813910
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/source-14e5b25b.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/source-14e5b25b.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours/restore.json"
+          ],
+          "elapsed_seconds": 65.39909843308851,
+          "phase": "restore",
+          "pid": 920219,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3316169229519278
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 4631928832,
+              "monotonic_ns": 3316175439327064
+            },
+            {
+              "hbm_bytes": 3618635776,
+              "host_bytes": 7825883136,
+              "monotonic_ns": 3316181634941584
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8434507776,
+              "monotonic_ns": 3316187875622913
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8640024576,
+              "monotonic_ns": 3316194121303392
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8785096704,
+              "monotonic_ns": 3316200350549615
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8840327168,
+              "monotonic_ns": 3316206583515943
+            },
+            {
+              "hbm_bytes": 5545918464,
+              "host_bytes": 9003048960,
+              "monotonic_ns": 3316212844801663
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9141374976,
+              "monotonic_ns": 3316219079673189
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 10608644096,
+              "monotonic_ns": 3316225366974202
+            },
+            {
+              "hbm_bytes": 3694133248,
+              "host_bytes": 3750215680,
+              "monotonic_ns": 3316231594540789
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-0a502302.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-0a502302.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours/timing-0.json"
+          ],
+          "elapsed_seconds": 63.74340780824423,
+          "phase": "restore",
+          "pid": 923454,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3316234643164509
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 3976773632,
+              "monotonic_ns": 3316240834781583
+            },
+            {
+              "hbm_bytes": 3619684352,
+              "host_bytes": 7786586112,
+              "monotonic_ns": 3316247062240899
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8417914880,
+              "monotonic_ns": 3316253377047052
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8577191936,
+              "monotonic_ns": 3316259702280496
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8769200128,
+              "monotonic_ns": 3316265958558436
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8790704128,
+              "monotonic_ns": 3316272189560627
+            },
+            {
+              "hbm_bytes": 5110759424,
+              "host_bytes": 8898920448,
+              "monotonic_ns": 3316278488561557
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9181700096,
+              "monotonic_ns": 3316284726456334
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9125826560,
+              "monotonic_ns": 3316290929199742
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 3276914688,
+              "monotonic_ns": 3316297155690715
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-358e58fc.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-358e58fc.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours/timing-1.json"
+          ],
+          "elapsed_seconds": 60.117594237904996,
+          "phase": "restore",
+          "pid": 926391,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3316298409537167
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 5116755968,
+              "monotonic_ns": 3316304598970753
+            },
+            {
+              "hbm_bytes": 3618635776,
+              "host_bytes": 7834796032,
+              "monotonic_ns": 3316310841585519
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8441282560,
+              "monotonic_ns": 3316317098608892
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8647188480,
+              "monotonic_ns": 3316323350596046
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8791183360,
+              "monotonic_ns": 3316329593007381
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8851881984,
+              "monotonic_ns": 3316335799603125
+            },
+            {
+              "hbm_bytes": 5546967040,
+              "host_bytes": 9111076864,
+              "monotonic_ns": 3316342053243035
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9147248640,
+              "monotonic_ns": 3316348292487048
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 3814305792,
+              "monotonic_ns": 3316354508390028
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-4fa7840f.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-4fa7840f.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours/timing-2.json"
+          ],
+          "elapsed_seconds": 61.410014893393964,
+          "phase": "restore",
+          "pid": 929301,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3316358554728595
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 4877516800,
+              "monotonic_ns": 3316364778569317
+            },
+            {
+              "hbm_bytes": 3618635776,
+              "host_bytes": 7803678720,
+              "monotonic_ns": 3316370980510912
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8416190464,
+              "monotonic_ns": 3316377178796652
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8621518848,
+              "monotonic_ns": 3316383410177664
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8766578688,
+              "monotonic_ns": 3316389705781000
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8825896960,
+              "monotonic_ns": 3316395910817808
+            },
+            {
+              "hbm_bytes": 5545918464,
+              "host_bytes": 9017634816,
+              "monotonic_ns": 3316402135330342
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9124814848,
+              "monotonic_ns": 3316408377895708
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 3806736384,
+              "monotonic_ns": 3316414617918574
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-d73c348e.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-d73c348e.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours",
+            "--method",
+            "ours",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours/timing-3.json"
+          ],
+          "elapsed_seconds": 63.67454615421593,
+          "phase": "restore",
+          "pid": 932207,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 16257024,
+              "monotonic_ns": 3316419886680889
+            },
+            {
+              "hbm_bytes": 3606052864,
+              "host_bytes": 3783450624,
+              "monotonic_ns": 3316426106159343
+            },
+            {
+              "hbm_bytes": 3619684352,
+              "host_bytes": 7793229824,
+              "monotonic_ns": 3316432338165037
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8426942464,
+              "monotonic_ns": 3316438537036650
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8577978368,
+              "monotonic_ns": 3316444814382194
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8778522624,
+              "monotonic_ns": 3316451069770491
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8796344320,
+              "monotonic_ns": 3316457301955496
+            },
+            {
+              "hbm_bytes": 5110759424,
+              "host_bytes": 8902303744,
+              "monotonic_ns": 3316463648616095
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9135689728,
+              "monotonic_ns": 3316469910544178
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9138229248,
+              "monotonic_ns": 3316476170301753
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 3309359104,
+              "monotonic_ns": 3316482362669140
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-b3342bf9.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-b3342bf9.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours/restore.json",
+      "restore_seconds": {
+        "max": 51.108530741,
+        "mean": 49.744953863333336,
+        "min": 48.865629076,
+        "raw_values": [
+          48.865629076,
+          49.260701773,
+          51.108530741
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 51.127315906
+      },
+      "seed": 43,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/ours/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "filesystem-84",
+        "reasons": []
+      },
+      "method": "bytecheckpoint_host",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 98.22229631012306,
+          "phase": "source",
+          "pid": 935140,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3316483561978836
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2033340416,
+              "monotonic_ns": 3316489780824438
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9021861888,
+              "monotonic_ns": 3316495938875629
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9262694400,
+              "monotonic_ns": 3316502191072763
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9371213824,
+              "monotonic_ns": 3316508406380711
+            },
+            {
+              "hbm_bytes": 5761925120,
+              "host_bytes": 9664221184,
+              "monotonic_ns": 3316514613498027
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 11552526336,
+              "monotonic_ns": 3316520879461646
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 16638877696,
+              "monotonic_ns": 3316527067815627
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 14314123264,
+              "monotonic_ns": 3316533297030630
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 14179393536,
+              "monotonic_ns": 3316539518703443
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 15550734336,
+              "monotonic_ns": 3316545767268353
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 16660348928,
+              "monotonic_ns": 3316551978787036
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13177077760,
+              "monotonic_ns": 3316558204633186
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 14302539776,
+              "monotonic_ns": 3316564415026734
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 15614857216,
+              "monotonic_ns": 3316570652802672
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 6109724672,
+              "monotonic_ns": 3316576877490887
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/source-c1c2049f.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/source-c1c2049f.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host/restore.json"
+          ],
+          "elapsed_seconds": 63.52072249399498,
+          "phase": "restore",
+          "pid": 938970,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3316581933002966
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2095480832,
+              "monotonic_ns": 3316588130262882
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8996179968,
+              "monotonic_ns": 3316594357622478
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9241784320,
+              "monotonic_ns": 3316600618843528
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9348558848,
+              "monotonic_ns": 3316606868158261
+            },
+            {
+              "hbm_bytes": 5758779392,
+              "host_bytes": 9672613888,
+              "monotonic_ns": 3316613099353312
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 9967919104,
+              "monotonic_ns": 3316619365232701
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11839361024,
+              "monotonic_ns": 3316625550004947
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12492894208,
+              "monotonic_ns": 3316631750903558
+            },
+            {
+              "hbm_bytes": 7554990080,
+              "host_bytes": 7584952320,
+              "monotonic_ns": 3316637944149419
+            },
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 5156663296,
+              "monotonic_ns": 3316644120297592
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-8f33e8ac.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-8f33e8ac.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host/timing-0.json"
+          ],
+          "elapsed_seconds": 58.171615042258054,
+          "phase": "restore",
+          "pid": 942828,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3316645339529447
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2045558784,
+              "monotonic_ns": 3316651582955256
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8986664960,
+              "monotonic_ns": 3316657740229024
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9228550144,
+              "monotonic_ns": 3316663981217624
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9337122816,
+              "monotonic_ns": 3316670191043820
+            },
+            {
+              "hbm_bytes": 5599395840,
+              "host_bytes": 9606938624,
+              "monotonic_ns": 3316676437943614
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 9955209216,
+              "monotonic_ns": 3316682708967843
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 11833020416,
+              "monotonic_ns": 3316688911661311
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12606656512,
+              "monotonic_ns": 3316695154605098
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5560909824,
+              "monotonic_ns": 3316701429118351
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-5eb60c36.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-5eb60c36.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host/timing-1.json"
+          ],
+          "elapsed_seconds": 57.10066704405472,
+          "phase": "restore",
+          "pid": 946664,
+          "resources": [
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3316703488599229
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2045931520,
+              "monotonic_ns": 3316709686571498
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8982671360,
+              "monotonic_ns": 3316715852910422
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9224400896,
+              "monotonic_ns": 3316722099735515
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9333104640,
+              "monotonic_ns": 3316728353399145
+            },
+            {
+              "hbm_bytes": 5761925120,
+              "host_bytes": 9680613376,
+              "monotonic_ns": 3316734523805005
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 10042855424,
+              "monotonic_ns": 3316740715211318
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11567996928,
+              "monotonic_ns": 3316746951153288
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12300034048,
+              "monotonic_ns": 3316753170455762
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5133402112,
+              "monotonic_ns": 3316759395740509
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-8e264477.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-8e264477.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host/timing-2.json"
+          ],
+          "elapsed_seconds": 57.05487870192155,
+          "phase": "restore",
+          "pid": 950498,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15851520,
+              "monotonic_ns": 3316760579538484
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2062979072,
+              "monotonic_ns": 3316766725519697
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9027420160,
+              "monotonic_ns": 3316772903332536
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9269272576,
+              "monotonic_ns": 3316779159058515
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9377914880,
+              "monotonic_ns": 3316785389699824
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9648807936,
+              "monotonic_ns": 3316791601058836
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 10012729344,
+              "monotonic_ns": 3316797796111774
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12031397888,
+              "monotonic_ns": 3316804021624752
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12316270592,
+              "monotonic_ns": 3316810251648169
+            },
+            {
+              "hbm_bytes": 3609198592,
+              "host_bytes": 5134651392,
+              "monotonic_ns": 3316816452052898
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-a9c4528d.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-a9c4528d.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host",
+            "--method",
+            "bytecheckpoint_host",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host/timing-3.json"
+          ],
+          "elapsed_seconds": 58.408385389950126,
+          "phase": "restore",
+          "pid": 954323,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3316817689484665
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2036236288,
+              "monotonic_ns": 3316823892682235
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9044484096,
+              "monotonic_ns": 3316830131567936
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9286610944,
+              "monotonic_ns": 3316836326619264
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9395224576,
+              "monotonic_ns": 3316842553550118
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9717452800,
+              "monotonic_ns": 3316848706998741
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 10013773824,
+              "monotonic_ns": 3316854882545111
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 11889803264,
+              "monotonic_ns": 3316861104578526
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12645666816,
+              "monotonic_ns": 3316867303786500
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 5582725120,
+              "monotonic_ns": 3316873496883450
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-65698ab8.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-65698ab8.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host/restore.json",
+      "restore_seconds": {
+        "max": 45.025624648,
+        "mean": 44.645166493,
+        "min": 44.211169469,
+        "raw_values": [
+          44.211169469,
+          44.698705362,
+          45.025624648
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 45.221545765
+      },
+      "seed": 43,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/bytecheckpoint_host/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": false,
+        "comparison_group": "training-only",
+        "reasons": [
+          "No checkpoint or recovery"
+        ]
+      },
+      "method": "none",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/none",
+            "--method",
+            "none",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 48.95899343723431,
+          "phase": "source",
+          "pid": 958195,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15859712,
+              "monotonic_ns": 3316876093281477
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2047950848,
+              "monotonic_ns": 3316882336580996
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8976494592,
+              "monotonic_ns": 3316888488512713
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9218179072,
+              "monotonic_ns": 3316894718127907
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9326800896,
+              "monotonic_ns": 3316900952695512
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9634512896,
+              "monotonic_ns": 3316907149710577
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11230367744,
+              "monotonic_ns": 3316913303376161
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6097854464,
+              "monotonic_ns": 3316919511089009
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/source-58f6e75b.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/source-58f6e75b.stdout.log"
+        }
+      ],
+      "restore_status": "not_applicable",
+      "seed": 43,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/none/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "filesystem-84",
+        "reasons": []
+      },
+      "method": "mindspore_native_save",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 109.16341031901538,
+          "phase": "source",
+          "pid": 961336,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15855616,
+              "monotonic_ns": 3316925045920708
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2061185024,
+              "monotonic_ns": 3316931252214910
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8970350592,
+              "monotonic_ns": 3316937469362156
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9212452864,
+              "monotonic_ns": 3316943658147329
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9321181184,
+              "monotonic_ns": 3316949839374491
+            },
+            {
+              "hbm_bytes": 5599395840,
+              "host_bytes": 9602433024,
+              "monotonic_ns": 3316955981649640
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 11227406336,
+              "monotonic_ns": 3316962127485592
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13537042432,
+              "monotonic_ns": 3316968334758489
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13537423360,
+              "monotonic_ns": 3316974528082559
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13537521664,
+              "monotonic_ns": 3316980744608732
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13537525760,
+              "monotonic_ns": 3316986898295486
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13537628160,
+              "monotonic_ns": 3316993127152568
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13582188544,
+              "monotonic_ns": 3316999313797182
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13537751040,
+              "monotonic_ns": 3317005528251777
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13537759232,
+              "monotonic_ns": 3317011810512440
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 13537808384,
+              "monotonic_ns": 3317018056494810
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 13692153856,
+              "monotonic_ns": 3317024272395970
+            },
+            {
+              "hbm_bytes": 3695181824,
+              "host_bytes": 5635571712,
+              "monotonic_ns": 3317030479626956
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/source-f88c4d09.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/source-f88c4d09.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save/restore.json"
+          ],
+          "elapsed_seconds": 51.26769979810342,
+          "phase": "restore",
+          "pid": 964771,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15847424,
+              "monotonic_ns": 3317034285130618
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2060292096,
+              "monotonic_ns": 3317040487031163
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 8992800768,
+              "monotonic_ns": 3317046662479467
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9234575360,
+              "monotonic_ns": 3317052864329105
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9343279104,
+              "monotonic_ns": 3317059149357291
+            },
+            {
+              "hbm_bytes": 5761925120,
+              "host_bytes": 9655705600,
+              "monotonic_ns": 3317065370167774
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 12170317824,
+              "monotonic_ns": 3317071613846627
+            },
+            {
+              "hbm_bytes": 7556038656,
+              "host_bytes": 13462376448,
+              "monotonic_ns": 3317077872579490
+            },
+            {
+              "hbm_bytes": 3610247168,
+              "host_bytes": 4438753280,
+              "monotonic_ns": 3317084052893003
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-efb6186f.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-efb6186f.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save/timing-0.json"
+          ],
+          "elapsed_seconds": 50.90944851608947,
+          "phase": "restore",
+          "pid": 967946,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3317085530822895
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2040688640,
+              "monotonic_ns": 3317091764507778
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9010515968,
+              "monotonic_ns": 3317097988868625
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9251344384,
+              "monotonic_ns": 3317104223340642
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9363255296,
+              "monotonic_ns": 3317110456166243
+            },
+            {
+              "hbm_bytes": 5596250112,
+              "host_bytes": 9624268800,
+              "monotonic_ns": 3317116616433607
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12196319232,
+              "monotonic_ns": 3317122823486236
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6106923008,
+              "monotonic_ns": 3317129027823214
+            },
+            {
+              "hbm_bytes": 3541041152,
+              "host_bytes": 4119175168,
+              "monotonic_ns": 3317135177315427
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-2b9b81f6.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-2b9b81f6.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save/timing-1.json"
+          ],
+          "elapsed_seconds": 50.91499867895618,
+          "phase": "restore",
+          "pid": 971117,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15863808,
+              "monotonic_ns": 3317136417361281
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2061791232,
+              "monotonic_ns": 3317142634690420
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8998277120,
+              "monotonic_ns": 3317148843101165
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9205145600,
+              "monotonic_ns": 3317155083707746
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9347919872,
+              "monotonic_ns": 3317161241657901
+            },
+            {
+              "hbm_bytes": 5546967040,
+              "host_bytes": 9584209920,
+              "monotonic_ns": 3317167412087506
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12565295104,
+              "monotonic_ns": 3317173697717114
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6106562560,
+              "monotonic_ns": 3317179887904047
+            },
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 21975040,
+              "monotonic_ns": 3317186093611270
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-8d351a8e.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-8d351a8e.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save/timing-2.json"
+          ],
+          "elapsed_seconds": 49.460942761041224,
+          "phase": "restore",
+          "pid": 974307,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15859712,
+              "monotonic_ns": 3317187306820079
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2017480704,
+              "monotonic_ns": 3317193501785920
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9036500992,
+              "monotonic_ns": 3317199697697655
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9279586304,
+              "monotonic_ns": 3317205902002933
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 9388113920,
+              "monotonic_ns": 3317212090236418
+            },
+            {
+              "hbm_bytes": 5757730816,
+              "host_bytes": 9659514880,
+              "monotonic_ns": 3317218279178356
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12220973056,
+              "monotonic_ns": 3317224482784221
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6075117568,
+              "monotonic_ns": 3317230636312549
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-3d8b1f8a.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-3d8b1f8a.stdout.log"
+        },
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "restore",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "timing",
+            "--output",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save/timing-3.json"
+          ],
+          "elapsed_seconds": 48.154101222753525,
+          "phase": "restore",
+          "pid": 977460,
+          "resources": [
+            {
+              "hbm_bytes": 3539992576,
+              "host_bytes": 15867904,
+              "monotonic_ns": 3317236714643981
+            },
+            {
+              "hbm_bytes": 3538944000,
+              "host_bytes": 2017517568,
+              "monotonic_ns": 3317242938285075
+            },
+            {
+              "hbm_bytes": 3622830080,
+              "host_bytes": 8977870848,
+              "monotonic_ns": 3317249150210723
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9219366912,
+              "monotonic_ns": 3317255400102301
+            },
+            {
+              "hbm_bytes": 3623878656,
+              "host_bytes": 9327874048,
+              "monotonic_ns": 3317261657300017
+            },
+            {
+              "hbm_bytes": 5761925120,
+              "host_bytes": 9684975616,
+              "monotonic_ns": 3317267876687715
+            },
+            {
+              "hbm_bytes": 6071255040,
+              "host_bytes": 12158836736,
+              "monotonic_ns": 3317274057217659
+            },
+            {
+              "hbm_bytes": 6070206464,
+              "host_bytes": 6099820544,
+              "monotonic_ns": 3317280293963355
+            }
+          ],
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-e771efc5.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/restore-e771efc5.stdout.log"
+        }
+      ],
+      "restore": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save/restore.json",
+      "restore_seconds": {
+        "max": 38.018758052,
+        "mean": 36.95564105733333,
+        "min": 36.334287096,
+        "raw_values": [
+          38.018758052,
+          36.513878024,
+          36.334287096
+        ],
+        "sample_count": 3,
+        "statistics": "observed mean/range; no tail inference",
+        "warmup": 37.759602801
+      },
+      "seed": 43,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save/source.json"
+    }
+  ],
+  "source_digest": "d46c633ad4c8abdfdd07e5ddc7007948672fb6a36ec9d63c482652abb8f2c7e7",
+  "validation_status": "pass"
+}
