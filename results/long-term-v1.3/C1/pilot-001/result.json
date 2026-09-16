@@ -1,0 +1,87 @@
+{
+  "command": "benchmark",
+  "error": "RuntimeError('restore/mindspore_native_save failed (1); see /models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/restore-e3e71383')",
+  "execution_status": "completed",
+  "observed_commit": "ed43b2ed7c071ea7f719147e043080a892032531",
+  "runs": [
+    {
+      "comparison": {
+        "comparable": false,
+        "comparison_group": "training-only",
+        "reasons": [
+          "No checkpoint or recovery"
+        ]
+      },
+      "method": "none",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/none",
+            "--method",
+            "none",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 46.087637623772025,
+          "phase": "source",
+          "pid": 720304,
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/source-9eaf805c.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/source-9eaf805c.stdout.log"
+        }
+      ],
+      "restore_status": "not_applicable",
+      "seed": 41,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/none/source.json"
+    },
+    {
+      "comparison": {
+        "comparable": true,
+        "comparison_group": "filesystem-84",
+        "reasons": []
+      },
+      "method": "mindspore_native_save",
+      "processes": [
+        {
+          "argv": [
+            "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+            "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+            "_phase",
+            "--phase",
+            "source",
+            "--flat-config",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/flat-config.json",
+            "--run-dir",
+            "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/mindspore_native_save",
+            "--method",
+            "mindspore_native_save",
+            "--generation",
+            "latest-committed",
+            "--mode",
+            "verify"
+          ],
+          "elapsed_seconds": 53.34987673908472,
+          "phase": "source",
+          "pid": 723457,
+          "returncode": 0,
+          "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/source-c7890c92.stderr.log",
+          "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/source-c7890c92.stdout.log"
+        }
+      ],
+      "seed": 41,
+      "source": "/models/npu_nvme_exp/user7-stack/c1-runs/pilot-001/seed-41/mindspore_native_save/source.json"
+    }
+  ],
+  "source_digest": "eb6c2acfedeefc57429b0e45d3b111075bda8cab410160792e6afd11555ff30c",
+  "validation_status": "fail"
+}

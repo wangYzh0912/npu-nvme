@@ -182,14 +182,6 @@ def restore_training_controls(ms, optimizer, controls: Mapping[str, Any],
             raise ValueError("optimizer global_step cannot be restored")
         optimizer.global_step.set_data(ms.Tensor(saved_step))
 
-    random.setstate(controls["python_rng"])
-    np.random.set_state(controls["numpy_rng"])
-    if hasattr(ms, "common") and hasattr(ms.common, "set_seed"):
-        ms.common.set_seed(int(controls["mindspore_seed"]))
-    elif hasattr(ms, "set_seed"):
-        ms.set_seed(int(controls["mindspore_seed"]))
-    ms.set_rng_state(ms.Tensor(np.asarray(controls["mindspore_rng"])))
-
     if scheduler is not None:
         if hasattr(scheduler, "load_state_dict"):
             scheduler.load_state_dict(controls["scheduler"])
@@ -198,6 +190,16 @@ def restore_training_controls(ms, optimizer, controls: Mapping[str, Any],
         else:
             raise TypeError(
                 "mutable scheduler must expose load_state_dict() or set_state()")
+    # MindSpore set_seed also resets NumPy's global generator. Restore the
+    # Host generators LAST, after framework/scheduler initialization, so their
+    # saved cursors survive instead of silently rewinding to the initial seed.
+    if hasattr(ms, "common") and hasattr(ms.common, "set_seed"):
+        ms.common.set_seed(int(controls["mindspore_seed"]))
+    elif hasattr(ms, "set_seed"):
+        ms.set_seed(int(controls["mindspore_seed"]))
+    ms.set_rng_state(ms.Tensor(np.asarray(controls["mindspore_rng"])))
+    random.setstate(controls["python_rng"])
+    np.random.set_state(controls["numpy_rng"])
     return {
         "data_cursor": controls["data_cursor"],
         "loss_scale": controls["loss_scale"],
