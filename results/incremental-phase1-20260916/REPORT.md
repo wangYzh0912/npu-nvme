@@ -1,6 +1,6 @@
 # 增量检查点第一阶段实验报告
 
-当前状态：执行中，未完成项不计为通过。已完成 6/35 项覆盖。
+当前状态：执行中，未完成项不计为通过。已完成 7/35 项覆盖。
 
 实验固定 TP4、序列长度 128、micro-batch 1、FP32 权重/BF16 计算、AdamW、种子 42。各组从相同初始 FULL 恢复模型、优化器和随机状态，预热后连续运行 20 个优化器 step，每步保存。主模型 Qwen3-8B，辅模型 Qwen3-4B；两者同属 Qwen3，不据此声称跨模型家族泛化。
 
@@ -39,6 +39,7 @@
 
 | 组 | 校验 step 数 | 末步相对 L2 | 末步 loss 差 | 最大块年龄 |
 |---|---:|---:|---:|---:|
+| K10 | 20 | 0.00010939587 | 0.069645479 | 20 |
 
 影子状态由实际媒体读回的数据更新；逐块检查映射、覆盖范围及选中值，与设备参考状态交叉核验。误差按真实完整权重计算。固定评估 batch 与训练固定样本相同，衡量状态数值差异，不作为留出集泛化质量指标。未指定质量预算，故只报告误差及组间差异，不宣布质量通过。
 
@@ -57,7 +58,6 @@
 - auxiliary-K20
 - fidelity-B1
 - fidelity-K5
-- fidelity-K10
 - fidelity-K20
 - p2-score-0.5
 - p2-score-1.0
@@ -109,6 +109,8 @@ HBM 导出表只有本次采集汇总：[{"Device_id": "0", "Metric": "Average",
 ![Main timeline](figures/phase-timeline-main.png)
 
 ![Main demo](figures/demo-main.png)
+
+![fidelity-curves.png](figures/fidelity-curves.png)
 
 ## 已测链路分段
 
