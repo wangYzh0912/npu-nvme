@@ -1,0 +1,113 @@
+{
+  "adapter": "bytecheckpoint_host",
+  "applied_state_sha256": "e0025352a00a6c32dc725d7d56440c43b68e17f84d57fce26006698c04e7a2d8",
+  "byte_exact": true,
+  "checkpoint_step": 3,
+  "controls": {
+    "data_cursor": "{'epoch': 0, 'next_step': 4, 'sample': 3}",
+    "global_step": "[3]",
+    "loss_scale": "1.0"
+  },
+  "controls_verified": true,
+  "expected_state_sha256": "e0025352a00a6c32dc725d7d56440c43b68e17f84d57fce26006698c04e7a2d8",
+  "generation": 1,
+  "loss_deviation": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "mandatory_integrity": true,
+  "mode": "verify",
+  "persisted_state_sha256": "e0025352a00a6c32dc725d7d56440c43b68e17f84d57fce26006698c04e7a2d8",
+  "repeat_index": null,
+  "restore_pid": 765593,
+  "restored_losses": [
+    10.868170738220215,
+    10.8652925491333,
+    10.868734359741211
+  ],
+  "source_oracle_losses": [
+    10.868170738220215,
+    10.8652925491333,
+    10.868734359741211
+  ],
+  "source_pid": 761989,
+  "status": "pass",
+  "timing": {
+    "events": [
+      {
+        "event": "process_start",
+        "mode": "verify",
+        "monotonic_ns": 3312623444993469,
+        "pid": 765593,
+        "repeat_index": null
+      },
+      {
+        "event": "restore_begin",
+        "monotonic_ns": 3312623445259360,
+        "selected_generation": 1,
+        "selected_step": 3
+      },
+      {
+        "event": "model_constructed",
+        "monotonic_ns": 3312653263368006
+      },
+      {
+        "event": "framework_ready",
+        "monotonic_ns": 3312653263391436
+      },
+      {
+        "event": "metadata_ready",
+        "monotonic_ns": 3312653343191981
+      },
+      {
+        "combined": true,
+        "event": "read_deserialize_done",
+        "monotonic_ns": 3312665747480886
+      },
+      {
+        "event": "integrity_and_apply_done",
+        "mandatory_checksums": true,
+        "monotonic_ns": 3312668782470972
+      },
+      {
+        "event": "controls_verified",
+        "monotonic_ns": 3312668786313498
+      },
+      {
+        "event": "state_ready",
+        "monotonic_ns": 3312668786315548
+      },
+      {
+        "event": "verify_begin",
+        "monotonic_ns": 3312668786316718
+      },
+      {
+        "applied_state_sha256": "e0025352a00a6c32dc725d7d56440c43b68e17f84d57fce26006698c04e7a2d8",
+        "byte_exact": true,
+        "event": "verify_end",
+        "expected_state_sha256": "e0025352a00a6c32dc725d7d56440c43b68e17f84d57fce26006698c04e7a2d8",
+        "monotonic_ns": 3312672687322659,
+        "persisted_state_sha256": "e0025352a00a6c32dc725d7d56440c43b68e17f84d57fce26006698c04e7a2d8"
+      },
+      {
+        "event": "first_step_begin",
+        "monotonic_ns": 3312672687345709,
+        "step": 4
+      },
+      {
+        "event": "first_step_end",
+        "includes_graph_compile": true,
+        "loss": 10.868170738220215,
+        "monotonic_ns": 3312672749096807,
+        "step": 4
+      }
+    ],
+    "first_step_begin_ns": 3312672687345709,
+    "first_step_end_ns": 3312672749096807,
+    "process_start_ns": 3312623444989419,
+    "restore_begin_ns": 3312623445259360,
+    "state_ready_ns": 3312668786315548
+  },
+  "verification_performed": true
+}

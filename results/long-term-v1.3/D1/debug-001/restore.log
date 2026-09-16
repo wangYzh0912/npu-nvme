@@ -1,0 +1,57 @@
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:22.628.275 [mindspore/run_check/_check_version.py:402] Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:25.934.517 [mindspore/context.py:1335] For 'context.set_context', the parameter 'deterministic' will be deprecated and removed in a future version. Please use the api mindspore.set_deterministic() instead.
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:25.958.814 [mindspore/run_check/_check_version.py:402] Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:25.959.008 [mindspore/context.py:1335] For 'context.set_context', the parameter 'device_target' will be deprecated and removed in a future version. Please use the api mindspore.set_device() instead.
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:25.959.702 [mindspore/run_check/_check_version.py:402] Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:25.959.811 [mindspore/context.py:1335] For 'context.set_context', the parameter 'device_id' will be deprecated and removed in a future version. Please use the api mindspore.set_device() instead.
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/jieba/_compat.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+[Common] Building gpt2 model...
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:27.129.969 [mindspore/ops/primitive.py:217] The in_strategy/in_layout of the operator in your network will not take effect in stand_alone mode. This means the the shard function called in the network is ignored. 
+If you want to enable it, please use semi auto or auto parallel mode by context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:27.528.452 [mindspore/common/parameter.py:851] This interface may be deleted in the future.
+2026-09-14 13:15:28,782 - mindformers[mindformers/models/modeling_utils.py:1502] - INFO - model built, but weights is unloaded, since the config has no checkpoint_name_or_path attribute or checkpoint_name_or_path is None.
+2026-09-14 13:15:32,577 - mindformers[mindformers/models/auto/auto_factory.py:362] - INFO - model built successfully!
+[WARNING] ME(565756:281473845497888,MainProcess):2026-09-14-13:15:55.540.662 [mindspore/hal/stream.py:272] WARN_DEPRECATED: The usage of mindspore.hal.synchronize() is deprecated. Please use mindspore.runtime.synchronize()
+[C1] excluded_step=0 loss=10.8473606 time=22.027s
+EAL: '-c <coremask>' option is deprecated, and will be removed in a future release
+EAL: 	Use '-l <corelist>' or '--lcores=<corelist>' option instead
+[Diag] after spdk_env_init: rte_lcore_count=1 rte_socket_count=8 spdk_core_count=1
+[Diag] reactor: rings w=0x2000008fd600 r=0x2000008fd080 m=0x2000008fcb80 pollers s=0xfffba41df390 w=0xfffba41f9550 r=0xfffba4071340 m=0xfffba4076a80
+[NPU-NVMe] Found matching controller at 0000:83:00.0
+[NPU-NVMe] Attached NS: block_size=512 total_blocks=7501476528
+[Init] NPUNVME Fully Initialized! Stream/Events ready. Max Pipe Depth: 4
+[Init] Initialisation complete.
+[Rank 0] FileSystem Mounted. V2 generation=2 Active Slot: A
+[WARNING] ME(565756:281456521769376,MainProcess):2026-09-14-13:15:56.138.46 [mindspore/context.py:1282] For 'context.set_context' in Ascend backend, the backend is already initialized, please set it before the definition of any Tensor and Parameter, and the instantiation and execution of any operation and net, otherwise the settings may not take effect. 
+[WARNING] ME(565756:281456521769376,MainProcess):2026-09-14-13:15:56.140.56 [mindspore/context.py:1335] For 'context.set_context', the parameter 'deterministic' will be deprecated and removed in a future version. Please use the api mindspore.set_deterministic() instead.
+[Common] Building gpt2 model...
+2026-09-14 13:15:57,778 - mindformers[mindformers/models/modeling_utils.py:1502] - INFO - model built, but weights is unloaded, since the config has no checkpoint_name_or_path attribute or checkpoint_name_or_path is None.
+2026-09-14 13:15:57,780 - mindformers[mindformers/models/auto/auto_factory.py:362] - INFO - model built successfully!
+[C1] excluded_step=0 loss=10.8473606 time=16.493s
+Traceback (most recent call last):
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/d1_full_state.py", line 152, in <module>
+    if __name__=='__main__': sys.exit(main())
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/d1_full_state.py", line 123, in main
+    try: (save if args.phase=='save' else restore)(args)
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/d1_full_state.py", line 85, in restore
+    target,receipt=store.restore_full_state(factory,saved['spec'],args.save_step,deadline=time.monotonic()+180)
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/python/npu_nvme/strict_checkpoint.py", line 87, in restore_full_state
+    return self.begin_restore_full_state(target_factory, expected_spec, step).result(deadline)
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/python/npu_nvme/runtime/d1_restore.py", line 51, in result
+    if self._error is not None: raise self._error
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/python/npu_nvme/runtime/d1_restore.py", line 33, in _run
+    self._result = operation(self.request_id)
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/python/npu_nvme/runtime/d1_runtime.py", line 152, in operation
+    try: return self.restore_session.restore_full_state(factory, spec, step, request_id=request_id)
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/python/npu_nvme/runtime/d1_restore.py", line 90, in restore_full_state
+    raise StrictRestoreError('control state readback differs')
+npu_nvme.runtime.d1_restore.StrictRestoreError: control state readback differs

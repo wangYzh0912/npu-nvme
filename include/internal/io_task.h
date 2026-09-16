@@ -9,36 +9,54 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdatomic.h>
+#include <openssl/sha.h>
 
 /* --- DMA buffer descriptor --- */
 typedef struct {
     void *buf;
     uint64_t phys_addr;
+    atomic_ullong owner_request_id;
+    atomic_ullong owned_bytes;
+    atomic_ullong owned_offset;
 } dma_buf_t;
 
 /* --- Chunk lifecycle state --- */
 typedef enum {
     CHUNK_IDLE = 0,
+    CHUNK_HOST_COPYING,
     CHUNK_NPU_COPYING,      /* write path: NPU -> DMA buffer in flight */
     CHUNK_NPU_DONE,         /* write path: DMA copy complete */
     CHUNK_SPDK_WRITING,     /* write path: SPDK NVMe write in flight */
     CHUNK_SPDK_READING,     /* read path:  SPDK NVMe read in flight */
     CHUNK_SPDK_DONE,        /* read path:  NVMe -> DMA buffer complete */
-    CHUNK_DONE
+    CHUNK_H2D_COPYING,
+    CHUNK_DONE,
+    CHUNK_QUARANTINED      /* no proof that DMA stopped; never reusable */
 } chunk_state_t;
 
 /* --- Per-chunk I/O descriptor --- */
 typedef struct {
     int task_idx;
+    uint64_t request_id;
     int buf_idx;            /* ring buffer slot index, -1 = unassigned */
     chunk_state_t state;
+    void *host_ptr;         /* caller buffer for a copy-only request */
     void *npu_ptr;          /* source (write) or dest (read) address */
     size_t size;
     uint64_t nvme_offset;   /* absolute byte offset on NVMe */
     uint32_t crc32;         /* CRC of the unpadded logical payload */
+    uint8_t sha256[32];
+    size_t host_copy_offset;
+    size_t checksum_offset;
+    uint32_t checksum_crc;
+    SHA256_CTX checksum_sha;
+    bool checksum_done;
+    uint32_t expected_crc32;
+    uint8_t expected_sha256[32];
     uint64_t ts_slot_wait;  /* profiling: started waiting for a DMA slot */
     uint64_t ts_slot_acquire; /* profiling: DMA slot acquired */
     uint64_t ts_submit;     /* profiling: submission timestamp */
+    uint64_t ts_h2d_submit;
     uint64_t ts_npu_done;   /* profiling: NPU copy completion */
     uint64_t ts_spdk_submit; /* profiling: NVMe command submission */
     uint64_t ts_spdk_done;  /* profiling: SPDK I/O completion */
@@ -84,12 +102,34 @@ typedef struct NPUNVMERequest {
     struct NPUNVMEContext *ctx; /* owner used by public poll/wait API */
     io_task_t *tasks;           /* array of per-chunk descriptors */
     int num_tasks;              /* number of chunks in this write */
+    bool is_copy;
     bool is_host;               /* true → memcpy, false → aclrtMemcpy D2H */
     bool async_dma;             /* true → aclrtMemcpyAsync + event polling */
+    atomic_uint refs;          /* caller + queue/reactor references */
     atomic_int done;            /* set to 1 when all chunks complete */
     atomic_int detached;        /* reserved for legacy internal requests */
     int result;                 /* 0 = success, -1 = any chunk failed */
+    uint32_t timeout_ms;        /* finite default survives context shutdown */
     bool compute_crc;           /* calculate CRC after async DMA completion */
+    bool compute_sha256;
+    uint32_t operation;
+    uint64_t byte_offset;       /* absolute byte offset on NVMe */
+    uint32_t total_bytes;       /* number of bytes to read/write */
+    int is_read;                /* 1 = read, 0 = write */
+    int is_flush;               /* 1 = namespace flush, no data buffer */
+    void *meta_buffer;          /* caller's host buffer */
+    void *owned_buffer;         /* reactor-owned DMA staging copy */
+    uint64_t submit_not_before_us; /* test hook; zero in normal operation */
+    int submitted;              /* NVMe command has been submitted */
+    atomic_int io_done;         /* set by NVMe callback */
+    atomic_int owner_state;     /* meta_owner_state_t */
+    uint64_t request_id;
+    int resume_index; /* quiescent prefix; no DMA references while rotated */
+    struct NPUNVMERequest *ready_next;
+    struct NPUNVMERequest *accepted_next;
+    struct NPUNVMERequest **dependencies;
+    uint32_t dependency_count;
+    int dependency_error;
     uint32_t *crc32_out;        /* optional caller-owned per-task CRC array */
     uint64_t ts_batch_start;    /* C-layer: first DMA submit time (us) */
     uint64_t ts_batch_end;      /* C-layer: last SPDK completion time (us) */
@@ -112,16 +152,7 @@ typedef enum {
     READ_FSM_RUNNING,
 } read_fsm_state_t;
 
-typedef struct {
-    io_task_t *tasks;           /* array of per-chunk descriptors */
-    int num_tasks;              /* number of chunks in this read */
-    bool is_host;               /* true → memcpy, false → aclrtMemcpy H2D */
-    atomic_int done;            /* set to 1 when all chunks complete */
-    atomic_int detached;        /* reserved for legacy internal requests */
-    int result;                 /* 0 = success, -1 = any chunk failed */
-    uint64_t ts_batch_start;    /* C-layer: first SPDK submit time (us) */
-    uint64_t ts_batch_end;      /* C-layer: last DMA completion time (us) */
-} read_request_t;
+typedef write_request_t read_request_t; /* one opaque request ownership contract */
 
 typedef struct {
     read_fsm_state_t state;
@@ -144,20 +175,6 @@ typedef enum {
     META_CALLER_DONE,
 } meta_owner_state_t;
 
-typedef struct {
-    uint64_t byte_offset;       /* absolute byte offset on NVMe */
-    uint32_t total_bytes;       /* number of bytes to read/write */
-    int is_read;                /* 1 = read, 0 = write */
-    int is_flush;               /* 1 = namespace flush, no data buffer */
-    void *meta_buffer;          /* caller's host buffer */
-    void *owned_buffer;         /* reactor-owned DMA staging copy */
-    uint64_t submit_not_before_us; /* test hook; zero in normal operation */
-    int submitted;              /* NVMe command has been submitted */
-    atomic_int done;            /* set only after reactor publication */
-    atomic_int io_done;         /* set by NVMe callback */
-    atomic_int owner_state;     /* meta_owner_state_t */
-    atomic_int detached;        /* caller timed out; reactor owns cleanup */
-    int result;                 /* 0 = success, -1 = I/O error */
-} meta_request_t;
+typedef write_request_t meta_request_t;
 
 #endif

@@ -1,0 +1,61 @@
+{
+  "argv": [
+    "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+    "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/stage4_fault_lifecycle.py",
+    "--output",
+    "/tmp/h02-isolated-r3/019-before_data_complete-fault",
+    "--pci",
+    "0000:83:00.0",
+    "--npu",
+    "7",
+    "--depth",
+    "2",
+    "--shm-id",
+    "312422",
+    "--library",
+    "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/build_out/lib/libnpu_nvme.so.1.0",
+    "--close-timeout-ms",
+    "5000",
+    "--timeout-bound",
+    "0.2",
+    "--crash-child",
+    "before_data_complete"
+  ],
+  "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3",
+  "expected_rc": 86,
+  "pid": 414637,
+  "returncode": 86,
+  "seconds": 0.8187949466519058,
+  "status": "pass",
+  "worker": {
+    "before_crash": {
+      "retained_slots": [],
+      "stats": {
+        "async_dma_submit_count": 0,
+        "async_event_query_count": 0,
+        "async_event_query_error_count": 0,
+        "completion_error_count": 0,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 0,
+        "nvme_complete_count": 0,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 0,
+        "nvme_submit_count": 0,
+        "reactor_cpu_us": 1251,
+        "request_ring_depth": 1,
+        "request_ring_peak": 1,
+        "spdk_retry_count": 0,
+        "stream_sync_fallback_count": 0
+      }
+    },
+    "case": "before_data_complete",
+    "cleanup_safe": false,
+    "crash_boundary": "host request accepted, before NVMe submit; no HBM DMA",
+    "init_rc": 0,
+    "pid": 414637,
+    "scope": "process-crash smoke only; no DMA-stop or power-loss proof",
+    "shm_id": 312422,
+    "status": "expected_crash",
+    "superblock_sha256": "3595d57996507a46ba61a6f404b03da576a49de72781d4aff1173e8e93c511a7"
+  }
+}

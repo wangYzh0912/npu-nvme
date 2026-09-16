@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "profile_id": "EN-native",
+  "profile_sha256": "be5e2541c8b55b7c0e4dab9f0df06871cde3dc79e97bde155cf74a18f741c778",
+  "execution_status": "completed",
+  "validation_status": "pass",
+  "cases": [
+    {
+      "id": "EN-recorded-native-restart",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/gates/test_native_restart_evidence.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/EN-native/gate-001/case-000/junit.xml"
+      ],
+      "counts": {
+        "tests": 5,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-000/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.49468195997178555,
+      "stdout": "case-000/stdout.txt",
+      "stderr": "case-000/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "EN-preflight-and-ready-faults",
+      "required": true,
+      "tier": "FAKE",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/python/test_qwen_native_state.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/EN-native/gate-001/case-001/junit.xml"
+      ],
+      "counts": {
+        "tests": 24,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-001/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.8313359222374856,
+      "stdout": "case-001/stdout.txt",
+      "stderr": "case-001/stderr.txt",
+      "binary_artifacts": []
+    },
+    {
+      "id": "EN-payload-auditor",
+      "required": true,
+      "tier": "CPU",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "tests/python/test_safetensors_audit.py",
+        "--junitxml",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/EN-native/gate-001/case-002/junit.xml"
+      ],
+      "counts": {
+        "tests": 10,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "junit": "case-002/junit.xml",
+      "execution_status": "completed",
+      "validation_status": "pass",
+      "returncode": 0,
+      "elapsed_seconds": 0.3765960782766342,
+      "stdout": "case-002/stdout.txt",
+      "stderr": "case-002/stderr.txt",
+      "binary_artifacts": []
+    }
+  ],
+  "case_count": 39,
+  "environment": {
+    "commit": "a79ec360f3f4cb67b020dbf8b56613e1c6a740ab",
+    "python": "3.9.25 (main, Nov  3 2025, 22:33:42) \n[GCC 11.2.0]",
+    "executable": "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+    "binary_sha256": null,
+    "source_manifest_sha256": "a4626535b41735227ce2310ab1cb0dcb30be2b9cd398a9e0b99ea33b06ebdeff"
+  },
+  "invocation": {
+    "argv": [
+      "tools/run_gate.py",
+      "--profile",
+      "EN-native",
+      "--out",
+      "results/long-term-v1.3/EN-native/gate-001"
+    ],
+    "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3",
+    "script_sha256": "b349ea0a5200a4cdf7d66cccd184a2b5348554f04cd49a4bc2da6cbf53ccbcc8"
+  },
+  "metrics": {},
+  "faults_injected": [],
+  "changed_sources": [],
+  "boundaries": {
+    "can_prove": [
+      "declared host test outcomes"
+    ],
+    "cannot_prove": [
+      "device behavior",
+      "hardware DMA stop",
+      "C binary identity unless reported by C_IMPL test output"
+    ]
+  },
+  "native_evidence": {
+    "source_run": "/models/npu_nvme_exp/user7-stack/qwen3-v13-source-002",
+    "restore_run": "/models/npu_nvme_exp/user7-stack/qwen3-v13-restore-003",
+    "preserved_artifacts_root": "results/long-term-v1.3/EN",
+    "input_artifact_index": "native_input_artifacts.json",
+    "tier": "HW4",
+    "scope": "completed real native experiment, verified by post-run CPU audit"
+  }
+}

@@ -81,6 +81,7 @@ class TrainingStateCodecTests(unittest.TestCase):
             @classmethod
             def set_seed(cls, seed):
                 cls.seed = seed
+                np.random.seed(seed)  # MindSpore's real set_seed has this side effect.
 
         class FakeMS:
             common = FakeCommon
@@ -115,6 +116,9 @@ class TrainingStateCodecTests(unittest.TestCase):
         self.assertTrue(np.array_equal(FakeMS.restored_rng,
                                        np.array([7, 11], dtype=np.int64)))
         self.assertEqual(FakeCommon.seed, 31)
+        self.assertEqual(encode_control_value(np.random.get_state())[0].tobytes(),
+                         encode_control_value(controls['numpy_rng'])[0].tobytes())
+        self.assertEqual(random.getstate(), controls['python_rng'])
         self.assertEqual(restored["data_cursor"], {"epoch": 2, "sample": 19})
         random.setstate(python_before)
         np.random.set_state(numpy_before)
