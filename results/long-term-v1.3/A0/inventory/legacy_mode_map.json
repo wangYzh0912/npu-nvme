@@ -1,0 +1,92 @@
+{
+  "entry": "DirectCheckpoint.save",
+  "source": "python/direct_checkpoint.py",
+  "modes": {
+    "serial": {
+      "capture": "frozen",
+      "transport": "legacy_sync",
+      "wait": "background worker; benchmark caller explicitly waits"
+    },
+    "queue": {
+      "capture": "frozen",
+      "transport": "legacy_sync",
+      "wait": "caller-controlled handle"
+    },
+    "async": {
+      "capture": "frozen",
+      "transport": "async write only where supported; existing host/CRC callers require migration",
+      "wait": "caller-controlled handle"
+    },
+    "frozen_async": {
+      "capture": "frozen",
+      "transport": "same write route as async",
+      "wait": "save waits for persistence"
+    },
+    "live_async": {
+      "capture": "live generation-owned pinned Host staging",
+      "transport": "Host request after ACL event",
+      "wait": "update fence plus later persistence wait"
+    }
+  },
+  "admission": {
+    "block": "two blocking semaphores without deadline in BASE",
+    "try": "nonblocking busy"
+  },
+  "source_references": [
+    {
+      "path": "experiments/baselines/repro/adapters/ours.py",
+      "line": 133,
+      "source": "io_mode=\"serial\", timeout=float(self.config[\"timeout_seconds\"]))"
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1412,
+      "source": "_prepared_params=None, _checkpoint_meta=None, io_mode=\"queue\","
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1414,
+      "source": "if io_mode not in (\"queue\", \"async\", \"serial\", \"frozen_async\","
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1417,
+      "source": "\"io_mode must be serial, queue, async, frozen_async, or live_async\")"
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1421,
+      "source": "io_mode = (\"async\" if requested_mode == \"frozen_async\" else"
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1588,
+      "source": "if io_mode == \"serial\":"
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1598,
+      "source": "if io_mode == \"async\" and hasattr("
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1884,
+      "source": "io_mode: str = \"queue\", admission: str = None,"
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1906,
+      "source": "if io_mode != \"live_async\" and hasattr(ms.hal, \"synchronize\"):"
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1909,
+      "source": "components, with_checksums=(verify_checksums and io_mode != \"live_async\"))"
+    },
+    {
+      "path": "python/direct_checkpoint.py",
+      "line": 1943,
+      "source": "_live_staging=(True if io_mode == \"live_async\" else None))"
+    }
+  ]
+}

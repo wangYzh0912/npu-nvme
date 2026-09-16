@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "default": "old",
+  "private_root": "/models/npu_nvme_exp/user7-stack",
+  "driver_version_file": "/usr/local/Ascend/driver/version.info",
+  "expected_driver_version": "24.1.rc3",
+  "profiles": {
+    "old": {
+      "python": "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+      "toolkit": "/usr/local/Ascend/ascend-toolkit/latest",
+      "version_root": "/usr/local/Ascend/ascend-toolkit/8.0.RC3",
+      "set_env": "/usr/local/Ascend/ascend-toolkit/8.0.RC3/aarch64-linux/bin/setenv.bash"
+    },
+    "candidate": {
+      "python": "/models/npu_nvme_exp/user7-stack/conda/bin/python",
+      "toolkit": "/models/npu_nvme_exp/user7-stack/cann-install/ascend-toolkit/latest",
+      "version_root": "/models/npu_nvme_exp/user7-stack/cann-install/ascend-toolkit/8.3.RC1",
+      "set_env": "/models/npu_nvme_exp/user7-stack/cann-install/ascend-toolkit/set_env.sh",
+      "library": "/models/npu_nvme_exp/user7-stack/project-lib/libnpu_nvme.so"
+    }
+  }
+}
