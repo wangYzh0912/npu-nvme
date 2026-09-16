@@ -201,9 +201,14 @@ def probe_specs(config, phase):
     return []
 
 
-def run(config, output, *, phase="all", resume=False):
+def run(config, output, *, phase="all", resume=False, performance_repeats=1, max_repeats=2):
+    if not 1 <= performance_repeats <= max_repeats <= 2:
+        raise ValueError("effective repetitions must satisfy 1 <= repeats <= max_repeats <= 2")
+    # Scheduling is deliberately separate from immutable initial FULL identity.
+    schedule=dict(config,performance_repeats=performance_repeats,
+                  extra_repeats_on_instability=max_repeats-performance_repeats)
     selected_phases = [phase] if phase != "all" else [f"p{value}" for value in range(7)]
-    needs_raw = any(any(group != 'B0' for group, _, _, _ in _phase_runs(config, item))
+    needs_raw = any(any(group != 'B0' for group, _, _, _ in _phase_runs(schedule, item))
                     for item in selected_phases)
     needs_raw = needs_raw or 'p5' in selected_phases
     if needs_raw and os.geteuid() != 0:
@@ -217,11 +222,13 @@ def run(config, output, *, phase="all", resume=False):
         "schema_version": 1, "status": "running", "config_sha256": config["config_sha256"], "phases": {}}
     if manifest["config_sha256"] != config["config_sha256"]:
         raise ValueError("campaign resume configuration differs")
+    manifest["execution_policy"] = dict(performance_repeats=performance_repeats, max_repeats=max_repeats,
+        initial_identity_preserved=True)
     phases = selected_phases
     try:
         for selected in phases:
             row = manifest["phases"].setdefault(selected, {"status": "running", "runs": []})
-            for group, repeat, canonical, role in _phase_runs(config, selected):
+            for group, repeat, canonical, role in _phase_runs(schedule, selected):
                 path = _run_one(config, output, group, repeat, canonical=canonical, role=role, profile=selected=='p1')
                 if str(path) not in row["runs"]: row["runs"].append(str(path))
                 write(manifest_path, manifest)
@@ -229,20 +236,23 @@ def run(config, output, *, phase="all", resume=False):
                 path=_run_one(config,output,'B0',0,probe=probe)
                 if str(path) not in row['runs']:row['runs'].append(str(path))
                 write(manifest_path,manifest)
-            if not _phase_runs(config, selected):
+            if not _phase_runs(schedule, selected):
                 row['status']='validation_pending' if probe_specs(config,selected) else 'not_implemented' 
             else:
                 row["status"] = "pilot_completed" if selected == 'p0' else "validation_pending"
             if selected=='p0':
                 row['baseline']=validate_baseline(row['runs'], config)
                 if not row['baseline']['stable']:
-                    for repeat in range(config['performance_repeats'],config['performance_repeats']+config['extra_repeats_on_instability']):
+                    for repeat in range(performance_repeats,max_repeats):
                         path=_run_one(config,output,'B0',repeat)
                         if str(path) not in row['runs']:row['runs'].append(str(path))
                     row['baseline']=validate_baseline(row['runs'], config)
                 row['status']='pass' if row['baseline']['stable'] else 'inconclusive_variance'
             elif selected=='p1':
-                row['status']='pass'
+                row['status']='validation_pending'
+            elif selected=='p6':
+                path=_run_one(config,output,'B0',0,role='auxiliary',profile=True)
+                if str(path) not in row['runs']:row['runs'].append(str(path))
             write(manifest_path, manifest)
         manifest["status"] = "completed" if set(manifest["phases"]) == {f'p{i}' for i in range(7)} and all(row.get("status") == "pass" for row in manifest["phases"].values()) else "partial"
         write(manifest_path, manifest); return 0

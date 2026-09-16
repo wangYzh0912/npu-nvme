@@ -102,6 +102,8 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--phase", choices=("p0", "p1", "p2", "p3", "p4", "p5", "p6", "all"), default="all")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--repeats", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--max-repeats", type=int, choices=(1, 2), default=2)
     args = parser.parse_args(argv)
     config = load(args.config, ROOT)
     if args.command == "preflight":
@@ -109,7 +111,8 @@ def main(argv=None):
         print(json.dumps(result, indent=2)); return 0
     if args.command == "campaign":
         from npu_nvme.experiments.campaign import run
-        return run(config, args.output, phase=args.phase, resume=args.resume)
+        return run(config, args.output, phase=args.phase, resume=args.resume,
+                   performance_repeats=args.repeats, max_repeats=args.max_repeats)
     from npu_nvme.experiments.report import render
     return render(args.output)
 

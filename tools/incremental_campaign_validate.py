@@ -26,8 +26,8 @@ def audit(root):
             completions=[]
             for rank in range(4):
                 completions.extend(json.loads(p.read_text()) for p in (path/f'rank_{rank}'/'incremental-completions').glob('step-*.json'))
-            if group!='B0':
-                owner=root/'owners'/path.name
+            owner=root/'owners'/path.name
+            if group!='B0' or owner.exists():
                 catalog=json.loads((owner/'raw-catalog.json').read_text());closed=json.loads((owner/'result.json').read_text())
                 if closed.get('status')!='pass' or not closed.get('closed') or len(completions)!=80:
                     raise ValueError('raw commit/drain incomplete')
