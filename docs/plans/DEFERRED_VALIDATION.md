@@ -29,6 +29,7 @@ large for Git:
 - `/models/npu_nvme_exp/user7-stack/qwen-entry-pilot-source-20260916-001`
 - `/models/npu_nvme_exp/user7-stack/qwen-entry-pilot-resume-20260916-001`
 - `/models/npu_nvme_exp/user7-stack/d2-fresh-sessions-20260915-001`
+- `/models/npu_nvme_exp/user7-stack/c2b-hardware-20260915-001/candidate`
 - `/models/npu_nvme_exp/user7-stack/placement-npu{0,1,2,3}-20260916-001`
 - `/models/npu_nvme_exp/user7-stack/bytecheckpoint-worker-probe-20260916-002`
 - `/models/npu_nvme_exp/user7-stack/release-software-20260916-005/junit.xml`
@@ -51,13 +52,20 @@ Resume with a new output directory. Attempt 004 is immutable partial evidence.
 
 ```bash
 sudo python3 train.py benchmark --config config/qwen_training.json \
-  --output /models/NEW_QWEN_ACCEPTANCE --profile all \
-  --reuse-multicycle /models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004
+  --output /models/NEW_QWEN_ACCEPTANCE --profile all
 ```
 
-The reuse verifier accepts only complete unchanged method groups. Attempt 004
-can supply the complete Native group but cannot supply the incomplete Ours or
-ByteCheckpoint groups. Repeated timing always runs again.
+The command above starts a fresh campaign, including its oracle and Native
+group. Attempt 004 references the oracle in attempt 002; the current reuse
+verifier requires a local `trajectory-none` directory and does not follow that
+indirection. Passing attempt 004 directly to `--reuse-multicycle` therefore
+rejects reuse and reruns the groups. Supporting chained evidence reuse remains
+a later convenience improvement. Repeated timing always runs again.
+
+Additional deferred hardware validation includes the complete D2 commit-fault
+and V2 offline-migration matrices, and injected rank disconnect/owner failure
+under the final candidate environment. Existing normal-path results and CPU
+fault tests do not replace those hardware cases.
 
 ## Later product work
 

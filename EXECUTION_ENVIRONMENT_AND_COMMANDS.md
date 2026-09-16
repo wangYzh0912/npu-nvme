@@ -37,6 +37,14 @@ sudo python3 train.py fit --config config/qwen_training.json \
   --output /models/qwen-resume --resume \
   --checkpoint-root /models/qwen-source/checkpoints \
   --generation latest --stop-step 24
+```
+
+To verify continuation against an uninterrupted oracle, use this alternative
+to the resume command above while the source catalog is still at step 8:
+
+```bash
+python3 train.py fit --config config/qwen_training.json --method none \
+  --output /models/qwen-oracle --stop-step 24
 
 sudo python3 train.py verify-restart --config config/qwen_training.json \
   --output /models/qwen-verify \
@@ -48,7 +56,9 @@ Select `none`, `mindspore_native_save`, `ours`, or `bytecheckpoint_host` with
 `--method`. Ours requires root for raw SPDK access. The other methods may run
 without root. `--generation` is a catalog generation, not an optimizer step.
 The restore target must exceed the selected checkpoint step and remain within
-the frozen learning-rate horizon.
+the frozen learning-rate horizon. Resumed saves update the same checkpoint
+catalog, so a catalog already advanced to step 24 cannot resume again with
+`--stop-step 24`.
 
 `inspect` reads `checkpoint_root` from its config and reports accepted and
 rejected committed generations. `latest` skips invalid or no-longer-retained
