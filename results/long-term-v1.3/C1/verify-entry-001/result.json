@@ -1,0 +1,199 @@
+{
+  "command": "verify-restart",
+  "execution_status": "completed",
+  "observed_commit": "cb3e21d70bf8a83f2e395603fc47691829fd2f01",
+  "runs": [
+    {
+      "method": "mindspore_native_save",
+      "process": {
+        "argv": [
+          "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+          "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/train.py",
+          "_phase",
+          "--phase",
+          "restore",
+          "--flat-config",
+          "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/flat-config.json",
+          "--run-dir",
+          "/models/npu_nvme_exp/user7-stack/c1-runs/acceptance-002/hardware/seed-43/mindspore_native_save",
+          "--method",
+          "mindspore_native_save",
+          "--generation",
+          "latest-committed",
+          "--mode",
+          "verify",
+          "--output",
+          "/models/npu_nvme_exp/user7-stack/c1-runs/verify-entry-001/restore.json"
+        ],
+        "elapsed_seconds": 51.43010766757652,
+        "phase": "restore",
+        "pid": 981053,
+        "resources": [
+          {
+            "hbm_bytes": 3539992576,
+            "host_bytes": 15872000,
+            "monotonic_ns": 3317372187115492
+          },
+          {
+            "hbm_bytes": 3538944000,
+            "host_bytes": 2074320896,
+            "monotonic_ns": 3317378396675360
+          },
+          {
+            "hbm_bytes": 3622830080,
+            "host_bytes": 9027874816,
+            "monotonic_ns": 3317384598879570
+          },
+          {
+            "hbm_bytes": 3622830080,
+            "host_bytes": 9268355072,
+            "monotonic_ns": 3317390818046797
+          },
+          {
+            "hbm_bytes": 3622830080,
+            "host_bytes": 9376837632,
+            "monotonic_ns": 3317397033362808
+          },
+          {
+            "hbm_bytes": 5762973696,
+            "host_bytes": 9724100608,
+            "monotonic_ns": 3317403284746502
+          },
+          {
+            "hbm_bytes": 6070206464,
+            "host_bytes": 12209704960,
+            "monotonic_ns": 3317409523192044
+          },
+          {
+            "hbm_bytes": 7556038656,
+            "host_bytes": 13615763456,
+            "monotonic_ns": 3317415771659106
+          },
+          {
+            "hbm_bytes": 3610247168,
+            "host_bytes": 4443107328,
+            "monotonic_ns": 3317421999689338
+          }
+        ],
+        "returncode": 0,
+        "stderr": "/models/npu_nvme_exp/user7-stack/c1-runs/verify-entry-001/restore-a063da18.stderr.log",
+        "stdout": "/models/npu_nvme_exp/user7-stack/c1-runs/verify-entry-001/restore-a063da18.stdout.log"
+      },
+      "restore": {
+        "adapter": "mindspore_native_save",
+        "applied_state_sha256": "3fb03546053f754024115f042d989bcdfcaa2aae3540c3022b01cccb3cc34eab",
+        "byte_exact": true,
+        "checkpoint_step": 35,
+        "controls": {
+          "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+          "global_step": "[35]",
+          "loss_scale": "1.0"
+        },
+        "controls_verified": true,
+        "expected_state_sha256": "3fb03546053f754024115f042d989bcdfcaa2aae3540c3022b01cccb3cc34eab",
+        "generation": 10,
+        "loss_deviation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mandatory_integrity": true,
+        "mode": "verify",
+        "persisted_state_sha256": "3fb03546053f754024115f042d989bcdfcaa2aae3540c3022b01cccb3cc34eab",
+        "repeat_index": null,
+        "restore_pid": 981053,
+        "restored_losses": [
+          10.873710632324219,
+          10.87198257446289,
+          10.856389045715332
+        ],
+        "source_oracle_losses": [
+          10.873710632324219,
+          10.87198257446289,
+          10.856389045715332
+        ],
+        "source_pid": 961336,
+        "status": "pass",
+        "timing": {
+          "events": [
+            {
+              "event": "process_start",
+              "mode": "verify",
+              "monotonic_ns": 3317375525372771,
+              "pid": 981053,
+              "repeat_index": null
+            },
+            {
+              "event": "restore_begin",
+              "monotonic_ns": 3317375526148794,
+              "selected_generation": 10,
+              "selected_step": 35
+            },
+            {
+              "event": "model_constructed",
+              "monotonic_ns": 3317404654060345
+            },
+            {
+              "event": "framework_ready",
+              "monotonic_ns": 3317404654088025
+            },
+            {
+              "event": "metadata_ready",
+              "monotonic_ns": 3317404654422377
+            },
+            {
+              "combined": true,
+              "event": "read_deserialize_done",
+              "monotonic_ns": 3317409219776059
+            },
+            {
+              "event": "integrity_and_apply_done",
+              "mandatory_checksums": true,
+              "monotonic_ns": 3317411758570269
+            },
+            {
+              "event": "controls_verified",
+              "monotonic_ns": 3317411762199673
+            },
+            {
+              "event": "state_ready",
+              "monotonic_ns": 3317411762201593
+            },
+            {
+              "event": "verify_begin",
+              "monotonic_ns": 3317411762202653
+            },
+            {
+              "applied_state_sha256": "3fb03546053f754024115f042d989bcdfcaa2aae3540c3022b01cccb3cc34eab",
+              "byte_exact": true,
+              "event": "verify_end",
+              "expected_state_sha256": "3fb03546053f754024115f042d989bcdfcaa2aae3540c3022b01cccb3cc34eab",
+              "monotonic_ns": 3317415451660646,
+              "persisted_state_sha256": "3fb03546053f754024115f042d989bcdfcaa2aae3540c3022b01cccb3cc34eab"
+            },
+            {
+              "event": "first_step_begin",
+              "monotonic_ns": 3317415451680256,
+              "step": 36
+            },
+            {
+              "event": "first_step_end",
+              "includes_graph_compile": true,
+              "loss": 10.873710632324219,
+              "monotonic_ns": 3317415502186835,
+              "step": 36
+            }
+          ],
+          "first_step_begin_ns": 3317415451680256,
+          "first_step_end_ns": 3317415502186835,
+          "process_start_ns": 3317375525368351,
+          "restore_begin_ns": 3317375526148794,
+          "state_ready_ns": 3317411762201593
+        },
+        "verification_performed": true
+      }
+    }
+  ],
+  "source_digest": "d46c633ad4c8abdfdd07e5ddc7007948672fb6a36ec9d63c482652abb8f2c7e7",
+  "validation_status": "pass"
+}

@@ -29,6 +29,8 @@ CHUNK_SIZE = 4 * 1024 * 1024
 SAFE_OFFSET = 64 * 1024 * 1024 * 1024
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def command(argv):
     try:
         result = subprocess.run(argv, capture_output=True, text=True,
@@ -165,7 +167,7 @@ def one_request(ckpt, request_id, offset, payload, warmup):
     write_ptrs, write_offsets, write_sizes = arrays_for(source, offset, size)
     event(events, "write_api_enter")
     write_enter = events[-1]["monotonic_ns"]
-    rc = lib.npu_nvme_write_batch_host(
+    rc = transfer_wait(lib,0,1,
         ckpt.ctx, write_ptrs, write_offsets, write_sizes, 1)
     write_return = event(events, "write_api_return")
     if rc != 0:
@@ -176,7 +178,7 @@ def one_request(ckpt, request_id, offset, payload, warmup):
     read_ptrs, read_offsets, read_sizes = arrays_for(destination, offset, size)
     event(events, "read_api_enter")
     read_enter = events[-1]["monotonic_ns"]
-    rc = lib.npu_nvme_read_batch_host(
+    rc = transfer_wait(lib,1,1,
         ckpt.ctx, read_ptrs, read_offsets, read_sizes, 1)
     read_return = event(events, "read_api_return")
     if rc != 0:

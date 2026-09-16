@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "primary_after_acceptance": "qwen3_8b",
+  "current_primary": "gpt2",
+  "models": {
+    "gpt2": {
+      "environment": "old",
+      "role": "fallback",
+      "provider": "compat_gpt2"
+    },
+    "qwen3_8b": {
+      "environment": "candidate",
+      "role": "candidate_primary",
+      "methods": [
+        "none",
+        "mindspore_native_save",
+        "ours",
+        "bytecheckpoint_host"
+      ],
+      "requires": "Qwen-four-methods"
+    }
+  },
+  "cross_environment_gpt2": "supplemental_not_a_qwen_gate"
+}

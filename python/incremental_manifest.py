@@ -10,6 +10,8 @@ recovery process.
 from __future__ import annotations
 
 import hashlib
+import copy
+import math
 import json
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Tuple
@@ -124,7 +126,7 @@ class TrainingStateManifest:
         self._by_name = {field.canonical_name: field for field in self.fields}
 
     def as_dict(self) -> dict:
-        return {**self._payload, "digest": self.digest}
+        return {**copy.deepcopy(self._payload), "digest": self.digest}
 
     def field(self, canonical_name: str) -> ManifestField:
         try:
@@ -133,6 +135,8 @@ class TrainingStateManifest:
             raise KeyError(f"unknown training-state field: {canonical_name}") from error
 
     def block(self, state_index: int, block_index: int) -> ManifestBlock:
+        if type(state_index) is not int or type(block_index) is not int or state_index < 0 or block_index < 0:
+            raise ValueError("negative or non-integer block identity")
         field = self.fields[int(state_index)]
         for block in field.blocks:
             if block.block_index == int(block_index):
@@ -171,7 +175,7 @@ def build_training_state_manifest(components: Mapping[str, Any],
             seen_names.add(canonical_name)
             dtype = _parameter_dtype(parameter)
             shape = _local_shape(parameter)
-            elements = int(np.prod(shape, dtype=np.int64))
+            elements = math.prod(shape)
             if elements <= 0:
                 continue
             collected.append((namespace, str(source_name), canonical_name, dtype,
