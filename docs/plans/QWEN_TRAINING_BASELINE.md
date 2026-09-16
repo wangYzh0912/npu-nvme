@@ -44,6 +44,18 @@ is measured and disclosed without the cancelled five-percent regression gate.
 
 ## Execution status (2026-09-16)
 
+- Release software gate: 389 tests passed, junit and logs in
+  release-software-20260916-003. Attempt 002 has passed the seeded 24-step
+  oracle, Native source8 and explicit step4-to8 restart with exact state/control.
+- ByteCheckpoint independent-process probe reproduced producer shared-memory
+  unlink on worker exit. The worker now disables its own tracking for attached
+  segments; producer retains unlink ownership. Save/fresh-load probe passed
+  (bytecheckpoint-worker-probe-20260916-002), plus process lifecycle regression.
+  Reference: https://docs.python.org/3.14/library/multiprocessing.shared_memory.html
+- Complete unchanged method groups can be verified and reused across repaired
+  campaigns. Repeated performance samples always run anew. The original source
+  worktree remains frozen so its recorded tracked-byte identity can be checked.
+
 - Acceptance attempt qwen-training-acceptance-20260916-001 failed after the
   Native source run: only default MindSpore RNG differed from the 24-step
   oracle. set_seed does not initialize that generator. The release adds

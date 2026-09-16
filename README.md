@@ -42,6 +42,12 @@ sudo python3 train.py benchmark --config config/qwen_training.json \
   --output /models/NEW_ACCEPTANCE --profile all
 ```
 
+After a backend repair, `benchmark --reuse-multicycle /models/PREVIOUS_ACCEPTANCE`
+can reuse complete method groups whose environment, training implementation,
+native extension and completion records still match. It reruns comparisons and
+records the original evidence paths. Incomplete groups and changed backends run
+again; repeated timing runs are always new.
+
 The build emits a new explicit environment manifest. Select it in the training
 configuration. SPDK and the patched DPDK ring archive are external build
 dependencies; the build records their paths and the archive hash. The native

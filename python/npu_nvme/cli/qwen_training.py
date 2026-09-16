@@ -181,7 +181,10 @@ def main(argv=None):
         item=sub.add_parser(command);item.add_argument('--config',type=Path,required=True)
         item.add_argument('--output',type=Path)
         item.add_argument('--method',choices=METHODS)
-        if command=='benchmark':item.add_argument('--profile',choices=('all','multicycle','repeated'),default='all')
+        if command=='benchmark':
+            item.add_argument('--profile',choices=('all','multicycle','repeated'),default='all')
+            item.add_argument('--reuse-multicycle',type=Path,
+                help='verify and reuse complete method groups from a previous campaign')
         if command in ('fit','verify-restart'):
             item.add_argument('--resume',action='store_true');item.add_argument('--generation',default='latest')
             item.add_argument('--stop-step',type=int)
@@ -210,6 +213,6 @@ def main(argv=None):
         if args.command=='benchmark':
             if args.output is None:raise ValueError('--output required')
             from npu_nvme.runtime.training_benchmark import campaign
-            return campaign(config,args.output,profile=args.profile)
+            return campaign(config,args.output,profile=args.profile,reuse=args.reuse_multicycle)
     except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as error:
         parser.exit(2,str(error)+'\n')

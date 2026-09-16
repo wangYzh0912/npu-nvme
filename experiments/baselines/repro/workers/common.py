@@ -6,14 +6,20 @@ import hashlib
 import json
 import os
 import sys
-from multiprocessing import shared_memory
+from multiprocessing import shared_memory, resource_tracker
 from pathlib import Path
 
 import numpy as np
 
 
 def attach_arrays(descriptor):
-    shm = shared_memory.SharedMemory(name=descriptor["name"])
+    # These workers are independent subprocesses. The producer alone owns
+    # unlink; a worker's private tracker must not remove its live segment.
+    if sys.version_info >= (3, 13):
+        shm = shared_memory.SharedMemory(name=descriptor["name"], track=False)
+    else:
+        shm = shared_memory.SharedMemory(name=descriptor["name"])
+        resource_tracker.unregister(shm._name, "shared_memory")
     arrays = {}
     for field in descriptor["fields"]:
         begin = int(field["offset"])

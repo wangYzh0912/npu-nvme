@@ -6,13 +6,24 @@ from .training_catalog import read_checked
 from .training_validation import compare
 
 
-def campaign(config,output,*,profile='all'):
+def campaign(config,output,*,profile='all',reuse=None):
     from npu_nvme.cli.qwen_training import run_fit,write
     output=Path(output).resolve();output.mkdir(parents=True,exist_ok=False)
     result=dict(validation_status='running',profile=profile,runs=[],comparisons=[],timings={})
+    reusable={}
+    if reuse:
+        from npu_nvme.cli.qwen_training import preflight,ROOT
+        from .training_reuse import verified_runs
+        preflight(config)
+        reusable,rejected=verified_runs(reuse,config,ROOT)
+        result['reuse']=dict(source=str(Path(reuse).resolve()),accepted=sorted(reusable),rejected=rejected)
     def record():write(output/'result.json',result)
     record()
     def execute(name,method,*,stop,horizon,interval,root=None,resume=False,generation='latest'):
+        if name in reusable:
+            path=reusable[name]
+            result['runs'].append(dict(name=name,method=method,path=str(path),reused=True));record()
+            return path
         settings=dict(config,method=method,stop_step=stop,lr_horizon=horizon,checkpoint_interval=interval)
         settings['identity']=dict(config['identity'],lr_horizon=horizon)
         settings.pop('checkpoint_root',None)
