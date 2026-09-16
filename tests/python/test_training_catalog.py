@@ -80,3 +80,18 @@ def test_lineage_cannot_change_method_or_identity(tmp_path):
     catalog.initialize(tmp_path, identity={'seed': 42}, method='ours')
     with pytest.raises(ValueError, match='identity/method'):
         catalog.initialize(tmp_path, identity={'seed': 43}, method='ours')
+
+
+def test_save_after_fallback_preserves_corruption_evidence(tmp_path):
+    checkpoint(tmp_path, 4)
+    broken = checkpoint(tmp_path, 8)
+    (broken / 'checkpoint.json').write_text('corrupt')
+    with catalog.selected(tmp_path) as (_, value):
+        assert value['step'] == 4
+    checkpoint(tmp_path, 12)
+    assert catalog.prune(tmp_path, 1) == [1]
+    assert (broken / 'checkpoint.json').read_text() == 'corrupt'
+    rejected = catalog.read_checked(tmp_path / 'prune-rejections.json')
+    assert len(rejected) == 1 and rejected[0]['path'] == str(broken)
+    with catalog.selected(tmp_path) as (_, value):
+        assert value['step'] == 12

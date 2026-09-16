@@ -200,7 +200,11 @@ def prune(root, retention):
     if type(retention) is not int or retention<1:raise ValueError('invalid retention')
     retired=[]
     with catalog_lock(root):
-        for generation,path,_ in committed(root)[:-retention]:
+        rejected=[]
+        rows=committed(root,rejected=rejected)
+        if rejected:
+            write_checked(Path(root)/'prune-rejections.json',rejected)
+        for generation,path,_ in rows[:-retention]:
             with (path/'.reader.lock').open('a+b') as lock:
                 try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
                 except BlockingIOError:continue

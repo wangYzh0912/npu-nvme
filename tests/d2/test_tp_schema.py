@@ -6,7 +6,7 @@ from npu_nvme.d2.tp_schema import validate,validate_rank,DTYPES
 
 
 def schema():
-    return json.loads((Path(__file__).resolve().parents[2]/'results/long-term-v1.3/EN/state_schema-002.json').read_text())
+    return json.loads((Path(__file__).resolve().parents[2]/'config/qwen_runtime_schema.json').read_text())
 
 def test_actual_tp_schema_and_local_geometry():
     s=schema();assert validate(s)

@@ -37,13 +37,13 @@ def test_actual_qwen_schema_has_no_c1_generation_limit():
     from pathlib import Path
     from tools.qwen_resource_plan import plan
     root=Path(__file__).resolve().parents[2]
-    schema=json.loads((root/'results/long-term-v1.3/EN/state_schema-002.json').read_text())
-    expected={1:95520,4:25224,16:7872}
+    schema=json.loads((root/'config/qwen_runtime_schema.json').read_text())
+    expected={1:95800,4:25504,16:8152}
     for mib,count in expected.items():
         result=plan(schema,chunk=mib*1024**2,depth=64,mode='blocking',hbm_free=8*1024**3,
                     host_free=1024**4,hbm_headroom=1024**3,host_headroom=16*1024**3)
         assert result['descriptors_total']==count
-        assert result['state_bytes_per_rank']==24574980144
-        assert result['tensor_count_per_rank']==882
-        assert result['partition_counts']==dict(replicated=435,sharded=438,per_rank_control=9)
+        assert result['state_bytes_per_rank']==24574980708
+        assert result['tensor_count_per_rank']==952
+        assert result['partition_counts']==dict(replicated=435,sharded=438,per_rank_control=79)
         assert result['admission_per_rank']['admitted']

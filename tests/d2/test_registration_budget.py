@@ -21,7 +21,7 @@ def test_registered_formal_extent_accepts_exact_end_and_rejects_escape():
 
 
 def test_socket_budget_counts_private_rank_pools_and_one_pin():
-    schema=json.loads((ROOT/'results/long-term-v1.3/EN/state_schema-002.json').read_text())
+    schema=json.loads((ROOT/'config/qwen_runtime_schema.json').read_text())
     args=dict(chunk=4<<20,depth=4,mode='blocking',hbm_free=8<<30,host_free=1<<40,hbm_headroom=1<<30,host_headroom=16<<30)
     result=plan(schema,**args)
     assert result['rank_pools_bytes']+result['owner_pool_bytes']==80<<20

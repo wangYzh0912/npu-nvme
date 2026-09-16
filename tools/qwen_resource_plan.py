@@ -15,7 +15,8 @@ def plan(schema,*,chunk,depth,mode,hbm_free,host_free,hbm_headroom,host_headroom
          control_bytes=0,active_pins=1,region_bytes=1<<40):
     if chunk not in (1<<20,4<<20,16<<20) or depth not in (1,4,8,16,32,64):raise ValueError('unsupported probe configuration')
     if schema['topology']!={'tp':4,'dp':1,'pp':1}:raise ValueError('expected actual TP4 schema')
-    tensors=schema['tensors'];names=set();sizes=[];partitions={}
+    tensors=[row for row in schema['tensors'] if row.get('placement')!='native_container_metadata']
+    names=set();sizes=[];partitions={}
     for tensor in tensors:
         name=tensor['name'];size=tensor['logical_bytes_per_rank']
         if name in names or type(size) is not int or size<=0:raise ValueError('invalid tensor inventory')

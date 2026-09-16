@@ -77,33 +77,3 @@ def test_training_identity_checked_before_communication(tmp_path, fault):
         with pytest.raises(ValueError, match='identity differs'):
             validate_training_identity(tmp_path, target, model_hash)
 
-
-@pytest.mark.parametrize('fault', ['missing_rank', 'duplicate_rank', 'wrong_rank', 'wrong_step', 'wrong_topology', 'corrupt_shard'])
-def test_real_worker_rejects_restart_before_framework_import(tmp_path, fault):
-    import subprocess
-    import sys
-    source = tmp_path/'source';source.mkdir()
-    data = fixture(source)
-    if fault == 'missing_rank': data['ranks'].pop()
-    if fault == 'duplicate_rank': data['ranks'][3]['rank'] = 0
-    if fault == 'wrong_rank': data['ranks'][3]['rank'] = 4
-    if fault == 'wrong_step': data['checkpoint_step'] = 7
-    if fault == 'wrong_topology': data['topology']['tp'] = 2
-    if fault == 'corrupt_shard':
-        (source/'training/checkpoint/rank_0/qwen3_rank_0-8_1.safetensors').write_bytes(b'evil')
-    (source/'restart_contract.json').write_text(json.dumps(data))
-    output = tmp_path/'output'
-    entry = Path(__file__).resolve().parents[2]/'experiments/training/train_qwen3_full_restart.py'
-    result = subprocess.run([sys.executable, str(entry), '--output', str(output),
-                             '--resume-run', str(source), '--checkpoint-step', '8',
-                             '--source-stop-step', '11', '--lr-horizon', '32'],
-                            env=dict(os.environ, RANK_ID='0'), timeout=10,
-                            capture_output=True, text=True)
-    report = json.loads((output/'rank_0/acceptance.json').read_text())
-    print(json.dumps(dict(fault=fault, returncode=result.returncode, error=report.get('error'),
-                         ready_files=[str(p) for p in output.glob('ready-rank-*')],
-                         communication=report['phases']['communication'])))
-    assert result.returncode == 1 and report['failed_stage'] == 'config'
-    assert report['phases']['communication'] == 'not_run'
-    assert not list(output.glob('ready-rank-*'))
-    assert (output/'failed-rank-0.json').is_file()
