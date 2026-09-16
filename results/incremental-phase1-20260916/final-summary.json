@@ -15,18 +15,18 @@
     "fidelity-K5": true,
     "fidelity-K10": true,
     "fidelity-K20": true,
-    "p2-score-0.5": false,
-    "p2-score-1.0": false,
-    "p2-score-2.0": false,
-    "p2-score_select-0.5": false,
-    "p2-score_select-1.0": false,
-    "p2-score_select-2.0": false,
-    "p2-copy-0.5-262144": false,
-    "p2-copy-0.5-4194304": false,
-    "p2-copy-1.0-262144": false,
-    "p2-copy-1.0-4194304": false,
-    "p2-copy-2.0-262144": false,
-    "p2-copy-2.0-4194304": false,
+    "p2-score-0.5": true,
+    "p2-score-1.0": true,
+    "p2-score-2.0": true,
+    "p2-score_select-0.5": true,
+    "p2-score_select-1.0": true,
+    "p2-score_select-2.0": true,
+    "p2-copy-0.5-262144": true,
+    "p2-copy-0.5-4194304": true,
+    "p2-copy-1.0-262144": true,
+    "p2-copy-1.0-4194304": true,
+    "p2-copy-2.0-262144": true,
+    "p2-copy-2.0-4194304": true,
     "p5-ablation-1": false,
     "p5-ablation-2": false,
     "p5-ablation-3": false,
@@ -171,6 +171,7 @@
   ],
   "limitations": [
     "One or two independent runs; step/rank samples are not independent repetitions.",
+    "FULL restore leaves additional first-formal-step framework/data-readiness cost; it is retained, so warmup isolation is incomplete and near-budget comparisons are limited.",
     "Weights only; no fault injection or resumed-training convergence claim.",
     "The fixed evaluation batch equals the fixed training fixture; loss differences measure state fidelity, not held-out generalization.",
     "No task-quality threshold supplied; fidelity curves do not imply a quality pass."
@@ -236,5 +237,453 @@
       "peak_layer_relative_l2": 0.00045199952713620596
     }
   ],
-  "training_probes": []
+  "training_probes": [
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-0.5-262144",
+      "name": "copy-0.5-262144",
+      "kind": "copy",
+      "spec": {
+        "factor": 0.5,
+        "granularity": 262144,
+        "kind": "copy",
+        "name": "copy-0.5-262144",
+        "output_bytes": 819077120
+      },
+      "training_seconds": 19.840839919,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 0.12543805312623135,
+      "slowdown_baseline_sensitivity": [
+        0.04365172275285811,
+        0.2211327825103957
+      ],
+      "auxiliary_critical_median_ms": 85.146735,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "stage_median_ms": {
+        "pack_ns": 29.5477385,
+        "d2h_ns": 55.803513,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-0.5-4194304",
+      "name": "copy-0.5-4194304",
+      "kind": "copy",
+      "spec": {
+        "factor": 0.5,
+        "granularity": 4194304,
+        "kind": "copy",
+        "name": "copy-0.5-4194304",
+        "output_bytes": 819077120
+      },
+      "training_seconds": 18.694900489,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 0.060436579077506325,
+      "slowdown_baseline_sensitivity": [
+        -0.016626051029523525,
+        0.15060430637445155
+      ],
+      "auxiliary_critical_median_ms": 44.1536745,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "stage_median_ms": {
+        "pack_ns": 1.996528,
+        "d2h_ns": 41.687878,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-1.0-262144",
+      "name": "copy-1.0-262144",
+      "kind": "copy",
+      "spec": {
+        "factor": 1.0,
+        "granularity": 262144,
+        "kind": "copy",
+        "name": "copy-1.0-262144",
+        "output_bytes": 1638150144
+      },
+      "training_seconds": 21.868451366,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 0.24045087963580336,
+      "slowdown_baseline_sensitivity": [
+        0.15030649081580316,
+        0.34592502004838344
+      ],
+      "auxiliary_critical_median_ms": 178.428084,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "stage_median_ms": {
+        "pack_ns": 52.8390605,
+        "d2h_ns": 112.204861,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-1.0-4194304",
+      "name": "copy-1.0-4194304",
+      "kind": "copy",
+      "spec": {
+        "factor": 1.0,
+        "granularity": 4194304,
+        "kind": "copy",
+        "name": "copy-1.0-4194304",
+        "output_bytes": 1638150144
+      },
+      "training_seconds": 20.595294876,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 0.16823323324178707,
+      "slowdown_baseline_sensitivity": [
+        0.08333694872247377,
+        0.26756678856464156
+      ],
+      "auxiliary_critical_median_ms": 103.583672,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "stage_median_ms": {
+        "pack_ns": 3.74246,
+        "d2h_ns": 98.3199715,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-2.0-262144",
+      "name": "copy-2.0-262144",
+      "kind": "copy",
+      "spec": {
+        "factor": 2.0,
+        "granularity": 262144,
+        "kind": "copy",
+        "name": "copy-2.0-262144",
+        "output_bytes": 3276296192
+      },
+      "training_seconds": 28.612319209,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 0.6229853654111943,
+      "slowdown_baseline_sensitivity": [
+        0.5050419415879541,
+        0.76098598206536
+      ],
+      "auxiliary_critical_median_ms": 375.476144,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "stage_median_ms": {
+        "pack_ns": 102.7771555,
+        "d2h_ns": 238.7679995,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-2.0-4194304",
+      "name": "copy-2.0-4194304",
+      "kind": "copy",
+      "spec": {
+        "factor": 2.0,
+        "granularity": 4194304,
+        "kind": "copy",
+        "name": "copy-2.0-4194304",
+        "output_bytes": 3276296192
+      },
+      "training_seconds": 24.401468698,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 0.3841319993010619,
+      "slowdown_baseline_sensitivity": [
+        0.2835462081411313,
+        0.5018231834023528
+      ],
+      "auxiliary_critical_median_ms": 252.05596,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "stage_median_ms": {
+        "pack_ns": 7.0950835,
+        "d2h_ns": 221.3920435,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score-0.5",
+      "name": "score-0.5",
+      "kind": "score",
+      "spec": {
+        "factor": 0.5,
+        "kind": "score",
+        "name": "score-0.5",
+        "target_elements": 2047683840
+      },
+      "training_seconds": 36.479625521,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 1.0692449963175483,
+      "slowdown_baseline_sensitivity": [
+        0.9188715888943908,
+        1.2451905664909555
+      ],
+      "auxiliary_critical_median_ms": 557.172659,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42203864576,
+        42203864576,
+        42203865600,
+        42203865600
+      ],
+      "stage_median_ms": {
+        "score_ns": 556.8474175,
+        "selection_ns": 0.207751,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score-1.0",
+      "name": "score-1.0",
+      "kind": "score",
+      "spec": {
+        "factor": 1.0,
+        "kind": "score",
+        "name": "score-1.0",
+        "target_elements": 2047683840
+      },
+      "training_seconds": 39.767870957,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 1.2557651515529709,
+      "slowdown_baseline_sensitivity": [
+        1.0918372006389458,
+        1.447570320333663
+      ],
+      "auxiliary_critical_median_ms": 927.5603235,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204084736,
+        42204084736,
+        42204085760,
+        42204085760
+      ],
+      "stage_median_ms": {
+        "score_ns": 927.1384475,
+        "selection_ns": 0.231946,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score-2.0",
+      "name": "score-2.0",
+      "kind": "score",
+      "spec": {
+        "factor": 2.0,
+        "kind": "score",
+        "name": "score-2.0",
+        "target_elements": 2047683840
+      },
+      "training_seconds": 66.573527948,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 2.776270661394366,
+      "slowdown_baseline_sensitivity": [
+        2.501846565786294,
+        3.0973627001962223
+      ],
+      "auxiliary_critical_median_ms": 2013.5019435,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204258816,
+        42204258816,
+        42204259840,
+        42204259840
+      ],
+      "stage_median_ms": {
+        "score_ns": 2012.7327695,
+        "selection_ns": 0.3485215,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score_select-0.5",
+      "name": "score_select-0.5",
+      "kind": "score_select",
+      "spec": {
+        "factor": 0.5,
+        "kind": "score_select",
+        "name": "score_select-0.5",
+        "target_elements": 2047683840
+      },
+      "training_seconds": 32.278578239,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 0.8309477017752098,
+      "slowdown_baseline_sensitivity": [
+        0.6978915169254165,
+        0.9866311215345063
+      ],
+      "auxiliary_critical_median_ms": 604.0577095,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204370944,
+        42204370944,
+        42204371968,
+        42204371968
+      ],
+      "stage_median_ms": {
+        "score_ns": 603.646193,
+        "selection_ns": 0.326801,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score_select-1.0",
+      "name": "score_select-1.0",
+      "kind": "score_select",
+      "spec": {
+        "factor": 1.0,
+        "kind": "score_select",
+        "name": "score_select-1.0",
+        "target_elements": 2047683840
+      },
+      "training_seconds": 44.581267314,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 1.5287969106449526,
+      "slowdown_baseline_sensitivity": [
+        1.3450275605624067,
+        1.743817662217618
+      ],
+      "auxiliary_critical_median_ms": 1136.31042,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204591104,
+        42204591104,
+        42204592128,
+        42204592128
+      ],
+      "stage_median_ms": {
+        "score_ns": 1135.593571,
+        "selection_ns": 0.472742,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score_select-2.0",
+      "name": "score_select-2.0",
+      "kind": "score_select",
+      "spec": {
+        "factor": 2.0,
+        "kind": "score_select",
+        "name": "score_select-2.0",
+        "target_elements": 2047683840
+      },
+      "training_seconds": 65.427211037,
+      "baseline_seconds": 17.629437590000002,
+      "baseline_range_seconds": [
+        16.247897201,
+        19.010977979
+      ],
+      "slowdown": 2.7112477753750057,
+      "slowdown_baseline_sensitivity": [
+        2.441548936055396,
+        3.0268109914539094
+      ],
+      "auxiliary_critical_median_ms": 1952.71154,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "stage_median_ms": {
+        "score_ns": 1951.8511715,
+        "selection_ns": 0.751278,
+        "wait_previous_ns": 0.0
+      }
+    }
+  ],
+  "resource_conclusions": {
+    "main": {
+      "minimum_observed_conservative_slowdown": 7.669186045116902,
+      "slowdown_budget": 0.03,
+      "status": "fails_slowdown_budget",
+      "quality_status": "unassessed_no_predefined_budget",
+      "scope": "Current synchronous weight detection and capture implementation"
+    }
+  }
 }

@@ -76,7 +76,7 @@
         0
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -160,7 +160,7 @@
         0
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -244,7 +244,7 @@
         622329856
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -335,7 +335,7 @@
         622329856
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -426,7 +426,7 @@
         622329856
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -517,7 +517,7 @@
         622329856
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -608,7 +608,7 @@
         622329856
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -699,7 +699,7 @@
         622329856
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -790,7 +790,7 @@
         622329856
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -881,7 +881,7 @@
         622329856
       ],
       "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
-      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured.",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
       "full_state_bytes_by_rank": [
         24574980708,
         24574980708,
@@ -895,6 +895,1182 @@
         71100850276
       ],
       "direct_full_state_projection_policy": "Framework peak includes framework-managed weight reference; replace it with full-state reference and add ACL output staging, which framework accounting excludes. Existing score workspace assumed unchanged; actual extension can require more."
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-after",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": false,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "framework_extra_vs_min_baseline": [
+        1012736,
+        1012736,
+        1012736,
+        1012736
+      ],
+      "board_sampled_peak_mib": {
+        "0": 45870,
+        "1": 45872,
+        "2": 45872,
+        "3": 45872
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 19666,
+        "1": 19664,
+        "2": 19664,
+        "3": 19664
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-before",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": false,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42203752448,
+        42203752448,
+        42203753472,
+        42203753472
+      ],
+      "framework_extra_vs_min_baseline": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "board_sampled_peak_mib": {
+        "0": 45353,
+        "1": 45357,
+        "2": 45356,
+        "3": 45356
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 20183,
+        "1": 20179,
+        "2": 20180,
+        "3": 20180
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-0.5-262144",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "framework_extra_vs_min_baseline": [
+        1012736,
+        1012736,
+        1012736,
+        1012736
+      ],
+      "board_sampled_peak_mib": {
+        "0": 46644,
+        "1": 46646,
+        "2": 46646,
+        "3": 46647
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 18892,
+        "1": 18890,
+        "2": 18890,
+        "3": 18889
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        819077120,
+        819077120,
+        819077120,
+        819077120
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        805306368,
+        805306368,
+        805306368,
+        805306368
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-0.5-4194304",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "framework_extra_vs_min_baseline": [
+        1012736,
+        1012736,
+        1012736,
+        1012736
+      ],
+      "board_sampled_peak_mib": {
+        "0": 46644,
+        "1": 46646,
+        "2": 46646,
+        "3": 46647
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 18892,
+        "1": 18890,
+        "2": 18890,
+        "3": 18889
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        819077120,
+        819077120,
+        819077120,
+        819077120
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        805306368,
+        805306368,
+        805306368,
+        805306368
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-1.0-262144",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "framework_extra_vs_min_baseline": [
+        1012736,
+        1012736,
+        1012736,
+        1012736
+      ],
+      "board_sampled_peak_mib": {
+        "0": 46644,
+        "1": 46646,
+        "2": 46646,
+        "3": 46646
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 18892,
+        "1": 18890,
+        "2": 18890,
+        "3": 18890
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        1638150144,
+        1638150144,
+        1638150144,
+        1638150144
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        805306368,
+        805306368,
+        805306368,
+        805306368
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-1.0-4194304",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "framework_extra_vs_min_baseline": [
+        1012736,
+        1012736,
+        1012736,
+        1012736
+      ],
+      "board_sampled_peak_mib": {
+        "0": 46644,
+        "1": 46646,
+        "2": 46646,
+        "3": 46646
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 18892,
+        "1": 18890,
+        "2": 18890,
+        "3": 18890
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        1638150144,
+        1638150144,
+        1638150144,
+        1638150144
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        805306368,
+        805306368,
+        805306368,
+        805306368
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-2.0-262144",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "framework_extra_vs_min_baseline": [
+        1012736,
+        1012736,
+        1012736,
+        1012736
+      ],
+      "board_sampled_peak_mib": {
+        "0": 46644,
+        "1": 46646,
+        "2": 46646,
+        "3": 46646
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 18892,
+        "1": 18890,
+        "2": 18890,
+        "3": 18890
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        3276296192,
+        3276296192,
+        3276296192,
+        3276296192
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        805306368,
+        805306368,
+        805306368,
+        805306368
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-copy-2.0-4194304",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "framework_extra_vs_min_baseline": [
+        1012736,
+        1012736,
+        1012736,
+        1012736
+      ],
+      "board_sampled_peak_mib": {
+        "0": 46644,
+        "1": 46646,
+        "2": 46646,
+        "3": 46646
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 18892,
+        "1": 18890,
+        "2": 18890,
+        "3": 18890
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        3276296192,
+        3276296192,
+        3276296192,
+        3276296192
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        805306368,
+        805306368,
+        805306368,
+        805306368
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score-0.5",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42203864576,
+        42203864576,
+        42203865600,
+        42203865600
+      ],
+      "framework_extra_vs_min_baseline": [
+        112128,
+        112128,
+        112128,
+        112128
+      ],
+      "board_sampled_peak_mib": {
+        "0": 45869,
+        "1": 45873,
+        "2": 45872,
+        "3": 45873
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 19667,
+        "1": 19663,
+        "2": 19664,
+        "3": 19663
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        674542592,
+        674542592,
+        674542592,
+        674542592
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        674542592,
+        674542592,
+        674542592,
+        674542592
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score-1.0",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204084736,
+        42204084736,
+        42204085760,
+        42204085760
+      ],
+      "framework_extra_vs_min_baseline": [
+        332288,
+        332288,
+        332288,
+        332288
+      ],
+      "board_sampled_peak_mib": {
+        "0": 45869,
+        "1": 45872,
+        "2": 45872,
+        "3": 45873
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 19667,
+        "1": 19664,
+        "2": 19664,
+        "3": 19663
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        812214272,
+        812214272,
+        812214272,
+        812214272
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        812214272,
+        812214272,
+        812214272,
+        812214272
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score-2.0",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204258816,
+        42204258816,
+        42204259840,
+        42204259840
+      ],
+      "framework_extra_vs_min_baseline": [
+        506368,
+        506368,
+        506368,
+        506368
+      ],
+      "board_sampled_peak_mib": {
+        "0": 45869,
+        "1": 45872,
+        "2": 45872,
+        "3": 45873
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 19667,
+        "1": 19664,
+        "2": 19664,
+        "3": 19663
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        550686720,
+        550686720,
+        550686720,
+        550686720
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        550686720,
+        550686720,
+        550686720,
+        550686720
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score_select-0.5",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204370944,
+        42204370944,
+        42204371968,
+        42204371968
+      ],
+      "framework_extra_vs_min_baseline": [
+        618496,
+        618496,
+        618496,
+        618496
+      ],
+      "board_sampled_peak_mib": {
+        "0": 45869,
+        "1": 45872,
+        "2": 45872,
+        "3": 45872
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 19667,
+        "1": 19664,
+        "2": 19664,
+        "3": 19664
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        674542592,
+        674542592,
+        674542592,
+        674542592
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        674542592,
+        674542592,
+        674542592,
+        674542592
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score_select-1.0",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204591104,
+        42204591104,
+        42204592128,
+        42204592128
+      ],
+      "framework_extra_vs_min_baseline": [
+        838656,
+        838656,
+        838656,
+        838656
+      ],
+      "board_sampled_peak_mib": {
+        "0": 45869,
+        "1": 45872,
+        "2": 45872,
+        "3": 45872
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 19667,
+        "1": 19664,
+        "2": 19664,
+        "3": 19664
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        812214272,
+        812214272,
+        812214272,
+        812214272
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        812214272,
+        812214272,
+        812214272,
+        812214272
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
+      "run": "main-p2-suite/suite/main-b0-suite-score_select-2.0",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": true,
+      "framework_peak_bytes_by_rank": [
+        42204765184,
+        42204765184,
+        42204766208,
+        42204766208
+      ],
+      "framework_extra_vs_min_baseline": [
+        1012736,
+        1012736,
+        1012736,
+        1012736
+      ],
+      "board_sampled_peak_mib": {
+        "0": 45870,
+        "1": 45872,
+        "2": 45872,
+        "3": 45872
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 19666,
+        "1": 19664,
+        "2": 19664,
+        "3": 19664
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        550686720,
+        550686720,
+        550686720,
+        550686720
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        550686720,
+        550686720,
+        550686720,
+        550686720
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
     }
   ]
 }
