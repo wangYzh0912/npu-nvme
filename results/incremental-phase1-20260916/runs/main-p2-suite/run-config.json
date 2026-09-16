@@ -1,0 +1,190 @@
+{
+  "model": "/models/Qwen3-8B",
+  "method": "none",
+  "stop_step": 284,
+  "lr_horizon": 24,
+  "seq_length": 128,
+  "checkpoint_interval": 285,
+  "retention": 3,
+  "timeout_seconds": 7200,
+  "operation_timeout_seconds": 1800,
+  "copy_timeout_ms": 30000,
+  "shm_base": 79000,
+  "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
+  "region": "/home/user7/npu-nvme/config/d2_qwen_region.json",
+  "hardware_lock": "/models/npu_nvme_exp/user7-stack/hardware-campaign.lock",
+  "schema_version": 2,
+  "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
+  "identity": {
+    "model": "Qwen3-8B",
+    "model_config_sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
+    "topology": {
+      "tp": 4,
+      "dp": 1,
+      "pp": 1
+    },
+    "seed": 42,
+    "default_generator_seed": 42,
+    "sequence_length": 128,
+    "state_scope": "full_state",
+    "params_dtype": "float32",
+    "compute_dtype": "bfloat16",
+    "dropout": 0,
+    "lr_horizon": 24,
+    "strategy_sha256": "6fc9ea0d69ea8a21870a18b0322295ccea97c7b7d907528bf738f7278566ff9b",
+    "data_fixture": "checkpoint-recovery-fixed-text-v1",
+    "optimizer": "mindformers-1.7-qwen3-template",
+    "weights_sha256": "da844ab63b97bf1b3c5416026bbc0b4dc1a34d8feea8a188ea2e81f0a1c3b541",
+    "framework_template_sha256": "b48e426de99fa7b5d7e1fb262861591ae6f27124469dbb986eb8e7b12ebce2d7",
+    "environment_id": "957589429f649e9202db9b51f74319a25fdc8e66292bb5263188abc39aac32ba"
+  },
+  "incremental_experiment": {
+    "group": "B0",
+    "warmup_steps": 4,
+    "formal_steps": 280,
+    "block_elements": 65536,
+    "hbm_staging_bytes": 268435456,
+    "chunk_bytes": 4194304,
+    "library": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/build/libnpu_nvme.so.2.0",
+    "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
+    "timeout_seconds": 7200,
+    "model_role": "main",
+    "profile": false,
+    "canonical": false,
+    "run_id": "main-p2-suite",
+    "initial_full": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006/initial-full-main",
+    "initial_identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:main",
+    "probe": {
+      "kind": "suite",
+      "name": "p2-suite",
+      "specs": [
+        {
+          "name": "main-b0-suite-before",
+          "probe": null
+        },
+        {
+          "name": "main-b0-suite-score-0.5",
+          "probe": {
+            "name": "score-0.5",
+            "kind": "score",
+            "factor": 0.5,
+            "target_elements": 2047683840
+          }
+        },
+        {
+          "name": "main-b0-suite-score-1.0",
+          "probe": {
+            "name": "score-1.0",
+            "kind": "score",
+            "factor": 1.0,
+            "target_elements": 2047683840
+          }
+        },
+        {
+          "name": "main-b0-suite-score-2.0",
+          "probe": {
+            "name": "score-2.0",
+            "kind": "score",
+            "factor": 2.0,
+            "target_elements": 2047683840
+          }
+        },
+        {
+          "name": "main-b0-suite-score_select-0.5",
+          "probe": {
+            "name": "score_select-0.5",
+            "kind": "score_select",
+            "factor": 0.5,
+            "target_elements": 2047683840
+          }
+        },
+        {
+          "name": "main-b0-suite-score_select-1.0",
+          "probe": {
+            "name": "score_select-1.0",
+            "kind": "score_select",
+            "factor": 1.0,
+            "target_elements": 2047683840
+          }
+        },
+        {
+          "name": "main-b0-suite-score_select-2.0",
+          "probe": {
+            "name": "score_select-2.0",
+            "kind": "score_select",
+            "factor": 2.0,
+            "target_elements": 2047683840
+          }
+        },
+        {
+          "name": "main-b0-suite-copy-0.5-262144",
+          "probe": {
+            "name": "copy-0.5-262144",
+            "kind": "copy",
+            "factor": 0.5,
+            "output_bytes": 819077120,
+            "granularity": 262144
+          }
+        },
+        {
+          "name": "main-b0-suite-copy-0.5-4194304",
+          "probe": {
+            "name": "copy-0.5-4194304",
+            "kind": "copy",
+            "factor": 0.5,
+            "output_bytes": 819077120,
+            "granularity": 4194304
+          }
+        },
+        {
+          "name": "main-b0-suite-copy-1.0-262144",
+          "probe": {
+            "name": "copy-1.0-262144",
+            "kind": "copy",
+            "factor": 1.0,
+            "output_bytes": 1638150144,
+            "granularity": 262144
+          }
+        },
+        {
+          "name": "main-b0-suite-copy-1.0-4194304",
+          "probe": {
+            "name": "copy-1.0-4194304",
+            "kind": "copy",
+            "factor": 1.0,
+            "output_bytes": 1638150144,
+            "granularity": 4194304
+          }
+        },
+        {
+          "name": "main-b0-suite-copy-2.0-262144",
+          "probe": {
+            "name": "copy-2.0-262144",
+            "kind": "copy",
+            "factor": 2.0,
+            "output_bytes": 3276296192,
+            "granularity": 262144
+          }
+        },
+        {
+          "name": "main-b0-suite-copy-2.0-4194304",
+          "probe": {
+            "name": "copy-2.0-4194304",
+            "kind": "copy",
+            "factor": 2.0,
+            "output_bytes": 3276296192,
+            "granularity": 4194304
+          }
+        },
+        {
+          "name": "main-b0-suite-after",
+          "probe": null
+        }
+      ]
+    }
+  },
+  "output": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006/runs/main-p2-suite",
+  "run_id": "da90645c01c94007a525598f273b9277",
+  "start_step": 0,
+  "checkpoint_root": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006/runs/main-p2-suite/checkpoints"
+}
