@@ -12,6 +12,11 @@ def compare(controller, network):
     ms=controller.ms
     if not hasattr(controller,'evaluation_model'):
         from mindspore.parallel.auto_parallel import AutoParallel
+        # Restoring a local TP tensor with set_data resets MindSpore's sliced
+        # marker. Its bytes are already local; compiling another graph must
+        # not slice them a second time. Verified by a two-rank hardware probe.
+        for parameter in controller.parameters.values():
+            parameter.sliced=True
         model=AutoParallel(get_real_models(network),parallel_mode='semi_auto')
         model.no_init_parameters_in_compile()
         model.dataset_strategy('full_batch')
@@ -33,7 +38,7 @@ def compare(controller, network):
         return scalars[0]
     # Compile the forward path before changing storage addresses, then refresh
     # pointers: graph compilation is allowed to alter allocation ownership.
-    original={name:parameter.asnumpy().copy() for name,parameter in controller.parameters.items() if name in controller.references}
+    original={name:parameter.asnumpy().copy() for name,parameter in controller.parameters.items()}
     true_loss=loss()
     for name,array in original.items():
         if not np.array_equal(controller.parameters[name].asnumpy(),array):raise ValueError('forward evaluation changed training weights: '+name)
@@ -56,7 +61,7 @@ def compare(controller, network):
                         reason='evaluation DMA stream stop not proven'))+'\n')
                 raise RuntimeError('evaluation weight copy failed')
     try:
-        for name,reference in controller.references.items():
+        for name in controller.parameters:
             copy(controller.pointers[name],controller.media_shadow(name))
         restore_control(ms,network,state)
         shadow_loss=loss()
