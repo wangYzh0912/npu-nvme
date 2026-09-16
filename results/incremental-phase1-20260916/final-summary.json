@@ -34,7 +34,8 @@
     "p5-ablation-5": false,
     "p5-ablation-6": false,
     "main-profile": true,
-    "auxiliary-profile": false
+    "auxiliary-profile": false,
+    "actual-checkpoint-profile": false
   },
   "groups": [
     {
@@ -157,5 +158,16 @@
     "One or two independent runs; step/rank samples are not independent repetitions.",
     "Weights only; no fault injection or resumed-training convergence claim.",
     "No task-quality threshold supplied; fidelity curves do not imply a quality pass."
-  ]
+  ],
+  "baseline_repeatability": {
+    "main": {
+      "repeats": 2,
+      "seconds": [
+        22.391667276,
+        18.621201905
+      ],
+      "spread_fraction": 0.1838674272877617,
+      "stable": false
+    }
+  }
 }

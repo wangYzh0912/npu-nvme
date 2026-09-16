@@ -1,6 +1,6 @@
 # 增量检查点第一阶段实验报告
 
-当前状态：执行中，未完成项不计为通过。已完成 6/34 项覆盖。
+当前状态：执行中，未完成项不计为通过。已完成 6/35 项覆盖。
 
 实验固定 TP4、序列长度 128、micro-batch 1、FP32 权重/BF16 计算、AdamW、种子 42。各组从相同初始 FULL 恢复模型、优化器和随机状态，预热后连续运行 20 个优化器 step，每步保存。主模型 Qwen3-8B，辅模型 Qwen3-4B；两者同属 Qwen3，不据此声称跨模型家族泛化。
 
@@ -78,6 +78,7 @@
 - p5-ablation-5
 - p5-ablation-6
 - auxiliary-profile
+- actual-checkpoint-profile
 
 ## 候选窗口分布
 
