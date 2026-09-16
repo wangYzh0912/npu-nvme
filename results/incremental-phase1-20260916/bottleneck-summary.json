@@ -1,0 +1,80 @@
+{
+  "runs": [
+    {
+      "run": "main-k10-rep0-attempt2",
+      "group": "K10",
+      "role": "main",
+      "stage_times": {
+        "source_stable_ns": {
+          "samples": 80,
+          "median_ms": 0.0769305,
+          "maximum_ms": 0.09881
+        },
+        "score_ns": {
+          "samples": 80,
+          "median_ms": 2976.039205,
+          "maximum_ms": 3086.052201
+        },
+        "select_ns": {
+          "samples": 80,
+          "median_ms": 1548.08514,
+          "maximum_ms": 2069.213398
+        },
+        "capture_ns": {
+          "samples": 80,
+          "median_ms": 252.929528,
+          "maximum_ms": 702.449273
+        },
+        "checksum_ns": {
+          "samples": 80,
+          "median_ms": 547.811519,
+          "maximum_ms": 662.073901
+        },
+        "wait_previous_ns": {
+          "samples": 80,
+          "median_ms": 7326.75713,
+          "maximum_ms": 9696.799087
+        },
+        "critical_ns": {
+          "samples": 80,
+          "median_ms": 13006.4622775,
+          "maximum_ms": 15773.639435
+        }
+      },
+      "transport": {},
+      "owner": {
+        "request_ready": {
+          "median_ms": 8024.244558,
+          "total_seconds": 251.809446317
+        },
+        "prefix_write": {
+          "median_ms": 48.455179,
+          "total_seconds": 0.97892322
+        },
+        "payload_receive_and_write": {
+          "median_ms": 4929.397478,
+          "total_seconds": 100.257678377
+        },
+        "flush_commit_descriptor_encoding": {
+          "median_ms": 1053.600765,
+          "total_seconds": 19.877555463
+        }
+      },
+      "checkpoint_lifetime_overlap_training_callback_seconds_by_rank": [
+        12.101443252,
+        13.461822239,
+        13.689664521,
+        13.781433228
+      ],
+      "overlap_interpretation": "Wall-clock checkpoint lifetime intersected with optimizer-step callback interval. It does not prove device instruction concurrency.",
+      "checkpoint_lifetime_seconds_by_rank": [
+        416.360766689,
+        416.339172923,
+        416.361646976,
+        416.485782182
+      ],
+      "readback": null
+    }
+  ],
+  "note": "Stage execution durations overlap and are not summed as critical-path overhead; cumulative fixed-input ablations provide additional evidence."
+}
