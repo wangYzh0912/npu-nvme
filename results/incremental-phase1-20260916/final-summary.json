@@ -8,7 +8,7 @@
     "main-K20": true,
     "auxiliary-B0": true,
     "auxiliary-B1": true,
-    "auxiliary-K5": false,
+    "auxiliary-K5": true,
     "auxiliary-K10": false,
     "auxiliary-K20": false,
     "fidelity-B1": true,
@@ -88,6 +88,32 @@
       "slowdown_baseline_sensitivity": [
         36.3337606764954,
         36.3337606764954
+      ]
+    },
+    {
+      "role": "auxiliary",
+      "group": "K5",
+      "repeats": 1,
+      "training_seconds": 114.399446724,
+      "time_range_seconds": [
+        114.399446724,
+        114.399446724
+      ],
+      "slowdown": 4.752851622887131,
+      "all_saved_seconds": 117.025118936,
+      "all_work_done_seconds": 127.416310733,
+      "drain_seconds": 2.741737983,
+      "pending_at_formal_end": 1,
+      "payload_bytes": 16106086400,
+      "written_bytes": 16377597952,
+      "exact_training_numerics": true,
+      "baseline_range_seconds": [
+        19.885693952,
+        19.885693952
+      ],
+      "slowdown_baseline_sensitivity": [
+        4.752851622887131,
+        4.752851622887131
       ]
     },
     {
@@ -1050,6 +1076,13 @@
   "resource_conclusions": {
     "main": {
       "minimum_observed_conservative_slowdown": 7.669186045116902,
+      "slowdown_budget": 0.03,
+      "status": "fails_slowdown_budget",
+      "quality_status": "unassessed_no_predefined_budget",
+      "scope": "Current synchronous weight detection and capture implementation"
+    },
+    "auxiliary": {
+      "minimum_observed_conservative_slowdown": 4.752851622887131,
       "slowdown_budget": 0.03,
       "status": "fails_slowdown_budget",
       "quality_status": "unassessed_no_predefined_budget",

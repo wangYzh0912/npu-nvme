@@ -176,6 +176,97 @@
       "direct_full_state_projection_policy": "Framework peak includes framework-managed weight reference; replace it with full-state reference and add ACL output staging, which framework accounting excludes. Existing score workspace assumed unchanged; actual extension can require more."
     },
     {
+      "run": "auxiliary-k5-rep0",
+      "role": "auxiliary",
+      "group": "K5",
+      "canonical": false,
+      "profiled": false,
+      "probe": false,
+      "suite": false,
+      "framework_peak_bytes_by_rank": [
+        26623625728,
+        25849879040,
+        27565647360,
+        26733323264
+      ],
+      "framework_extra_vs_min_baseline": [
+        5729641472,
+        4955894784,
+        6671662080,
+        5839337984
+      ],
+      "board_sampled_peak_mib": {
+        "0": 33051,
+        "1": 33052,
+        "2": 33052,
+        "3": 33052
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 32485,
+        "1": 32484,
+        "2": 32484,
+        "3": 32484
+      },
+      "weight_reference_bytes_by_rank": [
+        4023056384,
+        4022272000,
+        4022272000,
+        4022272000
+      ],
+      "host_output_peak_bytes_by_rank": [
+        252139520,
+        215794176,
+        222548992,
+        225825792
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        388956160,
+        388956160,
+        388956160,
+        388956160
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        12069169764,
+        12069169764,
+        12069169764,
+        12069169764
+      ],
+      "direct_full_state_reference_projection_bytes": [
+        34938174564,
+        34165212260,
+        35880980580,
+        35048656484
+      ],
+      "direct_full_state_projection_policy": "Framework peak includes framework-managed weight reference; replace it with full-state reference and add ACL output staging, which framework accounting excludes. Existing score workspace assumed unchanged; actual extension can require more."
+    },
+    {
       "run": "main-b0-rep0",
       "role": "main",
       "group": "B0",

@@ -282,6 +282,297 @@
       }
     },
     {
+      "run": "auxiliary-k5-rep0",
+      "group": "K5",
+      "role": "auxiliary",
+      "stage_times": {
+        "source_stable_ns": {
+          "samples": 80,
+          "median_ms": 0.0758755,
+          "maximum_ms": 0.118061
+        },
+        "score_ns": {
+          "samples": 80,
+          "median_ms": 1892.067416,
+          "maximum_ms": 2054.013313
+        },
+        "device_score_and_score_d2h_ns": {
+          "samples": 80,
+          "median_ms": 220.687588,
+          "maximum_ms": 333.111386
+        },
+        "host_fragment_reduce_ns": {
+          "samples": 80,
+          "median_ms": 1665.639244,
+          "maximum_ms": 1782.609274
+        },
+        "select_ns": {
+          "samples": 80,
+          "median_ms": 734.8576565,
+          "maximum_ms": 808.914402
+        },
+        "capture_ns": {
+          "samples": 80,
+          "median_ms": 109.139193,
+          "maximum_ms": 140.431639
+        },
+        "pack_stream_ns": {
+          "samples": 80,
+          "median_ms": 11.11037,
+          "maximum_ms": 19.43154
+        },
+        "d2h_stream_ns": {
+          "samples": 80,
+          "median_ms": 10.15109,
+          "maximum_ms": 12.87838
+        },
+        "checksum_ns": {
+          "samples": 80,
+          "median_ms": 133.4410215,
+          "maximum_ms": 169.353307
+        },
+        "wait_previous_ns": {
+          "samples": 80,
+          "median_ms": 1442.020875,
+          "maximum_ms": 2103.406123
+        },
+        "critical_ns": {
+          "samples": 80,
+          "median_ms": 4396.135335,
+          "maximum_ms": 5136.8392
+        },
+        "reference_update_ns": {
+          "samples": 80,
+          "median_ms": 19.237318,
+          "maximum_ms": 32.996924
+        },
+        "wait_ns": {
+          "samples": 80,
+          "median_ms": 1597.5961165,
+          "maximum_ms": 2713.222417
+        },
+        "wait_and_reference_ns": {
+          "samples": 80,
+          "median_ms": 1620.306614,
+          "maximum_ms": 2740.696369
+        }
+      },
+      "transport": {
+        "serialization_ns": {
+          "samples": 80,
+          "median": 87748826.0,
+          "maximum": 145575741
+        },
+        "descriptor_bytes": {
+          "samples": 80,
+          "median": 3462371.5,
+          "maximum": 5651530
+        },
+        "begin_and_assignment_ns": {
+          "samples": 80,
+          "median": 629172507.5,
+          "maximum": 1021906056
+        },
+        "chunk_send_ns": {
+          "samples": 80,
+          "median": 1164015772.5,
+          "maximum": 1468994559
+        },
+        "ack_wait_ns": {
+          "samples": 80,
+          "median": 434429337.0,
+          "maximum": 800260336
+        }
+      },
+      "owner": {
+        "request_ready": {
+          "median_ms": 3641.592784,
+          "total_seconds": 155.112870932
+        },
+        "prefix_write": {
+          "median_ms": 16.793443,
+          "total_seconds": 0.377529115
+        },
+        "payload_receive_and_write": {
+          "median_ms": 1252.8206875,
+          "total_seconds": 24.941619337
+        },
+        "flush_commit_descriptor_encoding": {
+          "median_ms": 312.608698,
+          "total_seconds": 6.167274853
+        }
+      },
+      "callback_stage_seconds_by_rank": {
+        "source_stable_ns": [
+          0.001621097,
+          0.001760638,
+          0.001483147,
+          0.001386077
+        ],
+        "score_ns": [
+          37.587553111,
+          38.071741755,
+          38.314079629,
+          37.749700709
+        ],
+        "device_score_and_score_d2h_ns": [
+          4.536505976,
+          4.6480642,
+          4.547287681,
+          4.338952935
+        ],
+        "host_fragment_reduce_ns": [
+          33.051047135,
+          33.423677555,
+          33.766791948,
+          33.410747774
+        ],
+        "select_ns": [
+          15.435351391,
+          14.498633791,
+          14.316409984,
+          14.896354985
+        ],
+        "capture_ns": [
+          2.276412584,
+          2.306086504,
+          2.08061427,
+          2.20382767
+        ],
+        "pack_stream_ns": [
+          0.259578921,
+          0.23331018,
+          0.22830314,
+          0.22237736
+        ],
+        "d2h_stream_ns": [
+          0.21696472,
+          0.20788804,
+          0.16661164,
+          0.20718262
+        ],
+        "checksum_ns": [
+          2.815797725,
+          2.674268058,
+          2.66516236,
+          2.673177774
+        ],
+        "wait_previous_ns": [
+          30.158955174,
+          29.804883775,
+          29.971453831,
+          30.10596487
+        ],
+        "critical_ns": [
+          90.463998388,
+          89.499240287,
+          89.415961588,
+          89.698933576
+        ]
+      },
+      "serialized_stage_interpretation": "Score, selection, capture, checksum and previous-save wait run inside the post-optimizer callback before the next optimizer step. Their wall times occupy this implementation critical path; they are not independently measured counterfactual slowdown contributions.",
+      "checkpoint_lifetime_overlap_training_callback_seconds_by_rank": [
+        10.657704457,
+        11.499281351,
+        11.612634981,
+        11.353882259
+      ],
+      "overlap_interpretation": "Wall-clock checkpoint lifetime intersected with optimizer-step callback interval. It does not prove device instruction concurrency.",
+      "checkpoint_lifetime_seconds_by_rank": [
+        133.916898564,
+        133.523986152,
+        133.741666705,
+        133.888318638
+      ],
+      "readback": {
+        "generation": 20,
+        "step": 20,
+        "ranks": [
+          {
+            "rank": 0,
+            "payload_bytes": 237094400,
+            "verified": true
+          },
+          {
+            "rank": 1,
+            "payload_bytes": 191920640,
+            "verified": true
+          },
+          {
+            "rank": 2,
+            "payload_bytes": 186490368,
+            "verified": true
+          },
+          {
+            "rank": 3,
+            "payload_bytes": 189798912,
+            "verified": true
+          }
+        ],
+        "status": "pass",
+        "descriptor_encoding_probe": [
+          {
+            "rank": 0,
+            "descriptor_bytes": 4740494,
+            "encode_ns": [
+              98712340,
+              97775386
+            ],
+            "sha256_ns": [
+              2875382,
+              2901431
+            ],
+            "packed_ranges": 1976,
+            "fragments": 17874
+          },
+          {
+            "rank": 1,
+            "descriptor_bytes": 4605281,
+            "encode_ns": [
+              92846127,
+              93779240
+            ],
+            "sha256_ns": [
+              2797372,
+              2863572
+            ],
+            "packed_ranges": 1694,
+            "fragments": 17619
+          },
+          {
+            "rank": 2,
+            "descriptor_bytes": 4595960,
+            "encode_ns": [
+              92718816,
+              94182622
+            ],
+            "sha256_ns": [
+              2751861,
+              2852162
+            ],
+            "packed_ranges": 1679,
+            "fragments": 17597
+          },
+          {
+            "rank": 3,
+            "descriptor_bytes": 4586041,
+            "encode_ns": [
+              92538785,
+              92557045
+            ],
+            "sha256_ns": [
+              2771612,
+              2831462
+            ],
+            "packed_ranges": 1677,
+            "fragments": 17553
+          }
+        ],
+        "scope": "Last committed step only; prior steps are not claimed as readback verified.",
+        "run": "auxiliary-k5-rep0"
+      }
+    },
+    {
       "run": "main-b1-rep0",
       "group": "B1",
       "role": "main",
