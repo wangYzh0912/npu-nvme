@@ -144,7 +144,7 @@ class AdapterError(RuntimeError):
 
 
 class DependencyBlocked(AdapterError):
-    pass
+    exit_code = 3
 
 
 class BuildFailed(AdapterError):

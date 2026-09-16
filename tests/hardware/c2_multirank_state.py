@@ -842,6 +842,7 @@ def finalize_existing(args):
 
 
 def main():
+    raise RuntimeError("Legacy raw caller retired; use strict single-rank FULL; Delta/multirank awaits D2")
     signal.signal(signal.SIGTERM, _interrupt_on_term)
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=("orchestrate", "coordinator", "rank",

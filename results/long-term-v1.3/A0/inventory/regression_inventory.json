@@ -1,0 +1,152 @@
+[
+  {
+    "id": "RC-01",
+    "input": "`category_delta.apply_frame`，`element_offset=-5, element_count=3`，张量长度 10",
+    "historical_claim": "静默写入索引 5..7 → `[0,0,0,0,0,9,8,7,0,0]`",
+    "target": "拒绝：显式要求 `offset ≥ 0`，并验证末端与重叠",
+    "gate": "G07-04 / G11",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-02",
+    "input": "同上但 `element_offset=-1, element_count=1`",
+    "historical_claim": "空切片 → numpy 广播 `ValueError`",
+    "target": "拒绝，且错误类型类型化",
+    "gate": "G07-04",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-03",
+    "input": "`S2DeltaOracle.observe(generation=1000)` 后 `ack` + `recover`",
+    "historical_claim": "均返回 `1000`（跳号被接受）",
+    "target": "规则显式化：允许空号但必须校验 parent 链与唯一性（G12-07）",
+    "gate": "G12-07",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-04",
+    "input": "`R0Session`：重新打包同 generation、不同 payload、`FULL base=999` 的帧后 `ack`",
+    "historical_claim": "被接受，`persisted` 前四元素变为 `[7,7,7,7]`",
+    "target": "拒绝：ACK 必须核对 pending frame hash / manifest / base FULL / parent",
+    "gate": "G12-02",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-05",
+    "input": "`manifest.as_dict()` 后改写 `fields[0].shape[0]=999`",
+    "historical_claim": "对象实际 `shape=(8,)`，序列化输出变 `[999]`（浅拷贝分叉）",
+    "target": "深拷贝 + 不可变视图；digest 与实际对象一致",
+    "gate": "G11 / G12",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-06",
+    "input": "`pack_metadata` 后把 generation 由 1 改写为 999",
+    "historical_claim": "`unpack_metadata` 返回 `999`（信封头不在 CRC 内）",
+    "target": "CRC 覆盖信封头（generation/flags 位翻转必须被检出）",
+    "gate": "G08-04",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-07",
+    "input": "`pack_lossless_delta_frame(1, [{'name':'w'}], [])`",
+    "historical_claim": "解码得 `[nan]`（缺键未 fail closed）",
+    "target": "抛类型化错误，不得注入 NaN",
+    "gate": "G11",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-08",
+    "input": "S2 帧 digest 首字节翻位（`frame[48] ^= 1`）",
+    "historical_claim": "解码接受（digest 不在 payload CRC 内）",
+    "target": "头部含 digest 时必须被 header CRC 覆盖",
+    "gate": "G11",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-09",
+    "input": "`validate_result_gate` 传入无 `status` 字段的字典",
+    "historical_claim": "被接受（返回 `None`，无异常）",
+    "target": "严格 schema 拒绝",
+    "gate": "G14-01",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-10",
+    "input": "`validate_result_gate(persisted=1, restore_verified='no')`",
+    "historical_claim": "被接受（只判真值）",
+    "target": "类型严格校验后拒绝",
+    "gate": "G14-02",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-11",
+    "input": "`FileDeltaWriter` 环回绕后 `read_frame(step_map[old_step])`",
+    "historical_claim": "返回他人 step 的帧（静默读错数据）",
+    "target": "旧索引显式拒绝",
+    "gate": "G13-01",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-12",
+    "input": "`_admit_checkpoint` 在信号量 acquire 时观察 `_admission_lock` 状态",
+    "historical_claim": "观测为 `[False, False]`（锁**未**持有）",
+    "target": "**注：本条是对\"死锁\"说法的反证**，应保留为文档化事实（防止未来重新引入持锁等待）",
+    "gate": "G02-05",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-13",
+    "input": "写 batch 中 `num_items` 极大（超预算）",
+    "historical_claim": "无上界校验，只有 `calloc` 兜底",
+    "target": "拒绝或分片，且有显式上界配置",
+    "gate": "G07-06",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-14",
+    "input": "`delta_init(slot_size=2^63, count=2)` 类回绕输入",
+    "historical_claim": "乘法回绕后容量校验被绕过",
+    "target": "除法界限检查后拒绝",
+    "gate": "G07-03",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  },
+  {
+    "id": "RC-15",
+    "input": "读路径单 chunk NVMe 失败",
+    "historical_claim": "`result=-1` 且目标 HBM 保留旧值；`completed_count` 照样达标",
+    "target": "明确区分\"处理结束\"与\"成功\"；batch 报错后模型必须禁止继续训练",
+    "gate": "G09-03 / G03",
+    "evidence_level": "H",
+    "state": "planned",
+    "runtime_reproduced": false
+  }
+]

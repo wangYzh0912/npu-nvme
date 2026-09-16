@@ -131,6 +131,16 @@ message(STATUS "==============================================")
 # ==================================================
 add_library(npu_nvme SHARED
     src/npu_nvme.c
+    src/runtime.c
+    src/reactor.c
+    src/request.c
+    src/validation.c
+    src/dma.c
+    src/write_pipeline.c
+    src/read_pipeline.c
+    src/metadata_io.c
+    src/step_listener.c
+    src/metrics.c
 )
 
 target_include_directories(npu_nvme PUBLIC
