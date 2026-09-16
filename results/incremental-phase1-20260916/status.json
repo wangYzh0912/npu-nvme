@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-16T19:32:27.893491+00:00",
+  "updated_at": "2026-09-16T19:36:01.651043+00:00",
   "status": "running",
   "local_campaign": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
   "runs": [
@@ -759,39 +759,40 @@
     },
     {
       "run": "main-k20-canonical",
-      "execution_status": "running",
-      "validation_status": "not_run",
+      "execution_status": "completed",
+      "validation_status": "pass",
       "method": "none",
+      "final_step": 24,
       "source_manifest_sha256": "8e93b3c196bca47414d3d203cf73671cd62eb167043e2638976fd7ca146e4a63",
       "ranks": [
         {
           "rank": 0,
-          "status": "running",
-          "recorded_steps": 22,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 1,
-          "status": "running",
-          "recorded_steps": 22,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 2,
-          "status": "running",
-          "recorded_steps": 22,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 3,
-          "status": "running",
-          "recorded_steps": 22,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         }
       ],
-      "commits": 19,
-      "media_verified_commits": 19,
-      "fidelity_steps": 19,
+      "commits": 20,
+      "media_verified_commits": 20,
+      "fidelity_steps": 20,
       "fidelity_observations": [
         {
           "step": 1,
@@ -922,9 +923,16 @@
         {
           "step": 19,
           "relative_l2": 5.0395437480637194e-05,
-          "loss_difference_status": "not_measured",
-          "loss_difference": null,
-          "maximum_block_age": null
+          "loss_difference_status": "measured",
+          "loss_difference": 0.019596129655838013,
+          "maximum_block_age": 19
+        },
+        {
+          "step": 20,
+          "relative_l2": 4.727799636477846e-05,
+          "loss_difference_status": "measured",
+          "loss_difference": 0.019592419266700745,
+          "maximum_block_age": 20
         }
       ]
     },
