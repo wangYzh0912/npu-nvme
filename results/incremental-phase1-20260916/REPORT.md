@@ -114,6 +114,10 @@ HBM 导出表只有本次采集汇总：[{"Device_id": "0", "Metric": "Average",
 
 ![fidelity-curves.png](figures/fidelity-curves.png)
 
+![fidelity-layers-k10.png](figures/fidelity-layers-k10.png)
+
+![fidelity-block-ages.png](figures/fidelity-block-ages.png)
+
 ## 已测链路分段
 
 | 组 | 评分/ms | 全局选择/ms | 打包流/ms | D2H 流/ms | payload 校验/ms | 上次提交等待/ms |

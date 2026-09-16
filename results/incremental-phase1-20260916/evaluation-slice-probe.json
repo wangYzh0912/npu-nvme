@@ -7,6 +7,13 @@
   ],
   "parameters_unchanged": true,
   "outputs_equal": true,
-  "limitation": "Simple model only. Qwen3 uses additional parameter aliases; Qwen3 validation remains failing.",
-  "logs": "/tmp/incremental-eval-slice-probe-logs"
+  "limitation": "Initial simple TP2 probe was insufficient; actual Qwen3 validation subsequently completed 20 steps using registry-validated local model and optimizer slicing guards.",
+  "logs": "/tmp/incremental-eval-slice-probe-logs",
+  "qwen3_validation": {
+    "run": "main-k10-canonical-attempt5",
+    "formal_steps": 20,
+    "media_readback_steps": 20,
+    "forward_oracle_rank_checks": 76,
+    "maximum_oracle_difference": 0.0
+  }
 }
