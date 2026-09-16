@@ -149,6 +149,9 @@ def run(options):
                         from npu_nvme.experiments.runtime import IncrementalController
                         from npu_nvme.experiments.injection import ProbeController
                         factory=ProbeController if experiment.get('probe') else IncrementalController
+                        if experiment.get('probe',{}).get('kind')=='suite':
+                            from npu_nvme.experiments.probe_suite import ProbeSuite
+                            factory=ProbeSuite
                         incremental=factory(ms,cb.train_network,experiment,
                             rank=rank,output=out)
                         incremental.warmup()
@@ -166,6 +169,7 @@ def run(options):
                 elif experiment and step>experiment['warmup_steps']:
                     logical=step-experiment['warmup_steps']
                     if incremental:
+                        if getattr(incremental,'suite',False):incremental.observe(row)
                         report['incremental']['steps'].append(incremental.save(logical))
                     if logical==experiment['formal_steps']:
                         report['incremental']['formal_end_ns']=time.monotonic_ns()

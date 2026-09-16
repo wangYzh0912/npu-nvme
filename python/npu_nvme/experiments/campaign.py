@@ -46,7 +46,7 @@ def validate_baseline(paths, config):
             raise ValueError('B0 numerical trajectory differs between repeats')
     spread=(max(times)-min(times))/statistics.median(times)
     return dict(seconds=times,median_seconds=statistics.median(times),spread_fraction=spread,
-                numerics='pass',stable=spread<=config['baseline_spread_limit'])
+                numerics='pass',stable=len(times)>=2 and spread<=config['baseline_spread_limit'])
 
 
 def _base_training(config, role):

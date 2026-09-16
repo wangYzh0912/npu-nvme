@@ -173,6 +173,11 @@ class RawOwner:
                        "owner_timing":dict(begin_ns=operation_begin_ns,prefix_begin_ns=prefix_begin_ns,
                            payload_begin_ns=payload_begin_ns,payload_end_ns=payload_end_ns,
                            commit_end_ns=time.monotonic_ns())}
+            import ctypes
+            from npu_nvme.storage.bindings import NPUNVMEStats
+            native_stats=NPUNVMEStats()
+            rc=self.transport.lib.npu_nvme_get_stats(self.transport.ctx,ctypes.byref(native_stats))
+            receipt['native_stats']={name:getattr(native_stats,name) for name,_ in native_stats._fields_} if not rc else dict(error=rc)
             if self.config.get('verify_before_ack'):
                 from npu_nvme.experiments.verify_media import verify_receipt
                 self.shadow.begin(step)

@@ -1,0 +1,81 @@
+{
+  "status": "pass",
+  "scope": "CPU metadata and global selection only; no device scoring or training slowdown",
+  "source": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006/runs/main-k10-rep0-attempt2/incremental-coordination/step-0001",
+  "data_policy": "64K scores from actual step; 32K halves parent score, 128K merges adjacent scores within each parameter.",
+  "limitation": "Changed block-size scores are synthetic workload probes, not fidelity or optimal-block-size results.",
+  "rows": [
+    {
+      "block_elements": 32768,
+      "repeat": 0,
+      "candidate_blocks": 249952,
+      "selected_blocks": 24996,
+      "encoded_bytes": 51279534,
+      "encode_ns": 2297147228,
+      "decode_ns": 1127154451,
+      "aggregate_ns": 1662083251,
+      "select_ns": 505984467,
+      "consumed_digest": "7206c714a89f8707bdcd9cc2a5cf07a08aa22e397877005cdde661de99349e6e"
+    },
+    {
+      "block_elements": 32768,
+      "repeat": 1,
+      "candidate_blocks": 249952,
+      "selected_blocks": 24996,
+      "encoded_bytes": 51279534,
+      "encode_ns": 2005517043,
+      "decode_ns": 1194174058,
+      "aggregate_ns": 1836610560,
+      "select_ns": 692607912,
+      "consumed_digest": "7206c714a89f8707bdcd9cc2a5cf07a08aa22e397877005cdde661de99349e6e"
+    },
+    {
+      "block_elements": 65536,
+      "repeat": 0,
+      "candidate_blocks": 124976,
+      "selected_blocks": 12498,
+      "encoded_bytes": 25640416,
+      "encode_ns": 1005447794,
+      "decode_ns": 637121737,
+      "aggregate_ns": 859515556,
+      "select_ns": 395715882,
+      "consumed_digest": "586fc137ae36f29ad08491a388bce2614bd47cf53c799707be60d6500982eee8"
+    },
+    {
+      "block_elements": 65536,
+      "repeat": 1,
+      "candidate_blocks": 124976,
+      "selected_blocks": 12498,
+      "encoded_bytes": 25640416,
+      "encode_ns": 1011413502,
+      "decode_ns": 582369926,
+      "aggregate_ns": 859705677,
+      "select_ns": 343848884,
+      "consumed_digest": "586fc137ae36f29ad08491a388bce2614bd47cf53c799707be60d6500982eee8"
+    },
+    {
+      "block_elements": 131072,
+      "repeat": 0,
+      "candidate_blocks": 62488,
+      "selected_blocks": 6249,
+      "encoded_bytes": 12790114,
+      "encode_ns": 513878233,
+      "decode_ns": 316940111,
+      "aggregate_ns": 386948012,
+      "select_ns": 192770083,
+      "consumed_digest": "c48e5604e531faae5419ef5291c49bea2923f99723676fb2ab284df7754147c3"
+    },
+    {
+      "block_elements": 131072,
+      "repeat": 1,
+      "candidate_blocks": 62488,
+      "selected_blocks": 6249,
+      "encoded_bytes": 12790114,
+      "encode_ns": 516482065,
+      "decode_ns": 294744919,
+      "aggregate_ns": 317402174,
+      "select_ns": 159074798,
+      "consumed_digest": "c48e5604e531faae5419ef5291c49bea2923f99723676fb2ab284df7754147c3"
+    }
+  ]
+}

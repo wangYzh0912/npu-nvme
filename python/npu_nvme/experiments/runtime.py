@@ -223,7 +223,11 @@ class IncrementalController:
 
     def _submit(self, step, host, view, descriptor, payload_sha):
         try:
+            serialize_begin=time.monotonic_ns()
             raw = json.dumps(descriptor, sort_keys=True, separators=(",", ":")).encode()
+            self.pending['serialization_ns']=time.monotonic_ns()-serialize_begin
+            self.pending['descriptor_bytes']=len(raw)
+            assignment_begin=time.monotonic_ns()
             control = {"kind": "begin", "rank": self.rank, "operation": self.operation,
                 "run_id": self.options["run_id"], "step": step, "payload_bytes": len(view),
                 "payload_sha256": payload_sha}
@@ -233,13 +237,18 @@ class IncrementalController:
             if (assigned.get("payload_bytes") != len(view) or assigned.get("payload_offset", -1) < 0 or
                     assigned.get("frame_bytes", 0) < assigned.get("prefix_bytes", 0) + len(view)):
                 raise ValueError("raw assignment geometry differs")
+            self.pending['begin_and_assignment_ns']=time.monotonic_ns()-assignment_begin
+            chunks_begin=time.monotonic_ns()
             chunk = self.options["chunk_bytes"]
             for offset in range(0, len(view), chunk):
                 data = bytes(view[offset:offset + chunk])
                 wire.send(self.socket, {"kind": "chunk", "offset": offset, "bytes": len(data),
                     "sha256": hashlib.sha256(data).hexdigest()}, data,
                     deadline=self.deadline, max_payload=chunk)
+            self.pending['chunk_send_ns']=time.monotonic_ns()-chunks_begin
+            ack_begin=time.monotonic_ns()
             committed, payload = wire.receive(self.socket, deadline=self.deadline, max_payload=0)
+            self.pending['ack_wait_ns']=time.monotonic_ns()-ack_begin
             if payload or committed.get("kind") != "committed": raise ValueError("raw commit ACK differs")
             receipt = committed.get('receipt', {})
             if (receipt.get('run_id') != self.options['run_id'] or receipt.get('step') != step or
@@ -283,7 +292,9 @@ class IncrementalController:
                         reference_update_ns=time.monotonic_ns()-reference_started,
                         wait_ns=reference_started-started,
                         updated_bytes=sum(r['payload_bytes'] for r in pending['records']),
-                        wait_and_reference_ns=time.monotonic_ns()-started))
+                        wait_and_reference_ns=time.monotonic_ns()-started,
+                        transport={key:pending.get(key) for key in ('serialization_ns','descriptor_bytes',
+                            'begin_and_assignment_ns','chunk_send_ns','ack_wait_ns')}))
             return time.monotonic_ns() - started
         finally:
             self._release_after_stop(pending["host"])
@@ -291,19 +302,29 @@ class IncrementalController:
 
     def save(self, logical_step):
         started = time.monotonic_ns()
+        anchor_wall=time.time_ns();anchor_after=time.monotonic_ns()
+        phase_intervals=[]
         self.ms.runtime.synchronize()
         stable_ns=time.monotonic_ns()-started
+        phase_intervals.append(dict(name='source_stable',start_ns=started,end_ns=time.monotonic_ns()))
+        phase_begin=time.monotonic_ns()
         wait_ns = self._finalize()
+        phase_intervals.append(dict(name='wait_previous_and_reference',start_ns=phase_begin,end_ns=time.monotonic_ns()))
+        phase_begin=time.monotonic_ns()
         if self.options["group"] == "B1":
             scores = []; selected = {(row["name"], row["block_index"]) for row in self.blocks if not row["small"]}
             selection = {"candidate_blocks": self.candidate_count, "selected_blocks": self.candidate_count, "rows": []}
             score_ns = select_ns = 0
         else:
             scores, score_ns = self._scores(); before = time.monotonic_ns()
+            phase_intervals.append(dict(name='score',start_ns=phase_begin,end_ns=before))
             selected, selection = self._select(logical_step, scores); select_ns = time.monotonic_ns() - before
+            phase_intervals.append(dict(name='selection',start_ns=before,end_ns=time.monotonic_ns()))
         before = time.monotonic_ns(); host, view, records = self._capture(selected)
         capture_ns = time.monotonic_ns() - before
+        phase_intervals.append(dict(name='capture',start_ns=before,end_ns=time.monotonic_ns()))
         before=time.monotonic_ns();payload_sha = hashlib.sha256(view).hexdigest();checksum_ns=time.monotonic_ns()-before
+        phase_intervals.append(dict(name='payload_checksum',start_ns=before,end_ns=time.monotonic_ns()))
         descriptor = {"schema_version": 1, "group": self.options["group"], "ratio": self.options.get("ratio"),
             "rank": self.rank, "logical_step": logical_step, "records": records,
             "candidate_blocks": selection["candidate_blocks"], "selected_blocks_global": selection["selected_blocks"]}
@@ -319,6 +340,8 @@ class IncrementalController:
             "payload_bytes": len(view), "saved_blocks": len(records),
             "small_bytes": sum(item["payload_bytes"] for item in records if item["small"]),
             "pending_requests": 1}
+        row['phase_intervals']=phase_intervals
+        row['clock_anchor']=dict(monotonic_before_ns=started,wall_ns=anchor_wall,monotonic_after_ns=anchor_after)
         row['block_age']=self.ages.advance(logical_step,selected & self.ages.saved.keys())
         row['logical_selected_blocks_global']=selection['selected_blocks']
         row['packed_ranges']=len(records)
@@ -367,6 +390,18 @@ class IncrementalController:
             _write(directory/'result.json',result)
         from npu_nvme.experiments.evaluate import compare
         evaluation=compare(self,self.network)
+        # The next pure-training loss observes exactly this post-update state.
+        # This also detects a forward graph accidentally reading stale aliases.
+        baseline=self.output.parent/(self.options['model_role']+'-b0-rep0')/'rank_0'/'training.json'
+        if step<20 and baseline.exists():
+            from npu_nvme.runtime.training_catalog import read_checked
+            oracle=read_checked(baseline)
+            if oracle.get('status')=='pass':
+                expected=oracle['losses'][self.options['warmup_steps']+step]['loss']
+                evaluation['expected_next_training_loss']=expected
+                evaluation['forward_vs_training_absolute_difference']=abs(evaluation['full_loss']-expected)
+                if abs(evaluation['full_loss']-expected)>1e-6+1e-5*abs(expected):
+                    raise ValueError('full forward evaluation differs from pure-training post-update state')
         evaluation['block_age']=self.timings[-1]['block_age']
         _write(directory/f'loss-rank-{self.rank}.json',evaluation)
         loss_paths=[directory/f'loss-rank-{rank}.json' for rank in range(4)]

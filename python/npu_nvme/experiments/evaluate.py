@@ -46,6 +46,7 @@ def compare(controller, network):
         diagnostics=[]
         def preserve_local_slice(parameter,phase,layout):
             name=parameter.name
+            diagnostics.append(dict(name=name,matched=name in original,shape=list(parameter.shape),sliced_before=parameter.sliced))
             if name in original:
                 candidates=[parameter]
                 if parameter.inited_param is not None:candidates.append(parameter.inited_param)
@@ -65,7 +66,7 @@ def compare(controller, network):
             parallel_utils._slice_parameter=original_slice
             (Path(controller.output)/f'rank_{controller.rank}'/'evaluation-compile-aliases.json').write_text(json.dumps(diagnostics)+'\n')
         controller.evaluation_aliases=aliases
-    else:true_loss=loss()
+    else:true_loss=None
     for name,array in original.items():
         if not np.array_equal(controller.parameters[name].asnumpy(),array):raise ValueError('forward evaluation changed training weights: '+name)
     from npu_nvme.framework.parameters import get_dev_ptr
@@ -90,6 +91,15 @@ def compare(controller, network):
                         reason='evaluation DMA stream stop not proven'))+'\n')
                 raise RuntimeError('evaluation weight copy failed')
     try:
+        if true_loss is None:
+            for name,array in original.items():
+                for pointer in targets[name]:
+                    if pointer!=controller.pointers[name]:copy(pointer,array)
+            restore_control(ms,network,state)
+            true_loss=loss()
+        for name,array in original.items():
+            if not np.array_equal(controller.parameters[name].asnumpy(),array):
+                raise ValueError('forward evaluation changed training weights: '+name)
         for name in controller.parameters:
             for pointer in targets[name]:copy(pointer,controller.media_shadow(name))
         restore_control(ms,network,state)

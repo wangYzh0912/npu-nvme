@@ -12,16 +12,24 @@ from npu_nvme.experiments.stages import summarise
 
 def audit(root):
     results=[];failed=[]
-    for path in sorted((root/'runs').iterdir()):
+    paths=[]
+    for parent in sorted((root/'runs').iterdir()):
+        if (parent/'suite').exists():
+            result=parent/'result.json'
+            if result.exists() and json.loads(result.read_text()).get('validation_status')=='pass':
+                paths.extend(sorted((parent/'suite').iterdir()))
+        else:paths.append(parent)
+    for path in paths:
         outcome=path/'result.json'
         if not outcome.exists() or json.loads(outcome.read_text()).get('validation_status')!='pass':continue
         ranks=[read_checked(path/f'rank_{rank}'/'training.json') for rank in range(4)]
         role='auxiliary' if path.name.startswith('auxiliary-') else 'main'
         experiment=ranks[0]['incremental'];group=experiment['group'];probe=any(s.get('probe') for s in experiment['steps'])
-        row=dict(run=path.name,role=role,group=group,canonical='canonical' in path.name,
+        row=dict(run=str(path.relative_to(root/'runs')),role=role,group=group,canonical='canonical' in path.name,
+                 suite=experiment.get('suite',False),
                  profiled=experiment.get('profiled',False),probe=probe,status='pass')
         try:
-            if any(r['status']!='pass' or len(r['losses'])!=24 or not r['initial_full_restore']['verified'] for r in ranks):
+            if any(r['status']!='pass' or len(r['losses'])!=20+experiment.get('warmup_steps',4) or not r['initial_full_restore']['verified'] for r in ranks):
                 raise ValueError('rank interval or initial state invalid')
             completions=[]
             for rank in range(4):
@@ -35,7 +43,7 @@ def audit(root):
                 row['physical_frame_bytes']=sum(v['frame_bytes']+4096 for c in catalog['commits'] for v in c['ranks'])
                 row['media_readback_verified']=all(c.get('media_verified') for c in catalog['commits'])
             row.update(summarise(ranks,completions))
-            row['losses']=[v['loss'] for v in ranks[0]['losses'][4:]]
+            row['losses']=[v['loss'] for v in ranks[0]['losses'][experiment.get('warmup_steps',4):]]
             row['peak_framework_hbm_bytes']=[v['incremental']['memory_peak_bytes'] for v in ranks]
             if row['canonical']:
                 curves=[json.loads(p.read_text()) for p in sorted((path/'fidelity').glob('step-*/result.json'))]

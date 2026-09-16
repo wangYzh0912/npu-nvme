@@ -105,7 +105,11 @@ def run_fit(config, output, *, restore='latest', resume=False):
                     import pwd
                     uid=Path(audit['profile']['version_root']).stat().st_uid
                     user=pwd.getpwuid(uid)
-                    if experiment.get('owner_connection'):raise ValueError('profile UID delegation requires a non-raw worker run')
+                    if experiment.get('owner_connection'):
+                        connection=json.loads(Path(experiment['owner_connection']).read_text())
+                        endpoint=Path(connection['socket'])
+                        if not endpoint.is_socket():raise ValueError('raw owner socket is not ready')
+                        os.chown(endpoint,uid,user.pw_gid);os.chmod(endpoint,0o600)
                     os.chown(output,uid,user.pw_gid)
                     initial=Path(experiment['initial_full'])
                     if not initial.exists():
