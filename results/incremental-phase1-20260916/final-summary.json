@@ -32,7 +32,7 @@
     "p5-ablation-3": true,
     "p5-ablation-4": true,
     "p5-ablation-5": true,
-    "p5-ablation-6": false,
+    "p5-ablation-6": true,
     "main-profile": true,
     "auxiliary-profile": false,
     "actual-checkpoint-profile": false
@@ -277,6 +277,47 @@
         "d2h_ns": 47.4556635,
         "wait_previous_ns": 3818.7732375,
         "checksum_ns": 551.32436
+      }
+    },
+    {
+      "run": "main-b0-rep0-ablation-6",
+      "name": "ablation-6",
+      "kind": "ablation",
+      "spec": {
+        "granularity": 4194304,
+        "kind": "ablation",
+        "name": "ablation-6",
+        "output_bytes": 819077120,
+        "stage": 6,
+        "target_elements": 2047683840
+      },
+      "training_seconds": 151.066481059,
+      "baseline_seconds": 20.5064345905,
+      "baseline_range_seconds": [
+        18.621201905,
+        22.391667276
+      ],
+      "slowdown": 6.366784332610627,
+      "slowdown_baseline_sensitivity": [
+        5.746549026338793,
+        7.11260636288128
+      ],
+      "auxiliary_critical_median_ms": 5638.8903995,
+      "synchronized": true,
+      "suite": false,
+      "memory_peak_bytes_by_rank": [
+        42203972608,
+        42203972608,
+        42203973632,
+        42203973632
+      ],
+      "stage_median_ms": {
+        "score_ns": 995.491784,
+        "selection_ns": 0.503332,
+        "pack_ns": 1.8601475,
+        "d2h_ns": 47.640445,
+        "wait_previous_ns": 3946.9850815,
+        "checksum_ns": 550.323349
       }
     },
     {
@@ -919,6 +960,16 @@
       "observed_extra_range_seconds": [
         112.97928621050002,
         112.97928621050002
+      ]
+    },
+    {
+      "stage": 6,
+      "repeats": 1,
+      "calibrated_extra_seconds": 130.56004646850002,
+      "incremental_seconds": 17.580760257999998,
+      "observed_extra_range_seconds": [
+        130.56004646850002,
+        130.56004646850002
       ]
     }
   ],

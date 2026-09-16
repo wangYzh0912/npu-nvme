@@ -169,6 +169,90 @@
       ]
     },
     {
+      "run": "main-b0-rep0-ablation-6",
+      "role": "main",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": true,
+      "suite": false,
+      "framework_peak_bytes_by_rank": [
+        42203972608,
+        42203972608,
+        42203973632,
+        42203973632
+      ],
+      "framework_extra_vs_min_baseline": [
+        220160,
+        220160,
+        220160,
+        220160
+      ],
+      "board_sampled_peak_mib": {
+        "0": 46644,
+        "1": 46646,
+        "2": 46646,
+        "3": 46647
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 18892,
+        "1": 18890,
+        "2": 18890,
+        "3": 18889
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        819077120,
+        819077120,
+        819077120,
+        819077120
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        805306368,
+        805306368,
+        805306368,
+        805306368
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        812214272,
+        812214272,
+        812214272,
+        812214272
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ]
+    },
+    {
       "run": "main-b0-rep1",
       "role": "main",
       "group": "B0",

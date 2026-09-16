@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-16T22:28:47.049973+00:00",
+  "updated_at": "2026-09-16T22:31:27.697738+00:00",
   "status": "running",
   "local_campaign": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
   "runs": [
@@ -166,40 +166,128 @@
     },
     {
       "run": "main-b0-rep0-ablation-6",
-      "execution_status": "running",
-      "validation_status": "not_run",
+      "execution_status": "completed",
+      "validation_status": "pass",
       "method": "none",
+      "final_step": 24,
       "source_manifest_sha256": "8e93b3c196bca47414d3d203cf73671cd62eb167043e2638976fd7ca146e4a63",
       "ranks": [
         {
           "rank": 0,
-          "status": "running",
-          "recorded_steps": 12,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 1,
-          "status": "running",
-          "recorded_steps": 12,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 2,
-          "status": "running",
-          "recorded_steps": 12,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         },
         {
           "rank": 3,
-          "status": "running",
-          "recorded_steps": 12,
+          "status": "pass",
+          "recorded_steps": 24,
           "error": null
         }
       ],
-      "commits": 8,
+      "commits": 20,
       "media_verified_commits": 0,
       "fidelity_steps": 0,
-      "fidelity_observations": []
+      "fidelity_observations": [],
+      "last_media_verification": {
+        "generation": 20,
+        "step": 20,
+        "ranks": [
+          {
+            "rank": 0,
+            "payload_bytes": 819077120,
+            "verified": true
+          },
+          {
+            "rank": 1,
+            "payload_bytes": 819077120,
+            "verified": true
+          },
+          {
+            "rank": 2,
+            "payload_bytes": 819077120,
+            "verified": true
+          },
+          {
+            "rank": 3,
+            "payload_bytes": 819077120,
+            "verified": true
+          }
+        ],
+        "status": "pass",
+        "descriptor_encoding_probe": [
+          {
+            "rank": 0,
+            "descriptor_bytes": 666,
+            "encode_ns": [
+              74340,
+              40181
+            ],
+            "sha256_ns": [
+              12590,
+              4150
+            ],
+            "packed_ranges": 4,
+            "fragments": 0
+          },
+          {
+            "rank": 1,
+            "descriptor_bytes": 666,
+            "encode_ns": [
+              69850,
+              33840
+            ],
+            "sha256_ns": [
+              10980,
+              3270
+            ],
+            "packed_ranges": 4,
+            "fragments": 0
+          },
+          {
+            "rank": 2,
+            "descriptor_bytes": 666,
+            "encode_ns": [
+              67060,
+              31600
+            ],
+            "sha256_ns": [
+              9600,
+              2720
+            ],
+            "packed_ranges": 4,
+            "fragments": 0
+          },
+          {
+            "rank": 3,
+            "descriptor_bytes": 666,
+            "encode_ns": [
+              62260,
+              31181
+            ],
+            "sha256_ns": [
+              9610,
+              2770
+            ],
+            "packed_ranges": 4,
+            "fragments": 0
+          }
+        ],
+        "scope": "Last committed step only; prior steps are not claimed as readback verified.",
+        "run": "main-b0-rep0-ablation-6"
+      }
     },
     {
       "run": "main-b0-rep1",
