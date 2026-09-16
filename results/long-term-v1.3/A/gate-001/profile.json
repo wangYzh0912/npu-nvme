@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "profile_id": "A",
+  "scope": "Complete A exit requires additional lifetime, ledger and device verification",
+  "cases": [
+    {
+      "id": "A-admission",
+      "tier": "FAKE",
+      "nodeid": "tests/regression/test_admission_lifetime.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-wait-input-result",
+      "tier": "FAKE",
+      "nodeid": "tests/regression/test_full_safety.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-protocol",
+      "tier": "CPU",
+      "nodeid": "tests/python/test_full_checkpoint_protocol.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-evidence",
+      "tier": "CPU",
+      "nodeid": "tests/regression/test_gate_evidence.py",
+      "timeout_seconds": 120,
+      "required": true
+    },
+    {
+      "id": "A-c-safety",
+      "tier": "C_IMPL",
+      "nodeid": "tests/regression/test_c_host_safety.py",
+      "timeout_seconds": 180,
+      "required": true
+    },
+    {
+      "id": "G03-resolve-retention",
+      "tier": "FAKE",
+      "nodeid": "tests/gates/test_request_registry.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "G04-owner-ledger",
+      "tier": "C_IMPL",
+      "nodeid": "tests/gates/test_quarantine_ledger.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "H02-device-stop",
+      "tier": "HW1",
+      "nodeid": "tests/gates/test_hardware_shutdown.py",
+      "timeout_seconds": 120,
+      "required": true
+    }
+  ]
+}

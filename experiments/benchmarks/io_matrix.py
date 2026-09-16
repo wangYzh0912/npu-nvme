@@ -44,6 +44,8 @@ ALIGNMENT = 4096
 FS_ROOT = Path("/models/npu_nvme_exp")
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def round_up(value, alignment=ALIGNMENT):
     return (value + alignment - 1) // alignment * alignment
 
@@ -300,7 +302,7 @@ def host_spdk_sample(ckpt, writer, item_bytes, items, index, warmup, base_offset
     ptrs, offs, sizes = host_chunk_arrays(sources, item_offsets, ckpt.chunk_size)
     write_enter = time.monotonic_ns()
     events.append({"name": "write_api_enter", "monotonic_ns": write_enter})
-    rc = lib.npu_nvme_write_batch_host(
+    rc = transfer_wait(lib,0,1,
         ckpt.ctx, ptrs, offs, sizes, len(sizes))
     write_return = time.monotonic_ns()
     events.append({"name": "write_api_return", "monotonic_ns": write_return,
@@ -315,7 +317,7 @@ def host_spdk_sample(ckpt, writer, item_bytes, items, index, warmup, base_offset
         destinations, item_offsets, ckpt.chunk_size)
     read_enter = time.monotonic_ns()
     events.append({"name": "read_api_enter", "monotonic_ns": read_enter})
-    rc = lib.npu_nvme_read_batch_host(
+    rc = transfer_wait(lib,1,1,
         ckpt.ctx, read_ptrs, read_offs, read_sizes, len(read_sizes))
     read_return = time.monotonic_ns()
     events.append({"name": "read_api_return", "monotonic_ns": read_return,

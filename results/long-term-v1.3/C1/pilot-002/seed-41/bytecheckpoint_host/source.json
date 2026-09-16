@@ -1,0 +1,272 @@
+{
+  "adapter": "bytecheckpoint_host",
+  "capture": "frozen",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3312608898589999,
+      "request_id": "bytecheckpoint_host-000001",
+      "sha256": "e0025352a00a6c32dc725d7d56440c43b68e17f84d57fce26006698c04e7a2d8",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 3,
+      "submit_ns": 3312603929553949,
+      "timestamps_ns": {
+        "CREATED": 3312603962052800,
+        "DMA_COPYING": 3312603963048294,
+        "FLUSHING": 3312608883234293,
+        "METADATA_COMMITTING": 3312608883402403,
+        "NVME_WRITING": 3312604075776332,
+        "PERSISTED": 3312608898589999,
+        "QUEUED": 3312603962940294,
+        "SNAPSHOTTING": 3312603962672152,
+        "SNAPSHOT_READY": 3312603962816883,
+        "admitted": 3312603962118060,
+        "data_completed": 3312608882845621,
+        "input_buffer_released": 3312605330214577,
+        "source_released": 3312604064023031
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 3312603962672152,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 3312603962816883,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 17951
+          },
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 3312603962940294,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 3312603963048294,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 3312604075776332,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3312608844354015
+          },
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 3312608883234293,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 3312608883402403,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "sha256": "e0025352a00a6c32dc725d7d56440c43b68e17f84d57fce26006698c04e7a2d8",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 3312608898589999,
+          "request_id": "bytecheckpoint_host-000001"
+        }
+      ]
+    }
+  ],
+  "deterministic": "ON",
+  "formal_steps": 2,
+  "fresh_restore_required": true,
+  "initial_state_sha256": "5afa9246b8df634566285140d96230fa2ce071f3caeb5052b942b72c218b0540",
+  "kind": "host-adapted-semantic-port",
+  "mechanisms_preserved": [
+    "model and optimizer DDPSavePlanner/DDPLoadPlanner workflows",
+    "official extra_state workflow for persisted controls",
+    "shared three-component CKPTCounter and async LocalStorageWriter queues"
+  ],
+  "model": "gpt2",
+  "model_revision": "sha256:132237ff20be59328e0ff606a4010357a659bb9b75ad9d235f15499c5ef150f5",
+  "oracle_seconds": 0.140778919,
+  "platform_substitutions": [
+    "PyTorch model extraction -> common ACL FULL capture and shared memory",
+    "CUDA pinned D2H -> ACL pinned D2H"
+  ],
+  "port_class": "host-adapted-semantic-port",
+  "resolved_model_config": {
+    "_name_or_path": "",
+    "architectures": null,
+    "attention_dropout_rate": 0.0,
+    "batch_size": 1,
+    "block_size": 16,
+    "bos_token_id": 50256,
+    "checkpoint_name_or_path": "",
+    "compute_dtype": "float16",
+    "do_sample": true,
+    "embedding_dropout_prob": 0.0,
+    "eos_token_id": 50256,
+    "expand_ratio": 4,
+    "hidden_act": "gelu",
+    "hidden_dropout_rate": 0.0,
+    "hidden_size": 768,
+    "is_dynamic": false,
+    "is_encoder_decoder": null,
+    "is_sample_acceleration": null,
+    "layernorm_compute_type": "float32",
+    "max_decode_length": 1024,
+    "max_position_embeddings": 128,
+    "mindformers_version": "1.3.2",
+    "model_type": "gpt2",
+    "moe_config": {
+      "aux_loss_factor": 0.05,
+      "aux_loss_factors": [],
+      "aux_loss_types": [],
+      "capacity_factor": 1.1,
+      "cold_token_percent": 1.0,
+      "comp_comm_parallel": false,
+      "comp_comm_parallel_degree": 2,
+      "cur_layer": 0,
+      "enable_cold_hot_expert": false,
+      "enable_sdrop": false,
+      "expert_group_size": null,
+      "expert_num": 1,
+      "first_k_dense_replace": true,
+      "group_wise_a2a": false,
+      "hot_expert_num": 0,
+      "max_router_load": 131072,
+      "moe_intermediate_size": 1407,
+      "moe_module_name": "",
+      "n_group": null,
+      "norm_topk_prob": true,
+      "num_experts_chosen": 1,
+      "routed_scaling_factor": 1.0,
+      "router_dense_type": "float32",
+      "routing_policy": "TopkRouterV1",
+      "save_token_distribution": false,
+      "shared_expert_num": 0,
+      "topk_group": null,
+      "topk_method": "greedy",
+      "update_step": 10000,
+      "use_fused_ops_topkrouter": false,
+      "use_shared_expert_gating": false,
+      "z_loss_factor": 0.0
+    },
+    "num_blocks": 512,
+    "num_heads": 12,
+    "num_labels": 2,
+    "num_layers": 12,
+    "offset": 0,
+    "pad_token_id": 50256,
+    "parallel_config": {
+      "context_parallel": 1,
+      "context_parallel_algo": "colossalai_cp",
+      "data_parallel": 1,
+      "expert_parallel": 1,
+      "gradient_aggregation_group": 4,
+      "micro_batch_num": 1,
+      "model_parallel": 1,
+      "optimizer_shard": null,
+      "pipeline_stage": 1,
+      "recompute": {
+        "mp_comm_recompute": true,
+        "parallel_optimizer_comm_recompute": false,
+        "recompute": false,
+        "recompute_slice_activation": false,
+        "select_recompute": false
+      },
+      "ulysses_degree_in_cp": 1,
+      "use_seq_parallel": false,
+      "vocab_emb_dp": true
+    },
+    "param_init_type": "float32",
+    "post_layernorm_residual": false,
+    "repetition_penalty": 1,
+    "seq_length": 128,
+    "softmax_compute_type": "float32",
+    "tokenizer_class": null,
+    "top_k": 5,
+    "top_p": 1,
+    "unk_token_id": 50256,
+    "use_flash_attention": false,
+    "use_past": false,
+    "use_prompt_flash_attention": false,
+    "vocab_size": 50257
+  },
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.868170738220215,
+      "step": 4,
+      "step_begin_ns": 3312610166412362,
+      "step_end_ns": 3312610218800589
+    },
+    {
+      "loss": 10.8652925491333,
+      "step": 5,
+      "step_begin_ns": 3312610218861509,
+      "step_end_ns": 3312610263413462
+    },
+    {
+      "loss": 10.868734359741211,
+      "step": 6,
+      "step_begin_ns": 3312610263460892,
+      "step_end_ns": 3312610306978060
+    }
+  ],
+  "source_pid": 761989,
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.873197555541992,
+      "step": 2,
+      "step_begin_ns": 3312603788025227,
+      "step_end_ns": 3312603883381700
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.816542625427246,
+      "step": 3,
+      "step_begin_ns": 3312603883399940,
+      "step_end_ns": 3312603929546369
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 6.378261944,
+  "transport": "legacy_sync",
+  "upstream_core_invoked": true
+}

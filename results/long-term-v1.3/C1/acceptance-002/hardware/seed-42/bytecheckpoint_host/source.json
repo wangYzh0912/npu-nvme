@@ -1,0 +1,1404 @@
+{
+  "adapter": "bytecheckpoint_host",
+  "capture": "frozen",
+  "checkpoint_count": 10,
+  "checkpoints": [
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315568301662530,
+      "request_id": "bytecheckpoint_host-000001",
+      "sha256": "35a9dc8ba2a5459e8ef74aa4b5648b177df2a21e075f29692e6536306f4c96c3",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 8,
+      "submit_ns": 3315563150250810,
+      "timestamps_ns": {
+        "CREATED": 3315563197128606,
+        "DMA_COPYING": 3315563198296381,
+        "FLUSHING": 3315568288136256,
+        "METADATA_COMMITTING": 3315568288383727,
+        "NVME_WRITING": 3315563315941308,
+        "PERSISTED": 3315568301662530,
+        "QUEUED": 3315563198180610,
+        "SNAPSHOTTING": 3315563197868359,
+        "SNAPSHOT_READY": 3315563198039170,
+        "admitted": 3315563197189196,
+        "data_completed": 3315568287740244,
+        "input_buffer_released": 3315564676499898,
+        "source_released": 3315563304127582
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 3315563197868359,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 3315563198039170,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 19110
+          },
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 3315563198180610,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 3315563198296381,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 3315563315941308,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315568220282166
+          },
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 3315568288136256,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 3315568288383727,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "sha256": "35a9dc8ba2a5459e8ef74aa4b5648b177df2a21e075f29692e6536306f4c96c3",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 3315568301662530,
+          "request_id": "bytecheckpoint_host-000001"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 2,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315573453881343,
+      "request_id": "bytecheckpoint_host-000002",
+      "sha256": "0aa49a2f4f3a64d8bed1cbd7fbd5b46fa5891b95b8720720dc78f415b924132c",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 11,
+      "submit_ns": 3315568302485263,
+      "timestamps_ns": {
+        "CREATED": 3315568304134800,
+        "DMA_COPYING": 3315568304687072,
+        "FLUSHING": 3315573440674590,
+        "METADATA_COMMITTING": 3315573440824491,
+        "NVME_WRITING": 3315568754945092,
+        "PERSISTED": 3315573453881343,
+        "QUEUED": 3315568304573711,
+        "SNAPSHOTTING": 3315568304324570,
+        "SNAPSHOT_READY": 3315568304442091,
+        "admitted": 3315568304155680,
+        "data_completed": 3315573440406119,
+        "input_buffer_released": 3315570020514143,
+        "source_released": 3315568460116190
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 2,
+          "monotonic_ns": 3315568304324570,
+          "request_id": "bytecheckpoint_host-000002"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 2,
+          "monotonic_ns": 3315568304442091,
+          "request_id": "bytecheckpoint_host-000002"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 13080
+          },
+          "event": "QUEUED",
+          "generation": 2,
+          "monotonic_ns": 3315568304573711,
+          "request_id": "bytecheckpoint_host-000002"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 2,
+          "monotonic_ns": 3315568304687072,
+          "request_id": "bytecheckpoint_host-000002"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 2,
+          "monotonic_ns": 3315568754945092,
+          "request_id": "bytecheckpoint_host-000002"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315573400849582
+          },
+          "event": "FLUSHING",
+          "generation": 2,
+          "monotonic_ns": 3315573440674590,
+          "request_id": "bytecheckpoint_host-000002"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 2,
+          "monotonic_ns": 3315573440824491,
+          "request_id": "bytecheckpoint_host-000002"
+        },
+        {
+          "detail": {
+            "sha256": "0aa49a2f4f3a64d8bed1cbd7fbd5b46fa5891b95b8720720dc78f415b924132c",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 2,
+          "monotonic_ns": 3315573453881343,
+          "request_id": "bytecheckpoint_host-000002"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 3,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315578401587323,
+      "request_id": "bytecheckpoint_host-000003",
+      "sha256": "4c0f97295c01d2b1432c4888e4f4a48bfe2d958fdafc7bd803147d143b05a312",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 14,
+      "submit_ns": 3315573454968047,
+      "timestamps_ns": {
+        "CREATED": 3315573456817245,
+        "DMA_COPYING": 3315573457377147,
+        "FLUSHING": 3315578388486591,
+        "METADATA_COMMITTING": 3315578388623191,
+        "NVME_WRITING": 3315573818597213,
+        "PERSISTED": 3315578401587323,
+        "QUEUED": 3315573457259066,
+        "SNAPSHOTTING": 3315573457012195,
+        "SNAPSHOT_READY": 3315573457134786,
+        "admitted": 3315573456836265,
+        "data_completed": 3315578388248930,
+        "input_buffer_released": 3315575073424602,
+        "source_released": 3315573564052181
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 3,
+          "monotonic_ns": 3315573457012195,
+          "request_id": "bytecheckpoint_host-000003"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 3,
+          "monotonic_ns": 3315573457134786,
+          "request_id": "bytecheckpoint_host-000003"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 11740
+          },
+          "event": "QUEUED",
+          "generation": 3,
+          "monotonic_ns": 3315573457259066,
+          "request_id": "bytecheckpoint_host-000003"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 3,
+          "monotonic_ns": 3315573457377147,
+          "request_id": "bytecheckpoint_host-000003"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 3,
+          "monotonic_ns": 3315573818597213,
+          "request_id": "bytecheckpoint_host-000003"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315578350208149
+          },
+          "event": "FLUSHING",
+          "generation": 3,
+          "monotonic_ns": 3315578388486591,
+          "request_id": "bytecheckpoint_host-000003"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 3,
+          "monotonic_ns": 3315578388623191,
+          "request_id": "bytecheckpoint_host-000003"
+        },
+        {
+          "detail": {
+            "sha256": "4c0f97295c01d2b1432c4888e4f4a48bfe2d958fdafc7bd803147d143b05a312",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 3,
+          "monotonic_ns": 3315578401587323,
+          "request_id": "bytecheckpoint_host-000003"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 4,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315583493594447,
+      "request_id": "bytecheckpoint_host-000004",
+      "sha256": "fa7e3bc818be23fb87f7640bc6c597510109a08eb0831429b8fa075dedb118f7",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 17,
+      "submit_ns": 3315578592088300,
+      "timestamps_ns": {
+        "CREATED": 3315578593769007,
+        "DMA_COPYING": 3315578594376049,
+        "FLUSHING": 3315583480438694,
+        "METADATA_COMMITTING": 3315583480596055,
+        "NVME_WRITING": 3315578773741923,
+        "PERSISTED": 3315583493594447,
+        "QUEUED": 3315578594270969,
+        "SNAPSHOTTING": 3315578594032398,
+        "SNAPSHOT_READY": 3315578594147429,
+        "admitted": 3315578593793777,
+        "data_completed": 3315583480119663,
+        "input_buffer_released": 3315580032528577,
+        "source_released": 3315578696659966
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 4,
+          "monotonic_ns": 3315578594032398,
+          "request_id": "bytecheckpoint_host-000004"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 4,
+          "monotonic_ns": 3315578594147429,
+          "request_id": "bytecheckpoint_host-000004"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 16020
+          },
+          "event": "QUEUED",
+          "generation": 4,
+          "monotonic_ns": 3315578594270969,
+          "request_id": "bytecheckpoint_host-000004"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 4,
+          "monotonic_ns": 3315578594376049,
+          "request_id": "bytecheckpoint_host-000004"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 4,
+          "monotonic_ns": 3315578773741923,
+          "request_id": "bytecheckpoint_host-000004"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315583441747421
+          },
+          "event": "FLUSHING",
+          "generation": 4,
+          "monotonic_ns": 3315583480438694,
+          "request_id": "bytecheckpoint_host-000004"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 4,
+          "monotonic_ns": 3315583480596055,
+          "request_id": "bytecheckpoint_host-000004"
+        },
+        {
+          "detail": {
+            "sha256": "fa7e3bc818be23fb87f7640bc6c597510109a08eb0831429b8fa075dedb118f7",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 4,
+          "monotonic_ns": 3315583493594447,
+          "request_id": "bytecheckpoint_host-000004"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 5,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315588479553759,
+      "request_id": "bytecheckpoint_host-000005",
+      "sha256": "60de42f2a713866845138abfebf6e82b956bfaf79393df441b19d39c050a1361",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 20,
+      "submit_ns": 3315583684497246,
+      "timestamps_ns": {
+        "CREATED": 3315583686176102,
+        "DMA_COPYING": 3315583686802345,
+        "FLUSHING": 3315588466449897,
+        "METADATA_COMMITTING": 3315588466605357,
+        "NVME_WRITING": 3315583863625358,
+        "PERSISTED": 3315588479553759,
+        "QUEUED": 3315583686695624,
+        "SNAPSHOTTING": 3315583686435573,
+        "SNAPSHOT_READY": 3315583686570434,
+        "admitted": 3315583686199482,
+        "data_completed": 3315588466064515,
+        "input_buffer_released": 3315585130296114,
+        "source_released": 3315583787428845
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 5,
+          "monotonic_ns": 3315583686435573,
+          "request_id": "bytecheckpoint_host-000005"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 5,
+          "monotonic_ns": 3315583686570434,
+          "request_id": "bytecheckpoint_host-000005"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 14380
+          },
+          "event": "QUEUED",
+          "generation": 5,
+          "monotonic_ns": 3315583686695624,
+          "request_id": "bytecheckpoint_host-000005"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 5,
+          "monotonic_ns": 3315583686802345,
+          "request_id": "bytecheckpoint_host-000005"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 5,
+          "monotonic_ns": 3315583863625358,
+          "request_id": "bytecheckpoint_host-000005"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315588427049250
+          },
+          "event": "FLUSHING",
+          "generation": 5,
+          "monotonic_ns": 3315588466449897,
+          "request_id": "bytecheckpoint_host-000005"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 5,
+          "monotonic_ns": 3315588466605357,
+          "request_id": "bytecheckpoint_host-000005"
+        },
+        {
+          "detail": {
+            "sha256": "60de42f2a713866845138abfebf6e82b956bfaf79393df441b19d39c050a1361",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 5,
+          "monotonic_ns": 3315588479553759,
+          "request_id": "bytecheckpoint_host-000005"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 6,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315593498070341,
+      "request_id": "bytecheckpoint_host-000006",
+      "sha256": "fb98449d39c4e5f68d36ab921c3490c376734dbdacbd8ee4741409152ebb3da1",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 23,
+      "submit_ns": 3315588668769561,
+      "timestamps_ns": {
+        "CREATED": 3315588670260527,
+        "DMA_COPYING": 3315588670876760,
+        "FLUSHING": 3315593484958248,
+        "METADATA_COMMITTING": 3315593485118029,
+        "NVME_WRITING": 3315588850948695,
+        "PERSISTED": 3315593498070341,
+        "QUEUED": 3315588670773769,
+        "SNAPSHOTTING": 3315588670535448,
+        "SNAPSHOT_READY": 3315588670652159,
+        "admitted": 3315588670284387,
+        "data_completed": 3315593484557097,
+        "input_buffer_released": 3315590120566313,
+        "source_released": 3315588771661750
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 6,
+          "monotonic_ns": 3315588670535448,
+          "request_id": "bytecheckpoint_host-000006"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 6,
+          "monotonic_ns": 3315588670652159,
+          "request_id": "bytecheckpoint_host-000006"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 14680
+          },
+          "event": "QUEUED",
+          "generation": 6,
+          "monotonic_ns": 3315588670773769,
+          "request_id": "bytecheckpoint_host-000006"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 6,
+          "monotonic_ns": 3315588670876760,
+          "request_id": "bytecheckpoint_host-000006"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 6,
+          "monotonic_ns": 3315588850948695,
+          "request_id": "bytecheckpoint_host-000006"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315593445994654
+          },
+          "event": "FLUSHING",
+          "generation": 6,
+          "monotonic_ns": 3315593484958248,
+          "request_id": "bytecheckpoint_host-000006"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 6,
+          "monotonic_ns": 3315593485118029,
+          "request_id": "bytecheckpoint_host-000006"
+        },
+        {
+          "detail": {
+            "sha256": "fb98449d39c4e5f68d36ab921c3490c376734dbdacbd8ee4741409152ebb3da1",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 6,
+          "monotonic_ns": 3315593498070341,
+          "request_id": "bytecheckpoint_host-000006"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 7,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315598500412038,
+      "request_id": "bytecheckpoint_host-000007",
+      "sha256": "f5c64a4b8653eb22331c883547712df70e893a9cda9ba78481df94be207a227f",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 26,
+      "submit_ns": 3315593687697584,
+      "timestamps_ns": {
+        "CREATED": 3315593689284031,
+        "DMA_COPYING": 3315593689889163,
+        "FLUSHING": 3315598487145155,
+        "METADATA_COMMITTING": 3315598487289586,
+        "NVME_WRITING": 3315593867995091,
+        "PERSISTED": 3315598500412038,
+        "QUEUED": 3315593689784083,
+        "SNAPSHOTTING": 3315593689546062,
+        "SNAPSHOT_READY": 3315593689663582,
+        "admitted": 3315593689306741,
+        "data_completed": 3315598486896144,
+        "input_buffer_released": 3315595129333636,
+        "source_released": 3315593792847312
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 7,
+          "monotonic_ns": 3315593689546062,
+          "request_id": "bytecheckpoint_host-000007"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 7,
+          "monotonic_ns": 3315593689663582,
+          "request_id": "bytecheckpoint_host-000007"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 14000
+          },
+          "event": "QUEUED",
+          "generation": 7,
+          "monotonic_ns": 3315593689784083,
+          "request_id": "bytecheckpoint_host-000007"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 7,
+          "monotonic_ns": 3315593689889163,
+          "request_id": "bytecheckpoint_host-000007"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 7,
+          "monotonic_ns": 3315593867995091,
+          "request_id": "bytecheckpoint_host-000007"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315598448220870
+          },
+          "event": "FLUSHING",
+          "generation": 7,
+          "monotonic_ns": 3315598487145155,
+          "request_id": "bytecheckpoint_host-000007"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 7,
+          "monotonic_ns": 3315598487289586,
+          "request_id": "bytecheckpoint_host-000007"
+        },
+        {
+          "detail": {
+            "sha256": "f5c64a4b8653eb22331c883547712df70e893a9cda9ba78481df94be207a227f",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 7,
+          "monotonic_ns": 3315598500412038,
+          "request_id": "bytecheckpoint_host-000007"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 8,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315603414460044,
+      "request_id": "bytecheckpoint_host-000008",
+      "sha256": "8308921c751a3e3b54a16766ae18d07a3bde5e4af5aa8492d247a649117f2da3",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 29,
+      "submit_ns": 3315598688696176,
+      "timestamps_ns": {
+        "CREATED": 3315598690186102,
+        "DMA_COPYING": 3315598690789835,
+        "FLUSHING": 3315603401242452,
+        "METADATA_COMMITTING": 3315603401382782,
+        "NVME_WRITING": 3315598869246184,
+        "PERSISTED": 3315603414460044,
+        "QUEUED": 3315598690685934,
+        "SNAPSHOTTING": 3315598690449433,
+        "SNAPSHOT_READY": 3315598690566414,
+        "admitted": 3315598690207272,
+        "data_completed": 3315603401008271,
+        "input_buffer_released": 3315600131239891,
+        "source_released": 3315598790384411
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 8,
+          "monotonic_ns": 3315598690449433,
+          "request_id": "bytecheckpoint_host-000008"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 8,
+          "monotonic_ns": 3315598690566414,
+          "request_id": "bytecheckpoint_host-000008"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 14880
+          },
+          "event": "QUEUED",
+          "generation": 8,
+          "monotonic_ns": 3315598690685934,
+          "request_id": "bytecheckpoint_host-000008"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 8,
+          "monotonic_ns": 3315598690789835,
+          "request_id": "bytecheckpoint_host-000008"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 8,
+          "monotonic_ns": 3315598869246184,
+          "request_id": "bytecheckpoint_host-000008"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315603362252527
+          },
+          "event": "FLUSHING",
+          "generation": 8,
+          "monotonic_ns": 3315603401242452,
+          "request_id": "bytecheckpoint_host-000008"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 8,
+          "monotonic_ns": 3315603401382782,
+          "request_id": "bytecheckpoint_host-000008"
+        },
+        {
+          "detail": {
+            "sha256": "8308921c751a3e3b54a16766ae18d07a3bde5e4af5aa8492d247a649117f2da3",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 8,
+          "monotonic_ns": 3315603414460044,
+          "request_id": "bytecheckpoint_host-000008"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 9,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315608306813164,
+      "request_id": "bytecheckpoint_host-000009",
+      "sha256": "6977eb346d5417203b92e3d58ad18fc654bd5cac1d773ef11a8e7290fc31c747",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 32,
+      "submit_ns": 3315603603648496,
+      "timestamps_ns": {
+        "CREATED": 3315603605192592,
+        "DMA_COPYING": 3315603605819445,
+        "FLUSHING": 3315608292973979,
+        "METADATA_COMMITTING": 3315608293108110,
+        "NVME_WRITING": 3315603784031113,
+        "PERSISTED": 3315608306813164,
+        "QUEUED": 3315603605713675,
+        "SNAPSHOTTING": 3315603605469184,
+        "SNAPSHOT_READY": 3315603605586014,
+        "admitted": 3315603605217663,
+        "data_completed": 3315608292738728,
+        "input_buffer_released": 3315605045468838,
+        "source_released": 3315603705994573
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 9,
+          "monotonic_ns": 3315603605469184,
+          "request_id": "bytecheckpoint_host-000009"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 9,
+          "monotonic_ns": 3315603605586014,
+          "request_id": "bytecheckpoint_host-000009"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 17580
+          },
+          "event": "QUEUED",
+          "generation": 9,
+          "monotonic_ns": 3315603605713675,
+          "request_id": "bytecheckpoint_host-000009"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 9,
+          "monotonic_ns": 3315603605819445,
+          "request_id": "bytecheckpoint_host-000009"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 9,
+          "monotonic_ns": 3315603784031113,
+          "request_id": "bytecheckpoint_host-000009"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315608253437202
+          },
+          "event": "FLUSHING",
+          "generation": 9,
+          "monotonic_ns": 3315608292973979,
+          "request_id": "bytecheckpoint_host-000009"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 9,
+          "monotonic_ns": 3315608293108110,
+          "request_id": "bytecheckpoint_host-000009"
+        },
+        {
+          "detail": {
+            "sha256": "6977eb346d5417203b92e3d58ad18fc654bd5cac1d773ef11a8e7290fc31c747",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 9,
+          "monotonic_ns": 3315608306813164,
+          "request_id": "bytecheckpoint_host-000009"
+        }
+      ]
+    },
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 10,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3315613348530228,
+      "request_id": "bytecheckpoint_host-000010",
+      "sha256": "130618d4fa840f95ed2ef99e079d6737a97cde03dd91a621f684edef4b0e7eb3",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 35,
+      "submit_ns": 3315608494711321,
+      "timestamps_ns": {
+        "CREATED": 3315608496231597,
+        "DMA_COPYING": 3315608496836160,
+        "FLUSHING": 3315613334611203,
+        "METADATA_COMMITTING": 3315613334754573,
+        "NVME_WRITING": 3315608685026758,
+        "PERSISTED": 3315613348530228,
+        "QUEUED": 3315608496732409,
+        "SNAPSHOTTING": 3315608496491068,
+        "SNAPSHOT_READY": 3315608496603879,
+        "admitted": 3315608496253247,
+        "data_completed": 3315613334327302,
+        "input_buffer_released": 3315609947446697,
+        "source_released": 3315608597284679
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 10,
+          "monotonic_ns": 3315608496491068,
+          "request_id": "bytecheckpoint_host-000010"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 10,
+          "monotonic_ns": 3315608496603879,
+          "request_id": "bytecheckpoint_host-000010"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 17220
+          },
+          "event": "QUEUED",
+          "generation": 10,
+          "monotonic_ns": 3315608496732409,
+          "request_id": "bytecheckpoint_host-000010"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 10,
+          "monotonic_ns": 3315608496836160,
+          "request_id": "bytecheckpoint_host-000010"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 10,
+          "monotonic_ns": 3315608685026758,
+          "request_id": "bytecheckpoint_host-000010"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 3315613295612178
+          },
+          "event": "FLUSHING",
+          "generation": 10,
+          "monotonic_ns": 3315613334611203,
+          "request_id": "bytecheckpoint_host-000010"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 10,
+          "monotonic_ns": 3315613334754573,
+          "request_id": "bytecheckpoint_host-000010"
+        },
+        {
+          "detail": {
+            "sha256": "130618d4fa840f95ed2ef99e079d6737a97cde03dd91a621f684edef4b0e7eb3",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 10,
+          "monotonic_ns": 3315613348530228,
+          "request_id": "bytecheckpoint_host-000010"
+        }
+      ]
+    }
+  ],
+  "deterministic": "ON",
+  "formal_steps": 30,
+  "fresh_restore_required": true,
+  "initial_state_sha256": "890ffdbbe0dfe1f55a38ea2b7c44e766782b30dc6d20c547b94c4873afd72fa3",
+  "kind": "host-adapted-semantic-port",
+  "mechanisms_preserved": [
+    "model and optimizer DDPSavePlanner/DDPLoadPlanner workflows",
+    "official extra_state workflow for persisted controls",
+    "shared three-component CKPTCounter and async LocalStorageWriter queues"
+  ],
+  "model": "gpt2",
+  "model_revision": "sha256:132237ff20be59328e0ff606a4010357a659bb9b75ad9d235f15499c5ef150f5",
+  "oracle_seconds": 0.151064611,
+  "platform_substitutions": [
+    "PyTorch model extraction -> common ACL FULL capture and shared memory",
+    "CUDA pinned D2H -> ACL pinned D2H"
+  ],
+  "port_class": "host-adapted-semantic-port",
+  "resolved_model_config": {
+    "_name_or_path": "",
+    "architectures": null,
+    "attention_dropout_rate": 0.0,
+    "batch_size": 1,
+    "block_size": 16,
+    "bos_token_id": 50256,
+    "checkpoint_name_or_path": "",
+    "compute_dtype": "float16",
+    "do_sample": true,
+    "embedding_dropout_prob": 0.0,
+    "eos_token_id": 50256,
+    "expand_ratio": 4,
+    "hidden_act": "gelu",
+    "hidden_dropout_rate": 0.0,
+    "hidden_size": 768,
+    "is_dynamic": false,
+    "is_encoder_decoder": null,
+    "is_sample_acceleration": null,
+    "layernorm_compute_type": "float32",
+    "max_decode_length": 1024,
+    "max_position_embeddings": 128,
+    "mindformers_version": "1.3.2",
+    "model_type": "gpt2",
+    "moe_config": {
+      "aux_loss_factor": 0.05,
+      "aux_loss_factors": [],
+      "aux_loss_types": [],
+      "capacity_factor": 1.1,
+      "cold_token_percent": 1.0,
+      "comp_comm_parallel": false,
+      "comp_comm_parallel_degree": 2,
+      "cur_layer": 0,
+      "enable_cold_hot_expert": false,
+      "enable_sdrop": false,
+      "expert_group_size": null,
+      "expert_num": 1,
+      "first_k_dense_replace": true,
+      "group_wise_a2a": false,
+      "hot_expert_num": 0,
+      "max_router_load": 131072,
+      "moe_intermediate_size": 1407,
+      "moe_module_name": "",
+      "n_group": null,
+      "norm_topk_prob": true,
+      "num_experts_chosen": 1,
+      "routed_scaling_factor": 1.0,
+      "router_dense_type": "float32",
+      "routing_policy": "TopkRouterV1",
+      "save_token_distribution": false,
+      "shared_expert_num": 0,
+      "topk_group": null,
+      "topk_method": "greedy",
+      "update_step": 10000,
+      "use_fused_ops_topkrouter": false,
+      "use_shared_expert_gating": false,
+      "z_loss_factor": 0.0
+    },
+    "num_blocks": 512,
+    "num_heads": 12,
+    "num_labels": 2,
+    "num_layers": 12,
+    "offset": 0,
+    "pad_token_id": 50256,
+    "parallel_config": {
+      "context_parallel": 1,
+      "context_parallel_algo": "colossalai_cp",
+      "data_parallel": 1,
+      "expert_parallel": 1,
+      "gradient_aggregation_group": 4,
+      "micro_batch_num": 1,
+      "model_parallel": 1,
+      "optimizer_shard": null,
+      "pipeline_stage": 1,
+      "recompute": {
+        "mp_comm_recompute": true,
+        "parallel_optimizer_comm_recompute": false,
+        "recompute": false,
+        "recompute_slice_activation": false,
+        "select_recompute": false
+      },
+      "ulysses_degree_in_cp": 1,
+      "use_seq_parallel": false,
+      "vocab_emb_dp": true
+    },
+    "param_init_type": "float32",
+    "post_layernorm_residual": false,
+    "repetition_penalty": 1,
+    "seq_length": 128,
+    "softmax_compute_type": "float32",
+    "tokenizer_class": null,
+    "top_k": 5,
+    "top_p": 1,
+    "unk_token_id": 50256,
+    "use_flash_attention": false,
+    "use_past": false,
+    "use_prompt_flash_attention": false,
+    "vocab_size": 50257
+  },
+  "seed": 42,
+  "source_oracle": [
+    {
+      "loss": 10.889991760253906,
+      "step": 36,
+      "step_begin_ns": 3315614735265511,
+      "step_end_ns": 3315614797561609
+    },
+    {
+      "loss": 10.859424591064453,
+      "step": 37,
+      "step_begin_ns": 3315614797652269,
+      "step_end_ns": 3315614842544298
+    },
+    {
+      "loss": 10.876554489135742,
+      "step": 38,
+      "step_begin_ns": 3315614842618108,
+      "step_end_ns": 3315614886064721
+    }
+  ],
+  "source_pid": 887099,
+  "state_bytes": 1485030871,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.880877494812012,
+      "step": 6,
+      "step_begin_ns": 3315562348528162,
+      "step_end_ns": 3315563058295354
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.892635345458984,
+      "step": 7,
+      "step_begin_ns": 3315563058321464,
+      "step_end_ns": 3315563104523508
+    },
+    {
+      "formal_step": 3,
+      "loss": 10.823893547058105,
+      "step": 8,
+      "step_begin_ns": 3315563104540928,
+      "step_end_ns": 3315563150242170
+    },
+    {
+      "formal_step": 4,
+      "loss": 10.870254516601562,
+      "step": 9,
+      "step_begin_ns": 3315563316468751,
+      "step_end_ns": 3315563543373793
+    },
+    {
+      "formal_step": 5,
+      "loss": 10.879045486450195,
+      "step": 10,
+      "step_begin_ns": 3315563543394683,
+      "step_end_ns": 3315563875312192
+    },
+    {
+      "formal_step": 6,
+      "loss": 10.883026123046875,
+      "step": 11,
+      "step_begin_ns": 3315563875330542,
+      "step_end_ns": 3315564058593031
+    },
+    {
+      "formal_step": 7,
+      "loss": 10.849129676818848,
+      "step": 12,
+      "step_begin_ns": 3315568472507989,
+      "step_end_ns": 3315568525919261
+    },
+    {
+      "formal_step": 8,
+      "loss": 10.856216430664062,
+      "step": 13,
+      "step_begin_ns": 3315568525942581,
+      "step_end_ns": 3315568572267496
+    },
+    {
+      "formal_step": 9,
+      "loss": 10.853157043457031,
+      "step": 14,
+      "step_begin_ns": 3315568572288756,
+      "step_end_ns": 3315568618459439
+    },
+    {
+      "formal_step": 10,
+      "loss": 10.870851516723633,
+      "step": 15,
+      "step_begin_ns": 3315573584103301,
+      "step_end_ns": 3315573647472953
+    },
+    {
+      "formal_step": 11,
+      "loss": 10.8603515625,
+      "step": 16,
+      "step_begin_ns": 3315573647495053,
+      "step_end_ns": 3315573693887417
+    },
+    {
+      "formal_step": 12,
+      "loss": 10.885912895202637,
+      "step": 17,
+      "step_begin_ns": 3315573693906567,
+      "step_end_ns": 3315573739788470
+    },
+    {
+      "formal_step": 13,
+      "loss": 10.897310256958008,
+      "step": 18,
+      "step_begin_ns": 3315578707629300,
+      "step_end_ns": 3315578767829979
+    },
+    {
+      "formal_step": 14,
+      "loss": 10.877726554870605,
+      "step": 19,
+      "step_begin_ns": 3315578767850719,
+      "step_end_ns": 3315578853718330
+    },
+    {
+      "formal_step": 15,
+      "loss": 10.865294456481934,
+      "step": 20,
+      "step_begin_ns": 3315578853750541,
+      "step_end_ns": 3315579226545333
+    },
+    {
+      "formal_step": 16,
+      "loss": 10.895469665527344,
+      "step": 21,
+      "step_begin_ns": 3315583798323468,
+      "step_end_ns": 3315583847353733
+    },
+    {
+      "formal_step": 17,
+      "loss": 10.925103187561035,
+      "step": 22,
+      "step_begin_ns": 3315583847372323,
+      "step_end_ns": 3315583937469571
+    },
+    {
+      "formal_step": 18,
+      "loss": 10.886711120605469,
+      "step": 23,
+      "step_begin_ns": 3315583937497832,
+      "step_end_ns": 3315584326227607
+    },
+    {
+      "formal_step": 19,
+      "loss": 10.87872314453125,
+      "step": 24,
+      "step_begin_ns": 3315588782200802,
+      "step_end_ns": 3315588837503572
+    },
+    {
+      "formal_step": 20,
+      "loss": 10.87788200378418,
+      "step": 25,
+      "step_begin_ns": 3315588837524532,
+      "step_end_ns": 3315588930540542
+    },
+    {
+      "formal_step": 21,
+      "loss": 10.85680103302002,
+      "step": 26,
+      "step_begin_ns": 3315588930567672,
+      "step_end_ns": 3315589310400722
+    },
+    {
+      "formal_step": 22,
+      "loss": 10.884387016296387,
+      "step": 27,
+      "step_begin_ns": 3315593803878266,
+      "step_end_ns": 3315593857554060
+    },
+    {
+      "formal_step": 23,
+      "loss": 10.901883125305176,
+      "step": 28,
+      "step_begin_ns": 3315593857573980,
+      "step_end_ns": 3315593932914509
+    },
+    {
+      "formal_step": 24,
+      "loss": 10.888477325439453,
+      "step": 29,
+      "step_begin_ns": 3315593932938859,
+      "step_end_ns": 3315594329361585
+    },
+    {
+      "formal_step": 25,
+      "loss": 10.864420890808105,
+      "step": 30,
+      "step_begin_ns": 3315598801217694,
+      "step_end_ns": 3315598848800943
+    },
+    {
+      "formal_step": 26,
+      "loss": 10.892410278320312,
+      "step": 31,
+      "step_begin_ns": 3315598848819863,
+      "step_end_ns": 3315598934395143
+    },
+    {
+      "formal_step": 27,
+      "loss": 10.896978378295898,
+      "step": 32,
+      "step_begin_ns": 3315598934422253,
+      "step_end_ns": 3315599321804423
+    },
+    {
+      "formal_step": 28,
+      "loss": 10.884866714477539,
+      "step": 33,
+      "step_begin_ns": 3315603716274284,
+      "step_end_ns": 3315603765018298
+    },
+    {
+      "formal_step": 29,
+      "loss": 10.907709121704102,
+      "step": 34,
+      "step_begin_ns": 3315603765036688,
+      "step_end_ns": 3315603849267533
+    },
+    {
+      "formal_step": 30,
+      "loss": 10.855350494384766,
+      "step": 35,
+      "step_begin_ns": 3315603849292993,
+      "step_end_ns": 3315604220566389
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 52.386553238,
+  "transport": "legacy_sync",
+  "upstream_core_invoked": true
+}
