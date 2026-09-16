@@ -155,12 +155,18 @@ def request_timing(request):
     }
 
 
-def build(args):
+def full_identity(args, ms):
+    return dict(workload=args.model, seq_len=args.seq_len, dropout=0.0, loss_scale=1.0,
+                optimizer='AdamWeightDecay', framework=ms.__version__, world_size=1, deterministic='ON')
+
+
+def build(args, initialized=False):
     import mindspore as ms
     from experiments.common import init_env, make_causal_lm_training
     from direct_checkpoint import ProbeTrainOneStepCell
     from training_cell import LiveForwardBackwardCell, LiveOptimizerCell
-    init_env(device_id=args.npu, seed=args.seed)
+    ms.set_context(deterministic="ON")
+    if not initialized: init_env(device_id=args.npu, seed=args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
     model, _dataset, optimizer = make_causal_lm_training(
@@ -222,7 +228,7 @@ def phase_source(args, run_dir):
             handle.wait(timeout=args.timeout)
             pending_record["foreground_wait_seconds"] = (
                 time.perf_counter() - wait_started)
-            if handle.state.value != "PERSISTED":
+            if handle.status != "PERSISTED":
                 raise RuntimeError(
                     f"checkpoint did not persist: {handle.as_dict()}")
             pending_record["request"] = handle.as_dict()
@@ -278,12 +284,16 @@ def phase_source(args, run_dir):
             }
             checkpoint_state = (None if args.mode == "live_async" else
                                 digest_state(model, optimizer))
+            from npu_nvme.framework.full_state import training_spec
+            from npu_nvme.storage.bindings import load_backend
+            spec = training_spec({'model': model, 'optimizer': optimizer}, controls,
+                full_identity(args, ms), framework=ms, acl=load_backend().acl_lib, npu=args.npu)
             started = time.perf_counter()
             try:
                 handle = ckpt.save_state(
                     {"model": model, "optimizer": optimizer}, controls,
                     step=step, meta_path=str(run_dir / f"meta_{step:06d}.pkl"),
-                    io_mode=args.mode, admission=args.admission,
+                    io_mode="frozen_async", expected_spec=spec, admission=args.admission,
                     timeout=args.timeout)
             except CheckpointBusyError as error:
                 admission_events.append({"step": step, "status": "BUSY",
@@ -292,7 +302,7 @@ def phase_source(args, run_dir):
                 previous = step
                 continue
             pending_record = {
-                "step": step, "started": started,
+                "step": step, "started": started, "expected_spec": spec,
                 "dispatch_seconds": time.perf_counter() - started,
                 "state": checkpoint_state,
                 "preceding_training_interval": {
@@ -301,6 +311,7 @@ def phase_source(args, run_dir):
                 },
             }
             pending.append((handle, pending_record))
+            if args.mode == "serial": finish_one()
             admission_events.append({"step": step, "status": "ACCEPTED",
                                      "request_id": handle.request_id,
                                      "generation": handle.generation})
@@ -348,24 +359,33 @@ def phase_restore(args, run_dir):
     baseline = json.loads((run_dir / "baseline.json").read_text())
     source = json.loads((run_dir / "source.json").read_text())
     target = int(args.restore_step or source["checkpoints"][-1]["step"])
-    ms, model, optimizer, cell = build(args)
+    import gc
+    bootstrap = build(args)
+    del bootstrap
+    gc.collect()
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=args.npu,
         pipeline_depth=args.pipeline_depth, requested_chunk_size=args.chunk_size,
         keep_last_n=args.keep_last_n, slot_size_gb=args.slot_size_gb,
         spdk_shm_id=args.shm_id)
     try:
-        controls = ckpt.load_state({"model": model, "optimizer": optimizer},
-                                   step=target, verify_checksums=True)
-        target_record = next(record for record in source["checkpoints"]
-                             if int(record["step"]) == target)
+        from npu_nvme.framework.full_state import MindSporeRestoreTarget
+        from npu_nvme.storage.bindings import load_backend
+        target_record = next(record for record in source['checkpoints'] if int(record['step']) == target)
+        def factory(spec):
+            framework, model, optimizer, cell = build(args, initialized=True)
+            return MindSporeRestoreTarget(framework=framework, acl=load_backend().acl_lib,
+                npu=args.npu, model=model, optimizer=optimizer, cell=cell, identity=full_identity(args, framework))
+        ready, receipt = ckpt.restore_full_state(factory, target_record['expected_spec'], target,
+                                                deadline=time.monotonic()+args.timeout)
+        model, optimizer, cell, controls = ready.model, ready.optimizer, ready.cell, ready.controls
         loaded_state = digest_state(model, optimizer)
         if loaded_state != target_record["state"]:
             raise AssertionError("fresh restore state digest mismatch")
         expected_step = int(np.asarray(controls["global_step"]).reshape(-1)[0])
         if expected_step != target:
             raise AssertionError(f"global_step={expected_step} target={target}")
-        restored = restore_training_controls(ms, optimizer, controls)
+        restored = controls
         if restored["data_cursor"] != {"epoch": 0, "sample": target}:
             raise AssertionError("data cursor mismatch")
         if args.mode == "live_async":
@@ -388,7 +408,7 @@ def phase_restore(args, run_dir):
         result = {"status": "pass", "model": args.model, "mode": args.mode,
                   "seed": args.seed, "pci": args.pci, "npu": args.npu,
                   "request_id": target_record["request"]["request_id"],
-                  "generation": target_record["request"]["metadata_generation"],
+                  "generation": target_record["request"]["generation"],
                   "checkpoint_step": target, "persisted": True,
                   "restore_verified": True, "loss_allclose": True,
                   "continuation_oracle": oracle,
@@ -585,12 +605,12 @@ def run_orchestrated(args, run_dir):
                 "run_id": run_dir.name, "status": "pass",
                 "step": record["step"],
                 "request_id": record["request"]["request_id"],
-                "generation": record["request"]["metadata_generation"],
+                "generation": record["request"]["generation"],
                 "persist_seconds": record["persist_seconds"],
                 "state_machine_seconds": record["state_machine_seconds"],
                 "foreground_wait_seconds": record.get(
                     "foreground_wait_seconds", 0.0),
-                "checksum": record["request"]["checksum"],
+                "checksum": record["request"]["snapshot_state_digest"],
                 "runtime_stats": record.get("runtime_stats", {}),
             }, sort_keys=True) + "\n")
     with (run_dir / "timeline.jsonl").open("w", encoding="utf-8") as timeline, \
@@ -601,7 +621,7 @@ def run_orchestrated(args, run_dir):
                 "rank": 0,
                 "request_id": record["request"]["request_id"],
                 "checkpoint_step": record["step"],
-                "generation": record["request"]["metadata_generation"],
+                "generation": record["request"]["generation"],
                 "api_enter_ns": record["request"].get("api_enter_ns"),
                 "api_return_ns": record["request"].get("api_return_ns"),
                 "freeze_wait_ns": record["request"].get("freeze_wait_ns", 0),
@@ -654,6 +674,10 @@ def summarize_performance(all_steps, checkpoint_steps, non_checkpoint_steps):
 
 
 def main():
+    if '--config' in sys.argv[1:]:
+        from npu_nvme.cli.training import main as unified_main
+        return unified_main(['benchmark'] + sys.argv[1:])
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=("orchestrate", "baseline", "source",
                                              "restore", "capability"),
@@ -672,9 +696,9 @@ def main():
     parser.add_argument("--seed", type=int, default=41)
     parser.add_argument("--npu", type=int, default=7)
     parser.add_argument("--pci", default="0000:83:00.0")
-    parser.add_argument("--chunk-size", type=int, default=4 * 1024 * 1024)
+    parser.add_argument("--chunk-size", type=int, default=1024 * 1024)
     parser.add_argument("--pipeline-depth", type=int, default=4)
-    parser.add_argument("--keep-last-n", type=int, default=3)
+    parser.add_argument("--keep-last-n", type=int, default=2)
     parser.add_argument("--slot-size-gb", type=int, default=10)
     parser.add_argument("--checkpoint-slots", type=int, default=1)
     parser.add_argument("--request-slots", type=int, default=None)
@@ -688,6 +712,13 @@ def main():
                         help="use a short, explicitly non-formal run")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if args.mode in ('live_async', 'async'):
+        print('D1 retires live/nonstrict FULL; use serial, queue or frozen_async',file=sys.stderr)
+        return 3
+    if args.keep_last_n != 2 or args.checkpoint_slots != 1 or args.request_slots not in (None, 1):
+        parser.error('D1 requires retention 2 and one pending FULL')
+    if args.chunk_size <= 0 or args.chunk_size > 1 << 20 or args.chunk_size % 4096:
+        parser.error('D1 chunk size must be aligned and at most 1 MiB')
     if args.request_slots is None:
         args.request_slots = args.checkpoint_slots
     if args.checkpoint_steps is None:

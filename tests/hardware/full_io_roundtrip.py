@@ -20,6 +20,8 @@ SIZES = (4096, 4096 + 137, 64 * 1024, 1024 * 1024,
          4 * 1024**2, 16 * 1024**2, 20 * 1024**2 + 731)
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def aligned(value):
     return (int(value) + ALIGN - 1) & ~(ALIGN - 1)
 
@@ -60,11 +62,11 @@ def write_read_host(ctx, payload, offset, chunk):
         size = min(chunk, len(payload) - inner)
         ptrs, offsets, sizes = arrays(ctypes.addressof(source) + inner,
                                       offset + inner, size)
-        require(lib.npu_nvme_write_batch_host(ctx, ptrs, offsets, sizes, 1) == 0,
+        require(transfer_wait(lib,0,1,ctx, ptrs, offsets, sizes, 1) == 0,
                 f"host write failed size={size}")
         read_ptrs, _, _ = arrays(ctypes.addressof(target) + inner,
                                  offset + inner, size)
-        require(lib.npu_nvme_read_batch_host(ctx, read_ptrs, offsets, sizes, 1) == 0,
+        require(transfer_wait(lib,1,1,ctx, read_ptrs, offsets, sizes, 1) == 0,
                 f"host read failed size={size}")
     require(target.raw == payload, f"host mismatch size={len(payload)}")
 
@@ -88,7 +90,7 @@ def verify_host_after_restart(ctx, records):
             part = min(args.chunk, size - inner)
             ptrs, offsets, sizes = arrays(ctypes.addressof(target) + inner,
                                           offset + inner, part)
-            require(lib.npu_nvme_read_batch_host(ctx, ptrs, offsets, sizes, 1) == 0,
+            require(transfer_wait(lib,1,1,ctx, ptrs, offsets, sizes, 1) == 0,
                     f"restart host read failed size={part}")
         require(digest(target.raw) == expected,
                 f"restart host checksum mismatch size={size}")
@@ -119,11 +121,11 @@ def hbm_matrix(ctx, start_offset):
                 part = min(args.chunk, size - inner)
                 ptrs, offsets, sizes = arrays(source_dev.value + inner,
                                               offset + inner, part)
-                require(lib.npu_nvme_write_batch(ctx, ptrs, offsets, sizes, 1) == 0,
+                require(transfer_wait(lib,0,0,ctx, ptrs, offsets, sizes, 1) == 0,
                         f"HBM write failed size={part}")
                 read_ptrs, _, _ = arrays(target_dev.value + inner,
                                          offset + inner, part)
-                require(lib.npu_nvme_read_batch(ctx, read_ptrs, offsets, sizes, 1) == 0,
+                require(transfer_wait(lib,1,0,ctx, read_ptrs, offsets, sizes, 1) == 0,
                         f"HBM read failed size={part}")
             require(acl_lib.aclrtMemcpy(result_host, size, target_dev, size, 2) == 0,
                     f"D2H failed size={size}")
@@ -141,15 +143,15 @@ def negative_matrix(ctx, capacity):
     null_ptrs = (ctypes.c_void_p * 1)(ctypes.addressof(dummy))
     offsets = (ctypes.c_uint64 * 1)(BASE)
     zero = (ctypes.c_size_t * 1)(0)
-    require(lib.npu_nvme_write_batch_host(ctx, null_ptrs, offsets, zero, 1) != 0,
+    require(transfer_wait(lib,0,1,ctx, null_ptrs, offsets, zero, 1) != 0,
             "empty object was accepted")
     bad_offsets = (ctypes.c_uint64 * 1)(BASE + 1)
     one = (ctypes.c_size_t * 1)(ALIGN)
-    require(lib.npu_nvme_write_batch_host(ctx, null_ptrs, bad_offsets, one, 1) != 0,
+    require(transfer_wait(lib,0,1,ctx, null_ptrs, bad_offsets, one, 1) != 0,
             "unaligned offset was accepted")
     end = (ctypes.c_uint64 * 1)(capacity - ALIGN)
     too_large = (ctypes.c_size_t * 1)(2 * ALIGN)
-    require(lib.npu_nvme_write_batch_host(ctx, null_ptrs, end, too_large, 1) != 0,
+    require(transfer_wait(lib,0,1,ctx, null_ptrs, end, too_large, 1) != 0,
             "capacity overflow was accepted")
 
 

@@ -1,0 +1,4465 @@
+{
+  "adapter": "ours",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "adapter": "ours",
+      "api_enter_ns": 3301437757723117,
+      "data_completed": true,
+      "events": [
+        {
+          "monotonic_ns": 3301438349708846,
+          "state": "CREATED"
+        },
+        {
+          "monotonic_ns": 3301445826324453,
+          "state": "PERSISTED"
+        }
+      ],
+      "expected_spec": {
+        "applicability": {
+          "data_cursor": "required",
+          "loss_scale": "required",
+          "model": "required",
+          "optimizer": "required",
+          "rng": "required",
+          "scheduler": "not_applicable:fixed learning rate"
+        },
+        "control_names": [
+          "data_cursor",
+          "global_step",
+          "loss_scale",
+          "mindspore_rng",
+          "mindspore_seed",
+          "numpy_rng",
+          "python_rng"
+        ],
+        "identity": {
+          "deterministic": "ON",
+          "dropout": 0.0,
+          "framework": "2.5.0",
+          "loss_scale": 1.0,
+          "optimizer": "AdamWeightDecay",
+          "seq_len": 129,
+          "workload": "gpt2",
+          "world_size": 1
+        },
+        "parameters": {
+          "model/backbone.blocks.0.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.0.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.0.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.0.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.0.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.0.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.0.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.0.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.1.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.1.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.1.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.1.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.1.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.1.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.1.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.1.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.10.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.10.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.10.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.10.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.10.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.10.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.10.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.10.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.11.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.11.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.11.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.11.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.11.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.11.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.11.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.11.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.2.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.2.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.2.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.2.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.2.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.2.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.2.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.2.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.3.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.3.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.3.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.3.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.3.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.3.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.3.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.3.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.4.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.4.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.4.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.4.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.4.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.4.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.4.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.4.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.5.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.5.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.5.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.5.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.5.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.5.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.5.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.5.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.6.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.6.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.6.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.6.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.6.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.6.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.6.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.6.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.7.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.7.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.7.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.7.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.7.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.7.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.7.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.7.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.8.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.8.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.8.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.8.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.8.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.8.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.8.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.8.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.9.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.9.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.9.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.9.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "model/backbone.blocks.9.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "model/backbone.blocks.9.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "model/backbone.blocks.9.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.blocks.9.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "model/backbone.embedding.position_embedding.embedding_table": {
+            "dtype": "float32",
+            "shape": [
+              128,
+              768
+            ],
+            "size": 393216
+          },
+          "model/backbone.embedding.word_embedding.embedding_table": {
+            "dtype": "float32",
+            "shape": [
+              50257,
+              768
+            ],
+            "size": 154389504
+          },
+          "model/backbone.layernorm.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "model/backbone.layernorm.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.0.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.0.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.0.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.0.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.0.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.0.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.0.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.1.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.1.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.1.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.1.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.1.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.1.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.1.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.1.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.10.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.10.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.10.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.10.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.10.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.10.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.10.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.10.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.11.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.11.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.11.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.11.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.11.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.11.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.11.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.11.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.2.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.2.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.2.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.2.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.2.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.2.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.2.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.2.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.3.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.3.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.3.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.3.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.3.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.3.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.3.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.3.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.4.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.4.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.4.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.4.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.4.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.4.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.4.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.4.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.5.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.5.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.5.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.5.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.5.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.5.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.5.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.5.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.6.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.6.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.6.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.6.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.6.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.6.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.6.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.6.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.7.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.7.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.7.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.7.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.7.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.7.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.7.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.7.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.8.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.8.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.8.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.8.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.8.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.8.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.8.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.8.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.9.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.9.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.9.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.9.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_m.backbone.blocks.9.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_m.backbone.blocks.9.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.blocks.9.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.blocks.9.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_m.backbone.embedding.position_embedding.embedding_table": {
+            "dtype": "float32",
+            "shape": [
+              128,
+              768
+            ],
+            "size": 393216
+          },
+          "optimizer/adam_m.backbone.embedding.word_embedding.embedding_table": {
+            "dtype": "float32",
+            "shape": [
+              50257,
+              768
+            ],
+            "size": 154389504
+          },
+          "optimizer/adam_m.backbone.layernorm.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_m.backbone.layernorm.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.0.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.0.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.0.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.0.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.0.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.0.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.0.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.1.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.1.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.1.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.1.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.1.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.1.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.1.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.1.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.10.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.10.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.10.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.10.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.10.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.10.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.10.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.10.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.11.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.11.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.11.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.11.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.11.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.11.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.11.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.11.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.2.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.2.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.2.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.2.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.2.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.2.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.2.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.2.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.3.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.3.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.3.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.3.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.3.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.3.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.3.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.3.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.4.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.4.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.4.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.4.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.4.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.4.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.4.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.4.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.5.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.5.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.5.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.5.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.5.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.5.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.5.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.5.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.6.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.6.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.6.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.6.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.6.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.6.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.6.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.6.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.7.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.7.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.7.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.7.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.7.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.7.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.7.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.7.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.8.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.8.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.8.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.8.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.8.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.8.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.8.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.8.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.9.attention.dense1.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.attention.dense1.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.9.attention.dense2.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.attention.dense2.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.9.attention.dense3.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.attention.dense3.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.9.attention.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.attention.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              768
+            ],
+            "size": 2359296
+          },
+          "optimizer/adam_v.backbone.blocks.9.layernorm1.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.layernorm1.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.layernorm2.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.layernorm2.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.output.mapping.bias": {
+            "dtype": "float32",
+            "shape": [
+              3072
+            ],
+            "size": 12288
+          },
+          "optimizer/adam_v.backbone.blocks.9.output.mapping.weight": {
+            "dtype": "float32",
+            "shape": [
+              768,
+              3072
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.blocks.9.output.projection.bias": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.blocks.9.output.projection.weight": {
+            "dtype": "float32",
+            "shape": [
+              3072,
+              768
+            ],
+            "size": 9437184
+          },
+          "optimizer/adam_v.backbone.embedding.position_embedding.embedding_table": {
+            "dtype": "float32",
+            "shape": [
+              128,
+              768
+            ],
+            "size": 393216
+          },
+          "optimizer/adam_v.backbone.embedding.word_embedding.embedding_table": {
+            "dtype": "float32",
+            "shape": [
+              50257,
+              768
+            ],
+            "size": 154389504
+          },
+          "optimizer/adam_v.backbone.layernorm.beta": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/adam_v.backbone.layernorm.gamma": {
+            "dtype": "float32",
+            "shape": [
+              768
+            ],
+            "size": 3072
+          },
+          "optimizer/global_step": {
+            "dtype": "int32",
+            "shape": [
+              1
+            ],
+            "size": 4
+          },
+          "optimizer/learning_rate": {
+            "dtype": "float32",
+            "shape": [],
+            "size": 4
+          }
+        }
+      },
+      "failed": false,
+      "generation": 7,
+      "input_buffer_released": true,
+      "metadata_generation": 14,
+      "persisted": true,
+      "persisted_ns": 3301445826324453,
+      "request_id": "bc74392d-2a8b-447d-a701-3b70cfbcfa33:1",
+      "sha256": "db34b9d5d42b2b9b73cfc8b947780264fe7c657afc0046d071859354480947a3",
+      "snapshot_state_digest": "4cff97d9bfe471f086d527462c845873677b311db43d5eeedf032684699f96e1",
+      "source_released": true,
+      "state": "PERSISTED",
+      "status": "PERSISTED",
+      "step": 3,
+      "submit_ns": 3301435262784041
+    }
+  ],
+  "formal_steps": 2,
+  "fresh_restore_required": true,
+  "kind": "native",
+  "mechanisms_preserved": [],
+  "model": "gpt2",
+  "platform_substitutions": [],
+  "port_class": "native",
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.868170738220215,
+      "step": 4,
+      "step_begin_ns": 3301445999913394,
+      "step_end_ns": 3301446043500323
+    },
+    {
+      "loss": 10.8652925491333,
+      "step": 5,
+      "step_begin_ns": 3301446043553783,
+      "step_end_ns": 3301446085047534
+    },
+    {
+      "loss": 10.868734359741211,
+      "step": 6,
+      "step_begin_ns": 3301446085098024,
+      "step_end_ns": 3301446125830581
+    }
+  ],
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.873197555541992,
+      "step": 2,
+      "step_begin_ns": 3301435113077992,
+      "step_end_ns": 3301435219300423
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.816542625427246,
+      "step": 3,
+      "step_begin_ns": 3301435219325103,
+      "step_end_ns": 3301435262775281
+    }
+  ],
+  "storage_backend": "raw_spdk",
+  "total_wall_seconds": 11.012811539,
+  "upstream_core_invoked": null
+}

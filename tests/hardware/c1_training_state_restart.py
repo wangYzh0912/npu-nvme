@@ -25,7 +25,8 @@ from pathlib import Path
 import numpy as np
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(os.environ.get("NPU_NVME_TEST_CHECKPOINT_ROOT",
+                                Path(__file__).resolve().parents[2])).resolve()
 sys.path[:0] = [str(REPO_ROOT), str(REPO_ROOT / "python")]
 
 from training_state import (capture_training_controls,
@@ -39,6 +40,8 @@ def write_json(path, value):
 
 def build_training(args, initialized=False):
     import mindspore as ms
+    if args.deterministic is not None:
+        ms.set_context(deterministic=args.deterministic)
     from experiments.common import init_env, make_causal_lm_training
     from direct_checkpoint import ProbeTrainOneStepCell
 
@@ -222,6 +225,12 @@ def save_phase(args):
     losses, times = train_range(ms, cell, 1, args.save_step, args.seq_len)
     before = state_digest(model, optimizer)
     controls = control_state(ms, optimizer, args.save_step, args)
+    import direct_checkpoint
+    write_json(Path(args.run_dir) / (args.phase + "_implementation.json"), {
+        "root": str(REPO_ROOT), "module": direct_checkpoint.__file__,
+        "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip(),
+        "library_sha256": hashlib.sha256((REPO_ROOT / "build_out/lib/libnpu_nvme.so").read_bytes()).hexdigest(),
+    })
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=args.npu,
         pipeline_depth=args.pipeline_depth,
@@ -274,6 +283,12 @@ def restore_phase(args):
     saved = json.loads(
         (Path(args.run_dir) / "save.json").read_text(encoding="utf-8"))
     ms, model, optimizer, cell = build_training(args)
+    import direct_checkpoint
+    write_json(Path(args.run_dir) / (args.phase + "_implementation.json"), {
+        "root": str(REPO_ROOT), "module": direct_checkpoint.__file__,
+        "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip(),
+        "library_sha256": hashlib.sha256((REPO_ROOT / "build_out/lib/libnpu_nvme.so").read_bytes()).hexdigest(),
+    })
     ckpt = DirectCheckpoint(
         nvme_addr=args.pci, npu_device_id=args.npu,
         pipeline_depth=args.pipeline_depth,
@@ -310,6 +325,10 @@ def restore_phase(args):
         final_comparison = compare_state_oracle(
             Path(args.run_dir) / "baseline_state", model, optimizer,
             args.state_rtol, args.state_atol)
+        write_json(Path(args.run_dir) / 'continuation_comparison.json', {
+            'deterministic': args.deterministic, 'initial_state_byte_exact': True,
+            'expected_losses': expected_losses.tolist(), 'actual_losses': actual_losses.tolist(),
+            'final_state': final_comparison})
         if not final_comparison["allclose"]:
             raise AssertionError(
                 f"final training state exceeds tolerance: "
@@ -368,6 +387,7 @@ def main():
     parser.add_argument("--model", default="gpt2")
     parser.add_argument("--seq-len", type=int, default=129)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument('--deterministic', choices=['ON', 'OFF'], default=None)
     parser.add_argument("--save-step", type=int, default=2)
     parser.add_argument("--continue-steps", type=int, default=2)
     parser.add_argument("--loss-scale", type=float, default=1.0)

@@ -1,0 +1,101 @@
+{
+  "adapter": "mindspore_native_save",
+  "applied_state_sha256": null,
+  "byte_exact": null,
+  "checkpoint_step": 35,
+  "controls": {
+    "data_cursor": "{'epoch': 0, 'next_step': 36, 'sample': 35}",
+    "global_step": "[35]",
+    "loss_scale": "1.0"
+  },
+  "controls_verified": true,
+  "expected_state_sha256": "3fb03546053f754024115f042d989bcdfcaa2aae3540c3022b01cccb3cc34eab",
+  "generation": 10,
+  "loss_deviation": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "mandatory_integrity": true,
+  "mode": "timing",
+  "persisted_state_sha256": null,
+  "repeat_index": null,
+  "restore_pid": 967946,
+  "restored_losses": [
+    10.873710632324219,
+    10.87198257446289,
+    10.856389045715332
+  ],
+  "source_oracle_losses": [
+    10.873710632324219,
+    10.87198257446289,
+    10.856389045715332
+  ],
+  "source_pid": 961336,
+  "status": "pass",
+  "timing": {
+    "events": [
+      {
+        "event": "process_start",
+        "mode": "timing",
+        "monotonic_ns": 3317089051121601,
+        "pid": 967946,
+        "repeat_index": null
+      },
+      {
+        "event": "restore_begin",
+        "monotonic_ns": 3317089051896314,
+        "selected_generation": 10,
+        "selected_step": 35
+      },
+      {
+        "event": "model_constructed",
+        "monotonic_ns": 3317119089914930
+      },
+      {
+        "event": "framework_ready",
+        "monotonic_ns": 3317119089937820
+      },
+      {
+        "event": "metadata_ready",
+        "monotonic_ns": 3317119090215361
+      },
+      {
+        "combined": true,
+        "event": "read_deserialize_done",
+        "monotonic_ns": 3317123797050041
+      },
+      {
+        "event": "integrity_and_apply_done",
+        "mandatory_checksums": true,
+        "monotonic_ns": 3317126807723380
+      },
+      {
+        "event": "controls_verified",
+        "monotonic_ns": 3317126811496825
+      },
+      {
+        "event": "state_ready",
+        "monotonic_ns": 3317126811499115
+      },
+      {
+        "event": "first_step_begin",
+        "monotonic_ns": 3317126811506085,
+        "step": 36
+      },
+      {
+        "event": "first_step_end",
+        "includes_graph_compile": true,
+        "loss": 10.873710632324219,
+        "monotonic_ns": 3317126931620788,
+        "step": 36
+      }
+    ],
+    "first_step_begin_ns": 3317126811506085,
+    "first_step_end_ns": 3317126931620788,
+    "process_start_ns": 3317089051116501,
+    "restore_begin_ns": 3317089051896314,
+    "state_ready_ns": 3317126811499115
+  },
+  "verification_performed": false
+}
