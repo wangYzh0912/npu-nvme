@@ -27,10 +27,10 @@
     "p2-copy-1.0-4194304": true,
     "p2-copy-2.0-262144": true,
     "p2-copy-2.0-4194304": true,
-    "p5-ablation-1": false,
-    "p5-ablation-2": false,
-    "p5-ablation-3": false,
-    "p5-ablation-4": false,
+    "p5-ablation-1": true,
+    "p5-ablation-2": true,
+    "p5-ablation-3": true,
+    "p5-ablation-4": true,
     "p5-ablation-5": false,
     "p5-ablation-6": false,
     "main-profile": true,
@@ -675,6 +675,200 @@
         "selection_ns": 0.751278,
         "wait_previous_ns": 0.0
       }
+    },
+    {
+      "run": "main-p5-local-suite/suite/main-b0-suite-ablation-1",
+      "name": "ablation-1",
+      "kind": "ablation",
+      "spec": {
+        "granularity": 4194304,
+        "kind": "ablation",
+        "name": "ablation-1",
+        "output_bytes": 819077120,
+        "stage": 1,
+        "target_elements": 2047683840
+      },
+      "training_seconds": 17.900804963,
+      "baseline_seconds": 18.191480163999998,
+      "baseline_range_seconds": [
+        16.440343474,
+        19.942616854
+      ],
+      "slowdown": -0.015978644858994473,
+      "slowdown_baseline_sensitivity": [
+        -0.10238435135910784,
+        0.08883400102374295
+      ],
+      "auxiliary_critical_median_ms": 0.0740055,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42203752448,
+        42203752448,
+        42203753472,
+        42203753472
+      ],
+      "stage_median_ms": {
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p5-local-suite/suite/main-b0-suite-ablation-2",
+      "name": "ablation-2",
+      "kind": "ablation",
+      "spec": {
+        "granularity": 4194304,
+        "kind": "ablation",
+        "name": "ablation-2",
+        "output_bytes": 819077120,
+        "stage": 2,
+        "target_elements": 2047683840
+      },
+      "training_seconds": 36.850572881,
+      "baseline_seconds": 18.191480163999998,
+      "baseline_range_seconds": [
+        16.440343474,
+        19.942616854
+      ],
+      "slowdown": 1.0257050305299171,
+      "slowdown_baseline_sensitivity": [
+        0.8478303600166031,
+        1.2414722015557813
+      ],
+      "auxiliary_critical_median_ms": 907.7693335,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42203972608,
+        42203972608,
+        42203973632,
+        42203973632
+      ],
+      "stage_median_ms": {
+        "score_ns": 907.477612,
+        "selection_ns": 0.203701,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p5-local-suite/suite/main-b0-suite-ablation-3",
+      "name": "ablation-3",
+      "kind": "ablation",
+      "spec": {
+        "granularity": 4194304,
+        "kind": "ablation",
+        "name": "ablation-3",
+        "output_bytes": 819077120,
+        "stage": 3,
+        "target_elements": 2047683840
+      },
+      "training_seconds": 44.784399181,
+      "baseline_seconds": 18.191480163999998,
+      "baseline_range_seconds": [
+        16.440343474,
+        19.942616854
+      ],
+      "slowdown": 1.461833714313474,
+      "slowdown_baseline_sensitivity": [
+        1.245663119783467,
+        1.7240549597899477
+      ],
+      "auxiliary_critical_median_ms": 1190.529982,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204192768,
+        42204192768,
+        42204193792,
+        42204193792
+      ],
+      "stage_median_ms": {
+        "score_ns": 1189.833019,
+        "selection_ns": 0.4145215,
+        "wait_previous_ns": 0.0
+      }
+    },
+    {
+      "run": "main-p5-local-suite/suite/main-b0-suite-ablation-4",
+      "name": "ablation-4",
+      "kind": "ablation",
+      "spec": {
+        "granularity": 4194304,
+        "kind": "ablation",
+        "name": "ablation-4",
+        "output_bytes": 819077120,
+        "stage": 4,
+        "target_elements": 2047683840
+      },
+      "training_seconds": 39.587020661,
+      "baseline_seconds": 18.191480163999998,
+      "baseline_range_seconds": [
+        16.440343474,
+        19.942616854
+      ],
+      "slowdown": 1.1761297213923623,
+      "slowdown_baseline_sensitivity": [
+        0.985046443544334,
+        1.4079193189367305
+      ],
+      "auxiliary_critical_median_ms": 1034.943899,
+      "synchronized": true,
+      "suite": true,
+      "memory_peak_bytes_by_rank": [
+        42204412928,
+        42204412928,
+        42204413952,
+        42204413952
+      ],
+      "stage_median_ms": {
+        "score_ns": 1031.5834545,
+        "selection_ns": 0.421197,
+        "pack_ns": 1.7929875,
+        "d2h_ns": 0.0,
+        "wait_previous_ns": 0.0
+      }
+    }
+  ],
+  "ablation_marginals": [
+    {
+      "stage": 1,
+      "repeats": 1,
+      "calibrated_extra_seconds": -0.2906752009999991,
+      "incremental_seconds": -0.2906752009999991,
+      "observed_extra_range_seconds": [
+        -0.2906752009999991,
+        -0.2906752009999991
+      ]
+    },
+    {
+      "stage": 2,
+      "repeats": 1,
+      "calibrated_extra_seconds": 18.659092717,
+      "incremental_seconds": 18.949767918,
+      "observed_extra_range_seconds": [
+        18.659092717,
+        18.659092717
+      ]
+    },
+    {
+      "stage": 3,
+      "repeats": 1,
+      "calibrated_extra_seconds": 26.592919017,
+      "incremental_seconds": 7.9338263,
+      "observed_extra_range_seconds": [
+        26.592919017,
+        26.592919017
+      ]
+    },
+    {
+      "stage": 4,
+      "repeats": 1,
+      "calibrated_extra_seconds": 21.395540497,
+      "incremental_seconds": -5.197378520000001,
+      "observed_extra_range_seconds": [
+        21.395540497,
+        21.395540497
+      ]
     }
   ],
   "resource_conclusions": {
