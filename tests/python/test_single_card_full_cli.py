@@ -33,11 +33,16 @@ class SingleCardFullCliTests(unittest.TestCase):
         self.assertIn("sorted", result.stderr)
 
     def test_new_async_modes_are_valid_cli_values(self):
-        for mode in ("frozen_async", "live_async"):
+        for mode in ("frozen_async", "queue"):
             result = self.run_cli("--dry-run", "--mode", mode,
                                   "--checkpoint-steps", "2", "--total-steps", "2")
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(json.loads(result.stdout)["mode"], mode)
+
+    def test_live_async_is_rejected_before_import(self):
+        result = self.run_cli('--dry-run', '--mode', 'live_async')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('retires', result.stderr)
 
     def test_retained_restore_is_explicit_in_config(self):
         result = self.run_cli("--dry-run", "--restore-retained",

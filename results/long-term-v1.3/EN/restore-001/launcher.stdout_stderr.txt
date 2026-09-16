@@ -1,0 +1,26 @@
+QWEN_RUN_OUTPUT=/models/npu_nvme_exp/user7-stack/qwen3-v13-restore-001
+/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/bin/sh: line 1: ip: command not found
+Start worker process with rank id:0, log file:/models/npu_nvme_exp/user7-stack/qwen3-v13-restore-001/msrun-log/worker_0.log. Environment variable [RANK_ID=0] is exported.
+[WARNING] ME(244860:281473615794208,MainProcess):2026-09-11-21:10:41.516.000 [mindspore/parallel/cluster/process_entity/_api.py:109] The '--tail_worker_log' is:4, which doesn't contain this worker 0. So this worker 0's log will not be output to console. Reset '--tail_worker_log', if you want to output this worker's log to console.
+Start worker process with rank id:1, log file:/models/npu_nvme_exp/user7-stack/qwen3-v13-restore-001/msrun-log/worker_1.log. Environment variable [RANK_ID=1] is exported.
+[WARNING] ME(244860:281473615794208,MainProcess):2026-09-11-21:10:41.550.000 [mindspore/parallel/cluster/process_entity/_api.py:109] The '--tail_worker_log' is:4, which doesn't contain this worker 1. So this worker 1's log will not be output to console. Reset '--tail_worker_log', if you want to output this worker's log to console.
+Start worker process with rank id:2, log file:/models/npu_nvme_exp/user7-stack/qwen3-v13-restore-001/msrun-log/worker_2.log. Environment variable [RANK_ID=2] is exported.
+[WARNING] ME(244860:281473615794208,MainProcess):2026-09-11-21:10:41.577.000 [mindspore/parallel/cluster/process_entity/_api.py:109] The '--tail_worker_log' is:4, which doesn't contain this worker 2. So this worker 2's log will not be output to console. Reset '--tail_worker_log', if you want to output this worker's log to console.
+Start worker process with rank id:3, log file:/models/npu_nvme_exp/user7-stack/qwen3-v13-restore-001/msrun-log/worker_3.log. Environment variable [RANK_ID=3] is exported.
+[WARNING] ME(244860:281473615794208,MainProcess):2026-09-11-21:10:41.607.000 [mindspore/parallel/cluster/process_entity/_api.py:109] The '--tail_worker_log' is:4, which doesn't contain this worker 3. So this worker 3's log will not be output to console. Reset '--tail_worker_log', if you want to output this worker's log to console.
+[WARNING] ME(244860:281473615794208,MainProcess):2026-09-11-21:10:41.641.000 [mindspore/parallel/cluster/process_entity/_api.py:273] Distributed job is spawned. Waiting all processes to exit...
+{
+  "status": "failed",
+  "restart": "not_run",
+  "oracle_compare": "not_run",
+  "ranks": [],
+  "error": "ValueError(\"continuation loss mismatch: {'step': 1, 'loss': 0.44561004638671875, 'overflow': False} vs {'step': 9, 'loss': 0.44427743554115295, 'overflow': False}\")"
+}

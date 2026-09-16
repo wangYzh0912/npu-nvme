@@ -11,6 +11,8 @@ sys.path.insert(0, str(ROOT / "python"))
 from c_bindings import NPUNVMEContext, lib
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--pci", default="0000:83:00.0")
@@ -29,14 +31,14 @@ def main():
         ptrs = (ctypes.c_void_p * 1)(ctypes.addressof(source))
         offsets = (ctypes.c_uint64 * 1)(64 * 1024**3)
         sizes = (ctypes.c_size_t * 1)(4096)
-        if lib.npu_nvme_write_batch_host(ctx, ptrs, offsets, sizes, 1) == 0:
+        if transfer_wait(lib,0,1,ctx, ptrs, offsets, sizes, 1) == 0:
             raise AssertionError("injected NVMe failure was not observed")
         os.environ.pop("NPU_NVME_TEST_FAIL_WRITE_AT", None)
-        if lib.npu_nvme_write_batch_host(ctx, ptrs, offsets, sizes, 1) != 0:
+        if transfer_wait(lib,0,1,ctx, ptrs, offsets, sizes, 1) != 0:
             raise AssertionError("Reactor did not recover after injected failure")
         target = ctypes.create_string_buffer(4096)
         reads = (ctypes.c_void_p * 1)(ctypes.addressof(target))
-        if (lib.npu_nvme_read_batch_host(ctx, reads, offsets, sizes, 1) != 0
+        if (transfer_wait(lib,1,1,ctx, reads, offsets, sizes, 1) != 0
                 or target.raw != payload):
             raise AssertionError("post-failure roundtrip mismatch")
         print("fault injection PASS")

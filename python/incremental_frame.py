@@ -49,11 +49,69 @@ def _crc32(value: bytes) -> int:
 
 def _digest(value):
     if not value:
-        return bytes(32)
+        raise ValueError('manifest digest must not be empty')
     raw = bytes.fromhex(str(value))
     if len(raw) != 32:
         raise ValueError("manifest_digest must be a SHA-256 hex digest")
     return raw
+
+
+def _document(raw):
+    def pairs(items):
+        value={}
+        for key,item in items:
+            if key in value:raise ValueError('duplicate descriptor key')
+            value[key]=item
+        return value
+    document=json.loads(raw.decode('utf-8'),object_pairs_hook=pairs,
+                        parse_constant=lambda value:(_ for _ in ()).throw(ValueError('nonfinite descriptor')))
+    if type(document) is not dict or set(document)!={'blocks','controls'} or any(type(document[k]) is not list for k in document):
+        raise ValueError('invalid descriptor lists')
+    return document
+
+
+def _header_contract(flags,digest,padding):
+    if flags & ~(FRAME_FLAGS_REPLACEMENT|FRAME_FLAGS_CONTROLS) or not flags & FRAME_FLAGS_REPLACEMENT:
+        raise ValueError('unknown or missing required frame flags')
+    if not any(digest) or any(padding):
+        raise ValueError('empty digest or nonzero header padding')
+
+
+def _integer(record,key,minimum=0):
+    value=record[key]
+    if type(value) is not int or value<minimum:raise ValueError('invalid '+key)
+    return value
+
+
+def _validate_records(document,payload_bytes,flags):
+    occupied=[];blocks=set();controls=set()
+    for kind,records in (('block',document['blocks']),('control',document['controls'])):
+        for record in records:
+            if type(record) is not dict or record.get('kind')!=kind:
+                raise ValueError('invalid record kind')
+            if type(record.get('name')) is not str or not record['name']:
+                raise ValueError('invalid record name')
+            offset=_integer(record,'payload_offset');size=_integer(record,'payload_bytes',1)
+            crc=_integer(record,'crc32')
+            if crc>0xffffffff or offset>payload_bytes-size:raise ValueError('record bounds/CRC')
+            if kind=='block':
+                key=(_integer(record,'state_index'),_integer(record,'block_index'))
+                _integer(record,'element_offset');count=_integer(record,'element_count',1)
+                if key in blocks:raise ValueError('duplicate block identity')
+                blocks.add(key)
+                dtype=np.dtype(record['dtype'])
+                if dtype.hasobject or dtype.fields or dtype.kind not in 'biuf' or record.get('encoding')!='raw' or size!=count*dtype.itemsize:
+                    raise ValueError('block dtype/size/encoding')
+            else:
+                if record['name'] in controls or type(record.get('codec')) is not str or not record['codec']:
+                    raise ValueError('duplicate control or invalid codec')
+                controls.add(record['name'])
+            occupied.append((offset,offset+size))
+    occupied.sort()
+    for left,right in zip(occupied,occupied[1:]):
+        if left[1]>right[0]:raise ValueError('overlapping payload records')
+    if bool(controls)!=bool(flags & FRAME_FLAGS_CONTROLS):raise ValueError('control flag differs')
+    return occupied
 
 
 def _raw_value(value, dtype):
@@ -128,6 +186,7 @@ def unpack_r0_frame_prefix(prefix: bytes) -> dict:
         raise ValueError("invalid v4 frame magic/version")
     if schema != 1 or strategy != 0 or world_size <= 0 or rank_id >= world_size:
         raise ValueError("unsupported v4 prefix identity")
+    _header_contract(flags,digest,prefix[header_struct.size:FRAME_HEADER_SIZE])
     if generation <= base_delta or generation <= 0:
         raise ValueError("invalid v4 generation lineage")
     if descriptor_bytes < FRAME_HEADER_SIZE or descriptor_bytes % FRAME_HEADER_SIZE:
@@ -142,12 +201,13 @@ def unpack_r0_frame_prefix(prefix: bytes) -> dict:
     if _crc32(descriptor) != descriptor_crc:
         raise ValueError("v4 descriptor CRC mismatch")
     try:
-        document = json.loads(descriptor.decode("utf-8"))
+        document = _document(descriptor)
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise ValueError("invalid v4 descriptor JSON") from error
     if not isinstance(document.get("blocks", []), list) or not isinstance(
             document.get("controls", []), list):
         raise ValueError("invalid v4 descriptor lists")
+    _validate_records(document,payload_bytes,flags)
     return {
         "version": version, "flags": flags, "schema_version": schema,
         "world_size": world_size, "rank_id": rank_id,
@@ -241,6 +301,7 @@ def unpack_r0_frame(frame: bytes) -> dict:
         raise ValueError("invalid v4 frame magic/version")
     if schema != 1 or strategy != 0:
         raise ValueError("unsupported v4 schema or strategy")
+    _header_contract(flags,digest,frame[header_struct.size:FRAME_HEADER_SIZE])
     if world_size <= 0 or rank_id >= world_size:
         raise ValueError("invalid v4 rank identity")
     if generation <= base_delta or generation <= 0:
@@ -262,43 +323,47 @@ def unpack_r0_frame(frame: bytes) -> dict:
     if _crc32(payload) != payload_crc:
         raise ValueError("v4 payload CRC mismatch")
     try:
-        document = json.loads(descriptor.decode("utf-8"))
+        document = _document(descriptor)
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise ValueError("invalid v4 descriptor JSON") from error
+    occupied = _validate_records(document,payload_bytes,flags)
+    cursor=0
+    for start,end in occupied:
+        if any(payload[cursor:start]):raise ValueError('nonzero payload padding')
+        cursor=end
+    if any(payload[cursor:]):raise ValueError('nonzero payload padding')
     blocks = []
-    occupied = []
     for record in document.get("blocks", []):
         if record.get("kind") != "block" or record.get("encoding") != "raw":
             raise ValueError("unsupported v4 block record")
+        if not isinstance(record.get('name'),str) or not record['name']:raise ValueError('invalid block name')
+        for key in ('state_index','block_index','element_offset'):_integer(record,key)
         dtype = np.dtype(record["dtype"]).newbyteorder("<")
-        offset = int(record["payload_offset"])
-        size = int(record["payload_bytes"])
-        count = int(record["element_count"])
+        if dtype.hasobject or dtype.kind not in 'biuf':raise ValueError('unsupported block dtype')
+        offset = _integer(record,'payload_offset')
+        size = _integer(record,'payload_bytes',1)
+        count = _integer(record,'element_count',1)
         if count < 0 or size != count * dtype.itemsize or offset < 0 or offset + size > len(payload):
             raise ValueError("invalid v4 block bounds")
         raw = payload[offset:offset + size]
         if _crc32(raw) != int(record["crc32"]):
             raise ValueError("v4 block CRC mismatch")
-        if any(offset < end and start < offset + size
-               for start, end in occupied):
-            raise ValueError("overlapping v4 payload records")
-        occupied.append((offset, offset + size))
         blocks.append({**record, "dtype": dtype.name,
                        "value": np.frombuffer(raw, dtype=dtype).copy()})
     controls = []
+    control_names=set()
     for record in document.get("controls", []):
-        offset = int(record["payload_offset"])
-        size = int(record["payload_bytes"])
+        offset = _integer(record,'payload_offset')
+        size = _integer(record,'payload_bytes',1)
+        if record.get('kind')!='control' or record.get('name') in control_names:raise ValueError('invalid or duplicate control')
+        control_names.add(record.get('name'))
         if not record.get("name") or not record.get("codec") or size <= 0 or offset < 0 or offset + size > len(payload):
             raise ValueError("invalid v4 control bounds")
-        if any(offset < end and start < offset + size
-               for start, end in occupied):
-            raise ValueError("overlapping v4 payload records")
         raw = payload[offset:offset + size]
         if _crc32(raw) != int(record["crc32"]):
             raise ValueError("v4 control CRC mismatch")
-        occupied.append((offset, offset + size))
         controls.append({**record, "payload": bytes(raw)})
+    if bool(controls)!=bool(flags & FRAME_FLAGS_CONTROLS):raise ValueError('control flag differs')
     return {
         "version": version, "flags": flags, "schema_version": schema,
         "world_size": world_size, "rank_id": rank_id,
