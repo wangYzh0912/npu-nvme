@@ -1,0 +1,78 @@
+{
+  "status": "pass",
+  "cases": [
+    {
+      "case": "acl_copy",
+      "status": "pass",
+      "fault": "NPU_NVME_TEST_FAIL_ACL_COPY"
+    },
+    {
+      "case": "event_query",
+      "status": "pass",
+      "fault": "NPU_NVME_TEST_FAIL_EVENT_QUERY"
+    },
+    {
+      "case": "event_record",
+      "status": "pass",
+      "fault": "NPU_NVME_TEST_FAIL_EVENT_RECORD"
+    },
+    {
+      "case": "nvme_submit",
+      "status": "pass",
+      "fault": "NPU_NVME_TEST_FAIL_NVME_SUBMIT"
+    },
+    {
+      "case": "nvme_completion",
+      "status": "pass",
+      "fault": "NPU_NVME_TEST_FAIL_NVME_COMPLETION"
+    },
+    {
+      "case": "metadata_write",
+      "status": "pass",
+      "fault": "NPU_NVME_TEST_FAIL_METADATA_WRITE"
+    },
+    {
+      "case": "flush",
+      "status": "pass",
+      "fault": "NPU_NVME_TEST_FAIL_FLUSH"
+    },
+    {
+      "case": "timeout",
+      "status": "pass",
+      "fault": "NPU_NVME_TEST_META_DELAY_MS"
+    },
+    {
+      "case": "request_ring_busy",
+      "status": "pass",
+      "busy_rc": -16,
+      "submitted": 16,
+      "stats": {
+        "nvme_submit_count": 16,
+        "nvme_complete_count": 16,
+        "nvme_outstanding": 0,
+        "nvme_outstanding_peak": 1,
+        "dma_inflight": 0,
+        "dma_inflight_peak": 1,
+        "request_ring_depth": 0,
+        "request_ring_peak": 16,
+        "async_dma_submit_count": 16,
+        "async_event_query_count": 16,
+        "async_event_query_error_count": 0,
+        "stream_sync_fallback_count": 0,
+        "spdk_retry_count": 0,
+        "completion_error_count": 0,
+        "reactor_cpu_us": 1467
+      }
+    },
+    {
+      "case": "before_data_complete",
+      "status": "pass",
+      "metadata_unchanged": true
+    },
+    {
+      "case": "before_metadata_commit",
+      "status": "pass",
+      "metadata_unchanged": true
+    }
+  ]
+}

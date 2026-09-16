@@ -1,0 +1,78 @@
+{
+  "config": {
+    "checkpoint_only": true,
+    "chunk_size": 1048576,
+    "ckpt_every": 5,
+    "experiment": "E4",
+    "formal_repetitions": 3,
+    "fs_root": "/models/npu_nvme_exp",
+    "io_timeout_s": 120.0,
+    "model": "gpt2_13b",
+    "npu": 7,
+    "output_root": "experiments/output/wp2/model_gpt2_13b_a5_1m",
+    "parameter_bytes": 26204712960,
+    "parameter_count": 644,
+    "parameter_precision": "model-native",
+    "path": "p4_spdk",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 4,
+    "profiling": false,
+    "repetitions": 3,
+    "run_id": "E4_20260825_230701_710b1965",
+    "safe_offset": 68719476736,
+    "safe_region": [
+      68719476736,
+      94924599296
+    ],
+    "shm_id": 205,
+    "steps": 10,
+    "submit_mode": "batch",
+    "warmups": 2
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "E4_20260825_230701_710b1965",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 3,
+  "status": "pass",
+  "summary": {
+    "first_param_ms": {
+      "ci95": [
+        242.96265029018963,
+        291.47588770981037
+      ],
+      "max": 288.125547,
+      "mean": 267.219269,
+      "min": 252.621523,
+      "n": 3,
+      "stdev": 18.573694087187175
+    },
+    "read_ms": {
+      "ci95": [
+        6534.495309653921,
+        6579.029389012745
+      ],
+      "max": 6570.75901,
+      "mean": 6556.762349333333,
+      "min": 6537.773155,
+      "n": 3,
+      "stdev": 17.050240521173116
+    },
+    "write_ms": {
+      "ci95": [
+        6309.927470166932,
+        6489.520897166401
+      ],
+      "max": 6478.597463,
+      "mean": 6399.724183666666,
+      "min": 6352.411577,
+      "n": 3,
+      "stdev": 68.75882852972867
+    }
+  }
+}

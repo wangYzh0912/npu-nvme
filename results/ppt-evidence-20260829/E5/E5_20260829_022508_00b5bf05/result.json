@@ -1,0 +1,141 @@
+{
+  "chunk_size": 4194304,
+  "cube_util": null,
+  "failed_samples": 0,
+  "fault_results": {
+    "sync_vs_ring_readback": "pass"
+  },
+  "foreground_wait": null,
+  "hbm_bandwidth": null,
+  "hbm_peak": null,
+  "host_rss_peak": null,
+  "latency_mean": {
+    "ci95": [
+      7.727388584713107,
+      8.481362948620227
+    ],
+    "ci95_method": "student-t(df=29)",
+    "max": 9.510938,
+    "mean": 8.104375766666667,
+    "median": 7.4040495,
+    "min": 7.395701,
+    "n": 30,
+    "p95": 9.51043495,
+    "p99": 9.510822,
+    "p99_status": "reported",
+    "stdev": 1.0095902151650504
+  },
+  "latency_p50": 7.4040495,
+  "latency_p95": 9.51043495,
+  "logical_bytes": 409600,
+  "loss_deviation": null,
+  "mode": "single_owner_sync_vs_request_ring_batch",
+  "model": "control_microbench",
+  "nvme_bytes": null,
+  "paths": {
+    "commit": "commit.json",
+    "config": "config.json",
+    "environment": "environment.json",
+    "failures": "failures.jsonl",
+    "raw": "raw/",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "pcie_bytes": null,
+  "physical_bytes": null,
+  "pinned_dram_peak": null,
+  "pipeline_depth": 4,
+  "producer_count": 1,
+  "protocol_note": "request-ring API is asynchronously serviced by the Reactor but this benchmark waits for durable completion per request",
+  "recovery_error": 0,
+  "ring_read_ms": {
+    "ci95": [
+      1.3882932448536807,
+      2.142193555146319
+    ],
+    "ci95_method": "student-t(df=29)",
+    "max": 3.171313,
+    "mean": 1.7652434,
+    "median": 1.063129,
+    "min": 1.0618339999999997,
+    "n": 30,
+    "p95": 3.1700995,
+    "p99": 3.1709650000000003,
+    "p99_status": "reported",
+    "stdev": 1.009491055554117
+  },
+  "ring_write_ms": {
+    "ci95": [
+      6.338414871473288,
+      6.339849861860044
+    ],
+    "ci95_method": "student-t(df=29)",
+    "max": 6.341995,
+    "mean": 6.339132366666666,
+    "median": 6.33946,
+    "min": 6.333246,
+    "n": 30,
+    "p95": 6.34139855,
+    "p99": 6.34188219,
+    "p99_status": "reported",
+    "stdev": 0.0019214874174457294
+  },
+  "run_id": "E5_20260829_022508_00b5bf05",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 30,
+  "seed": null,
+  "slot_count": 1,
+  "state_bytes": 409600,
+  "status": "pass",
+  "step_overhead": null,
+  "sync_read_ms": {
+    "ci95": [
+      1.6253877501816754,
+      2.436029316484991
+    ],
+    "ci95_method": "student-t(df=29)",
+    "max": 3.173003,
+    "mean": 2.0307085333333332,
+    "median": 1.0508389999999999,
+    "min": 1.021074,
+    "n": 30,
+    "p95": 3.172919,
+    "p99": 3.1729943,
+    "p99_status": "reported",
+    "stdev": 1.0854689927451107
+  },
+  "sync_write_ms": {
+    "ci95": [
+      1.106497464906674,
+      1.1085714684266592
+    ],
+    "ci95_method": "student-t(df=29)",
+    "max": 1.113774,
+    "mean": 1.1075344666666667,
+    "median": 1.107589,
+    "min": 1.095525,
+    "n": 30,
+    "p95": 1.1106485,
+    "p99": 1.1132056000000001,
+    "p99_status": "reported",
+    "stdev": 0.002777141717583064
+  },
+  "throughput": {
+    "ci95": [
+      46.781755606178244,
+      50.966259966667714
+    ],
+    "ci95_method": "student-t(df=29)",
+    "max": 52.817846475945956,
+    "mean": 48.87400778642298,
+    "median": 52.75829125669699,
+    "min": 41.07113304702438,
+    "n": 30,
+    "p95": 52.79748329985432,
+    "p99": 52.812985095868264,
+    "p99_status": "reported",
+    "stdev": 5.603154244891638
+  },
+  "vector_util": null
+}

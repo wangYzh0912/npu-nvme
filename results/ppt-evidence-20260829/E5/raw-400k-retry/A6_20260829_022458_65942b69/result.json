@@ -1,0 +1,94 @@
+{
+  "config": {
+    "experiment": "A6",
+    "npu": 7,
+    "output_root": "results/ppt-evidence-20260829/E5/raw-400k-retry",
+    "path": "sync_meta_control_vs_request_ring_fsm",
+    "payload_bytes": 409600,
+    "pci": "0000:83:00.0",
+    "repetitions": 30,
+    "ring_offset": 274878726144,
+    "run_id": "A6_20260829_022458_65942b69",
+    "scope": "API/control-plane microbenchmark, not full model checkpoint",
+    "shm_id": 7100,
+    "sync_offset": 274877906944,
+    "warmups": 10
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "A6_20260829_022458_65942b69",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 30,
+  "status": "pass",
+  "summary": {
+    "ring_read_ms": {
+      "ci95": [
+        1.3882932448536807,
+        2.142193555146319
+      ],
+      "ci95_method": "student-t(df=29)",
+      "max": 3.171313,
+      "mean": 1.7652434,
+      "median": 1.063129,
+      "min": 1.0618339999999997,
+      "n": 30,
+      "p95": 3.1700995,
+      "p99": 3.1709650000000003,
+      "p99_status": "reported",
+      "stdev": 1.009491055554117
+    },
+    "ring_write_ms": {
+      "ci95": [
+        6.338414871473288,
+        6.339849861860044
+      ],
+      "ci95_method": "student-t(df=29)",
+      "max": 6.341995,
+      "mean": 6.339132366666666,
+      "median": 6.33946,
+      "min": 6.333246,
+      "n": 30,
+      "p95": 6.34139855,
+      "p99": 6.34188219,
+      "p99_status": "reported",
+      "stdev": 0.0019214874174457294
+    },
+    "sync_read_ms": {
+      "ci95": [
+        1.6253877501816754,
+        2.436029316484991
+      ],
+      "ci95_method": "student-t(df=29)",
+      "max": 3.173003,
+      "mean": 2.0307085333333332,
+      "median": 1.0508389999999999,
+      "min": 1.021074,
+      "n": 30,
+      "p95": 3.172919,
+      "p99": 3.1729943,
+      "p99_status": "reported",
+      "stdev": 1.0854689927451107
+    },
+    "sync_write_ms": {
+      "ci95": [
+        1.106497464906674,
+        1.1085714684266592
+      ],
+      "ci95_method": "student-t(df=29)",
+      "max": 1.113774,
+      "mean": 1.1075344666666667,
+      "median": 1.107589,
+      "min": 1.095525,
+      "n": 30,
+      "p95": 1.1106485,
+      "p99": 1.1132056000000001,
+      "p99_status": "reported",
+      "stdev": 0.002777141717583064
+    }
+  }
+}

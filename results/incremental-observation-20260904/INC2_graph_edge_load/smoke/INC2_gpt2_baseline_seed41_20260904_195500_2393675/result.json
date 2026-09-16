@@ -1,0 +1,68 @@
+{
+  "config": {
+    "auxiliary_location": "MindSpore graph before optimizer via Depend",
+    "block_size": 65536,
+    "compute_repeats": 4,
+    "experiment": "INC2_graph_edge_load",
+    "formal_policy": "20 warmup + 50 formal; no step-internal host synchronization",
+    "invalid_prototype_excluded": "experiments/benchmarks/p6_aux_injection.py",
+    "mode": "baseline",
+    "model": "gpt2",
+    "npu": 2,
+    "output_root": "results/incremental-observation-20260904/INC2_graph_edge_load/smoke",
+    "pci": "0000:83:00.0",
+    "run_id": "INC2_gpt2_baseline_seed41_20260904_195500_2393675",
+    "seed": 41,
+    "seq_len": 129,
+    "steps": 2,
+    "top_k": 128,
+    "train_mr": "/home/user7/npu-nvme/dataset_prepare/gpt2/wikitext2_data/gpt2_train_1025.mindrecord",
+    "warmups": 2
+  },
+  "paths": {
+    "config": "config.json",
+    "environment": "environment.json",
+    "events": "events.jsonl",
+    "result": "result.json"
+  },
+  "run_id": "INC2_gpt2_baseline_seed41_20260904_195500_2393675",
+  "samples": 2,
+  "status": "pass",
+  "summary": {
+    "device_timing_limit": "No per-step device duration is claimed; synchronize was once after formal loop.",
+    "formal_steps": 2,
+    "graph_edge": {
+      "block_size_elements": 65536,
+      "checksum_participates_in_depend": false,
+      "host_worker": false,
+      "mode": "baseline",
+      "optimizer_precedes_auxiliary": false,
+      "step_internal_ms_hal_synchronize": false,
+      "top_k_blocks": 128
+    },
+    "host_submit_ms": {
+      "ci95": [
+        40.18544615675431,
+        45.98075884324568
+      ],
+      "ci95_method": "student-t(df=1)",
+      "max": 43.311153,
+      "mean": 43.083102499999995,
+      "median": 43.083102499999995,
+      "min": 42.855052,
+      "n": 2,
+      "p95": 43.288347949999995,
+      "p99": null,
+      "p99_status": "descriptive sample too small (n<30)",
+      "stdev": 0.3225121100059632
+    },
+    "loss_first": 10.468012809753418,
+    "loss_last": 10.352017402648926,
+    "mode": "baseline",
+    "model": "gpt2",
+    "post_loop_device_sync_ms": 0.09721,
+    "seed": 41,
+    "wallclock_ms": 35348.764301,
+    "warmups": 2
+  }
+}

@@ -1,0 +1,313 @@
+{
+  "device": 6,
+  "export_command": [
+    "/usr/local/Ascend/ascend-toolkit/latest/bin/msprof",
+    "--export=on",
+    "--output=results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_ArithmeticUtilization_20260829_140003/msprof",
+    "--type=text",
+    "--summary-format=csv"
+  ],
+  "export_returncode": 0,
+  "hbm": {
+    "read_mb_s": 20546.703,
+    "source": "results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_ArithmeticUtilization_20260829_140003/msprof/PROF_000001_20260829140247381_OCMFRGBOARNILDOA/mindstudio_profiler_output/hbm_20260829140719.csv",
+    "write_mb_s": 21708.906
+  },
+  "loss_first": 9.547518730163574,
+  "loss_last": 8.488838195800781,
+  "metric_group": "ArithmeticUtilization",
+  "model": "gpt2_xl",
+  "pmu_by_core": {
+    "AI_CORE": {
+      "kernel_count": 2,
+      "ops": {
+        "BatchMatMulV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 415387.866
+        },
+        "MatMulV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1187045.533
+        }
+      },
+      "total_time_us": 1602433.399
+    },
+    "AI_CPU": {
+      "kernel_count": 1,
+      "ops": {
+        "CheckNumerics": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 8054.6
+        }
+      },
+      "total_time_us": 8054.6
+    },
+    "AI_VECTOR_CORE": {
+      "kernel_count": 28,
+      "ops": {
+        "AdamApplyOneWithDecay": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 744041.221
+        },
+        "AdamApplyOneWithDecayAssign": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 73874.569
+        },
+        "Add": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 173925.51
+        },
+        "AddN": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 86784.889
+        },
+        "Assign": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 312959.922
+        },
+        "AssignAdd": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 42.341
+        },
+        "Cast": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1393569.399
+        },
+        "DropOutDoMask": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 183419.513
+        },
+        "Exp": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 21915.678
+        },
+        "FastGelu": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 27182.745
+        },
+        "FastGeluGrad": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 43991.661
+        },
+        "GatherV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1449.229
+        },
+        "LayerNormBetaGammaBackpropV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 59304.22
+        },
+        "LayerNormV3": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 90039.105
+        },
+        "LayerNormXBackpropV3": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 165287.673
+        },
+        "Log": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 41.741
+        },
+        "MemSet": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 37225.145
+        },
+        "Mul": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 24933.477
+        },
+        "Neg": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 9123.122
+        },
+        "NotEqual": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 68.863
+        },
+        "OneHot": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 2729.294
+        },
+        "RealDiv": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 47851.527
+        },
+        "SoftmaxGrad": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 245161.323
+        },
+        "SoftmaxV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 278122.977
+        },
+        "StridedSlice": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 942.821
+        },
+        "Sub": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 42593.067
+        },
+        "Tile": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 46.641
+        },
+        "Transpose": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 329972.512
+        }
+      },
+      "total_time_us": 4396600.185000001
+    },
+    "DSA_SQE": {
+      "kernel_count": 1,
+      "ops": {
+        "DSAGenBitMask": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 339517.686
+        }
+      },
+      "total_time_us": 339517.686
+    },
+    "MIX_AIC": {
+      "kernel_count": 2,
+      "ops": {
+        "MatMulV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1117793.154
+        },
+        "MatMulV3": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 67456.628
+        }
+      },
+      "total_time_us": 1185249.7820000001
+    },
+    "MIX_AIV": {
+      "kernel_count": 3,
+      "ops": {
+        "ReduceMax": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 5145.404
+        },
+        "ReduceSum": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 161558.478
+        },
+        "UnsortedSegmentSum": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 6138.723
+        }
+      },
+      "total_time_us": 172842.605
+    }
+  },
+  "pmu_total_time_us": 7704698.257000002,
+  "profile_command": [
+    "/usr/local/Ascend/ascend-toolkit/latest/bin/msprof",
+    "--dynamic=on",
+    "--pid=1014250",
+    "--output=results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_ArithmeticUtilization_20260829_140003/msprof",
+    "--ascendcl=on",
+    "--task-time=on",
+    "--runtime-api=on",
+    "--ai-core=on",
+    "--aic-mode=task-based",
+    "--aic-metrics=ArithmeticUtilization",
+    "--sys-hardware-mem=on",
+    "--sys-hardware-mem-freq=10",
+    "--sys-pid-profiling=on",
+    "--host-sys-pid=1014250"
+  ],
+  "profile_control": "interactive start; automatic collection until target exit",
+  "profile_control_error": null,
+  "profile_returncode": 0,
+  "seed": 41,
+  "status": "pass",
+  "step_stats_ms": {
+    "ci95": 18.347291065755773,
+    "mean": 593.3125717333332,
+    "median": 560.401239,
+    "n": 30,
+    "p95": 680.79603515,
+    "p99": 694.10624107,
+    "stdev": 51.27155707054815
+  },
+  "steps": 30,
+  "warmups": 10
+}

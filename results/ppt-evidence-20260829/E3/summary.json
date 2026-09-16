@@ -1,0 +1,152 @@
+{
+  "device_policy": "83.0.0 raw only; 84.0.0 and /models untouched",
+  "evidence": {
+    "hbm_slot_capacity_interpretation": "one immutable HBM snapshot slot; run-level allocation, not full HBM peak",
+    "hbm_slot_capacity_observed_bytes": 3280687104,
+    "host_staging_rss": "not measured in this partial batch",
+    "pinned_dram": "not measured; VmPin was unavailable in the historical runs",
+    "readback_correctness": "all six historical A9 configurations matched frozen HBM SHA-256 on 83.0.0",
+    "slow_disk_wait": "historical 5s-delay data shows 1-slot wait 7038.4 ms, 2-slot 3114.4 ms, 4-slot 0.051 ms"
+  },
+  "experiment": "E3",
+  "gate": {
+    "30_formal_samples": false,
+    "gpt2_13b": false,
+    "host_staging_vs_slot_memory": false,
+    "interpretation": "E3 remains partial; do not claim bounded host memory or 13B scaling until new measurements complete"
+  },
+  "matrix": {
+    "failed_attempts": 1,
+    "formal_samples_per_historical_run": [
+      3,
+      4
+    ],
+    "historical_runs": 6,
+    "normal_slot_counts": [
+      1,
+      2,
+      4
+    ],
+    "slow_slot_counts": [
+      1,
+      2,
+      4
+    ]
+  },
+  "runs": [
+    {
+      "foreground_wait_mean_ms": 3138.7343163333335,
+      "hbm_peak": null,
+      "hbm_slot_bytes": 3280687104,
+      "host_rss_peak": null,
+      "latency_mean_ms": 8138.834400666667,
+      "measurement_kind": "historical A9 real-HBM run",
+      "model": "gpt2_xl",
+      "pinned_dram_peak": null,
+      "run_id": "E3_20260829_021913_4dcad2ea",
+      "samples": 3,
+      "slot_count": 1,
+      "source_a9_run": "/home/user7/npu-nvme/results/wp2-20260826/a9_hbm/formal/A9_HBM_20260826_151627_dc2ccf82",
+      "state_bytes": 3280687104,
+      "status": "historical_pass_insufficient_samples"
+    },
+    {
+      "foreground_wait_mean_ms": 0.06895366666666666,
+      "hbm_peak": null,
+      "hbm_slot_bytes": 3280687104,
+      "host_rss_peak": null,
+      "latency_mean_ms": 11048.262106333334,
+      "measurement_kind": "historical A9 real-HBM run",
+      "model": "gpt2_xl",
+      "pinned_dram_peak": null,
+      "run_id": "E3_20260829_021913_e27bf237",
+      "samples": 3,
+      "slot_count": 2,
+      "source_a9_run": "/home/user7/npu-nvme/results/wp2-20260826/a9_hbm/formal/A9_HBM_20260826_152009_0275d7a8",
+      "state_bytes": 3280687104,
+      "status": "historical_pass_insufficient_samples"
+    },
+    {
+      "foreground_wait_mean_ms": 0.070687,
+      "hbm_peak": null,
+      "hbm_slot_bytes": 3280687104,
+      "host_rss_peak": null,
+      "latency_mean_ms": 11070.509479333334,
+      "measurement_kind": "historical A9 real-HBM run",
+      "model": "gpt2_xl",
+      "pinned_dram_peak": null,
+      "run_id": "E3_20260829_021913_e79a5f7d",
+      "samples": 3,
+      "slot_count": 4,
+      "source_a9_run": "/home/user7/npu-nvme/results/wp2-20260826/a9_hbm/formal/A9_HBM_20260826_152344_42c3a7f3",
+      "state_bytes": 3280687104,
+      "status": "historical_pass_insufficient_samples"
+    },
+    {
+      "foreground_wait_mean_ms": 8797.97730975,
+      "hbm_peak": null,
+      "hbm_slot_bytes": 3280687104,
+      "host_rss_peak": null,
+      "latency_mean_ms": 13049.180023,
+      "measurement_kind": "historical A9 real-HBM run; 5s delay",
+      "model": "gpt2_xl",
+      "pinned_dram_peak": null,
+      "run_id": "E3_20260829_021914_14c3920e",
+      "samples": 4,
+      "slot_count": 1,
+      "source_a9_run": "/home/user7/npu-nvme/results/wp2-20260826/a9_hbm/slow/A9_HBM_20260826_152754_f5e9322d",
+      "state_bytes": 3280687104,
+      "status": "historical_pass_insufficient_samples"
+    },
+    {
+      "foreground_wait_mean_ms": 0.04565,
+      "hbm_peak": null,
+      "hbm_slot_bytes": 3280687104,
+      "host_rss_peak": null,
+      "latency_mean_ms": 29060.37456575,
+      "measurement_kind": "historical A9 real-HBM run; 5s delay",
+      "model": "gpt2_xl",
+      "pinned_dram_peak": null,
+      "run_id": "E3_20260829_021914_911f0003",
+      "samples": 4,
+      "slot_count": 4,
+      "source_a9_run": "/home/user7/npu-nvme/results/wp2-20260826/a9_hbm/slow/A9_HBM_20260826_153554_7a837a59",
+      "state_bytes": 3280687104,
+      "status": "historical_pass_insufficient_samples"
+    },
+    {
+      "foreground_wait_mean_ms": 3893.00666425,
+      "hbm_peak": null,
+      "hbm_slot_bytes": 3280687104,
+      "host_rss_peak": null,
+      "latency_mean_ms": 19571.4679765,
+      "measurement_kind": "historical A9 real-HBM run; 5s delay",
+      "model": "gpt2_xl",
+      "pinned_dram_peak": null,
+      "run_id": "E3_20260829_021914_9fba7aee",
+      "samples": 4,
+      "slot_count": 2,
+      "source_a9_run": "/home/user7/npu-nvme/results/wp2-20260826/a9_hbm/slow/A9_HBM_20260826_153201_fc9f4b2f",
+      "state_bytes": 3280687104,
+      "status": "historical_pass_insufficient_samples"
+    },
+    {
+      "foreground_wait_mean_ms": null,
+      "hbm_peak": null,
+      "hbm_slot_bytes": null,
+      "host_rss_peak": null,
+      "latency_mean_ms": null,
+      "measurement_kind": "failed new run",
+      "model": "gpt2_xl",
+      "pinned_dram_peak": null,
+      "run_id": "E3_20260829_021959_714b1133",
+      "samples": 0,
+      "slot_count": 1,
+      "source_a9_run": null,
+      "state_bytes": null,
+      "status": "fail"
+    }
+  ],
+  "scope": "real GPT-2 XL HBM snapshot slots through single-owner SPDK on 0000:83:00.0",
+  "status": "partial"
+}

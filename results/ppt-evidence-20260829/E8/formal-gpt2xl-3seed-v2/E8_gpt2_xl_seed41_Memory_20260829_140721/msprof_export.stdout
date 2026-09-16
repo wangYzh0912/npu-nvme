@@ -1,0 +1,71 @@
+[INFO] Start profiling...
+[INFO] Start export data in msprof.
+Sat 29 Aug 2026 14:10:35 [INFO] [MSVP] [1057795] msprof_common.py: Start analyzing data in "/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/host" ...
+Sat 29 Aug 2026 14:10:35 [INFO] [MSVP] [1057795] msprof_common.py: It may take few minutes, please be patient ...
+Sat 29 Aug 2026 14:11:03 [INFO] [MSVP] [1057795] msprof_common.py: Analysis data in "/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/host" finished.
+Sat 29 Aug 2026 14:11:03 [INFO] [MSVP] [1057795] msprof_common.py: Start analyzing data in "/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/device_6" ...
+Sat 29 Aug 2026 14:11:03 [INFO] [MSVP] [1057795] msprof_common.py: It may take few minutes, please be patient ...
+Sat 29 Aug 2026 14:11:04 [INFO] [MSVP] [1057795] msprof_common.py: Analysis data in "/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/device_6" finished.
+Sat 29 Aug 2026 14:11:13 [INFO] [MSVP] [1057795] msprof_export.py: All collected data will be exported, path is: /home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/device_6.
+Sat 29 Aug 2026 14:11:25 [INFO] [MSVP] [1057795] msprof_export.py: There is no timeline data to export for "/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/host"
+Sat 29 Aug 2026 14:11:25 [INFO] [MSVP] [1057795] msprof_export.py: All collected data will be exported, path is: /home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/device_6.
+Sat 29 Aug 2026 14:13:57 [INFO] [MSVP] [1057795] msprof_common.py: Start exporting timeline output_file.
+--- Logging error ---
+Traceback (most recent call last):
+  File "/root/miniconda3/lib/python3.13/logging/__init__.py", line 1154, in emit
+    self.flush()
+    ~~~~~~~~~~^^
+  File "/root/miniconda3/lib/python3.13/logging/__init__.py", line 1136, in flush
+    self.stream.flush()
+    ~~~~~~~~~~~~~~~~~^^
+OSError: [Errno 28] No space left on device
+Call stack:
+  File "/root/miniconda3/lib/python3.13/threading.py", line 1012, in _bootstrap
+    self._bootstrap_inner()
+  File "/root/miniconda3/lib/python3.13/threading.py", line 1041, in _bootstrap_inner
+    self.run()
+  File "/root/miniconda3/lib/python3.13/threading.py", line 992, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/miniconda3/lib/python3.13/multiprocessing/pool.py", line 595, in _handle_results
+    cache[job]._set(i, obj)
+  File "/root/miniconda3/lib/python3.13/multiprocessing/pool.py", line 781, in _set
+    self._error_callback(self._value)
+  File "/usr/local/Ascend/ascend-toolkit/8.0.RC3/tools/profiler/profiler_tool/analysis/msinterface/msprof_output_summary.py", line 363, in <lambda>
+    error_callback=lambda error_info: logging.error(error, error_info))
+Message: 'Output: An exception occurs when multiple processes process the timeline file. The error is %s'
+Arguments: (OSError(28, 'No space left on device'),)
+--- Logging error ---
+Traceback (most recent call last):
+  File "/root/miniconda3/lib/python3.13/logging/__init__.py", line 1154, in emit
+    self.flush()
+    ~~~~~~~~~~^^
+  File "/root/miniconda3/lib/python3.13/logging/__init__.py", line 1136, in flush
+    self.stream.flush()
+    ~~~~~~~~~~~~~~~~~^^
+OSError: [Errno 28] No space left on device
+Call stack:
+  File "/root/miniconda3/lib/python3.13/threading.py", lOSError: [Errno 28] No space left on device
+OSError: [Errno 28] No space left on device
+Exception ignored on flushing sys.stdout:
+Exception ignored in sys.unraisablehook: <built-in function unraisablehook>
+Sat 29 Aug 2026 14:13:59 [ERROR] [MSVP] [1057795] msprof_entrance.py: [Errno 28] No space left on device
+Sat 29 Aug 2026 14:14:16 [INFO] [MSVP] [1059545] msprof_export.py: The data in "/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/host" has been analyzed.
+Sat 29 Aug 2026 14:14:16 [INFO] [MSVP] [1059545] msprof_export.py: The data in "/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/device_6" has been analyzed.
+Sat 29 Aug 2026 14:14:16 [INFO] [MSVP] [1059545] msprof_export.py: All collected data will be exported, path is: /home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/device_6.
+Sat 29 Aug 2026 14:14:19 [INFO] [MSVP] [1059545] msprof_export.py: There is no summary data to export for "/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/host"
+Sat 29 Aug 2026 14:14:19 [INFO] [MSVP] [1059545] msprof_export.py: All collected data will be exported, path is: /home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/device_6.
+Sat 29 Aug 2026 14:14:35 [INFO] [MSVP] [1059545] msprof_common.py: Start exporting summary output_file.
+Sat 29 Aug 2026 14:14:36 [INFO] [MSVP] [1059545] msprof_common.py: End exporting summary output_file.The file is stored in the /home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/mindstudio_profiler_output path.
+Sat 29 Aug 2026 14:14:36 [WARNING] [MSVP] [1059545] msprof_export.py: Invalid parsing dir("/home/user7/npu-nvme/results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof"), no valid dir. 
+
+Cluster Tuning Report:
+1. For slow nodes, pay attention to the data preparation phase (threshold: 20%):
+	N/A
+2. For slow link, pay attention to the data bandwidth (threshold: 20%):
+	N/A
+
+
+Sat 29 Aug 2026 14:14:36 [WARNING] [MSVP] [1059545] msprof_export.py: Cluster Tuning did not complete!
+[INFO] Export all data in msprof done.
+[INFO] Profiling finished.
+[INFO] Process profiling data complete. Data is saved in results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof

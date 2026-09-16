@@ -1,0 +1,50 @@
+{
+  "config": {
+    "block_size": 65536,
+    "experiment": "I1_REAL",
+    "model": "gpt2_xl",
+    "no_optimizer": false,
+    "npu": 5,
+    "numeric_only": true,
+    "oracle": "S2 persisted-reference replacement",
+    "output_root": "/home/user7/npu-nvme/results/wp3-closeout-20260826/i1_numeric",
+    "pci": "0000:83:00.0",
+    "run_id": "I1_REAL_20260826_170937_43f2431a",
+    "sample_every": 1,
+    "seed": 41,
+    "seq_len": 1025,
+    "small_threshold": 10000,
+    "state": "weights+adam_m_v+global_step",
+    "steps": 10,
+    "top_k_percent": 10.0
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "I1_REAL_20260826_170937_43f2431a",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 10,
+  "status": "pass",
+  "summary": {
+    "losses": [
+      9.928417205810547,
+      9.694063186645508,
+      9.657941818237305,
+      12.365055084228516,
+      9.33301067352295,
+      9.539934158325195,
+      9.439791679382324,
+      9.617077827453613,
+      9.467148780822754,
+      9.360370635986328
+    ],
+    "numeric_health": "all sampled weights/optimizer states finite",
+    "samples": 10,
+    "seed": 41,
+    "steps": 10
+  }
+}

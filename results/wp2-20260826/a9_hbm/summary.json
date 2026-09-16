@@ -1,0 +1,29 @@
+{
+  "experiment": "A9_HBM",
+  "model": "gpt2_xl",
+  "device": "0000:83:00.0",
+  "hbm_bytes_per_slot": 3280687104,
+  "normal": {
+    "steps": 25,
+    "warmups": 2,
+    "formal_samples_per_slot": 3,
+    "results": {
+      "1": {"slot_wait_mean_ms": 2497.6269278, "end_to_end_mean_ms": 8107.89049, "status": "pass"},
+      "2": {"slot_wait_mean_ms": 0.0667264, "end_to_end_mean_ms": 10817.961102, "status": "pass"},
+      "4": {"slot_wait_mean_ms": 0.0686562, "end_to_end_mean_ms": 10880.3164756, "status": "pass"}
+    }
+  },
+  "slow_disk": {
+    "steps": 15,
+    "warmups": 1,
+    "delay_ms": 5000,
+    "formal_samples_per_slot": 4,
+    "results": {
+      "1": {"slot_wait_mean_ms": 7038.3955878, "end_to_end_mean_ms": 13074.6987072, "status": "pass"},
+      "2": {"slot_wait_mean_ms": 3114.4206334, "end_to_end_mean_ms": 18284.1238562, "status": "pass"},
+      "4": {"slot_wait_mean_ms": 0.050996, "end_to_end_mean_ms": 26217.8186502, "status": "pass"}
+    }
+  },
+  "correctness": "every captured HBM slot matched the NVMe readback SHA-256 digest",
+  "device_safety": "83.0.0 only; 84.0.0 untouched"
+}

@@ -1,0 +1,87 @@
+{
+  "config": {
+    "chunk_size": 4194304,
+    "ckpt_every": 3,
+    "experiment": "A9_HBM",
+    "io_delay_ms": 5000.0,
+    "io_timeout_s": 120.0,
+    "model": "gpt2_xl",
+    "npu": 7,
+    "output_root": "/home/user7/npu-nvme/experiments/output/a9_hbm_slow",
+    "path": "A9_HBM_snapshot_slot_lifecycle",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 4,
+    "run_id": "A9_HBM_20260826_153201_fc9f4b2f",
+    "scope": "real MindSpore HBM slots",
+    "shm_id": 1420,
+    "slot_count": 2,
+    "slots": [
+      1,
+      2,
+      4
+    ],
+    "steps": 15,
+    "warmups": 1
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "A9_HBM_20260826_153201_fc9f4b2f",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 4,
+  "status": "pass",
+  "summary": {
+    "checkpoints": 5,
+    "end_to_end_ms": {
+      "ci95": [
+        15335.303780872817,
+        21232.94393152718
+      ],
+      "max": 19908.911687,
+      "mean": 18284.1238562,
+      "min": 13134.747375,
+      "n": 5,
+      "stdev": 2915.0142094817115
+    },
+    "formal_samples": 4,
+    "hbm_bytes_per_slot": 3280687104,
+    "slot_wait_ms": {
+      "ci95": [
+        199.21392202908964,
+        6029.62734477091
+      ],
+      "max": 5626.811477,
+      "mean": 3114.4206334,
+      "min": 0.05039,
+      "n": 5,
+      "stdev": 2881.7861958837157
+    },
+    "snapshot_ms": {
+      "ci95": [
+        3129.6719888195917,
+        3157.0782763804086
+      ],
+      "max": 3154.602044,
+      "mean": 3143.3751326,
+      "min": 3124.817874,
+      "n": 5,
+      "stdev": 13.546048186758172
+    },
+    "step_ms": {
+      "ci95": [
+        -5470.464805609434,
+        15602.543939609433
+      ],
+      "max": 70278.709455,
+      "mean": 5066.039567,
+      "min": 403.129915,
+      "n": 15,
+      "stdev": 18040.54198159061
+    },
+    "steps": 15
+  }
+}

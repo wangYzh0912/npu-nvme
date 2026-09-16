@@ -1,0 +1,27 @@
+{
+  "bytecheckpoint": {
+    "python": "3.9.25",
+    "torch": "2.5.1",
+    "grpcio": "1.69.0",
+    "protobuf": "3.20.3",
+    "upstream_commit": "6f00167c153f3e65a67240aaa5ef4850a1c740fd",
+    "environment": "/home/user7/npu-nvme-baseline-envs/bytecheckpoint",
+    "extra_runtime_dependencies": ["annotated-types (pure Python user site)"],
+    "status": "import_probe_passed",
+    "scope": "CPU worker only; no NPU tensor or distributed resharding"
+  },
+  "fastpersist": {
+    "python": "3.9.25",
+    "torch": "2.6.0",
+    "deepspeed": "0.19.6",
+    "deepspeed_commit": "32110a957c613aa097f4e1822aa71b1a6ef27e03",
+    "environment": "/home/user7/npu-nvme-baseline-envs/fastpersist",
+    "extensions": ["async_io", "pin_memory", "utils"],
+    "status": "import_probe_passed; extensions built outside repository",
+    "runtime_constraints": [
+      "worker requires an unlimited memlock limit for the 64 MiB locked buffer",
+      "locked UtilsBuilder has no CPU implementation; byte reinterpretation uses an equivalent torch uint8 view"
+    ],
+    "scope": "CPU AIO worker only; no CUDA/GDS"
+  }
+}

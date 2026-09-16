@@ -1,0 +1,173 @@
+{
+  "adapter": "bytecheckpoint_host",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "adapter": "bytecheckpoint_host",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 2650174019483968,
+      "request_id": "bytecheckpoint_host-000001",
+      "sha256": "f3f694cdf3a4db2b4b91643895d7db4d053978f15407be39e34ba5279a504609",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 8,
+      "submit_ns": 2650169417931057,
+      "timestamps_ns": {
+        "CREATED": 2650169456832490,
+        "DMA_COPYING": 2650169458082915,
+        "FLUSHING": 2650174005953205,
+        "METADATA_COMMITTING": 2650174006191346,
+        "NVME_WRITING": 2650169569574475,
+        "PERSISTED": 2650174019483968,
+        "QUEUED": 2650169457623133,
+        "SNAPSHOTTING": 2650169457366892,
+        "SNAPSHOT_READY": 2650169457494763,
+        "admitted": 2650169456866670,
+        "data_completed": 2650174005639464,
+        "input_buffer_released": 2650170781074687,
+        "source_released": 2650169558695372
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 2650169457366892,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "fields": 590
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 2650169457494763,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0,
+            "slot_wait_ns": 16440
+          },
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 2650169457623133,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 2650169458082915,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "slot_id": 0
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 2650169569574475,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "worker_data_done_ns": 2650173966179398
+          },
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 2650174005953205,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 2650174006191346,
+          "request_id": "bytecheckpoint_host-000001"
+        },
+        {
+          "detail": {
+            "sha256": "f3f694cdf3a4db2b4b91643895d7db4d053978f15407be39e34ba5279a504609",
+            "upstream_hook": "model+optimizer DDPSavePlanner; extra_state workflow; shared CKPTCounter(3); LocalStorageWriter"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 2650174019483968,
+          "request_id": "bytecheckpoint_host-000001"
+        }
+      ]
+    }
+  ],
+  "formal_steps": 3,
+  "fresh_restore_required": true,
+  "kind": "host-adapted-semantic-port",
+  "mechanisms_preserved": [
+    "model and optimizer DDPSavePlanner/DDPLoadPlanner workflows",
+    "official extra_state workflow for persisted controls",
+    "shared three-component CKPTCounter and async LocalStorageWriter queues"
+  ],
+  "model": "gpt2",
+  "platform_substitutions": [
+    "PyTorch model extraction -> common ACL FULL capture and shared memory",
+    "CUDA pinned D2H -> ACL pinned D2H"
+  ],
+  "port_class": "host-adapted-semantic-port",
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.87883186340332,
+      "step": 9,
+      "step_begin_ns": 2650175368210451,
+      "step_end_ns": 2650175420901159
+    },
+    {
+      "loss": 10.845147132873535,
+      "step": 10,
+      "step_begin_ns": 2650175420993880,
+      "step_end_ns": 2650175462985976
+    },
+    {
+      "loss": 10.859260559082031,
+      "step": 11,
+      "step_begin_ns": 2650175463058476,
+      "step_end_ns": 2650175503953417
+    }
+  ],
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.868734359741211,
+      "step": 6,
+      "step_begin_ns": 2650143344675810,
+      "step_end_ns": 2650169329433327
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.88557243347168,
+      "step": 7,
+      "step_begin_ns": 2650169329466258,
+      "step_end_ns": 2650169375323549
+    },
+    {
+      "formal_step": 3,
+      "loss": 10.84721565246582,
+      "step": 8,
+      "step_begin_ns": 2650169375346209,
+      "step_end_ns": 2650169417921897
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 32.159352477,
+  "upstream_core_invoked": true
+}

@@ -1,0 +1,34 @@
+{
+  "adapter": "fastpersist_host",
+  "error": null,
+  "preflight": {
+    "adapter": "fastpersist_host",
+    "capture": "real _data_ptr -> aclrtMemcpy -> ACL pinned Host",
+    "deepspeed": "/home/user7/npu-nvme-baseline-upstreams/DeepSpeed",
+    "kind": "host-adapted-semantic-port",
+    "mechanisms_preserved": [
+      "patched PyTorch legacy serialization storage-list hook",
+      "DeepNVMe FastFileWriter and AIO",
+      "64 MiB double-buffered drain before durable completion"
+    ],
+    "platform_substitutions": [
+      "PyTorch model extraction -> common ACL FULL capture and shared memory",
+      "CUDA pinned memory -> DeepNVMe CPU locked memory",
+      "GDS disabled; Host AIO retained"
+    ],
+    "port_class": "npu-semantic-port",
+    "source": "/home/user7/npu-nvme-baseline-upstreams/DeepSpeedExamples",
+    "status": "dependency_blocked",
+    "storage": "durable XFS file backend",
+    "upstream_core_invoked": true,
+    "upstream_integration": "patched serializer+FastFileWriter+AIO",
+    "worker": "/home/user7/npu-nvme-baseline-envs/fastpersist/bin/python",
+    "worker_status": {
+      "returncode": 1,
+      "status": "failed",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/home/user7/npu-nvme-baseline-upstreams/DeepSpeed/deepspeed/__init__.py\", line 37, in <module>\n    from . import module_inject\n  File \"/home/user7/npu-nvme-baseline-upstreams/DeepSpeed/deepspeed/module_inject/__init__.py\", line 6, in <module>\n    from .replace_module import replace_transformer_layer, revert_transformer_layer, ReplaceWithTensorSlicing, GroupQuantizer, generic_injection\n  File \"/home/user7/npu-nvme-baseline-upstreams/DeepSpeed/deepspeed/module_inject/replace_module.py\", line 16, in <module>\n    from .auto_tp import AutoTP, ReplaceWithTensorSlicing, Loading\n  File \"/home/user7/npu-nvme-baseline-upstreams/DeepSpeed/deepspeed/module_inject/auto_tp.py\", line 15, in <module>\n    from .layers import *\n  File \"/home/user7/npu-nvme-baseline-upstreams/DeepSpeed/deepspeed/module_inject/layers.py\", line 16, in <module>\n    from deepspeed.runtime.zero.utils import is_zero_param\n  File \"/home/user7/npu-nvme-baseline-upstreams/DeepSpeed/deepspeed/runtime/zero/__init__.py\", line 6, in <module>\n    from .partition_parameters import ZeroParamType\n  File \"/home/user7/npu-nvme-baseline-upstreams/DeepSpeed/deepspeed/runtime/zero/partition_parameters.py\", line 27, in <module>\n    from deepspeed.runtime.zero.config import DeepSpeedZeroConfig\n  File \"/home/user7/npu-nvme-baseline-upstreams/DeepSpeed/deepspeed/runtime/zero/config.py\", line 9, in <module>\n    from pydantic import Field, model_validator\n  File \"/home/user7/npu-nvme-baseline-envs/fastpersist/lib/python3.9/site-packages/pydantic/__init__.py\", line 446, in __getattr__\n    module = import_module(module_name, package=package)\n  File \"/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/importlib/__init__.py\", line 127, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n  File \"/home/user7/npu-nvme-baseline-envs/fastpersist/lib/python3.9/site-packages/pydantic/fields.py\", line 16, in <module>\n    import annotated_types\nModuleNotFoundError: No module named 'annotated_types'",
+      "stdout": "[2026-09-06 23:47:25,124] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.\n[2026-09-06 23:47:27,674] [WARNING] [real_accelerator.py:199:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it."
+    }
+  },
+  "status": "dependency_blocked"
+}

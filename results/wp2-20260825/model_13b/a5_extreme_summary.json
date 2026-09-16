@@ -1,0 +1,42 @@
+{
+  "experiment": "A5",
+  "model": "gpt2_13b",
+  "path": "p4_spdk",
+  "pci": "0000:83:00.0",
+  "npu": 7,
+  "pipeline_depth": 4,
+  "repetitions": 3,
+  "parameter_count": 644,
+  "parameter_bytes": 26204712960,
+  "results": [
+    {
+      "chunk_size_bytes": 262144,
+      "approx_chunks": 100000,
+      "io_timeout_ms": 60000,
+      "write_mean_ms": 19227.599418,
+      "read_mean_ms": 19152.410126,
+      "first_param_mean_ms": 768.242086,
+      "status": "pass",
+      "raw_run": "experiments/output/wp2_closeout/E4_20260826_114234_3d6c63ea"
+    },
+    {
+      "chunk_size_bytes": 65536,
+      "approx_chunks": 400000,
+      "io_timeout_ms": 600000,
+      "write_mean_ms": 67506.385210,
+      "read_mean_ms": 71447.291435,
+      "first_param_mean_ms": 2660.625309,
+      "status": "pass",
+      "raw_run": "experiments/output/wp2_closeout/E4_20260826_120003_101a4f3b"
+    }
+  ],
+  "negative_control": {
+    "chunk_size_bytes": 65536,
+    "io_timeout_ms": 60000,
+    "status": "timeout",
+    "error": "raw SPDK write returned -110",
+    "raw_run": "experiments/output/wp2_closeout/E4_20260826_115342_7a3620dc"
+  },
+  "correctness": "all formal samples passed 644 per-parameter hash checks",
+  "device_safety": "83.0.0 only; 84.0.0 untouched"
+}

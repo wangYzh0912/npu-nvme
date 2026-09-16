@@ -1,0 +1,52 @@
+{
+  "config": {
+    "capture_blocks": 128,
+    "ckpt_every": 1,
+    "commit_fields": 16,
+    "delta_timeout_ms": 60000,
+    "io_batch_blocks": 128,
+    "io_timeout": 900.0,
+    "mode": "r0",
+    "model": "gpt2_xl",
+    "npu": 5,
+    "output": "experiments/output/r0-repair/gpt2xl-r0-1-retry.json",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 8,
+    "seed": 17,
+    "seq_len": 129,
+    "shm_id": 2305,
+    "slot_size_gb": 10,
+    "steps": 1
+  },
+  "error": "error(\"'I' format requires 0 <= number <= 4294967295\")",
+  "events": [
+    {
+      "elapsed_ms": 149184.902595,
+      "event": "full_persisted",
+      "generation": 1
+    },
+    {
+      "blocks": 10553,
+      "elapsed_ms": 42311.199486,
+      "event": "r0_reference_initialized",
+      "fields": 2318
+    },
+    {
+      "event": "capture_begin",
+      "monotonic_ns": 1772997790217636,
+      "step": 1
+    },
+    {
+      "changed_blocks": 7426,
+      "event": "capture_end",
+      "monotonic_ns": 1773753074147777,
+      "step": 1,
+      "total_blocks": 10553
+    }
+  ],
+  "mode": "r0",
+  "model": "gpt2_xl",
+  "seed": 17,
+  "status": "FAIL",
+  "steps": []
+}

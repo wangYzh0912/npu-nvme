@@ -1,0 +1,143 @@
+{
+  "experiment": "Step 1 Benchmark: GPT-2 XL Pure Training",
+  "model": "GPT-2 XL (48L/1600d)",
+  "date": "2026-06-17 17:39:28",
+  "config": {
+    "seq_len": 1024,
+    "batch_size": 1,
+    "steps": 12,
+    "sink_size": 1,
+    "mode": "GRAPH_MODE",
+    "learning_rate": 1e-05,
+    "optimizer": "AdamWeightDecay",
+    "n_trainable_params": 772,
+    "n_transformer_layers": 48,
+    "total_elems": 1557611200,
+    "fp16_mb": 2970.9,
+    "fp16_gb": 2.9,
+    "device_id": 1
+  },
+  "S1.1_perf": {
+    "compile_epoch_ms": 155858.04800037295,
+    "warm_steps": 11,
+    "avg_step_ms": 567.9078710011461,
+    "std_step_ms": 34.40705814458049,
+    "min_step_ms": 542.2867676243186,
+    "max_step_ms": 672.4649760872126,
+    "cov_pct": 6.1,
+    "total_train_s": 162.137,
+    "all_step_times_ms": [
+      155858.0,
+      672.5,
+      545.3,
+      542.3,
+      562.5,
+      569.4,
+      568.2,
+      550.3,
+      547.0,
+      555.9,
+      567.1,
+      566.3
+    ]
+  },
+  "S1.2_compile": {
+    "model_init_s": 40.8,
+    "cell_build_s": 53.9,
+    "first_epoch_with_compile_ms": 155858.04800037295
+  },
+  "S1.5_hbm": {
+    "before": "NPU ID                         : 1\n\tChip Count                     : 1\n\n\tDDR Capacity(MB)               : 0\n\tDDR Usage Rate(%)              : 0\n\tDDR Hugepages Total(page)      : 0\n\tDDR Hugepages Usage Rate(%)    : 0\n\tHBM Capacity(MB)               : 65536\n\tHBM Usage Rate(%)              : 32\n\tAicore Usage Rate(%)           : 0\n\tAivector Usage Rate(%)         : 0\n\tAicpu Usage Rate(%)            : 0\n\tCtrlcpu Usage Rate(%)          : 3\n\tDDR Bandwidth Usage Rate(%)    : 0\n\tHBM Bandwidth Usage Rate(%)    : 0\n\tChip ID                        : 0",
+    "during_log_file": "/home/user7/npu-nvme/experiments/output/benchmark/step1_hbm_usage.log",
+    "after": "NPU ID                         : 1\n\tChip Count                     : 1\n\n\tDDR Capacity(MB)               : 0\n\tDDR Usage Rate(%)              : 0\n\tDDR Hugepages Total(page)      : 0\n\tDDR Hugepages Usage Rate(%)    : 0\n\tHBM Capacity(MB)               : 65536\n\tHBM Usage Rate(%)              : 35\n\tAicore Usage Rate(%)           : 0\n\tAivector Usage Rate(%)         : 0\n\tAicpu Usage Rate(%)            : 0\n\tCtrlcpu Usage Rate(%)          : 0\n\tDDR Bandwidth Usage Rate(%)    : 0\n\tHBM Bandwidth Usage Rate(%)    : 3\n\tChip ID                        : 0"
+  },
+  "S1_loss": {
+    "init": 10.547142028808594,
+    "final": 0.018818696960806847,
+    "avg": 1.021531
+  },
+  "S1.3_cube": {
+    "aic_total_ops": 10944,
+    "aic_total_dur_s": 0.6413,
+    "aic_mac_util_pct": 0.49,
+    "aic_scalar_util_pct": 0.39,
+    "aic_active_pct_of_total": 20.9
+  },
+  "S1.4_vector": {
+    "aiv_total_ops": 113005,
+    "aiv_total_dur_s": 1.7508,
+    "aiv_vec_util_pct": 0.23,
+    "aiv_scalar_util_pct": 0.16,
+    "aiv_active_pct_of_total": 57.0
+  },
+  "S1.6_ge_graph": {
+    "total_kernel_instances": 132170,
+    "total_dur_s": 3.0726,
+    "aicpu_ops": 0,
+    "aicpu_dur_s": 0.0,
+    "top_op_types": {
+      "Cast": 56616,
+      "Assign": 20736,
+      "MatMulV2": 10380,
+      "AdamApplyOneWithDecay": 6912,
+      "Add": 5208,
+      "Transpose": 4608,
+      "ReduceSum": 3516,
+      "DropOutDoMask": 3480,
+      "BatchMatMulV2": 3456,
+      "AdamApplyOneWithDecayAssign": 2352,
+      "RealDiv": 2328,
+      "Sub": 1812,
+      "DSAGenBitMask": 1740,
+      "AddN": 1740,
+      "LayerNormV3": 1164,
+      "LayerNormXBackpropV3": 1164,
+      "MemSet": 1164,
+      "LayerNormBetaGammaBackpropV2": 1164,
+      "SoftmaxV2": 576,
+      "FastGelu": 576
+    },
+    "delta_related_ops": {
+      "Add": {
+        "count": 5208,
+        "dur_us": 69050.4,
+        "core_type": "AI_VECTOR_CORE"
+      },
+      "Cast": {
+        "count": 56616,
+        "dur_us": 555437.2,
+        "core_type": "AI_VECTOR_CORE"
+      },
+      "Mul": {
+        "count": 84,
+        "dur_us": 10207.3,
+        "core_type": "AI_VECTOR_CORE"
+      },
+      "OnesLike": {
+        "count": 1,
+        "dur_us": 3.7,
+        "core_type": "AI_VECTOR_CORE"
+      },
+      "ReduceMax": {
+        "count": 12,
+        "dur_us": 2013.9,
+        "core_type": "MIX_AIV"
+      },
+      "ReduceSum": {
+        "count": 3516,
+        "dur_us": 63289.3,
+        "core_type": "MIX_AIV"
+      },
+      "Sub": {
+        "count": 1812,
+        "dur_us": 17101.8,
+        "core_type": "AI_VECTOR_CORE"
+      }
+    }
+  },
+  "_meta": {
+    "msprof_csv": "/home/user7/npu-nvme/output/profiling_vec/step1/PROF_000001_20260617173626718_CFFOFLRGLOAHFJKC/mindstudio_profiler_output/op_summary_20260617174249.csv",
+    "profiler_dir": "/home/user7/npu-nvme/output/profiling_vec/step1/PROF_000001_20260617173626718_CFFOFLRGLOAHFJKC",
+    "parse_date": "2026-06-17 17:45:35"
+  }
+}
