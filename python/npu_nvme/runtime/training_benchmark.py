@@ -58,7 +58,7 @@ def campaign(config,output,*,profile='all'):
                     if restore:samples.append(seconds)
                 result['timings'][method]=dict(samples_seconds=samples,median_seconds=statistics.median(samples),
                     source_repetitions=3,warmup_restores=1,timed_restores=3,
-                    boundary='restore_begin_to_global_ready',mandatory_integrity=True)
+                    boundary='worker_entry_to_restore_global_ready',mandatory_integrity=True)
                 record()
         result['validation_status']='pass';record();return 0
     except BaseException as error:

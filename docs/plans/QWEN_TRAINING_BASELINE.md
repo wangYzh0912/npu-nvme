@@ -44,6 +44,16 @@ is measured and disclosed without the cancelled five-percent regression gate.
 
 ## Execution status (2026-09-16)
 
+- Acceptance attempt qwen-training-acceptance-20260916-001 failed after the
+  Native source run: only default MindSpore RNG differed from the 24-step
+  oracle. set_seed does not initialize that generator. The release adds
+  manual_seed(42), restores its exact state and includes that seed in identity.
+  A new complete campaign must pass before publication. No acceptance process
+  from the first attempt remains running.
+- The release uses qwen-release-runtime-20260916-001. Timings cover worker
+  entry through global restore readiness, including initialization, compilation
+  and integrity checks; they are not storage-only restore latency.
+
 - Allocation classification fix: commit 556b757. Real MindSpore 2.7.1 Host
   scalar probe passed. Direct NPU hugepage probes passed on devices 0–3 after recovery.
 - Training entry and periodic catalog: commit 369436b. Persistent owner/rank

@@ -39,7 +39,7 @@ def resolve(value, repo):
     # Stop step, output location and backend do not change the optimizer trajectory.
     # Frozen model shard hashes are supplied by preflight before any training run.
     config['identity']=dict(model='Qwen3-8B',model_config_sha256=hashlib.sha256(raw).hexdigest(),
-        topology=dict(tp=4,dp=1,pp=1),seed=42,sequence_length=config['seq_length'],
+        topology=dict(tp=4,dp=1,pp=1),seed=42,default_generator_seed=42,sequence_length=config['seq_length'],
         state_scope='full_state',params_dtype='float32',compute_dtype='bfloat16',dropout=0,
         lr_horizon=config['lr_horizon'],strategy_sha256=digest(strategy),
         data_fixture='checkpoint-recovery-fixed-text-v1',optimizer='mindformers-1.7-qwen3-template')
