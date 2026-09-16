@@ -61,7 +61,7 @@ def run(options):
         build_context(config)
         if is_legacy_model() or get_group_size()!=4 or get_rank()!=rank or ms.get_context('device_id')!=rank:
             raise RuntimeError('baseline requires TP4 on physical NPU 0–3')
-        ms.set_seed(42);np.random.seed(42);random.seed(42)
+        ms.set_seed(42);ms.manual_seed(42);np.random.seed(42);random.seed(42)
         tokenizer=AutoTokenizer.from_pretrained(str(source),local_files_only=True,trust_remote_code=False)
         text=('Checkpoint recovery restores model parameters and optimizer state. '
               'Tensor parallel training divides the model across accelerator devices. ')

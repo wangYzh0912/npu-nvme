@@ -4,11 +4,13 @@ import subprocess
 import re
 import ast
 import pytest
+import os
 ROOT=Path(__file__).resolve().parents[2]
+LIBRARY=Path(os.environ.get('NPU_NVME_LIBRARY_PATH',ROOT/'build/libnpu_nvme.so'))
 
 
 def test_no_blocking_batch_exports_and_versioned_soname():
-    library=ROOT/'build/libnpu_nvme.so'
+    library=LIBRARY
     symbols=subprocess.check_output(['nm','-D','--defined-only',str(library)],text=True)
     assert not re.search(r'\bnpu_nvme_(?:write_batch(?:_crc|_host)?|read_batch(?:_host)?)\b',symbols)
     assert 'npu_nvme_abi_version' in symbols and 'npu_nvme_submit_transfer' in symbols
@@ -28,7 +30,7 @@ def test_no_runtime_sync_bulk_or_retired_callers():
 
 def test_abi_version_is_checked_without_device_initialization():
     import ctypes
-    library=ctypes.CDLL(str(ROOT/'build/libnpu_nvme.so'))
+    library=ctypes.CDLL(str(LIBRARY))
     library.npu_nvme_abi_version.argtypes=[]
     library.npu_nvme_abi_version.restype=ctypes.c_uint32
     assert library.npu_nvme_abi_version()==2
