@@ -1,0 +1,48 @@
+{
+  "experiment": "Step 1b: Device-level PMU Profiling",
+  "model": "GPT-2 XL (48L/1600d)",
+  "config": {
+    "seq_len": 1024,
+    "batch_size": 1,
+    "steps": 12,
+    "sink_size": 1,
+    "mode": "GRAPH_MODE",
+    "optimizer": "AdamWeightDecay",
+    "learning_rate": 1e-05,
+    "device_id": 1
+  },
+  "timing": {
+    "model_init_s": 39.9,
+    "cell_build_s": 49.7,
+    "compile_epoch_ms": 145400.51001869142,
+    "warm_steps": 11,
+    "avg_step_ms": 620.7224671644243,
+    "all_step_times_ms": [
+      145400.5,
+      720.5,
+      572.2,
+      567.6,
+      607.9,
+      629.8,
+      575.4,
+      569.6,
+      637.1,
+      785.3,
+      575.9,
+      586.6
+    ]
+  },
+  "pmu": {
+    "cube_mac_util_pct": 55.7,
+    "vector_alu_util_pct": 12.4,
+    "vector_idle_pct": 87.6,
+    "aic_time_pct": 21.07,
+    "aiv_time_pct": 56.44,
+    "aicpu_time_pct": 0.0,
+    "total_kernel_instances": 132170,
+    "aic_ops": 10944,
+    "aiv_ops": 113005,
+    "source": "sample-based PMU (aic=1 csvs, aiv=1 csvs)",
+    "aic_vec_total_pct": 0.0
+  }
+}

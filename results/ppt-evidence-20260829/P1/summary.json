@@ -1,0 +1,1061 @@
+{
+  "comparison": "same operation, logical bytes, configured depth and persistence boundary; physical request size differs when SPDK segments a logical block",
+  "groups": [
+    {
+      "block_size": 1048576,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.6158816777862127,
+              0.6265183192111204
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.67500000449,
+            "mean": 0.6211999984986666,
+            "median": 0.6149999974,
+            "min": 0.609999997,
+            "n": 30,
+            "p95": 0.6458499967130001,
+            "p99": 0.6674600033909001,
+            "p99_status": "reported",
+            "stdev": 0.01424272444643624
+          },
+          "latency_mean": 879.2,
+          "latency_p50": 878.0,
+          "latency_p95": 890.8,
+          "run_id": "P1_20260830_121814_2cc15530",
+          "spdk_command_size": null,
+          "throughput": 1221271410.3730662
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 1
+    },
+    {
+      "block_size": 1048576,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.6346847322518753,
+              0.6389819339101249
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.6500000015499999,
+            "mean": 0.6368333330810001,
+            "median": 0.63600000253,
+            "min": 0.6289999989,
+            "n": 30,
+            "p95": 0.6470999994665,
+            "p99": 0.6494200007930999,
+            "p99_status": "reported",
+            "stdev": 0.005754058698067663
+          },
+          "latency_mean": 657.2666666666667,
+          "latency_p50": 655.0,
+          "latency_p95": 671.0,
+          "run_id": "P1_20260830_121858_988aad94",
+          "spdk_command_size": null,
+          "throughput": 1633647160.9696724
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 4
+    },
+    {
+      "block_size": 268435456,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.7090616279452693,
+              0.7256050388493973
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.78399999696,
+            "mean": 0.7173333333973333,
+            "median": 0.70799999979,
+            "min": 0.7000000016,
+            "n": 30,
+            "p95": 0.7660499992734999,
+            "p99": 0.7828399982534,
+            "p99_status": "reported",
+            "stdev": 0.02215203403960818
+          },
+          "latency_mean": 854.1,
+          "latency_p50": 849.0,
+          "latency_p95": 885.6500000000001,
+          "run_id": "P1_20260830_122907_c6a327e0",
+          "spdk_command_size": null,
+          "throughput": 1257161718.768294
+        },
+        "odirect": {
+          "cpu_seconds": {
+            "ci95": [
+              0.04757373125352534,
+              0.048959601989808
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.051000000590000004,
+            "mean": 0.04826666662166667,
+            "median": 0.048999999089999996,
+            "min": 0.04499999935,
+            "n": 30,
+            "p95": 0.050550000626000006,
+            "p99": 0.051000000590000004,
+            "p99_status": "reported",
+            "stdev": 0.0018557149975021127
+          },
+          "latency_mean": 200.36666666666667,
+          "latency_p50": 200.0,
+          "latency_p95": 201.55,
+          "run_id": "P1_20260830_123236_9ab5569b",
+          "spdk_command_size": null,
+          "throughput": 5358884498.419564
+        },
+        "spdk_host": {
+          "cpu_seconds": {
+            "ci95": [
+              0.1436661262264921,
+              0.14393514044017314
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.14435399999999854,
+            "mean": 0.14380063333333262,
+            "median": 0.14380350000000108,
+            "min": 0.1430640000000043,
+            "n": 30,
+            "p95": 0.14432559999999273,
+            "p99": 0.14435254999999642,
+            "p99_status": "reported",
+            "stdev": 0.0003602166477720156
+          },
+          "latency_mean": 472.18967253333335,
+          "latency_p50": 472.29708400000004,
+          "latency_p95": 487.86155644999997,
+          "run_id": "P1_20260830_124117_c1f77d59",
+          "spdk_command_size": 4194304,
+          "throughput": 2273962956.9602695
+        }
+      },
+      "physical_request_size_equivalent": false,
+      "queue_depth": 1,
+      "speedup": {
+        "buffered": 1.8088070317541864,
+        "odirect": 0.424335131244367
+      }
+    },
+    {
+      "block_size": 268435456,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.7461588882314537,
+              0.7593077773618796
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.8109999992,
+            "mean": 0.7527333327966667,
+            "median": 0.7470000004799999,
+            "min": 0.73399999635,
+            "n": 30,
+            "p95": 0.7936499980195,
+            "p99": 0.8089699993653001,
+            "p99_status": "reported",
+            "stdev": 0.017606685905839883
+          },
+          "latency_mean": 769.2,
+          "latency_p50": 761.0,
+          "latency_p95": 817.25,
+          "run_id": "P1_20260830_122950_640037f2",
+          "spdk_command_size": null,
+          "throughput": 1395920208.0083203
+        },
+        "odirect": {
+          "cpu_seconds": {
+            "ci95": [
+              0.14928628004534994,
+              0.14971371928331667
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.15100000079999998,
+            "mean": 0.1494999996643333,
+            "median": 0.149000000955,
+            "min": 0.14899999893000002,
+            "n": 30,
+            "p95": 0.15000000038199998,
+            "p99": 0.15071000068399998,
+            "p99_status": "reported",
+            "stdev": 0.0005723516513115245
+          },
+          "latency_mean": 241.16666666666666,
+          "latency_p50": 239.0,
+          "latency_p95": 249.0,
+          "run_id": "P1_20260830_123252_ff4b39c5",
+          "spdk_command_size": null,
+          "throughput": 4452281232.895646
+        },
+        "spdk_host": {
+          "cpu_seconds": {
+            "ci95": [
+              0.14048171461946402,
+              0.14063908538053338
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.1411719999999832,
+            "mean": 0.1405603999999987,
+            "median": 0.140530500000001,
+            "min": 0.14015100000000302,
+            "n": 30,
+            "p95": 0.1408687999999882,
+            "p99": 0.1410992099999818,
+            "p99_status": "reported",
+            "stdev": 0.0002107233191661757
+          },
+          "latency_mean": 204.02073196666666,
+          "latency_p50": 202.4616455,
+          "latency_p95": 212.795361,
+          "run_id": "P1_20260830_124218_255f402e",
+          "spdk_command_size": 4194304,
+          "throughput": 5262905458.918901
+        }
+      },
+      "physical_request_size_equivalent": false,
+      "queue_depth": 4,
+      "speedup": {
+        "buffered": 3.7702050795782536,
+        "odirect": 1.1820694119755877
+      }
+    },
+    {
+      "block_size": 4096,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              1.0195952217274828,
+              1.0294047784358504
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 1.0530000081900002,
+            "mean": 1.0245000000816666,
+            "median": 1.022999995995,
+            "min": 1.0070000010000002,
+            "n": 30,
+            "p95": 1.0497499969604998,
+            "p99": 1.0527100059918002,
+            "p99_status": "reported",
+            "stdev": 0.013135237671150594
+          },
+          "latency_mean": 1114.2666666666667,
+          "latency_p50": 1112.0,
+          "latency_p95": 1134.85,
+          "run_id": "P1_20260830_121454_5d2115e3",
+          "spdk_command_size": null,
+          "throughput": 963630929.759483
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 1
+    },
+    {
+      "block_size": 4096,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              1.0512048228298858,
+              1.0600618410114473
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 1.08599999936,
+            "mean": 1.0556333319206666,
+            "median": 1.057000001425,
+            "min": 1.03399999902,
+            "n": 30,
+            "p95": 1.0691999993780001,
+            "p99": 1.081649998577,
+            "p99_status": "reported",
+            "stdev": 0.011859765158732568
+          },
+          "latency_mean": 1131.5333333333333,
+          "latency_p50": 1127.5,
+          "latency_p95": 1151.1,
+          "run_id": "P1_20260830_121550_67e20bf0",
+          "spdk_command_size": null,
+          "throughput": 948926374.8306134
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 4
+    },
+    {
+      "block_size": 4194304,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.6697520819269278,
+              0.678647918635072
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.7070000015699999,
+            "mean": 0.6742000002809999,
+            "median": 0.67249999761,
+            "min": 0.6589999969300001,
+            "n": 30,
+            "p95": 0.70159999997,
+            "p99": 0.7070000005056998,
+            "p99_status": "reported",
+            "stdev": 0.011911744120460203
+          },
+          "latency_mean": 848.3666666666667,
+          "latency_p50": 848.0,
+          "latency_p95": 856.0999999999999,
+          "run_id": "P1_20260830_122749_d9985b35",
+          "spdk_command_size": null,
+          "throughput": 1265657723.468626
+        },
+        "odirect": {
+          "cpu_seconds": {
+            "ci95": [
+              0.031589893255190675,
+              0.034676772682809325
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.0410000001,
+            "mean": 0.033133332969,
+            "median": 0.034499999605,
+            "min": 0.0259999996,
+            "n": 30,
+            "p95": 0.04000000032,
+            "p99": 0.040710000163800004,
+            "p99_status": "reported",
+            "stdev": 0.004133407466758358
+          },
+          "latency_mean": 322.7,
+          "latency_p50": 322.0,
+          "latency_p95": 334.0,
+          "run_id": "P1_20260830_123201_712e89f2",
+          "spdk_command_size": null,
+          "throughput": 3327368528.044624
+        },
+        "spdk_host": {
+          "cpu_seconds": {
+            "ci95": [
+              0.14485017274941905,
+              0.14500449391724904
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.145386000000002,
+            "mean": 0.14492733333333405,
+            "median": 0.1449144999999996,
+            "min": 0.1444270000000074,
+            "n": 30,
+            "p95": 0.14528990000000197,
+            "p99": 0.1453761400000001,
+            "p99_status": "reported",
+            "stdev": 0.00020663983882237904
+          },
+          "latency_mean": 469.2986099333333,
+          "latency_p50": 467.855436,
+          "latency_p95": 487.02577729999996,
+          "run_id": "P1_20260830_123457_0d9998d8",
+          "spdk_command_size": null,
+          "throughput": 2287971456.2813888
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 1,
+      "speedup": {
+        "buffered": 1.8077331760841615,
+        "odirect": 0.6876218961011656
+      }
+    },
+    {
+      "block_size": 4194304,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.6577670092870576,
+              0.6632329905742758
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.6750000042100001,
+            "mean": 0.6604999999306667,
+            "median": 0.6624999999000001,
+            "min": 0.6440000001599999,
+            "n": 30,
+            "p95": 0.6711000023475,
+            "p99": 0.6741300038591,
+            "p99_status": "reported",
+            "stdev": 0.007319083364126903
+          },
+          "latency_mean": 672.3,
+          "latency_p50": 669.0,
+          "latency_p95": 693.0,
+          "run_id": "P1_20260830_122831_a98afdf9",
+          "spdk_command_size": null,
+          "throughput": 1597117096.5342853
+        },
+        "odirect": {
+          "cpu_seconds": {
+            "ci95": [
+              0.02179942857077193,
+              0.02566723763589474
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.03,
+            "mean": 0.023733333103333334,
+            "median": 0.02649999973,
+            "min": 0.01799999964,
+            "n": 30,
+            "p95": 0.029549999669999997,
+            "p99": 0.029999999825999997,
+            "p99_status": "reported",
+            "stdev": 0.005179091456159509
+          },
+          "latency_mean": 160.5,
+          "latency_p50": 160.5,
+          "latency_p95": 161.0,
+          "run_id": "P1_20260830_123222_93752ccb",
+          "spdk_command_size": null,
+          "throughput": 6689980211.838006
+        },
+        "spdk_host": {
+          "cpu_seconds": {
+            "ci95": [
+              0.14079380408811237,
+              0.140940595911889
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.14137999999999806,
+            "mean": 0.1408672000000007,
+            "median": 0.14083550000001477,
+            "min": 0.14050000000000296,
+            "n": 30,
+            "p95": 0.14121020000000045,
+            "p99": 0.14135998999999913,
+            "p99_status": "reported",
+            "stdev": 0.00019655786197175578
+          },
+          "latency_mean": 206.01348233333334,
+          "latency_p50": 203.28358350000002,
+          "latency_p95": 221.98308830000002,
+          "run_id": "P1_20260830_123558_40befd2d",
+          "spdk_command_size": null,
+          "throughput": 5211997835.4749975
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 4,
+      "speedup": {
+        "buffered": 3.263378650685624,
+        "odirect": 0.7790752245054926
+      }
+    },
+    {
+      "block_size": 65536,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.6100988180287169,
+              0.61836784950595
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.6339999955400001,
+            "mean": 0.6142333337673335,
+            "median": 0.6195000005850002,
+            "min": 0.5969999997000001,
+            "n": 30,
+            "p95": 0.6276500018444999,
+            "p99": 0.6325499964013,
+            "p99_status": "reported",
+            "stdev": 0.011072436501746595
+          },
+          "latency_mean": 917.1333333333333,
+          "latency_p50": 916.0,
+          "latency_p95": 924.65,
+          "run_id": "P1_20260830_121644_0b303945",
+          "spdk_command_size": null,
+          "throughput": 1170758694.4828088
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 1
+    },
+    {
+      "block_size": 65536,
+      "operation": "read",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.6528167897938085,
+              0.6627832110348583
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.68099999928,
+            "mean": 0.6578000004143334,
+            "median": 0.6590000053,
+            "min": 0.6379999968000001,
+            "n": 30,
+            "p95": 0.6754000047030001,
+            "p99": 0.6804200005212,
+            "p99_status": "reported",
+            "stdev": 0.013345283138057024
+          },
+          "latency_mean": 914.6,
+          "latency_p50": 914.0,
+          "latency_p95": 920.55,
+          "run_id": "P1_20260830_121729_33484d70",
+          "spdk_command_size": null,
+          "throughput": 1174001556.9647934
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 4
+    },
+    {
+      "block_size": 1048576,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.1854766157615568,
+              0.20065671831510987
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.26300000348,
+            "mean": 0.19306666703833333,
+            "median": 0.184000000185,
+            "min": 0.18099999653999999,
+            "n": 30,
+            "p95": 0.2290000042095,
+            "p99": 0.25314000534760006,
+            "p99_status": "reported",
+            "stdev": 0.020326530631427527
+          },
+          "latency_mean": 990.0333333333333,
+          "latency_p50": 976.0,
+          "latency_p95": 1046.35,
+          "run_id": "P1_20260830_120953_8f490a89",
+          "spdk_command_size": null,
+          "throughput": 1084551184.1352143
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 1
+    },
+    {
+      "block_size": 1048576,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.19253735962018556,
+              0.20472930880114779
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.22600000684,
+            "mean": 0.19863333421066667,
+            "median": 0.19299999978,
+            "min": 0.17999999426,
+            "n": 30,
+            "p95": 0.222749997615,
+            "p99": 0.2257100035514,
+            "p99_status": "reported",
+            "stdev": 0.01632531978024296
+          },
+          "latency_mean": 958.5666666666667,
+          "latency_p50": 961.5,
+          "latency_p95": 996.9,
+          "run_id": "P1_20260830_121040_dcfb89f0",
+          "spdk_command_size": null,
+          "throughput": 1120153518.0999408
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 4
+    },
+    {
+      "block_size": 268435456,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.19241667406798413,
+              0.20771666000268252
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.2559999948,
+            "mean": 0.20006666703533332,
+            "median": 0.18999999962999997,
+            "min": 0.17899999307999997,
+            "n": 30,
+            "p95": 0.23600000219400002,
+            "p99": 0.2501999970852,
+            "p99_status": "reported",
+            "stdev": 0.020487057426978032
+          },
+          "latency_mean": 1007.2,
+          "latency_p50": 988.5,
+          "latency_p95": 1112.0,
+          "run_id": "P1_20260830_122552_14faa733",
+          "spdk_command_size": null,
+          "throughput": 1066066147.7362986
+        },
+        "odirect": {
+          "cpu_seconds": {
+            "ci95": [
+              0.039648116682232455,
+              0.042018550485767546
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.04600000024,
+            "mean": 0.040833333584,
+            "median": 0.040500000165,
+            "min": 0.03500000010000001,
+            "n": 30,
+            "p95": 0.045000001557000006,
+            "p99": 0.0457100006924,
+            "p99_status": "reported",
+            "stdev": 0.0031740691571315966
+          },
+          "latency_mean": 269.3,
+          "latency_p50": 263.0,
+          "latency_p95": 305.55,
+          "run_id": "P1_20260830_123104_04397396",
+          "spdk_command_size": null,
+          "throughput": 3987158648.347568
+        },
+        "spdk_host": {
+          "cpu_seconds": {
+            "ci95": [
+              0.32552996950438046,
+              0.3259671638289529
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.3268039999999993,
+            "mean": 0.3257485666666667,
+            "median": 0.3255905000000003,
+            "min": 0.3247360000000008,
+            "n": 30,
+            "p95": 0.3267551499999977,
+            "p99": 0.32679152999999916,
+            "p99_status": "reported",
+            "stdev": 0.0005854139521757135
+          },
+          "latency_mean": 599.8105406333333,
+          "latency_p50": 598.688037,
+          "latency_p95": 607.5154651,
+          "run_id": "P1_20260830_123939_66bb28bc",
+          "spdk_command_size": 4194304,
+          "throughput": 1790134969.7293549
+        }
+      },
+      "physical_request_size_equivalent": false,
+      "queue_depth": 1,
+      "speedup": {
+        "buffered": 1.6791968993017508,
+        "odirect": 0.4489751042314947
+      }
+    },
+    {
+      "block_size": 268435456,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.1850984760066661,
+              0.19956818913533395
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.25399999879999996,
+            "mean": 0.19233333257100002,
+            "median": 0.18450000107999998,
+            "min": 0.17200000092,
+            "n": 30,
+            "p95": 0.22860000163,
+            "p99": 0.248199999438,
+            "p99_status": "reported",
+            "stdev": 0.01937530172146262
+          },
+          "latency_mean": 997.4333333333333,
+          "latency_p50": 990.5,
+          "latency_p95": 1076.0500000000002,
+          "run_id": "P1_20260830_122645_b7c3e0c9",
+          "spdk_command_size": null,
+          "throughput": 1076504853.1230159
+        },
+        "odirect": {
+          "cpu_seconds": {
+            "ci95": [
+              0.042568847664386525,
+              0.04476448560494681
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.04800000133,
+            "mean": 0.043666666634666666,
+            "median": 0.043999999644999996,
+            "min": 0.03799999859,
+            "n": 30,
+            "p95": 0.0475500000495,
+            "p99": 0.0480000009443,
+            "p99_status": "reported",
+            "stdev": 0.002940013197992332
+          },
+          "latency_mean": 253.03333333333333,
+          "latency_p50": 241.0,
+          "latency_p95": 284.75,
+          "run_id": "P1_20260830_123127_11d4d638",
+          "spdk_command_size": null,
+          "throughput": 4243479741.7994995
+        },
+        "spdk_host": {
+          "cpu_seconds": {
+            "ci95": [
+              0.34126472691021276,
+              0.3423846730897872
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.3438069999999991,
+            "mean": 0.3418247,
+            "median": 0.341869,
+            "min": 0.33875199999999994,
+            "n": 30,
+            "p95": 0.3435696000000003,
+            "p99": 0.34374493999999944,
+            "p99_status": "reported",
+            "stdev": 0.0014996354763980731
+          },
+          "latency_mean": 370.54556313333336,
+          "latency_p50": 370.2244175,
+          "latency_p95": 376.167318,
+          "run_id": "P1_20260830_124717_009d42b0",
+          "spdk_command_size": 4194304,
+          "throughput": 2897732238.163747
+        }
+      },
+      "physical_request_size_equivalent": false,
+      "queue_depth": 4,
+      "speedup": {
+        "buffered": 2.6917967250748784,
+        "odirect": 0.6828669899422987
+      }
+    },
+    {
+      "block_size": 4096,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              1.686006128786399,
+              1.7586605387962677
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 1.8130000055999997,
+            "mean": 1.7223333337913334,
+            "median": 1.75299999413,
+            "min": 1.4829999979800002,
+            "n": 30,
+            "p95": 1.8071999939924999,
+            "p99": 1.8118400011049998,
+            "p99_status": "reported",
+            "stdev": 0.09728604173548429
+          },
+          "latency_mean": 4860.933333333333,
+          "latency_p50": 4901.0,
+          "latency_p95": 5330.3,
+          "run_id": "P1_20260830_120343_e8ccf087",
+          "spdk_command_size": null,
+          "throughput": 220892110.70576295
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 1
+    },
+    {
+      "block_size": 4096,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.8687912105363903,
+              0.922075456646943
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.9810000032499999,
+            "mean": 0.8954333335916667,
+            "median": 0.9254999996,
+            "min": 0.7509999984000001,
+            "n": 30,
+            "p95": 0.9693000075835001,
+            "p99": 0.9783900041635,
+            "p99_status": "reported",
+            "stdev": 0.07134891591922504
+          },
+          "latency_mean": 1435.0666666666666,
+          "latency_p50": 1461.0,
+          "latency_p95": 1498.15,
+          "run_id": "P1_20260830_120706_1ad76337",
+          "spdk_command_size": null,
+          "throughput": 748217381.7708817
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 4
+    },
+    {
+      "block_size": 4194304,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.1730466811672517,
+              0.18441998384941494
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.24600000000000002,
+            "mean": 0.17873333250833331,
+            "median": 0.17399999705500002,
+            "min": 0.16800000189999997,
+            "n": 30,
+            "p95": 0.20025000417600003,
+            "p99": 0.23469000177480004,
+            "p99_status": "reported",
+            "stdev": 0.015229131986027156
+          },
+          "latency_mean": 1001.6666666666666,
+          "latency_p50": 1010.5,
+          "latency_p95": 1055.25,
+          "run_id": "P1_20260830_122418_f1d09653",
+          "spdk_command_size": null,
+          "throughput": 1071955231.9467554
+        },
+        "odirect": {
+          "cpu_seconds": {
+            "ci95": [
+              0.04473822903870969,
+              0.048528437074623634
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.0589999989,
+            "mean": 0.04663333305666666,
+            "median": 0.04399999905,
+            "min": 0.042000000600000004,
+            "n": 30,
+            "p95": 0.058099999056,
+            "p99": 0.058999998882600005,
+            "p99_status": "reported",
+            "stdev": 0.0050751817696682786
+          },
+          "latency_mean": 264.76666666666665,
+          "latency_p50": 258.0,
+          "latency_p95": 298.1,
+          "run_id": "P1_20260830_123030_7d2d4092",
+          "spdk_command_size": null,
+          "throughput": 4055426755.6338916
+        },
+        "spdk_host": {
+          "cpu_seconds": {
+            "ci95": [
+              0.31622232595801125,
+              0.31667347404199164
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.31877000000000155,
+            "mean": 0.31644790000000145,
+            "median": 0.3164745,
+            "min": 0.31504800000000444,
+            "n": 30,
+            "p95": 0.3169484500000014,
+            "p99": 0.3182598900000016,
+            "p99_status": "reported",
+            "stdev": 0.0006040983791766228
+          },
+          "latency_mean": 588.3134148,
+          "latency_p50": 587.7824015000001,
+          "latency_p95": 590.9388286,
+          "run_id": "P1_20260830_123310_792b37c5",
+          "spdk_command_size": null,
+          "throughput": 1825118715.6169536
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 1,
+      "speedup": {
+        "buffered": 1.7026072183092884,
+        "odirect": 0.45004356522564654
+      }
+    },
+    {
+      "block_size": 4194304,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.18096044423415378,
+              0.19130622426851282
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.2180000004,
+            "mean": 0.1861333342513333,
+            "median": 0.18049999829999996,
+            "min": 0.16999999810000002,
+            "n": 30,
+            "p95": 0.2127500026505,
+            "p99": 0.2171300012497,
+            "p99_status": "reported",
+            "stdev": 0.013853253891567986
+          },
+          "latency_mean": 972.2666666666667,
+          "latency_p50": 975.0,
+          "latency_p95": 1018.2,
+          "run_id": "P1_20260830_122506_93ebcd0b",
+          "spdk_command_size": null,
+          "throughput": 1104369676.3576522
+        },
+        "odirect": {
+          "cpu_seconds": {
+            "ci95": [
+              0.04214437081294574,
+              0.04292229583172093
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.04599999978,
+            "mean": 0.04253333332233333,
+            "median": 0.042999998410000004,
+            "min": 0.0400000016,
+            "n": 30,
+            "p95": 0.0435500004155,
+            "p99": 0.0454199994958,
+            "p99_status": "reported",
+            "stdev": 0.0010416607310328456
+          },
+          "latency_mean": 242.1,
+          "latency_p50": 232.0,
+          "latency_p95": 271.20000000000005,
+          "run_id": "P1_20260830_123047_9ba9a8fa",
+          "spdk_command_size": null,
+          "throughput": 4435116992.978108
+        },
+        "spdk_host": {
+          "cpu_seconds": {
+            "ci95": [
+              0.3423034254550411,
+              0.3433252412116249
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.3456739999999998,
+            "mean": 0.342814333333333,
+            "median": 0.3428455000000006,
+            "min": 0.3402259999999999,
+            "n": 30,
+            "p95": 0.3452309499999988,
+            "p99": 0.34565892000000004,
+            "p99_status": "reported",
+            "stdev": 0.0013682364267700179
+          },
+          "latency_mean": 371.9000895333333,
+          "latency_p50": 370.441689,
+          "latency_p95": 380.0005231,
+          "run_id": "P1_20260830_124531_8ad6c42b",
+          "spdk_command_size": 4194304,
+          "throughput": 2887178180.9661565
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 4,
+      "speedup": {
+        "buffered": 2.614322217256478,
+        "odirect": 0.6509812899044776
+      }
+    },
+    {
+      "block_size": 65536,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.2772621000909219,
+              0.2921378989570782
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.32600000367,
+            "mean": 0.28469999952400005,
+            "median": 0.27250000302,
+            "min": 0.24899999969999997,
+            "n": 30,
+            "p95": 0.31909999588500004,
+            "p99": 0.3242600013471,
+            "p99_status": "reported",
+            "stdev": 0.01991906051050409
+          },
+          "latency_mean": 1203.1333333333334,
+          "latency_p50": 1203.5,
+          "latency_p95": 1258.65,
+          "run_id": "P1_20260830_120811_de80cb57",
+          "spdk_command_size": null,
+          "throughput": 892454555.3277552
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 1
+    },
+    {
+      "block_size": 65536,
+      "operation": "write",
+      "paths": {
+        "buffered": {
+          "cpu_seconds": {
+            "ci95": [
+              0.24954624369286474,
+              0.2593870870851352
+            ],
+            "ci95_method": "student-t(df=29)",
+            "max": 0.30299999759999996,
+            "mean": 0.254466665389,
+            "median": 0.25200000087999996,
+            "min": 0.23899999893,
+            "n": 30,
+            "p95": 0.28165000265600004,
+            "p99": 0.29719999931679997,
+            "p99_status": "reported",
+            "stdev": 0.01317713131030511
+          },
+          "latency_mean": 982.0333333333333,
+          "latency_p50": 977.0,
+          "latency_p95": 1039.65,
+          "run_id": "P1_20260830_120906_11b4776f",
+          "spdk_command_size": null,
+          "throughput": 1093386331.7606328
+        }
+      },
+      "physical_request_size_equivalent": true,
+      "queue_depth": 4
+    }
+  ]
+}

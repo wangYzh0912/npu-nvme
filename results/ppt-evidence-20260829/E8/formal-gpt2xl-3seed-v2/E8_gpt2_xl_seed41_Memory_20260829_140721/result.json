@@ -1,0 +1,313 @@
+{
+  "device": 6,
+  "export_command": [
+    "/usr/local/Ascend/ascend-toolkit/latest/bin/msprof",
+    "--export=on",
+    "--output=results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof",
+    "--type=text",
+    "--summary-format=csv"
+  ],
+  "export_returncode": 0,
+  "hbm": {
+    "read_mb_s": 19135.9,
+    "source": "results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof/PROF_000001_20260829141001949_CGJACGCMPMDHQACB/mindstudio_profiler_output/hbm_20260829141435.csv",
+    "write_mb_s": 20173.716
+  },
+  "loss_first": 9.547141075134277,
+  "loss_last": 8.48878288269043,
+  "metric_group": "Memory",
+  "model": "gpt2_xl",
+  "pmu_by_core": {
+    "AI_CORE": {
+      "kernel_count": 2,
+      "ops": {
+        "BatchMatMulV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 415483.782
+        },
+        "MatMulV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1187170.466
+        }
+      },
+      "total_time_us": 1602654.2480000001
+    },
+    "AI_CPU": {
+      "kernel_count": 1,
+      "ops": {
+        "CheckNumerics": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 7560.172
+        }
+      },
+      "total_time_us": 7560.172
+    },
+    "AI_VECTOR_CORE": {
+      "kernel_count": 28,
+      "ops": {
+        "AdamApplyOneWithDecay": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 742453.471
+        },
+        "AdamApplyOneWithDecayAssign": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 73899.709
+        },
+        "Add": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 173806.33
+        },
+        "AddN": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 84774.49
+        },
+        "Assign": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 313575.341
+        },
+        "AssignAdd": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 41.821
+        },
+        "Cast": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1395680.268
+        },
+        "DropOutDoMask": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 182505.046
+        },
+        "Exp": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 22029.922
+        },
+        "FastGelu": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 26466.481
+        },
+        "FastGeluGrad": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 44835.537
+        },
+        "GatherV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1420.909
+        },
+        "LayerNormBetaGammaBackpropV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 60593.978
+        },
+        "LayerNormV3": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 93544.647
+        },
+        "LayerNormXBackpropV3": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 165415.359
+        },
+        "Log": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 41.141
+        },
+        "MemSet": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 37255.908
+        },
+        "Mul": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 24960.458
+        },
+        "Neg": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 9111.522
+        },
+        "NotEqual": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 69.301
+        },
+        "OneHot": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 2668.253
+        },
+        "RealDiv": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 46455.269
+        },
+        "SoftmaxGrad": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 243940.807
+        },
+        "SoftmaxV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 276723.899
+        },
+        "StridedSlice": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1053.682
+        },
+        "Sub": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 42692.577
+        },
+        "Tile": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 46.361
+        },
+        "Transpose": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 334150.651
+        }
+      },
+      "total_time_us": 4400213.137999998
+    },
+    "DSA_SQE": {
+      "kernel_count": 1,
+      "ops": {
+        "DSAGenBitMask": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 339509.53
+        }
+      },
+      "total_time_us": 339509.53
+    },
+    "MIX_AIC": {
+      "kernel_count": 2,
+      "ops": {
+        "MatMulV2": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 1119059.327
+        },
+        "MatMulV3": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 67234.103
+        }
+      },
+      "total_time_us": 1186293.4300000002
+    },
+    "MIX_AIV": {
+      "kernel_count": 3,
+      "ops": {
+        "ReduceMax": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 5183.765
+        },
+        "ReduceSum": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 146102.832
+        },
+        "UnsortedSegmentSum": {
+          "count": 1,
+          "fp16_ratio": 0.0,
+          "fp32_ratio": 0.0,
+          "total_us": 6142.141
+        }
+      },
+      "total_time_us": 157428.738
+    }
+  },
+  "pmu_total_time_us": 7693659.255999998,
+  "profile_command": [
+    "/usr/local/Ascend/ascend-toolkit/latest/bin/msprof",
+    "--dynamic=on",
+    "--pid=1037055",
+    "--output=results/ppt-evidence-20260829/E8/formal-gpt2xl-3seed-v2/E8_gpt2_xl_seed41_Memory_20260829_140721/msprof",
+    "--ascendcl=on",
+    "--task-time=on",
+    "--runtime-api=on",
+    "--ai-core=on",
+    "--aic-mode=task-based",
+    "--aic-metrics=Memory",
+    "--sys-hardware-mem=on",
+    "--sys-hardware-mem-freq=10",
+    "--sys-pid-profiling=on",
+    "--host-sys-pid=1037055"
+  ],
+  "profile_control": "interactive start; automatic collection until target exit",
+  "profile_control_error": null,
+  "profile_returncode": 0,
+  "seed": 41,
+  "status": "pass",
+  "step_stats_ms": {
+    "ci95": 15.23327001061791,
+    "mean": 647.0816331999999,
+    "median": 643.9539915,
+    "n": 30,
+    "p95": 736.89197865,
+    "p99": 785.5494014100001,
+    "stdev": 42.56941637439996
+  },
+  "steps": 30,
+  "warmups": 10
+}

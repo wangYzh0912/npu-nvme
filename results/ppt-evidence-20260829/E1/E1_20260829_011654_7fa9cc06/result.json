@@ -1,0 +1,87 @@
+{
+  "chunk_size": 4096,
+  "cube_util": null,
+  "failed_samples": 0,
+  "fault_results": {
+    "fio_returncode": 0
+  },
+  "fio_command": [
+    "fio",
+    "--name=odirect_read_size4096_qd1",
+    "--filename=/models/npu_nvme_exp/ppt-evidence-20260829/odirect_read_size4096_qd1.bin",
+    "--rw=read",
+    "--ioengine=io_uring",
+    "--iodepth=1",
+    "--numjobs=1",
+    "--bs=4096",
+    "--size=4096",
+    "--loops=30",
+    "--group_reporting",
+    "--output-format=json+",
+    "--direct=1",
+    "--fsync=1"
+  ],
+  "fio_execution": {
+    "formal": {
+      "returncode": 0,
+      "stderr": "",
+      "wall_ms": 146.530311
+    },
+    "warmup": {
+      "returncode": 0,
+      "stderr": "",
+      "wall_ms": 149.130512
+    }
+  },
+  "foreground_wait": null,
+  "hbm_bandwidth": null,
+  "hbm_peak": null,
+  "host_rss_peak": null,
+  "latency_mean": 33815.066667,
+  "latency_p50": 24960,
+  "latency_p95": 40704,
+  "logical_bytes": 4096,
+  "loss_deviation": null,
+  "mode": "odirect",
+  "model": "synthetic_io",
+  "native_fio_latency": {
+    "max_ns": 140730,
+    "mean_ns": 33815.066667,
+    "min_ns": 27531,
+    "n": 30,
+    "p50_ns": 24960,
+    "p95_ns": 40704,
+    "p99_ns": 87552,
+    "p99_status": "reported",
+    "percentile_source": "clat_ns (completion; fsync excluded)",
+    "stdev_ns": 20454.208902
+  },
+  "nvme_bytes": 122880,
+  "paths": {
+    "commit": "commit.json",
+    "config": "config.json",
+    "environment": "environment.json",
+    "failures": "failures.jsonl",
+    "raw": "raw/",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "pcie_bytes": 0,
+  "percentile_note": "clat_ns (completion; fsync excluded)",
+  "physical_bytes": 4096,
+  "pinned_dram_peak": null,
+  "pipeline_depth": 1,
+  "recovery_error": null,
+  "run_id": "E1_20260829_011654_7fa9cc06",
+  "sample_note": "warmup and formal runs are separate; only formal samples are reported",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 30,
+  "seed": 17,
+  "slot_count": 1,
+  "state_bytes": 4096,
+  "status": "pass",
+  "step_overhead": null,
+  "throughput": 121129437.36991864,
+  "vector_util": null
+}

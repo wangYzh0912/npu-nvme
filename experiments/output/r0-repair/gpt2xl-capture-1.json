@@ -1,0 +1,45 @@
+{
+  "config": {
+    "capture_blocks": 128,
+    "ckpt_every": 1,
+    "commit_fields": 16,
+    "delta_timeout_ms": 60000,
+    "io_batch_blocks": 128,
+    "io_timeout": 900.0,
+    "mode": "capture_only",
+    "model": "gpt2_xl",
+    "npu": 3,
+    "output": "experiments/output/r0-repair/gpt2xl-capture-1.json",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 8,
+    "seed": 17,
+    "seq_len": 129,
+    "shm_id": 2301,
+    "slot_size_gb": 10,
+    "steps": 1
+  },
+  "events": [
+    {
+      "blocks": 10553,
+      "elapsed_ms": 36939.05383,
+      "event": "r0_reference_initialized",
+      "fields": 2318
+    }
+  ],
+  "mode": "capture_only",
+  "model": "gpt2_xl",
+  "npu": 3,
+  "pci": "0000:83:00.0",
+  "seed": 17,
+  "status": "PASS",
+  "steps": [
+    {
+      "changed_blocks": 7426,
+      "loss": 10.954421043395996,
+      "r0_capture_ms": 684221.157245,
+      "step": 1,
+      "step_wall_ms": 684591.263228,
+      "training_ms_before_r0": 370.105983
+    }
+  ]
+}

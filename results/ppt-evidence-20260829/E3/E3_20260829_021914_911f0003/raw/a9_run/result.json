@@ -1,0 +1,87 @@
+{
+  "config": {
+    "chunk_size": 4194304,
+    "ckpt_every": 3,
+    "experiment": "A9_HBM",
+    "io_delay_ms": 5000.0,
+    "io_timeout_s": 120.0,
+    "model": "gpt2_xl",
+    "npu": 7,
+    "output_root": "/home/user7/npu-nvme/experiments/output/a9_hbm_slow",
+    "path": "A9_HBM_snapshot_slot_lifecycle",
+    "pci": "0000:83:00.0",
+    "pipeline_depth": 4,
+    "run_id": "A9_HBM_20260826_153554_7a837a59",
+    "scope": "real MindSpore HBM slots",
+    "shm_id": 1420,
+    "slot_count": 4,
+    "slots": [
+      1,
+      2,
+      4
+    ],
+    "steps": 15,
+    "warmups": 1
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "A9_HBM_20260826_153554_7a837a59",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 4,
+  "status": "pass",
+  "summary": {
+    "checkpoints": 5,
+    "end_to_end_ms": {
+      "ci95": [
+        18031.96526562117,
+        34403.67203477882
+      ],
+      "max": 35968.918521,
+      "mean": 26217.818650199995,
+      "min": 14847.594988,
+      "n": 5,
+      "stdev": 8092.009116606981
+    },
+    "formal_samples": 4,
+    "hbm_bytes_per_slot": 3280687104,
+    "slot_wait_ms": {
+      "ci95": [
+        0.037228659635629546,
+        0.06476334036437045
+      ],
+      "max": 0.07238,
+      "mean": 0.050996,
+      "min": 0.03781,
+      "n": 5,
+      "stdev": 0.013609508808182609
+    },
+    "snapshot_ms": {
+      "ci95": [
+        2733.565497921316,
+        5705.787906078684
+      ],
+      "max": 5835.201586,
+      "mean": 4219.676702,
+      "min": 3136.842462,
+      "n": 5,
+      "stdev": 1469.0741266330679
+    },
+    "step_ms": {
+      "ci95": [
+        -5213.830562700351,
+        14966.135911100351
+      ],
+      "max": 67325.208682,
+      "mean": 4876.1526742,
+      "min": 413.009685,
+      "n": 15,
+      "stdev": 17276.011069861655
+    },
+    "steps": 15
+  }
+}

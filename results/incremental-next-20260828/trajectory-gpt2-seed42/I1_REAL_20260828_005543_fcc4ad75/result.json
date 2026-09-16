@@ -1,0 +1,61 @@
+{
+  "config": {
+    "block_size": 65536,
+    "block_sizes": [
+      65536,
+      262144,
+      524288
+    ],
+    "experiment": "I1_REAL",
+    "model": "gpt2",
+    "no_optimizer": false,
+    "npu": 1,
+    "numeric_only": false,
+    "oracle": "S2 persisted-reference replacement",
+    "output_root": "results/incremental-next-20260828/trajectory-gpt2-seed42",
+    "pci": "0000:83:00.0",
+    "run_id": "I1_REAL_20260828_005543_fcc4ad75",
+    "sample_every": 1,
+    "sample_windows": null,
+    "seed": 42,
+    "seq_len": 1025,
+    "small_threshold": 10000,
+    "state": "weights+adam_m_v+global_step",
+    "state_categories": [
+      "model",
+      "adam_m",
+      "adam_v",
+      "optimizer_other",
+      "small",
+      "control"
+    ],
+    "steps": 100,
+    "top_k_percent": 10.0
+  },
+  "failed_samples": 0,
+  "paths": {
+    "environment": "environment.json",
+    "result": "result.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl"
+  },
+  "run_id": "I1_REAL_20260828_005543_fcc4ad75",
+  "sample_policy": "failed samples excluded from statistics",
+  "samples": 100,
+  "status": "pass",
+  "summary": {
+    "final_frame_bytes": 150699224,
+    "final_generation": {
+      "262144": 100,
+      "524288": 100,
+      "65536": 100
+    },
+    "manifest_digests": {
+      "262144": "ddd1ab4a31990f9cff40e5b56bfea4bc6f12902662897518376efe5ef8253a17",
+      "524288": "b15b1efca34549b361d9ab55d2a12e438fb919b2e8cdf6d2721045da7177cbd3",
+      "65536": "1e48e816f90588f7087f3cfd1ba88efe1d5f6eba34cb06f5d0da1f4b4ed5e328"
+    },
+    "samples": 100,
+    "steps": 100
+  }
+}

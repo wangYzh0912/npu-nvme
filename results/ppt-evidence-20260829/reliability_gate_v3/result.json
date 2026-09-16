@@ -1,0 +1,87 @@
+{
+  "crash_rule": "uncommitted generation invisible; prior committed generation recoverable",
+  "experiment": "reliability",
+  "records": [
+    {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/sync_ring_ab.py",
+        "--npu",
+        "7",
+        "--shm-id",
+        "16300",
+        "--warmups",
+        "10",
+        "--repetitions",
+        "1000",
+        "--payload-bytes",
+        "4096",
+        "--output-root",
+        "results/ppt-evidence-20260829/reliability_gate_v3/owner_1000"
+      ],
+      "name": "owner_1000",
+      "returncode": 0,
+      "started": "2026-08-30T16:36:19+0800",
+      "status": "pass"
+    },
+    {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/home/user7/npu-nvme/experiments/benchmarks/sync_ring_ab.py",
+        "--npu",
+        "7",
+        "--shm-id",
+        "25300",
+        "--warmups",
+        "10",
+        "--repetitions",
+        "10000",
+        "--payload-bytes",
+        "4096",
+        "--output-root",
+        "results/ppt-evidence-20260829/reliability_gate_v3/owner_10000"
+      ],
+      "name": "owner_10000",
+      "returncode": 0,
+      "started": "2026-08-30T16:36:37+0800",
+      "status": "pass"
+    },
+    {
+      "argv": [
+        "env",
+        "PYTHONPATH=/home/user7/.local/lib/python3.9/site-packages",
+        "/home/user7/.local/bin/pytest",
+        "-q",
+        "tests/python/test_frame_lifecycle.py",
+        "tests/python/test_raw_ring.py",
+        "tests/python/test_incremental_frame.py",
+        "tests/python/test_disk_layout.py"
+      ],
+      "name": "fault_unit",
+      "returncode": 0,
+      "started": "2026-08-30T16:37:52+0800",
+      "status": "pass"
+    },
+    {
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "tests/hardware/fault_injection_write.py",
+        "--npu",
+        "7"
+      ],
+      "name": "hardware_nvme_error",
+      "returncode": 0,
+      "started": "2026-08-30T16:37:52+0800",
+      "status": "pass"
+    }
+  ],
+  "required_faults": [
+    "ring_full",
+    "slot_exhaustion",
+    "nvme_error",
+    "timeout",
+    "duplicate_completion",
+    "owner_exit"
+  ],
+  "status": "pass"
+}
