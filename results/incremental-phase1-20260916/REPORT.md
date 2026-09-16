@@ -116,6 +116,10 @@ HBM 导出表只有本次采集汇总：[{"Device_id": "0", "Metric": "Average",
 
 完整状态输出近似量（包含常驻副本，元数据待定）：[{"ratio": 0.05, "payload_bytes": 4929053481.6, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}, {"ratio": 0.1, "payload_bytes": 9843309763.2, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}, {"ratio": 0.2, "payload_bytes": 19671822326.4, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}]。
 
+按实际 TP 几何推导的单个活动评分输出缓冲（各卡，字节）：[16384, 49152, 49152, 16384]。
+
+全局 FP64 分数的紧凑表示为 999808 字节；选择及描述符索引位于 Host，当前实现不分配设备选择索引。Python 对象、JSON 元数据及编译缓存另计；该单输出尺寸不能替代实测 workspace 峰值。
+
 ## 图表
 
 ![Main timeline](figures/phase-timeline-main.png)

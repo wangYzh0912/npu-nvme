@@ -130,5 +130,37 @@
     93732,
     93732,
     93732
-  ]
+  ],
+  "weight_score_buffer_budget": {
+    "device_one_live_score_output_bytes_by_rank": [
+      16384,
+      49152,
+      49152,
+      16384
+    ],
+    "score_output_bytes_per_sweep_by_rank": [
+      1267760,
+      2447408,
+      2447408,
+      1267760
+    ],
+    "device_selection_index_bytes": 0,
+    "host_dense_global_fp64_score_bytes": 999808,
+    "host_dense_selected_int64_index_estimates": [
+      {
+        "ratio": 0.05,
+        "bytes": 49992
+      },
+      {
+        "ratio": 0.1,
+        "bytes": 99984
+      },
+      {
+        "ratio": 0.2,
+        "bytes": 199968
+      }
+    ],
+    "workspace_bytes": null,
+    "policy": "Top-K sequential per-parameter scoring: one current FP32 granule-score output; cached compiler workspaces are additional and not independently measured. Selection and descriptor indices are on Host. Dense Host representations exclude Python object and JSON overhead."
+  }
 }
