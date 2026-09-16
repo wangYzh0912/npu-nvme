@@ -1,8 +1,6 @@
 from direct_checkpoint import DirectCheckpoint
 
-
-def test_live_async_reports_generation_staging_capability():
+def test_live_async_explicitly_retired():
     capability = DirectCheckpoint.live_async_capability()
-    assert capability["supported"] is True
-    assert capability["code"] == "SUPPORTED_GENERATION_PINNED_STAGING"
-    assert "split" in capability["required"]
+    assert capability['supported'] is False
+    assert capability['code'] == 'RETIRED_NONSTRICT_FULL'

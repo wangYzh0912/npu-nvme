@@ -1,0 +1,216 @@
+{
+  "adapter": "mindspore_native_save",
+  "capture": "frozen",
+  "checkpoint_count": 1,
+  "checkpoints": [
+    {
+      "adapter": "mindspore_native_save",
+      "admitted": true,
+      "data_completed": true,
+      "error": null,
+      "failed": false,
+      "generation": 1,
+      "input_buffer_released": true,
+      "persisted": true,
+      "persisted_ns": 3311648277968131,
+      "request_id": "mindspore_native_save-000001",
+      "sha256": "162afbc3eb2c2dd72fa5ff0dbceaf87fefdd57f6ed33180979b311840b1d5d3b",
+      "source_released": true,
+      "state": "PERSISTED",
+      "step": 3,
+      "submit_ns": 3311642488175090,
+      "timestamps_ns": {
+        "CREATED": 3311642489158954,
+        "DMA_COPYING": 3311643534415840,
+        "FLUSHING": 3311645100708052,
+        "METADATA_COMMITTING": 3311645777396845,
+        "NVME_WRITING": 3311643534522151,
+        "PERSISTED": 3311648277968131,
+        "QUEUED": 3311643534296310,
+        "SNAPSHOTTING": 3311642489690426,
+        "SNAPSHOT_READY": 3311643533995038,
+        "admitted": 3311642489201284,
+        "data_completed": 3311645777078634,
+        "input_buffer_released": 3311645100553982,
+        "source_released": 3311645100276920
+      },
+      "transitions": [
+        {
+          "detail": {},
+          "event": "SNAPSHOTTING",
+          "generation": 1,
+          "monotonic_ns": 3311642489690426,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "capture_ns": 1022395337,
+            "fields": 591
+          },
+          "event": "SNAPSHOT_READY",
+          "generation": 1,
+          "monotonic_ns": 3311643533995038,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {},
+          "event": "QUEUED",
+          "generation": 1,
+          "monotonic_ns": 3311643534296310,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "backend": "mindspore.save_checkpoint"
+          },
+          "event": "DMA_COPYING",
+          "generation": 1,
+          "monotonic_ns": 3311643534415840,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "backend": "mindspore.save_checkpoint"
+          },
+          "event": "NVME_WRITING",
+          "generation": 1,
+          "monotonic_ns": 3311643534522151,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "native_api_ns": 1564926256
+          },
+          "event": "FLUSHING",
+          "generation": 1,
+          "monotonic_ns": 3311645100708052,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {},
+          "event": "METADATA_COMMITTING",
+          "generation": 1,
+          "monotonic_ns": 3311645777396845,
+          "request_id": "mindspore_native_save-000001"
+        },
+        {
+          "detail": {
+            "capture_ns": 1022395337,
+            "file_sha256": "cce1d7448a39e74d1bb5b46f00e71d8ba14c1539f6e5d059fd7eded5f062b645",
+            "flush_ns": 676302522,
+            "native_api_ns": 1564926256,
+            "sha256": "162afbc3eb2c2dd72fa5ff0dbceaf87fefdd57f6ed33180979b311840b1d5d3b"
+          },
+          "event": "PERSISTED",
+          "generation": 1,
+          "monotonic_ns": 3311648277968131,
+          "request_id": "mindspore_native_save-000001"
+        }
+      ]
+    }
+  ],
+  "deterministic": "ON",
+  "formal_steps": 2,
+  "fresh_restore_required": true,
+  "kind": "framework-native-save",
+  "mechanisms_preserved": [
+    "MindSpore save_checkpoint parameter serialization",
+    "MindSpore checkpoint protobuf file format",
+    "synchronous native API completion before source release"
+  ],
+  "model": "gpt2",
+  "native_save_metrics": {
+    "api": "mindspore.save_checkpoint(async_save=False)",
+    "native_api": {
+      "count": 1,
+      "max_ns": 1564926256,
+      "mean_ns": 1564926256,
+      "min_ns": 1564926256,
+      "p95_ns": 1564926256,
+      "values_ns": [
+        1564926256
+      ]
+    },
+    "post_write_file_flush": {
+      "count": 1,
+      "max_ns": 676302522,
+      "mean_ns": 676302522,
+      "min_ns": 676302522,
+      "p95_ns": 676302522,
+      "values_ns": [
+        676302522
+      ]
+    },
+    "pre_save_capture_oracle": {
+      "count": 1,
+      "max_ns": 1022395337,
+      "mean_ns": 1022395337,
+      "min_ns": 1022395337,
+      "p95_ns": 1022395337,
+      "values_ns": [
+        1022395337
+      ]
+    },
+    "storage_backend": "filesystem",
+    "submit_to_persist": {
+      "count": 1,
+      "max_ns": 5789793041,
+      "mean_ns": 5789793041,
+      "min_ns": 5789793041,
+      "p95_ns": 5789793041,
+      "values_ns": [
+        5789793041
+      ]
+    }
+  },
+  "oracle_seconds": 0.149574901,
+  "platform_substitutions": [
+    "MindSpore native serializer writes the configured XFS filesystem",
+    "controls are encoded as a uint8 tensor plus a durable sidecar"
+  ],
+  "port_class": "framework-native-save",
+  "seed": 41,
+  "source_oracle": [
+    {
+      "loss": 10.868170738220215,
+      "step": 4,
+      "step_begin_ns": 3311648318732128,
+      "step_end_ns": 3311648378014346
+    },
+    {
+      "loss": 10.8652925491333,
+      "step": 5,
+      "step_begin_ns": 3311648378095336,
+      "step_end_ns": 3311648423659184
+    },
+    {
+      "loss": 10.868734359741211,
+      "step": 6,
+      "step_begin_ns": 3311648423731155,
+      "step_end_ns": 3311648468038027
+    }
+  ],
+  "source_pid": 723457,
+  "state_bytes": 1485030841,
+  "status": "trend_measured",
+  "steps": [
+    {
+      "formal_step": 1,
+      "loss": 10.873197555541992,
+      "step": 2,
+      "step_begin_ns": 3311642217202161,
+      "step_end_ns": 3311642440588643
+    },
+    {
+      "formal_step": 2,
+      "loss": 10.816542625427246,
+      "step": 3,
+      "step_begin_ns": 3311642440611303,
+      "step_end_ns": 3311642488167560
+    }
+  ],
+  "storage_backend": "filesystem",
+  "total_wall_seconds": 6.101375836,
+  "transport": "legacy_sync",
+  "upstream_core_invoked": true
+}

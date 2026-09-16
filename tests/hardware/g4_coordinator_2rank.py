@@ -35,6 +35,8 @@ from c_bindings import lib  # noqa: E402
 FIELDS = ("weight", "optimizer", "rng", "data_cursor")
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def multirank_slot_base(ckpt, rank_id, step, keep_last_n=3):
     """Use the declared multi-rank area rather than the single-rank FULL ring."""
     base = ckpt.layout.full_end + 1024 * 1024 * 1024
@@ -147,7 +149,7 @@ def write_rank_state(ckpt, rank_id, step, fields):
     ptr_array = (ctypes.c_void_p * len(ptrs))(*ptrs)
     offset_array = (ctypes.c_uint64 * len(offsets))(*offsets)
     size_array = (ctypes.c_size_t * len(sizes))(*sizes)
-    rc = lib.npu_nvme_write_batch_host(
+    rc = transfer_wait(lib,0,1,
         ckpt.ctx, ptr_array, offset_array, size_array, len(ptrs))
     if rc != 0:
         raise RuntimeError(f"coordinator rank {rank_id} write failed: {rc}")
@@ -169,7 +171,7 @@ def read_rank_state(ckpt, rank_layout):
     ptr_array = (ctypes.c_void_p * len(ptrs))(*ptrs)
     offset_array = (ctypes.c_uint64 * len(offsets))(*offsets)
     size_array = (ctypes.c_size_t * len(sizes))(*sizes)
-    rc = lib.npu_nvme_read_batch_host(
+    rc = transfer_wait(lib,1,1,
         ckpt.ctx, ptr_array, offset_array, size_array, len(ptrs))
     if rc != 0:
         raise RuntimeError(f"coordinator read failed: {rc}")
@@ -389,6 +391,7 @@ def verify_phase(args, run_dir):
 
 
 def main():
+    raise RuntimeError("Legacy raw caller retired; use strict single-rank FULL; Delta/multirank awaits D2")
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=("orchestrate", "coordinator", "verify"),
                         default="orchestrate")

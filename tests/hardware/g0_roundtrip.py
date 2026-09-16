@@ -23,6 +23,8 @@ TEST_BASE = 64 * 1024**3
 CHUNK = 1024 * 1024
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def require(condition, message):
     if not condition:
         raise AssertionError(message)
@@ -67,10 +69,10 @@ def main():
         sizes = (ctypes.c_size_t * 2)(CHUNK, CHUNK)
 
         print("[G0] host multi-item write/read", flush=True)
-        require(lib.npu_nvme_write_batch_host(ctx, ptrs, offsets, sizes, 2) == 0,
+        require(transfer_wait(lib,0,1,ctx, ptrs, offsets, sizes, 2) == 0,
                 "host write failed")
         read_ptrs = make_array([ctypes.addressof(host_read_a), ctypes.addressof(host_read_b)])
-        require(lib.npu_nvme_read_batch_host(ctx, read_ptrs, offsets, sizes, 2) == 0,
+        require(transfer_wait(lib,1,1,ctx, read_ptrs, offsets, sizes, 2) == 0,
                 "host read failed")
         require(host_read_a.raw == host_a.raw[:CHUNK] and
                 host_read_b.raw == host_b.raw[:CHUNK],
@@ -81,11 +83,11 @@ def main():
         bad_offset = (ctypes.c_uint64 * 1)(TEST_BASE + 1)
         one_ptr = make_array([ctypes.addressof(host_a)])
         one_size = (ctypes.c_size_t * 1)(CHUNK)
-        require(lib.npu_nvme_write_batch_host(ctx, one_ptr, bad_offset, one_size, 1) != 0,
+        require(transfer_wait(lib,0,1,ctx, one_ptr, bad_offset, one_size, 1) != 0,
                 "unaligned offset was accepted")
         end_offset = (ctypes.c_uint64 * 1)(total_bytes - 4096)
         too_big = (ctypes.c_size_t * 1)(8192)
-        require(lib.npu_nvme_write_batch_host(ctx, one_ptr, end_offset, too_big, 1) != 0,
+        require(transfer_wait(lib,0,1,ctx, one_ptr, end_offset, too_big, 1) != 0,
                 "out-of-capacity write was accepted")
 
         print("[G0] NPU device-buffer write/read", flush=True)
@@ -101,14 +103,14 @@ def main():
             npu_ptrs = make_array([device_ptr.value])
             one_offset = (ctypes.c_uint64 * 1)(TEST_BASE + (8 + len(dev_ptrs)) * CHUNK)
             one_size = (ctypes.c_size_t * 1)(CHUNK)
-            require(lib.npu_nvme_write_batch(ctx, npu_ptrs, one_offset, one_size, 1) == 0,
+            require(transfer_wait(lib,0,0,ctx, npu_ptrs, one_offset, one_size, 1) == 0,
                     "NPU write failed")
             read_device = ctypes.c_void_p()
             require(acl_lib.aclrtMalloc(ctypes.byref(read_device), CHUNK, 0) == 0,
                     "second aclrtMalloc failed")
             dev_ptrs.append(read_device)
             read_ptr = make_array([read_device.value])
-            require(lib.npu_nvme_read_batch(ctx, read_ptr, one_offset, one_size, 1) == 0,
+            require(transfer_wait(lib,1,0,ctx, read_ptr, one_offset, one_size, 1) == 0,
                     "NPU read failed")
             result = ctypes.create_string_buffer(CHUNK)
             require(acl_lib.aclrtMemcpy(

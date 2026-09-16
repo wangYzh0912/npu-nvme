@@ -29,6 +29,8 @@ from experiment_evidence import command, environment_snapshot  # noqa: E402
 HEADER = struct.Struct("!IIQ")
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def atomic_json(path, value):
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
@@ -150,7 +152,7 @@ def write_host(ctx, payload, offset):
     ptrs = (ctypes.c_void_p * 1)(ctypes.addressof(buffer))
     offsets = (ctypes.c_uint64 * 1)(offset)
     sizes = (ctypes.c_size_t * 1)(len(payload))
-    rc = lib.npu_nvme_write_batch_host(ctx, ptrs, offsets, sizes, 1)
+    rc = transfer_wait(lib,0,1,ctx, ptrs, offsets, sizes, 1)
     if rc != 0:
         raise RuntimeError(f"SPDK write failed: {rc}")
 
@@ -160,7 +162,7 @@ def read_host(ctx, size, offset):
     ptrs = (ctypes.c_void_p * 1)(ctypes.addressof(buffer))
     offsets = (ctypes.c_uint64 * 1)(offset)
     sizes = (ctypes.c_size_t * 1)(size)
-    rc = lib.npu_nvme_read_batch_host(ctx, ptrs, offsets, sizes, 1)
+    rc = transfer_wait(lib,1,1,ctx, ptrs, offsets, sizes, 1)
     if rc != 0:
         raise RuntimeError(f"SPDK read failed: {rc}")
     return buffer.raw[:size]
@@ -189,7 +191,7 @@ def direct_host_spdk(args):
             raise RuntimeError(f"npu_nvme_init failed: {rc}")
         cpu_before = resource.getrusage(resource.RUSAGE_SELF)
         started = time.perf_counter_ns()
-        rc = lib.npu_nvme_write_batch_host(
+        rc = transfer_wait(lib,0,1,
             context, ptrs, offsets, sizes, len(descriptors))
         service_ns = time.perf_counter_ns() - started
         if rc != 0:

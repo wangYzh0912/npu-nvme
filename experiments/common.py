@@ -55,7 +55,11 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
     if seq_len < 2:
         raise ValueError("training record length must be at least two tokens")
     model_seq_len = seq_len - 1
-    cfg = AutoConfig.from_pretrained(model_name)
+    if model_name in ('gpt2', 'gpt2_xl'):
+        from npu_nvme.workloads.compat_gpt2 import configuration
+        cfg = configuration(model_name)
+    else:
+        cfg = AutoConfig.from_pretrained(model_name)
     if dropout_rate is not None:
         if not 0.0 <= float(dropout_rate) < 1.0:
             raise ValueError("dropout_rate must be in [0, 1)")
@@ -72,7 +76,11 @@ def make_causal_lm_training(model_name="gpt2_xl", total_steps=20,
         # [1,1025,1025] vs [1,seq_len,seq_len] broadcast error.
         cfg.max_position_embeddings = model_seq_len
     cfg.checkpoint_name_or_path = ""  # train from scratch
-    model = AutoModel.from_config(cfg)
+    if model_name in ('gpt2', 'gpt2_xl'):
+        from npu_nvme.workloads.compat_gpt2 import model as pinned_model
+        model = pinned_model(cfg)
+    else:
+        model = AutoModel.from_config(cfg)
     # MindFormers causal-LM cells return inference tuples unless training mode
     # is enabled.  Feeding that tuple to value_and_grad used to make the
     # experiment harness differentiate logits/tokens/masks and corrupt both
@@ -131,7 +139,11 @@ def make_causal_lm_checkpoint_model(model_name="gpt2_xl", seq_len=128):
     from mindformers import AutoModel, AutoConfig
 
     print(f"[Common] Building checkpoint-only {model_name} model...", flush=True)
-    cfg = AutoConfig.from_pretrained(model_name)
+    if model_name in ('gpt2', 'gpt2_xl'):
+        from npu_nvme.workloads.compat_gpt2 import configuration
+        cfg = configuration(model_name)
+    else:
+        cfg = AutoConfig.from_pretrained(model_name)
     if hasattr(cfg, "seq_length"):
         cfg.seq_length = seq_len
     if hasattr(cfg, "max_position_embeddings"):
@@ -143,6 +155,9 @@ def make_causal_lm_checkpoint_model(model_name="gpt2_xl", seq_len=128):
     if model_name.startswith("glm") and hasattr(cfg, "use_past"):
         cfg.use_past = False
     cfg.checkpoint_name_or_path = ""
+    if model_name in ('gpt2', 'gpt2_xl'):
+        from npu_nvme.workloads.compat_gpt2 import model as pinned_model
+        return pinned_model(cfg), cfg
     return AutoModel.from_config(cfg), cfg
 
 

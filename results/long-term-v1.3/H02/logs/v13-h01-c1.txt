@@ -1,0 +1,51 @@
+[sudo] password for user7: /home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+[WARNING] ME(328271:281473446595200,MainProcess):2026-09-12-16:07:41.961.086 [mindspore/run_check/_check_version.py:315] Using custom Ascend AI software package (Ascend Data Center Solution) path, package version checking is skipped. Please make sure Ascend AI software package (Ascend Data Center Solution) version is supported. For details, refer to the installation guidelines https://www.mindspore.cn/install
+[WARNING] ME(328271:281473446595200,MainProcess):2026-09-12-16:07:41.961.611 [mindspore/run_check/_check_version.py:397] Can not find ccec_compiler(need by mindspore-ascend). Please check whether the Environment Variable PATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+[WARNING] ME(328271:281473446595200,MainProcess):2026-09-12-16:07:41.961.692 [mindspore/run_check/_check_version.py:402] Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+[WARNING] ME(328271:281473446595200,MainProcess):2026-09-12-16:07:41.961.749 [mindspore/run_check/_check_version.py:413] Can not find opp path (need by mindspore-ascend). Please check whether the Environment Variable ASCEND_OPP_PATH is set. For details, refer to the installation guidelines: https://www.mindspore.cn/install
+Traceback (most recent call last):
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/c1_training_state_restart.py", line 402, in <module>
+    main()
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/c1_training_state_restart.py", line 389, in main
+    baseline_phase(args)
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/c1_training_state_restart.py", line 202, in baseline_phase
+    ms, model, optimizer, cell = build_training(args)
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/c1_training_state_restart.py", line 46, in build_training
+    init_env(device_id=args.npu, seed=args.seed)
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/experiments/common.py", line 357, in init_env
+    context.set_context(mode=mode, device_target="Ascend", device_id=device_id)
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindspore/_checkparam.py", line 1367, in wrapper
+    return func(*args, **kwargs)
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindspore/context.py", line 1952, in set_context
+    ctx.set_device_target(kwargs['device_target'])
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindspore/context.py", line 500, in set_device_target
+    self.set_param(ms_ctx_param.device_target, target)
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/site-packages/mindspore/context.py", line 187, in set_param
+    self._context_handle.set_param(param, value)
+RuntimeError: Unsupported device target Ascend. This process only supports one of the ['CPU']. Please check whether the Ascend environment is installed and configured correctly, and check whether current mindspore wheel package was built with "-e Ascend". For details, please refer to "Device load error message".
+
+----------------------------------------------------
+- Device load error message:
+----------------------------------------------------
+Load dynamic library: libmindspore_ascend.so.2 failed. libhost_cpu_engine.so: cannot open shared object file: No such file or directory
+
+----------------------------------------------------
+- C++ Call Stack: (For framework developers)
+----------------------------------------------------
+mindspore/core/utils/ms_context.cc:281 SetDeviceTargetFromInner
+
+Traceback (most recent call last):
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/c1_training_state_restart.py", line 402, in <module>
+    main()
+  File "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/c1_training_state_restart.py", line 396, in main
+    subprocess.run(child_command(args, phase), cwd=args.run_dir, check=True)
+  File "/home/user7/miniconda3/envs/ms_2.5/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/home/user7/miniconda3/envs/ms_2.5/bin/python', '/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/c1_training_state_restart.py', '--phase', 'baseline', '--run-dir', '/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/hw-v13/h01-c1', '--pci', '0000:83:00.0', '--npu', '7', '--model', 'gpt2', '--seq-len', '129', '--seed', '41', '--save-step', '2', '--continue-steps', '3', '--loss-scale', '1.0', '--dropout-rate', '0.0', '--loss-rtol', '1e-05', '--loss-atol', '1e-06', '--state-rtol', '1e-05', '--state-atol', '1e-06', '--pipeline-depth', '8', '--slot-size-gb', '10', '--shm-id', '311212', '--io-timeout', '900.0']' returned non-zero exit status 1.

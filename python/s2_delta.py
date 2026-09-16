@@ -379,6 +379,16 @@ class FileS2Ring:
         self.slot_size = int(slot_size)
         os.makedirs(self.directory, exist_ok=True)
         self.next_slot = 0
+        # Resume the slot cursor from the validated on-disk frame identities.
+        for slot in range(self.slot_count):
+            path=self._path(slot)
+            if os.path.exists(path):
+                with open(path,'rb') as stream:frame=stream.read(self.slot_size+1)
+                if len(frame)>self.slot_size:raise ValueError('oversized persisted ring frame')
+                _,_,_,info=unpack_s2_replacement_frame(frame)
+                generation=info['generation']
+                if (generation-1)%self.slot_count!=slot:raise ValueError('ring slot generation mismatch')
+                self.next_slot=max(self.next_slot,generation)
 
     def _path(self, slot):
         if slot < 0 or slot >= self.slot_count:
@@ -386,10 +396,21 @@ class FileS2Ring:
         return os.path.join(self.directory, f"s2_slot_{slot:04d}.bin")
 
     def write(self, frame):
+        """Serialize writers and recheck the persisted cursor before replacing."""
+        import fcntl
+        with open(os.path.join(self.directory,'.writer.lock'),'a+b') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            observed=FileS2Ring(self.directory,self.slot_count,self.slot_size)
+            self.next_slot=observed.next_slot
+            return self._write_owned(frame)
+
+    def _write_owned(self, frame):
         """Atomically write a complete frame and return its slot index."""
         _step, _blocks, _smalls, _info = unpack_s2_replacement_frame(frame)
         if len(frame) > self.slot_size:
             raise ValueError("S2 frame exceeds ring slot")
+        generation=_info['generation']
+        if generation!=self.next_slot+1:raise ValueError('ring generation must follow persisted cursor')
         slot = self.next_slot % self.slot_count
         path = self._path(slot)
         temporary = f"{path}.tmp.{os.getpid()}"
@@ -398,6 +419,9 @@ class FileS2Ring:
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, path)
+        directory_fd=os.open(self.directory,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(directory_fd)
+        finally:os.close(directory_fd)
         self.next_slot += 1
         return slot
 

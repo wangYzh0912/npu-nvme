@@ -1,0 +1,4 @@
+C_IMPL compile: ['cc', '-std=gnu11', '-g', '-O1', '-ffunction-sections', '-fdata-sections', '-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-I/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/include', '-I/home/user7/npu-nvme/third_party/spdk/include', '-I/home/user7/npu-nvme/third_party/spdk/dpdk/build/include', '-I/usr/local/Ascend/ascend-toolkit/latest/include', '-c', '/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/c/host_safety_test.c', '-o', '/tmp/pytest-of-user7/pytest-113/c-host0/host.o'] link: ['clang', '-fsanitize=address,undefined', '/tmp/pytest-of-user7/pytest-113/c-host0/host.o', '-Wl,--gc-sections,--no-export-dynamic', '-lpthread', '-o', '/tmp/pytest-of-user7/pytest-113/c-host0/host.elf']
+C_IMPL binary_sha256: c3430332b08e5b19e717406b407280aa95f6e4f93be0f8ecc0a210794230731b
+.................
+17 passed in 91.80s (0:01:31)
