@@ -12,6 +12,7 @@ import sys
 import time
 from pathlib import Path
 
+from npu_nvme.cli.contracts import outcome
 from .adapters import ADAPTERS
 from .protocol import AdapterError, DependencyBlocked
 from .runner import prepare as prepare_run
@@ -37,8 +38,9 @@ def load_config(path):
     missing = [field for field in REQUIRED if config.get(field) in (None, "")]
     if missing:
         raise ValueError("config missing required fields: " + ", ".join(missing))
-    if config["project_commit"] != "f3c086157d2ce65d8b686cd938874b1b3541ec5d":
-        raise ValueError("project_commit must be the locked f3c0861 baseline")
+    actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=Path(__file__).resolve().parents[3], text=True).strip()
+    if config["project_commit"] != actual:
+        raise ValueError("project_commit differs from actual source checkout")
     if config["capture_mode"] != "frozen":
         raise ValueError("first implementation only supports frozen capture")
     return config
@@ -158,7 +160,7 @@ def run_one(config, name, mode="run"):
                           "--config", str(run_dir / "config.json"),
                           "--adapter", name, "--run-dir", str(run_dir)]
             source_proc = subprocess.run(
-                source_cmd, capture_output=True, text=True, check=False)
+                source_cmd, capture_output=True, text=True, check=False, timeout=config.get("phase_timeout_seconds", 900))
             (run_dir / "stdout.log").write_text(
                 source_proc.stdout, encoding="utf-8")
             (run_dir / "stderr.log").write_text(
@@ -183,7 +185,7 @@ def run_one(config, name, mode="run"):
                            "--config", str(run_dir / "config.json"),
                            "--adapter", name, "--run-dir", str(run_dir)]
             restore_proc = subprocess.run(
-                restore_cmd, capture_output=True, text=True, check=False)
+                restore_cmd, capture_output=True, text=True, check=False, timeout=config.get("phase_timeout_seconds", 900))
             (run_dir / "restore.stdout.log").write_text(
                 restore_proc.stdout, encoding="utf-8")
             (run_dir / "restore.stderr.log").write_text(
@@ -196,6 +198,10 @@ def run_one(config, name, mode="run"):
                            "error": "restore subprocess produced no restore.json",
                            "returncode": restore_proc.returncode}
             result["restore"] = restore
+            result["source_returncode"] = source_proc.returncode
+            result["restore_returncode"] = restore_proc.returncode
+            if outcome(result, source_proc.returncode, restore_proc.returncode):
+                result["status"] = "roundtrip_failed"
             write_json(run_dir / "result.json", result)
             return result
         raise ValueError(f"unsupported mode {mode}")
@@ -236,7 +242,29 @@ def main(argv=None):
         cmd.add_argument("--repeat-index", type=int)
         cmd.add_argument("--runtime-probe", action="store_true")
     args = parser.parse_args(argv)
-    config = load_config(args.config)
+    # New versioned configs use the single public supervisor. Historical
+    # flat configs retain their explicit CLI, with the same shared workload.
+    try:
+        document = json.loads(Path(args.config).read_text())
+    except (OSError, ValueError):
+        document = {}
+    if isinstance(document, dict) and 'workload' in document and document.get('schema_version') == 1:
+        from npu_nvme.cli.training import main as unified_main
+        commands = {'preflight':'preflight', 'run':'benchmark', 'suite':'benchmark', 'smoke':'benchmark'}
+        if args.command not in commands:
+            parser.error('use train.py fit/verify-restart/inspect for this versioned configuration')
+        if args.adapter and document['checkpoint']['methods'] != [args.adapter]:
+            parser.error('versioned config methods must match --adapter')
+        if any(value is not None for value in (args.steps,args.checkpoint_every,args.continue_steps,args.run_dir,args.repeat_index)) or args.runtime_probe or args.eligible_only:
+            parser.error('put workload overrides in the versioned configuration')
+        forwarded=[commands[args.command],'--config',args.config]
+        if args.output: forwarded += ['--out',args.output]
+        if args.dry_run: forwarded += ['--dry-run']
+        return unified_main(forwarded)
+    try:
+        config = load_config(args.config)
+    except (ValueError, OSError) as error:
+        parser.error(str(error))
     # Command-line overrides are intentionally explicit so short G2 smoke runs
     # can reuse the same fixture without silently changing the checked-in plan.
     if args.steps is not None:
@@ -285,17 +313,18 @@ def main(argv=None):
         for name in names:
             result = run_one(config, name)
             print(json.dumps(result, sort_keys=True))
-            if result.get("status") not in ("trend_measured", "ready"):
+            if outcome(result, result.get("source_returncode", 0), result.get("restore_returncode", 0)):
                 failures += 1
                 if not args.continue_on_failure:
                     break
-        return 1 if failures and not args.continue_on_failure else 0
+        write_json(Path(config["results_root"]) / "suite.json", {"failures": failures, "continued": args.continue_on_failure})
+        return 1 if failures else 0
     if args.command == "run":
         if not args.adapter:
             parser.error("run requires --adapter")
         result = run_one(config, args.adapter)
         print(json.dumps(result, indent=2, sort_keys=True))
-        return 0 if result.get("status") == "trend_measured" else 1
+        return outcome(result, result.get("source_returncode", 0), result.get("restore_returncode", 0))
     if args.command == "source":
         if not args.adapter or not args.run_dir:
             parser.error("source requires --adapter and --run-dir")

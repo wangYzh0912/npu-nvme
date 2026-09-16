@@ -31,6 +31,8 @@ from longrun_utils import (atomic_json, checked_stdout, completed_result,
                            open_campaign, update_entry)  # noqa: E402
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def chunks(total, chunk):
     return [(offset, min(chunk, total - offset))
             for offset in range(0, total, chunk)]
@@ -148,7 +150,7 @@ def run_one(args):
                 one_ptr = (ctypes.c_void_p * 1)(ptrs[index])
                 one_off = (ctypes.c_uint64 * 1)(offsets[index])
                 one_size = (ctypes.c_size_t * 1)(sizes[index])
-                rc = lib.npu_nvme_write_batch(context, one_ptr, one_off, one_size, 1)
+                rc = transfer_wait(lib,0,0,context, one_ptr, one_off, one_size, 1)
                 if rc != 0:
                     break
             poll_count = 0
@@ -156,7 +158,7 @@ def run_one(args):
                 raise RuntimeError(f"serial write failed: {rc}")
         else:
             # queue is the synchronous-D2H path driven by the Reactor FSM.
-            rc = lib.npu_nvme_write_batch(context, ptrs, offsets, sizes, len(descriptors))
+            rc = transfer_wait(lib,0,0,context, ptrs, offsets, sizes, len(descriptors))
             poll_count = 0
             if rc != 0:
                 raise RuntimeError(f"queue write failed: {rc}")
@@ -165,7 +167,7 @@ def run_one(args):
 
         read_ptrs = (ctypes.c_void_p * len(descriptors))(*(
             target.value + inner for inner, _part in descriptors))
-        check_acl(lib.npu_nvme_read_batch(context, read_ptrs, offsets, sizes,
+        check_acl(transfer_wait(lib,1,0,context, read_ptrs, offsets, sizes,
                                           len(descriptors)), "HBM readback")
         actual, readback = digest_hbm(target, size, args.npu)
         if actual != expected:

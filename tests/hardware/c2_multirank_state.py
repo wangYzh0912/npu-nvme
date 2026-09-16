@@ -47,6 +47,8 @@ DATA_CHUNK = 4 * 1024 * 1024
 DEFAULT_RANK_DEVICES = (1, 2, 3, 4)
 
 
+from npu_nvme.storage.requests import transfer_wait
+
 def socket_path_for(run_dir, channel):
     """Return a short AF_UNIX path; Linux limits sun_path to 108 bytes."""
     digest = hashlib.sha256(str(Path(run_dir).resolve()).encode()).hexdigest()[:16]
@@ -233,7 +235,7 @@ def write_chunk(ckpt, absolute_offset, payload):
     chunks, _ = build_chunks_host(__import__("ctypes").addressof(buffer),
                                   absolute_offset, len(payload), DATA_CHUNK)
     ptrs, offsets, sizes = build_ctypes_arrays(chunks)
-    rc = lib.npu_nvme_write_batch_host(
+    rc = transfer_wait(lib,0,1,
         ckpt.ctx, ptrs, offsets, sizes, len(chunks))
     if rc != 0:
         raise RuntimeError(f"coordinator host write failed: {rc}")
@@ -251,7 +253,7 @@ def read_chunk(ckpt, absolute_offset, size):
     ptrs = (ctypes.c_void_p * 1)(ctypes.addressof(buffer))
     offsets = (ctypes.c_uint64 * 1)(absolute_offset)
     sizes = (ctypes.c_size_t * 1)(size)
-    rc = lib.npu_nvme_read_batch_host(ckpt.ctx, ptrs, offsets, sizes, 1)
+    rc = transfer_wait(lib,1,1,ckpt.ctx, ptrs, offsets, sizes, 1)
     if rc != 0:
         raise RuntimeError(f"coordinator host read failed: {rc}")
     return ctypes.string_at(buffer, size)
@@ -842,6 +844,7 @@ def finalize_existing(args):
 
 
 def main():
+    raise RuntimeError("Legacy raw caller retired; use strict single-rank FULL; Delta/multirank awaits D2")
     signal.signal(signal.SIGTERM, _interrupt_on_term)
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=("orchestrate", "coordinator", "rank",

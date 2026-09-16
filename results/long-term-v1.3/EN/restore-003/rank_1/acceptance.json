@@ -1,0 +1,92 @@
+{
+  "model": "/models/Qwen3-8B",
+  "rank": 1,
+  "pid": 278623,
+  "python": "/models/npu_nvme_exp/user7-stack/conda/bin/python",
+  "environment_id": "32a715b267ca5961b230e3e786f24447cec9d70b0cbae5e54b8f7c4be5a6cc39",
+  "parallel": {
+    "tensor_parallel": 4,
+    "data_parallel": 1,
+    "pipeline_parallel": 1
+  },
+  "status": "restored_and_continued",
+  "losses": [
+    {
+      "step": 9,
+      "callback_step": 1,
+      "loss": 0.4469923675060272,
+      "overflow": false
+    },
+    {
+      "step": 10,
+      "callback_step": 2,
+      "loss": 0.4367216229438782,
+      "overflow": false
+    },
+    {
+      "step": 11,
+      "callback_step": 3,
+      "loss": 0.42501887679100037,
+      "overflow": false
+    }
+  ],
+  "phases": {
+    "config": "pass",
+    "communication": "pass",
+    "model_construct": "pass",
+    "load": "pass",
+    "train": "pass",
+    "checkpoint": "not_run",
+    "restart": "pass",
+    "oracle_compare": "not_run"
+  },
+  "weights": [
+    {
+      "name": "model-00001-of-00005.safetensors",
+      "bytes": 3996250744
+    },
+    {
+      "name": "model-00002-of-00005.safetensors",
+      "bytes": 3993160032
+    },
+    {
+      "name": "model-00003-of-00005.safetensors",
+      "bytes": 3959604768
+    },
+    {
+      "name": "model-00004-of-00005.safetensors",
+      "bytes": 3187841392
+    },
+    {
+      "name": "model-00005-of-00005.safetensors",
+      "bytes": 1244659840
+    }
+  ],
+  "config_sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
+  "versions": {
+    "mindspore": "2.7.1",
+    "mindformers": "1.7.0"
+  },
+  "deterministic": true,
+  "schedule": {
+    "checkpoint_step": 8,
+    "source_stop_step": 11,
+    "lr_horizon": 32,
+    "resume_start_step": 8
+  },
+  "precision": {
+    "compute": "bfloat16",
+    "parameters_and_adam": "float32"
+  },
+  "world_size": 4,
+  "device_id": 1,
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "data_kind": "fixed local tokenized text, smoke training only",
+  "restore_seconds": 24.263014384079725,
+  "checkpoint_files": [
+    "training/checkpoint/rank_0/qwen3_rank_0-11_1.safetensors",
+    "training/checkpoint/rank_2/qwen3_rank_2-11_1.safetensors",
+    "training/checkpoint/rank_1/qwen3_rank_1-11_1.safetensors",
+    "training/checkpoint/rank_3/qwen3_rank_3-11_1.safetensors"
+  ]
+}

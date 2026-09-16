@@ -1,0 +1,90 @@
+{
+  "status": "pass",
+  "model": "gpt2",
+  "mode": "serial",
+  "seed": 41,
+  "pci": "0000:83:00.0",
+  "npu": 7,
+  "request_id": "cf4f956d-879d-44b0-9129-e9902803fcfe:1",
+  "generation": 6,
+  "checkpoint_step": 2,
+  "persisted": true,
+  "restore_verified": true,
+  "loss_allclose": true,
+  "continuation_oracle": "source_process_continuation",
+  "loaded_state_byte_exact": true,
+  "state_after_restore": {
+    "sha256": "63eb2a5bcc4fe14c8ad343b27de5af394149795996b5059dd186fa6c2e6dd852",
+    "fields": 590,
+    "bytes": 1485020168
+  },
+  "state_after_continuation": {
+    "sha256": "460648c83c979dbc0dfc93e98a5ad2850f3b86bc9d372e21bb0b9d4184540c5a",
+    "fields": 590,
+    "bytes": 1485020168
+  },
+  "continuation_losses": [
+    10.85014533996582,
+    10.876251220703125,
+    10.873220443725586
+  ],
+  "step_seconds": [
+    0.05250696279108524,
+    0.04641874972730875,
+    0.04521526535972953
+  ],
+  "restored_steps": [
+    2
+  ],
+  "all_retained_restores_verified": true,
+  "performance": {
+    "all": {
+      "count": 5,
+      "mean_seconds": 0.04513539243489504,
+      "p95_seconds": 0.04692319091409445,
+      "p99_seconds": 0.04697954293340444
+    },
+    "checkpoint": {
+      "count": 1,
+      "mean_seconds": 0.044157331343740225,
+      "p95_seconds": 0.044157331343740225,
+      "p99_seconds": 0.044157331343740225
+    },
+    "non_checkpoint": {
+      "count": 4,
+      "mean_seconds": 0.04537990770768374,
+      "p95_seconds": 0.046940800920128825,
+      "p99_seconds": 0.046983064934611324
+    }
+  },
+  "checkpoint_latency_seconds": [
+    8.001031274
+  ],
+  "checkpoint_state_machine_seconds": [
+    7.412445199
+  ],
+  "latency_semantics": {
+    "checkpoint_latency_seconds": "api_enter_to_persisted_event",
+    "checkpoint_state_machine_seconds": "created_to_persisted_event",
+    "foreground_wait_seconds": "host_wait_inside_finish_one"
+  },
+  "api_return_seconds": [],
+  "run_id": "single-card",
+  "samples": 1,
+  "failed_samples": 0,
+  "accepted_generations": 1,
+  "busy_requests": 0,
+  "paths": {
+    "config": "config.json",
+    "environment": "environment.json",
+    "commit": "commit.json",
+    "samples": "samples.jsonl",
+    "timeline": "timeline.jsonl",
+    "events": "events.jsonl",
+    "failures": "failures.jsonl",
+    "source": "source.json",
+    "restore": "restore.json",
+    "raw": "raw/",
+    "result": "result.json"
+  }
+}

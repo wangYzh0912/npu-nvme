@@ -1,0 +1,78 @@
+{
+  "after_close": {
+    "retained_slots": [],
+    "stats": {
+      "async_dma_submit_count": 16,
+      "async_event_query_count": 16,
+      "async_event_query_error_count": 0,
+      "completion_error_count": 0,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 1,
+      "nvme_complete_count": 16,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 1,
+      "nvme_submit_count": 16,
+      "reactor_cpu_us": 3210,
+      "request_ring_depth": 0,
+      "request_ring_peak": 16,
+      "spdk_retry_count": 0,
+      "stream_sync_fallback_count": 0
+    }
+  },
+  "before_close": {
+    "retained_slots": [],
+    "stats": {
+      "async_dma_submit_count": 16,
+      "async_event_query_count": 16,
+      "async_event_query_error_count": 0,
+      "completion_error_count": 0,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 1,
+      "nvme_complete_count": 16,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 1,
+      "nvme_submit_count": 16,
+      "reactor_cpu_us": 3208,
+      "request_ring_depth": 0,
+      "request_ring_peak": 16,
+      "spdk_retry_count": 0,
+      "stream_sync_fallback_count": 0
+    }
+  },
+  "busy_rc": -16,
+  "case": "request_ring_busy",
+  "cleanup_safe": true,
+  "close_rc": 0,
+  "close_seconds": 0.00787732983008027,
+  "fault": {
+    "NPU_NVME_TEST_NVME_SUBMIT_DELAY_MS": "100"
+  },
+  "init_rc": 0,
+  "pid": 639942,
+  "request_codes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "resources": {
+    "fd_count": 92,
+    "meminfo": "MemTotal:       2107993572 kB\nMemFree:        715700080 kB\nMemAvailable:   1997269372 kB\nBuffers:         4127368 kB\nCached:         1351158288 kB\nSwapCached:         3176 kB\nActive:         309138544 kB\nInactive:       1053398020 kB\nActive(anon):    7550772 kB\nInactive(anon): 73200000 kB\nActive(file):   301587772 kB\nInactive(file): 980198020 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       4194300 kB\nSwapFree:        3702012 kB\nDirty:              1216 kB\nWriteback:             0 kB\nAnonPages:       6997972 kB\nMapped:           880260 kB\nShmem:          73500024 kB\nKReclaimable:    9577192 kB\nSlab:           16620016 kB\nSReclaimable:    9577192 kB\nSUnreclaim:      7042824 kB\nKernelStack:       69456 kB\nPageTables:        61904 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    1056488172 kB\nCommitted_AS:   92274492 kB\nVmallocTotal:   135290159040 kB\nVmallocUsed:     1664540 kB\nVmallocChunk:          0 kB\nPercpu:          3514368 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:   4435968 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nCmaTotal:          65536 kB\nCmaFree:            5132 kB\nHugePages_Total:    1663\nHugePages_Free:     1627\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:         3405824 kB\n",
+    "process_status": "Name:\tpython\nUmask:\t0022\nState:\tR (running)\nTgid:\t639942\nNgid:\t0\nPid:\t639942\nPPid:\t639564\nTracerPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\nFDSize:\t128\nGroups:\t0 \nNStgid:\t639942\nNSpid:\t639942\nNSpgid:\t639942\nNSsid:\t639942\nVmPeak:\t9127690812 kB\nVmSize:\t9127624932 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t  178964 kB\nVmRSS:\t  178964 kB\nRssAnon:\t   75424 kB\nRssFile:\t   90912 kB\nRssShmem:\t   12628 kB\nVmData:\t  138240 kB\nVmStk:\t     136 kB\nVmExe:\t    3056 kB\nVmLib:\t  115056 kB\nVmPTE:\t     864 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t   73728 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nThreads:\t10\nSigQ:\t2/8233978\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t00000001418044fe\nCapInh:\t0000000000000000\nCapPrm:\t000001ffffffffff\nCapEff:\t000001ffffffffff\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nCpus_allowed:\t00000000,00000000,00000000,00000000,00000000,00000001\nCpus_allowed_list:\t0\nMems_allowed:\t00000000,00000000,00000000,000000ff\nMems_allowed_list:\t0-7\nvoluntary_ctxt_switches:\t1909\nnonvoluntary_ctxt_switches:\t433\n"
+  },
+  "shm_id": 18317,
+  "status": "pass",
+  "submitted": 16
+}
