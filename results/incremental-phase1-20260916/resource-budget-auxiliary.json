@@ -1,0 +1,146 @@
+{
+  "scope_bytes": {
+    "model": {
+      "logical_bytes": 16089872384,
+      "physical_bytes": 16092225536,
+      "elements": 4022468096
+    }
+  },
+  "weight_bytes": 16089872384,
+  "candidate_blocks": 61375,
+  "small_bytes": 784384,
+  "score_scalar_ops": 12067404288,
+  "score_scan_bytes": 32178176000,
+  "full_state_scan_bytes": 96553358112,
+  "outputs": [
+    {
+      "ratio": 0.05,
+      "selected_blocks": 3069,
+      "approximate_payload_bytes": 805238784.0,
+      "metadata_bytes": null
+    },
+    {
+      "ratio": 0.1,
+      "selected_blocks": 6138,
+      "approximate_payload_bytes": 1609693184.0,
+      "metadata_bytes": null
+    },
+    {
+      "ratio": 0.2,
+      "selected_blocks": 12275,
+      "approximate_payload_bytes": 3218601984.0,
+      "metadata_bytes": null
+    }
+  ],
+  "hbm_extra": {
+    "reference_physical_bytes": 16092225536,
+    "staging_physical_bytes": 1073741824,
+    "score_bytes": 491000,
+    "workspace_bytes": null,
+    "snapshot_bytes": 0
+  },
+  "note": "Output estimates exclude metadata; actual selected tails determine exact bytes. Workspace and framework temporaries require measurement.",
+  "full_state_physical_bytes": 48276679056,
+  "full_state_physical_scopes_by_rank": [
+    {
+      "model": 4023056384,
+      "adam_m": 4023056384,
+      "adam_v": 4023056384,
+      "other": 612
+    },
+    {
+      "model": 4023056384,
+      "adam_m": 4023056384,
+      "adam_v": 4023056384,
+      "other": 612
+    },
+    {
+      "model": 4023056384,
+      "adam_m": 4023056384,
+      "adam_v": 4023056384,
+      "other": 612
+    },
+    {
+      "model": 4023056384,
+      "adam_m": 4023056384,
+      "adam_v": 4023056384,
+      "other": 612
+    }
+  ],
+  "full_state_small_physical_bytes_by_rank": [
+    2353764,
+    2353764,
+    2353764,
+    2353764
+  ],
+  "full_state_local_candidate_block_counts_by_rank": [
+    46032,
+    46032,
+    46032,
+    46032
+  ],
+  "full_state_output_estimates": [
+    {
+      "ratio": 0.05,
+      "payload_bytes": 2422778256.0,
+      "metadata_bytes": null,
+      "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."
+    },
+    {
+      "ratio": 0.1,
+      "payload_bytes": 4836141456.0,
+      "metadata_bytes": null,
+      "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."
+    },
+    {
+      "ratio": 0.2,
+      "payload_bytes": 9662867856.0,
+      "metadata_bytes": null,
+      "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."
+    }
+  ],
+  "full_state_extra_reference_bytes_by_rank": [
+    12069169764,
+    12069169764,
+    12069169764,
+    12069169764
+  ],
+  "control_metadata_bytes_by_rank": [
+    205204,
+    205204,
+    205204,
+    205204
+  ],
+  "weight_score_buffer_budget": {
+    "device_one_live_score_output_bytes_by_rank": [
+      194560,
+      194560,
+      194560,
+      194560
+    ],
+    "score_output_bytes_per_sweep_by_rank": [
+      7432540,
+      7432540,
+      7432540,
+      7432540
+    ],
+    "device_selection_index_bytes": 0,
+    "host_dense_global_fp64_score_bytes": 491000,
+    "host_dense_selected_int64_index_estimates": [
+      {
+        "ratio": 0.05,
+        "bytes": 24552
+      },
+      {
+        "ratio": 0.1,
+        "bytes": 49104
+      },
+      {
+        "ratio": 0.2,
+        "bytes": 98200
+      }
+    ],
+    "workspace_bytes": null,
+    "policy": "Top-K sequential per-parameter scoring: one current FP32 granule-score output; cached compiler workspaces are additional and not independently measured. Selection and descriptor indices are on Host. Dense Host representations exclude Python object and JSON overhead."
+  }
+}

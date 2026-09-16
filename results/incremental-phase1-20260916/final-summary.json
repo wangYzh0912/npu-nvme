@@ -6,7 +6,7 @@
     "main-K5": true,
     "main-K10": true,
     "main-K20": true,
-    "auxiliary-B0": false,
+    "auxiliary-B0": true,
     "auxiliary-B1": false,
     "auxiliary-K5": false,
     "auxiliary-K10": false,
@@ -38,6 +38,32 @@
     "actual-checkpoint-profile": true
   },
   "groups": [
+    {
+      "role": "auxiliary",
+      "group": "B0",
+      "repeats": 1,
+      "training_seconds": 19.885693952,
+      "time_range_seconds": [
+        19.885693952,
+        19.885693952
+      ],
+      "slowdown": 0.0,
+      "all_saved_seconds": 19.885693952,
+      "all_work_done_seconds": 19.885693952,
+      "drain_seconds": 0.0,
+      "pending_at_formal_end": 0,
+      "payload_bytes": 0,
+      "written_bytes": 0,
+      "exact_training_numerics": true,
+      "baseline_range_seconds": [
+        19.885693952,
+        19.885693952
+      ],
+      "slowdown_baseline_sensitivity": [
+        0.0,
+        0.0
+      ]
+    },
     {
       "role": "main",
       "group": "B0",
@@ -195,6 +221,21 @@
           "run": "main-b0-rep1",
           "first_formal_step_seconds": 6.687196841,
           "remaining_19_step_seconds": 11.794522780999998
+        }
+      ]
+    },
+    "auxiliary": {
+      "repeats": 1,
+      "seconds": [
+        19.885693952
+      ],
+      "spread_fraction": 0.0,
+      "stable": false,
+      "rank0_callback_decomposition": [
+        {
+          "run": "auxiliary-b0-rep0",
+          "first_formal_step_seconds": 8.994686788,
+          "remaining_19_step_seconds": 10.757670836999997
         }
       ]
     }

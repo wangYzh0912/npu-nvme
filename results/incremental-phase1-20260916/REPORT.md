@@ -1,6 +1,6 @@
 # 增量检查点第一阶段实验报告
 
-当前状态：执行中，未完成项不计为通过。已完成 29/35 项覆盖。
+当前状态：执行中，未完成项不计为通过。已完成 30/35 项覆盖。
 
 实验固定 TP4、序列长度 128、micro-batch 1、FP32 权重/BF16 计算、AdamW、种子 42。各组从相同初始 FULL 恢复模型、优化器和随机状态，预热后连续运行 20 个优化器 step，每步保存。主模型 Qwen3-8B，辅模型 Qwen3-4B；两者同属 Qwen3，不据此声称跨模型家族泛化。
 
@@ -10,6 +10,7 @@
 
 | 模型 | 组 | 次数 | 20 步训练/s | 保存提交完成/s | 全部工作完成/s | 相对 B0 减速 | 实际写入/GB | 训练 loss 完全一致 |
 |---|---|---:|---:|---:|---:|---:|---:|---|
+| auxiliary | B0 | 1 | 19.886 | 19.886 | 19.886 | 0.00% | 0.000 | True |
 | main | B0 | 2 | 20.506 | 20.506 | 20.506 | 0.00% | 0.000 | True |
 | main | B1 | 1 | 1387.319 | 1449.158 | 1451.150 | 6665.29% | 661.271 | True |
 | main | K10 | 1 | 292.710 | 300.700 | 311.173 | 1327.41% | 66.409 | True |
@@ -19,6 +20,10 @@
 main 的独立 B0 时间为 22.392, 18.621 秒；极差/中位数为 18.39%，是否达到 3% 时间稳定性门槛：False。
 
 rank 0 训练回调分解：[{"run": "main-b0-rep0", "first_formal_step_seconds": 9.939812181, "remaining_19_step_seconds": 12.316924385000002}, {"run": "main-b0-rep1", "first_formal_step_seconds": 6.687196841, "remaining_19_step_seconds": 11.794522780999998}]。首步仍计入正式结果；回调分解不等同于跨卡全局总区间。
+
+auxiliary 的独立 B0 时间为 19.886 秒；极差/中位数为 0.00%，是否达到 3% 时间稳定性门槛：False。
+
+rank 0 训练回调分解：[{"run": "auxiliary-b0-rep0", "first_formal_step_seconds": 8.994686788, "remaining_19_step_seconds": 10.757670836999997}]。首步仍计入正式结果；回调分解不等同于跨卡全局总区间。
 
 基线数值轨迹单独验证；时间稳定性不足不记为稳定通过。按缩减重复次数的执行要求保留该波动，以较慢基线计算保守减速下界，并对预算附近的探针使用套件前后校准及最多一次补跑。
 
@@ -68,7 +73,6 @@ K5 全局块平均年龄 10.096，未选中过的块 25850 个，其中末步评
 
 ## 待完成项
 
-- auxiliary-B0
 - auxiliary-B1
 - auxiliary-K5
 - auxiliary-K10
@@ -105,6 +109,20 @@ HBM 导出表只有本次采集汇总：[{"Device_id": "0", "Metric": "Average",
 
 全局 FP64 分数的紧凑表示为 999808 字节；选择及描述符索引位于 Host，当前实现不分配设备选择索引。Python 对象、JSON 元数据及编译缓存另计；该单输出尺寸不能替代实测 workspace 峰值。
 
+## auxiliary 空间与工作量预算
+
+权重 16.090 GB，可选择块 61375，小参数 784384 字节；每次扫描约 32.178 GB。三档 Top-K 均需评分全量候选。
+
+完整训练状态对应扫描量约 96.553 GB，仅为预算，未扩展实际检测范围。
+
+完整状态各卡实存大小（字节）：[{"model": 4023056384, "adam_m": 4023056384, "adam_v": 4023056384, "other": 612}, {"model": 4023056384, "adam_m": 4023056384, "adam_v": 4023056384, "other": 612}, {"model": 4023056384, "adam_m": 4023056384, "adam_v": 4023056384, "other": 612}, {"model": 4023056384, "adam_m": 4023056384, "adam_v": 4023056384, "other": 612}]。
+
+完整状态输出近似量（包含常驻副本，元数据待定）：[{"ratio": 0.05, "payload_bytes": 2422778256.0, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}, {"ratio": 0.1, "payload_bytes": 4836141456.0, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}, {"ratio": 0.2, "payload_bytes": 9662867856.0, "metadata_bytes": null, "policy": "Physical state estimate including replicas; all local tensors below 64K elements saved fully. Global TP blocks and selected tails require mapping before extension."}]。
+
+按实际 TP 几何推导的单个活动评分输出缓冲（各卡，字节）：[194560, 194560, 194560, 194560]。
+
+全局 FP64 分数的紧凑表示为 491000 字节；选择及描述符索引位于 Host，当前实现不分配设备选择索引。Python 对象、JSON 元数据及编译缓存另计；该单输出尺寸不能替代实测 workspace 峰值。
+
 ## 图表
 
 ![Main timeline](figures/phase-timeline-main.png)
@@ -124,6 +142,10 @@ HBM 导出表只有本次采集汇总：[{"Device_id": "0", "Metric": "Average",
 ![fidelity-block-ages.png](figures/fidelity-block-ages.png)
 
 ![ablation-main.png](figures/ablation-main.png)
+
+![actual-k10-timeline.png](figures/actual-k10-timeline.png)
+
+![demo-auxiliary.png](figures/demo-auxiliary.png)
 
 ![memory-main.png](figures/memory-main.png)
 
@@ -152,6 +174,7 @@ main：已测 Top-K 中，即使用较慢的 B0 作为分母，最小减速仍�
 
 | 模型:组 | 参考副本/GiB | 独立快照/GiB | HBM 输出/GiB | Host 输出峰值/GiB | 框架额外峰值/GiB | 整卡采样最少剩余/GiB |
 |---|---:|---:|---:|---:|---:|---:|
+| auxiliary:B0 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 39.471 |
 | main:B0 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 19.706 |
 | main:B0 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 19.706 |
 | main:B1 | 7.629 | 0.000 | 0.250 | 7.629 | 12.840 | 4.198 |

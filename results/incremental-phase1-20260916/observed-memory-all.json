@@ -1,6 +1,90 @@
 {
   "runs": [
     {
+      "run": "auxiliary-b0-rep0",
+      "role": "auxiliary",
+      "group": "B0",
+      "canonical": false,
+      "profiled": false,
+      "probe": false,
+      "suite": false,
+      "framework_peak_bytes_by_rank": [
+        20893984256,
+        20893984256,
+        20893985280,
+        20893985280
+      ],
+      "framework_extra_vs_min_baseline": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "board_sampled_peak_mib": {
+        "0": 25116,
+        "1": 25118,
+        "2": 25118,
+        "3": 25118
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 40420,
+        "1": 40418,
+        "2": 40418,
+        "3": 40418
+      },
+      "weight_reference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "host_output_peak_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "hbm_output_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        12069169764,
+        12069169764,
+        12069169764,
+        12069169764
+      ]
+    },
+    {
       "run": "main-b0-rep0",
       "role": "main",
       "group": "B0",
@@ -697,6 +781,97 @@
         71771945572,
         72644370532,
         71293790308
+      ],
+      "direct_full_state_projection_policy": "Framework peak includes framework-managed weight reference; replace it with full-state reference and add ACL output staging, which framework accounting excludes. Existing score workspace assumed unchanged; actual extension can require more."
+    },
+    {
+      "run": "main-k10-rep0-profile",
+      "role": "main",
+      "group": "K10",
+      "canonical": false,
+      "profiled": true,
+      "probe": false,
+      "suite": false,
+      "framework_peak_bytes_by_rank": [
+        51019497984,
+        50394553344,
+        51981584896,
+        50394554368
+      ],
+      "framework_extra_vs_min_baseline": [
+        8815745536,
+        8190800896,
+        9777831424,
+        8190800896
+      ],
+      "board_sampled_peak_mib": {
+        "0": 61251,
+        "1": 61251,
+        "2": 61252,
+        "3": 61253
+      },
+      "board_remaining_at_sampled_peak_mib": {
+        "0": 4285,
+        "1": 4285,
+        "2": 4284,
+        "3": 4283
+      },
+      "weight_reference_bytes_by_rank": [
+        8191660032,
+        8190427136,
+        8190427136,
+        8190427136
+      ],
+      "host_output_peak_bytes_by_rank": [
+        884981760,
+        836276224,
+        835457024,
+        838619136
+      ],
+      "hbm_output_bytes_by_rank": [
+        268435456,
+        268435456,
+        268435456,
+        268435456
+      ],
+      "snapshot_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_hbm_working_set_reported_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_fixed_score_inputs_bytes_by_rank": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "probe_buffer_policy": "Copy probe working_set counts three ACL loop buffers, including staging and reference; score input footprint is derived separately because combined rungs overwrite working_set. Host output is allocated even for pack-only rungs. Probe inputs are synthetic and are not model snapshots.",
+      "largest_per_parameter_difference_bytes_by_rank": [
+        622329856,
+        622329856,
+        622329856,
+        622329856
+      ],
+      "temporary_policy": "Per-parameter difference and square; compiler fusion not assumed",
+      "measurement_limits": "Board sampling includes startup and can miss brief peaks; framework and ACL allocations have different accounting. Workspace is not directly measured. Shared-suite graph and allocator caches may persist between intervals; these are not independent-process memory peaks.",
+      "full_state_bytes_by_rank": [
+        24574980708,
+        24574980708,
+        24574980708,
+        24574980708
+      ],
+      "direct_full_state_reference_projection_bytes": [
+        67671254116,
+        67047542372,
+        68634573924,
+        67047543396
       ],
       "direct_full_state_projection_policy": "Framework peak includes framework-managed weight reference; replace it with full-state reference and add ACL output staging, which framework accounting excludes. Existing score workspace assumed unchanged; actual extension can require more."
     },
