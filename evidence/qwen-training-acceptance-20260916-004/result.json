@@ -1,0 +1,237 @@
+{
+  "validation_status": "deferred",
+  "profile": "all",
+  "runs": [
+    {
+      "name": "trajectory-none",
+      "method": "none",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "reused": true
+    },
+    {
+      "name": "mindspore_native_save-source8",
+      "method": "mindspore_native_save",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/mindspore_native_save-source8"
+    },
+    {
+      "name": "mindspore_native_save-explicit4",
+      "method": "mindspore_native_save",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/mindspore_native_save-explicit4"
+    },
+    {
+      "name": "mindspore_native_save-latest8-to16",
+      "method": "mindspore_native_save",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/mindspore_native_save-latest8-to16"
+    },
+    {
+      "name": "mindspore_native_save-latest16-to24",
+      "method": "mindspore_native_save",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/mindspore_native_save-latest16-to24"
+    },
+    {
+      "name": "ours-source8",
+      "method": "ours",
+      "path": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/ours-source8"
+    }
+  ],
+  "comparisons": [
+    {
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 8
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact",
+      "oracle": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "run": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/mindspore_native_save-source8"
+    },
+    {
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 1,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 2,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 3,
+          "steps": 4,
+          "final_step": 8
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact",
+      "oracle": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "run": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/mindspore_native_save-explicit4"
+    },
+    {
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 16
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact",
+      "oracle": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "run": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/mindspore_native_save-latest8-to16"
+    },
+    {
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 24
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 24
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 24
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 24
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact",
+      "oracle": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "run": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/mindspore_native_save-latest16-to24"
+    },
+    {
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 8
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact",
+      "oracle": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/trajectory-none",
+      "run": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004/ours-source8"
+    }
+  ],
+  "timings": {},
+  "reuse": {
+    "source": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002",
+    "accepted": [
+      "trajectory-none"
+    ],
+    "rejected": [
+      {
+        "method": "mindspore_native_save",
+        "reason": "training implementation changed: python/npu_nvme/framework/checkpoint_controller.py"
+      },
+      {
+        "method": "ours",
+        "reason": "[Errno 2] No such file or directory: '/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/ours-source8/result.json'"
+      },
+      {
+        "method": "bytecheckpoint_host",
+        "reason": "[Errno 2] No such file or directory: '/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-002/bytecheckpoint_host-source8/result.json'"
+      }
+    ]
+  },
+  "scope_change": {
+    "decided_at": "2026-09-16T08:59:02.782893+00:00",
+    "decision": "publish usable training entry; defer exhaustive four-method campaign",
+    "completed_runs": 6,
+    "completed_comparisons": 5,
+    "deferred": [
+      "ours explicit generation-1 restore and current-campaign latest restore chain",
+      "bytecheckpoint_host current-campaign multicycle chain",
+      "three-source repetition and one-warmup/three-timed restore matrix for persistent methods"
+    ],
+    "safety": "campaign scheduler stopped only after Ours step-8 save, all rank sessions and storage owner closed; all eight NPUs idle; stale lease archived"
+  }
+}
