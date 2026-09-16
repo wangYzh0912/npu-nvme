@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-16T17:07:48.476833+00:00",
+  "updated_at": "2026-09-16T17:08:22.478290+00:00",
   "status": "running",
   "local_campaign": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
   "runs": [
@@ -498,9 +498,10 @@
     },
     {
       "run": "main-k20-rep0",
-      "execution_status": "running",
-      "validation_status": "not_run",
+      "execution_status": "completed",
+      "validation_status": "pass",
       "method": "none",
+      "final_step": 24,
       "source_manifest_sha256": "3b3e4cbd8b35c39819d18bcc856395fdb40f1873c6dffca7dbe6a94206d183e0",
       "ranks": [
         {
@@ -531,7 +532,94 @@
       "commits": 20,
       "media_verified_commits": 0,
       "fidelity_steps": 0,
-      "fidelity_observations": []
+      "fidelity_observations": [],
+      "last_media_verification": {
+        "generation": 20,
+        "step": 20,
+        "ranks": [
+          {
+            "rank": 0,
+            "payload_bytes": 1690284032,
+            "verified": true
+          },
+          {
+            "rank": 1,
+            "payload_bytes": 1614979072,
+            "verified": true
+          },
+          {
+            "rank": 2,
+            "payload_bytes": 1642913792,
+            "verified": true
+          },
+          {
+            "rank": 3,
+            "payload_bytes": 1605607424,
+            "verified": true
+          }
+        ],
+        "status": "pass",
+        "descriptor_encoding_probe": [
+          {
+            "rank": 0,
+            "descriptor_bytes": 12101131,
+            "encode_ns": [
+              257556775,
+              251928483
+            ],
+            "sha256_ns": [
+              8139503,
+              7815681
+            ],
+            "packed_ranges": 6014,
+            "fragments": 43911
+          },
+          {
+            "rank": 1,
+            "descriptor_bytes": 12113179,
+            "encode_ns": [
+              249712203,
+              253240148
+            ],
+            "sha256_ns": [
+              7599641,
+              7618510
+            ],
+            "packed_ranges": 5825,
+            "fragments": 44151
+          },
+          {
+            "rank": 2,
+            "descriptor_bytes": 12133411,
+            "encode_ns": [
+              253845700,
+              249293602
+            ],
+            "sha256_ns": [
+              7969092,
+              8333203
+            ],
+            "packed_ranges": 5761,
+            "fragments": 44293
+          },
+          {
+            "rank": 3,
+            "descriptor_bytes": 11923162,
+            "encode_ns": [
+              245424046,
+              247062283
+            ],
+            "sha256_ns": [
+              7441240,
+              7567580
+            ],
+            "packed_ranges": 5663,
+            "fragments": 43482
+          }
+        ],
+        "scope": "Last committed step only; prior steps are not claimed as readback verified.",
+        "run": "main-k20-rep0"
+      }
     },
     {
       "run": "main-k5-rep0",
