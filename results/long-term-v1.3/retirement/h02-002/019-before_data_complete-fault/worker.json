@@ -1,0 +1,31 @@
+{
+  "before_crash": {
+    "retained_slots": [],
+    "stats": {
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "completion_error_count": 0,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 0,
+      "nvme_complete_count": 0,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 0,
+      "nvme_submit_count": 0,
+      "reactor_cpu_us": 981,
+      "request_ring_depth": 1,
+      "request_ring_peak": 1,
+      "spdk_retry_count": 0,
+      "stream_sync_fallback_count": 0
+    }
+  },
+  "case": "before_data_complete",
+  "cleanup_safe": false,
+  "crash_boundary": "host request accepted, before NVMe submit; no HBM DMA",
+  "init_rc": 0,
+  "pid": 639981,
+  "scope": "process-crash smoke only; no DMA-stop or power-loss proof",
+  "shm_id": 18319,
+  "status": "expected_crash",
+  "superblock_sha256": "9c25a221594c8eb137b0c9b3235dd02f9210c20234b0e5d63ca6f74f41da3abd"
+}

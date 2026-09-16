@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "profile_id": "A-subset",
+  "scope": "Implemented host subset only; not the complete A exit gate",
+  "cases": [
+    {
+      "id": "A-admission",
+      "tier": "FAKE",
+      "nodeid": "tests/d1/test_runtime.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-wait-input-result",
+      "tier": "FAKE",
+      "nodeid": "tests/regression/test_full_safety.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-protocol",
+      "tier": "CPU",
+      "nodeid": "tests/python/test_full_checkpoint_protocol.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-evidence",
+      "tier": "CPU",
+      "nodeid": "tests/regression/test_gate_evidence.py",
+      "timeout_seconds": 120,
+      "required": true
+    },
+    {
+      "id": "A-c-safety",
+      "tier": "C_IMPL",
+      "nodeid": "tests/regression/test_c_host_safety.py",
+      "timeout_seconds": 720,
+      "required": true
+    }
+  ]
+}

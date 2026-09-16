@@ -78,7 +78,7 @@ def inspect_disk(pci_addr, npu_id=0):
         print(f"  Magic Number    : {sb_buf.raw[:8]} "
               f"{'(OK)' if is_formatted else '(INVALID)'}")
         if not is_formatted:
-            return
+            raise ValueError("invalid or unsupported superblock")
 
         active_slot = layout.active_meta_slot
         total_bytes = layout.total_bytes
@@ -108,6 +108,11 @@ def inspect_disk(pci_addr, npu_id=0):
 
         slot_a_data = parse_metadata_slot(ctx, "A", META_SLOT_A_OFFSET)
         slot_b_data = parse_metadata_slot(ctx, "B", META_SLOT_B_OFFSET)
+
+        if any(x["status"] == "I/O Error" for x in (slot_a_data,slot_b_data)):
+            raise RuntimeError("metadata read failed")
+        if (slot_a_data,slot_b_data)[active_slot]["status"] != "Valid JSON":
+            raise ValueError("active metadata is invalid")
 
         def extract_step_num(key_str):
             try:
@@ -152,6 +157,7 @@ def inspect_disk(pci_addr, npu_id=0):
 
     except Exception as e:
         print(f"\n[Fatal Error] Inspection failed: {e}")
+        raise
     finally:
         lib.npu_nvme_cleanup(ctx)
 

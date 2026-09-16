@@ -21,7 +21,7 @@
 
 /* Pipeline depth bounds */
 #define MIN_PIPE_DEPTH  1
-#define MAX_PIPE_DEPTH  16
+#define MAX_PIPE_DEPTH  64
 
 /* Hugepage pool auto-expansion constants */
 #define NR_HUGEPAGES_PATH  "/proc/sys/vm/nr_hugepages"
@@ -77,6 +77,9 @@ typedef struct NPUNVMEContext {
     acl_state_t acl;
     dma_pool_t dma;
 
+    uint32_t copy_bytes_per_tick, checksum_bytes_per_tick;
+    uint32_t submit_items_per_tick, quantum_items, max_pending_requests;
+
     /* Metadata I/O */
     void *meta_dma_buf;
     bool enable_profiling;
@@ -93,8 +96,20 @@ typedef struct NPUNVMEContext {
     pthread_t reactor_pthread;
     pthread_barrier_t init_barrier;
     atomic_int app_should_stop;
+    atomic_int quarantined;
+    atomic_int admission_closed;
+    atomic_uint safety_reason; /* 1: event record, 2: event query, 3: observation timeout */
+    atomic_ullong request_serial;
+    atomic_int reactor_exited;
+    atomic_uint refs;          /* owner + allocated request objects */
+    atomic_uint queued_writes;
+    atomic_uint pending_requests; /* queued or reactor-owned requests */
     bool reactor_pthread_started;
     bool state_lock_initialized;
+    atomic_bool close_in_progress;
+    bool native_owner_held;
+    int native_owner_fd;
+    pid_t native_owner_pid;
     int reactor_init_result;
 
     /* ---- Step-counter poller ---- */
@@ -111,6 +126,10 @@ typedef struct NPUNVMEContext {
 
     /* ---- Async write FSM (V3) ---- */
     write_fsm_ctx_t write_fsm;
+    write_request_t *ready_head[2], *ready_tail[2]; /* reactor-owned */
+    bool prefer_ready[2];
+    int prior_write_error; /* sticky within this context, under state_lock */
+    write_request_t *accepted_writes; /* under state_lock, queue-owned references */
     struct spdk_ring *write_ring;    /* Python → reactor write requests */
 
     /* ---- Async read FSM (V4) ---- */
