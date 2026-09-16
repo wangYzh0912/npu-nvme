@@ -6,6 +6,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
+#include <unistd.h>
+
+static int transfer(NPUNVMEContext *ctx, void *pointer, uint64_t offset, size_t size, int read) {
+    NPUNVMETransferItem item={.address=pointer,.offset=offset,.length=size};
+    NPUNVMETransferSpec spec={.struct_size=sizeof(spec),.version=1,.operation=read,
+        .memory_kind=NPU_NVME_MEMORY_HOST,.item_count=1,.items=&item};
+    NPUNVMERequest *request=NULL;
+    int rc=npu_nvme_submit_transfer(ctx,&spec,&request);
+    if (rc) return rc;
+    rc=npu_nvme_wait_request(request,0);
+    if (rc==-ETIMEDOUT) {
+        int done=0;
+        while (!done) {npu_nvme_poll_request(request,&done);if (!done) usleep(1000);}
+    }
+    npu_nvme_release_request(request);return rc;
+}
 
 int main(int argc, char **argv) {
     NPUNVMEContext *ctx = NULL;
@@ -40,7 +57,7 @@ int main(int argc, char **argv) {
     size_t sizes[1] = { buf_size };
 
     printf("[V2-smoke] writing %zu bytes...\n", buf_size); fflush(stdout);
-    rc = npu_nvme_write_batch_host(ctx, ptrs, offsets, sizes, 1);
+    rc = transfer(ctx,ptrs[0],offsets[0],sizes[0],0);
     printf("[V2-smoke] write -> %d\n", rc); fflush(stdout);
     if (rc != 0) {
         fprintf(stderr, "[V2-smoke] FAIL: host write returned %d\n", rc);
@@ -53,7 +70,7 @@ int main(int argc, char **argv) {
     printf("[V2-smoke] reading back...\n"); fflush(stdout);
     memset(read_buf, 0, buf_size);
     ptrs[0] = read_buf;
-    rc = npu_nvme_read_batch_host(ctx, ptrs, offsets, sizes, 1);
+    rc = transfer(ctx,ptrs[0],offsets[0],sizes[0],1);
     printf("[V2-smoke] read -> %d\n", rc); fflush(stdout);
     if (rc != 0) {
         fprintf(stderr, "[V2-smoke] FAIL: host read returned %d\n", rc);

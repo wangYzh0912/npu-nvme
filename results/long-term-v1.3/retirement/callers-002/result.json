@@ -1,0 +1,66 @@
+{
+  "status": "pass",
+  "phases": [
+    {
+      "phase": "single-card",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/models/npu_nvme_exp/user7-stack/checkouts/strict-retirement-001/experiments/benchmarks/run_single_card_full.py",
+        "--run-dir",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/retirement/callers-002/single-card",
+        "--smoke",
+        "--total-steps",
+        "5",
+        "--checkpoint-steps",
+        "2",
+        "--mode",
+        "serial",
+        "--shm-id",
+        "45100",
+        "--timeout",
+        "180"
+      ],
+      "returncode": 0
+    },
+    {
+      "phase": "prepare",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/models/npu_nvme_exp/user7-stack/checkouts/strict-retirement-001/tests/hardware/d1_callers.py",
+        "--out",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/retirement/callers-002",
+        "--phase",
+        "prepare"
+      ],
+      "returncode": 0
+    },
+    {
+      "phase": "source",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/models/npu_nvme_exp/user7-stack/checkouts/strict-retirement-001/tests/hardware/d1_callers.py",
+        "--out",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/retirement/callers-002",
+        "--phase",
+        "source"
+      ],
+      "returncode": 0
+    },
+    {
+      "phase": "restore",
+      "argv": [
+        "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+        "/models/npu_nvme_exp/user7-stack/checkouts/strict-retirement-001/tests/hardware/d1_callers.py",
+        "--out",
+        "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/results/long-term-v1.3/retirement/callers-002",
+        "--phase",
+        "restore"
+      ],
+      "returncode": 0
+    }
+  ],
+  "changed_sources": [],
+  "commit": "590fab4da87d85f45d933a4142b35954337a3d69",
+  "library_sha256": "0f521c87a95b18de2d87f48417abd45b603414e8586ff568c226fc4b36fc3c7d",
+  "scope": "single-card serial frozen FULL and Ours source/fresh restore; seed41, GPT2"
+}

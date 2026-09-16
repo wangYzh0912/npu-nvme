@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import threading
+import queue
 import time
 from pathlib import Path
 
@@ -41,21 +42,36 @@ class WorkerSemanticAdapter(ACLSemanticAdapter):
             env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, text=True, bufsize=1)
         self._worker_lock = threading.Lock()
+        self._lines = queue.Queue()
+        def pump():
+            for line in self._worker.stdout: self._lines.put(line)
+            self._lines.put(None)
+        def errors():
+            with (self.run_dir / 'worker.stderr.log').open('a') as log:
+                for line in self._worker.stderr:
+                    log.write(line); log.flush()
+        threading.Thread(target=pump, daemon=True).start()
+        threading.Thread(target=errors, daemon=True).start()
+
+    def _line(self, deadline):
+        try: return self._lines.get(timeout=max(0, deadline-time.monotonic()))
+        except queue.Empty as error: raise TimeoutError('worker response deadline exceeded') from error
 
     def _worker_request(self, request):
         with self._worker_lock:
             if self._worker.poll() is not None:
-                stderr = self._worker.stderr.read()
+                stderr = "see worker.stderr.log"
                 raise RuntimeError(
                     f"{self.name} worker exited {self._worker.returncode}: {stderr[-4000:]}")
             self._worker.stdin.write(json.dumps(request, sort_keys=True) + "\n")
             self._worker.stdin.flush()
             response = None
+            deadline = time.monotonic() + float(self.config["timeout_seconds"])
             noise = []
             while response is None:
-                line = self._worker.stdout.readline()
+                line = self._line(deadline)
                 if not line:
-                    stderr = self._worker.stderr.read()
+                    stderr = "see worker.stderr.log"
                     raise RuntimeError(
                         f"{self.name} worker returned no response: {stderr[-4000:]}"
                         f" stdout={''.join(noise)[-2000:]}")
@@ -166,8 +182,9 @@ class WorkerSemanticAdapter(ACLSemanticAdapter):
                 # close is the only non-OK worker response (the worker has
                 # intentionally left its request loop).  Ignore import noise
                 # exactly as in _worker_request and require the closed ACK.
+                deadline = time.monotonic() + float(self.config.get("close_timeout_seconds", 120))
                 while True:
-                    line = self._worker.stdout.readline()
+                    line = self._line(deadline)
                     if not line:
                         raise RuntimeError("worker exited without close ACK")
                     try:

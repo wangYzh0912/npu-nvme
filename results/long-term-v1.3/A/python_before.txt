@@ -1,0 +1,243 @@
+FFFFFFFFFFF                                                              [100%]
+=================================== FAILURES ===================================
+________ test_wait_timeout_preserves_request_and_allows_late_completion ________
+
+    def test_wait_timeout_preserves_request_and_allows_late_completion():
+        owner = SimpleNamespace()
+        handle = checkpoint.CheckpointHandle(owner, 'r1', 1, 1)
+        before = handle.state
+        with pytest.raises(TimeoutError):
+>           handle.wait(timeout=0)
+
+tests/regression/test_full_safety.py:18: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <direct_checkpoint.CheckpointHandle object at 0xfffe947d3670>
+timeout = 0
+
+    def wait(self, timeout=None):
+        """Wait for durable completion and raise the original failure."""
+        if not self._done.wait(timeout=timeout):
+            error = TimeoutError("checkpoint did not reach a terminal state")
+            with self._lock:
+                if self.state not in TERMINAL_STATES:
+                    require_transition(self.state, CheckpointState.TIMED_OUT)
+                    self.state = CheckpointState.TIMED_OUT
+                    self._record_event(self.state)
+            self.status = self.TIMED_OUT
+            self.error = error
+>           raise
+E           RuntimeError: No active exception to reraise
+
+python/direct_checkpoint.py:311: RuntimeError
+______________________ test_cancelled_wait_is_not_timeout ______________________
+
+    def test_cancelled_wait_is_not_timeout():
+        handle = checkpoint.CheckpointHandle(SimpleNamespace(), 'r1', 1, 1)
+        handle.status = handle.CANCELLED
+        handle.state = CheckpointState.CANCELLED
+        handle._done.set()
+        with pytest.raises(RuntimeError, match='cancel'):
+>           handle.wait(timeout=0)
+
+tests/regression/test_full_safety.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <direct_checkpoint.CheckpointHandle object at 0xfffe947269a0>
+timeout = 0
+
+    def wait(self, timeout=None):
+        """Wait for durable completion and raise the original failure."""
+        if not self._done.wait(timeout=timeout):
+            error = TimeoutError("checkpoint did not reach a terminal state")
+            with self._lock:
+                if self.state not in TERMINAL_STATES:
+                    require_transition(self.state, CheckpointState.TIMED_OUT)
+                    self.state = CheckpointState.TIMED_OUT
+                    self._record_event(self.state)
+            self.status = self.TIMED_OUT
+            self.error = error
+            raise
+        if self.status == self.FAILED:
+            raise RuntimeError("checkpoint persistence failed") from self.error
+        if self.status != self.PERSISTED:
+>           raise TimeoutError("checkpoint did not reach PERSISTED state")
+E           TimeoutError: checkpoint did not reach PERSISTED state
+
+python/direct_checkpoint.py:315: TimeoutError
+______ test_result_requires_explicit_status_and_boolean_proofs[changes0] _______
+
+changes = {}
+
+    @pytest.mark.parametrize('changes', [{}, {'persisted': 1}, {'restore_verified': 'no'}])
+    def test_result_requires_explicit_status_and_boolean_proofs(changes):
+        result = dict(mode='serial', request_id='r1', generation=1,
+                      persisted=True, restore_verified=True)
+        if changes:
+            result['status'] = 'pass'
+            result.update(changes)
+        with pytest.raises(ValueError):
+>           validate_result_gate(result)
+E           Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/regression/test_full_safety.py:42: Failed
+______ test_result_requires_explicit_status_and_boolean_proofs[changes1] _______
+
+changes = {'persisted': 1}
+
+    @pytest.mark.parametrize('changes', [{}, {'persisted': 1}, {'restore_verified': 'no'}])
+    def test_result_requires_explicit_status_and_boolean_proofs(changes):
+        result = dict(mode='serial', request_id='r1', generation=1,
+                      persisted=True, restore_verified=True)
+        if changes:
+            result['status'] = 'pass'
+            result.update(changes)
+        with pytest.raises(ValueError):
+>           validate_result_gate(result)
+E           Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/regression/test_full_safety.py:42: Failed
+______ test_result_requires_explicit_status_and_boolean_proofs[changes2] _______
+
+changes = {'restore_verified': 'no'}
+
+    @pytest.mark.parametrize('changes', [{}, {'persisted': 1}, {'restore_verified': 'no'}])
+    def test_result_requires_explicit_status_and_boolean_proofs(changes):
+        result = dict(mode='serial', request_id='r1', generation=1,
+                      persisted=True, restore_verified=True)
+        if changes:
+            result['status'] = 'pass'
+            result.update(changes)
+        with pytest.raises(ValueError):
+>           validate_result_gate(result)
+E           Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/regression/test_full_safety.py:42: Failed
+_______________ test_chunk_input_rejected_before_ctypes[size--1] _______________
+
+field = 'size', value = -1
+
+    @pytest.mark.parametrize('field,value', [('size', -1), ('offset', -4096),
+                                           ('offset', 1), ('ptr', -1)])
+    def test_chunk_input_rejected_before_ctypes(field, value):
+        item = dict(ptr=4096, size=4, offset=4096, name='x')
+        item[field] = value
+        with pytest.raises(ValueError):
+>           chunk_helpers.build_chunks([item], 4096)
+E           Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/regression/test_full_safety.py:51: Failed
+____________ test_chunk_input_rejected_before_ctypes[offset--4096] _____________
+
+field = 'offset', value = -4096
+
+    @pytest.mark.parametrize('field,value', [('size', -1), ('offset', -4096),
+                                           ('offset', 1), ('ptr', -1)])
+    def test_chunk_input_rejected_before_ctypes(field, value):
+        item = dict(ptr=4096, size=4, offset=4096, name='x')
+        item[field] = value
+        with pytest.raises(ValueError):
+>           chunk_helpers.build_chunks([item], 4096)
+E           Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/regression/test_full_safety.py:51: Failed
+______________ test_chunk_input_rejected_before_ctypes[offset-1] _______________
+
+field = 'offset', value = 1
+
+    @pytest.mark.parametrize('field,value', [('size', -1), ('offset', -4096),
+                                           ('offset', 1), ('ptr', -1)])
+    def test_chunk_input_rejected_before_ctypes(field, value):
+        item = dict(ptr=4096, size=4, offset=4096, name='x')
+        item[field] = value
+        with pytest.raises(ValueError):
+>           chunk_helpers.build_chunks([item], 4096)
+E           Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/regression/test_full_safety.py:51: Failed
+_______________ test_chunk_input_rejected_before_ctypes[ptr--1] ________________
+
+field = 'ptr', value = -1
+
+    @pytest.mark.parametrize('field,value', [('size', -1), ('offset', -4096),
+                                           ('offset', 1), ('ptr', -1)])
+    def test_chunk_input_rejected_before_ctypes(field, value):
+        item = dict(ptr=4096, size=4, offset=4096, name='x')
+        item[field] = value
+        with pytest.raises(ValueError):
+>           chunk_helpers.build_chunks([item], 4096)
+E           Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/regression/test_full_safety.py:51: Failed
+_____________________ test_zero_chunk_rejected_before_loop _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xfffe944c6970>
+
+    def test_zero_chunk_rejected_before_loop(monkeypatch):
+        count = 0
+        pointer = chunk_helpers.ctypes.c_void_p
+        def bounded_pointer(value):
+            nonlocal count
+            count += 1
+            if count > 5:
+                raise AssertionError('chunk loop did not reject zero chunk size')
+            return pointer(value)
+        monkeypatch.setattr(chunk_helpers.ctypes, 'c_void_p', bounded_pointer)
+        with pytest.raises(ValueError):
+>           chunk_helpers.build_chunks([dict(ptr=4096, size=4, offset=4096)], 0)
+
+tests/regression/test_full_safety.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+python/chunk_helpers.py:34: in build_chunks
+    ctypes.c_void_p(ptr + inner_off),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = 4096
+
+    def bounded_pointer(value):
+        nonlocal count
+        count += 1
+        if count > 5:
+>           raise AssertionError('chunk loop did not reject zero chunk size')
+E           AssertionError: chunk loop did not reject zero chunk size
+
+tests/regression/test_full_safety.py:61: AssertionError
+____________ test_restore_size_mismatch_rejected_before_allocation _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xfffe94737340>
+
+    def test_restore_size_mismatch_rejected_before_allocation(monkeypatch):
+        model = SimpleNamespace(parameters_and_names=lambda: [('x', SimpleNamespace(shape=(1,)))])
+        monkeypatch.setattr(checkpoint, 'get_dev_ptr', lambda param: 0)
+        def forbidden(*args, **kwargs):
+            raise AssertionError('allocated unvalidated metadata')
+        monkeypatch.setattr(np, 'empty', forbidden)
+        with pytest.raises(ValueError):
+>           chunk_helpers.rebuild_chunks_from_meta(model, {'x':dict(shape=[1],dtype='float32',size=4096,offset=4096)},4096)
+
+tests/regression/test_full_safety.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+python/chunk_helpers.py:118: in rebuild_chunks_from_meta
+    np_arr = np.empty(info["shape"], dtype=np.dtype(info["dtype"]))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = ([1],), kwargs = {'dtype': dtype('float32')}
+
+    def forbidden(*args, **kwargs):
+>       raise AssertionError('allocated unvalidated metadata')
+E       AssertionError: allocated unvalidated metadata
+
+tests/regression/test_full_safety.py:72: AssertionError
+=========================== short test summary info ============================
+FAILED tests/regression/test_full_safety.py::test_wait_timeout_preserves_request_and_allows_late_completion
+FAILED tests/regression/test_full_safety.py::test_cancelled_wait_is_not_timeout
+FAILED tests/regression/test_full_safety.py::test_result_requires_explicit_status_and_boolean_proofs[changes0]
+FAILED tests/regression/test_full_safety.py::test_result_requires_explicit_status_and_boolean_proofs[changes1]
+FAILED tests/regression/test_full_safety.py::test_result_requires_explicit_status_and_boolean_proofs[changes2]
+FAILED tests/regression/test_full_safety.py::test_chunk_input_rejected_before_ctypes[size--1]
+FAILED tests/regression/test_full_safety.py::test_chunk_input_rejected_before_ctypes[offset--4096]
+FAILED tests/regression/test_full_safety.py::test_chunk_input_rejected_before_ctypes[offset-1]
+FAILED tests/regression/test_full_safety.py::test_chunk_input_rejected_before_ctypes[ptr--1]
+FAILED tests/regression/test_full_safety.py::test_zero_chunk_rejected_before_loop
+FAILED tests/regression/test_full_safety.py::test_restore_size_mismatch_rejected_before_allocation
+11 failed, 22 warnings in 5.50s

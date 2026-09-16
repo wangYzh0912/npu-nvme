@@ -30,7 +30,7 @@ class FullCheckpointProtocolTests(unittest.TestCase):
     def test_none_baseline_is_not_restore_success(self):
         with self.assertRaises(ValueError):
             validate_result_gate({"mode": "none", "restore_verified": True})
-        validate_result_gate({"mode": "none", "restore_verified": None})
+        validate_result_gate({"mode": "none", "status": "pass", "restore_verified": None})
 
     def test_full_success_requires_persistence_and_restore(self):
         with self.assertRaises(ValueError):

@@ -1,0 +1,83 @@
+{
+  "checkpoint": {
+    "admission": "block",
+    "capture": "frozen",
+    "interval": 3,
+    "methods": [
+      "none",
+      "mindspore_native_save",
+      "ours",
+      "bytecheckpoint_host"
+    ],
+    "retention": 2,
+    "state_scope": "full_state",
+    "transport": "legacy_sync",
+    "wait_policy": "source_safe"
+  },
+  "identity": {
+    "allow_dirty": false,
+    "expected_commit": "cb3e21d70bf8a83f2e395603fc47691829fd2f01"
+  },
+  "measurement": {
+    "cache_policy": "warm",
+    "continue_steps": 3,
+    "formal_steps": 30,
+    "integrity": "mandatory",
+    "loss_atol": 1e-06,
+    "loss_rtol": 1e-05,
+    "mode": "correctness_and_timing",
+    "restore_repetitions": 3,
+    "run_order": "rotating_serial",
+    "timing_schema": 1,
+    "warmup": 5
+  },
+  "output": {
+    "root": "/models/npu_nvme_exp/user7-stack/c1-runs"
+  },
+  "runtime": {
+    "admission_ms": 120000,
+    "chunk_bytes": 1048576,
+    "close_ms": 120000,
+    "dma_depth": 4,
+    "drain_ms": 120000,
+    "hbm_budget_bytes": 34359738368,
+    "host_budget_bytes": 34359738368,
+    "max_batch_bytes": 68719476736,
+    "max_batch_items": 65536,
+    "max_metadata_bytes": 1048576,
+    "max_requests": 1,
+    "phase_ms": 900000,
+    "wait_ms": 120000
+  },
+  "schema_version": 1,
+  "storage": {
+    "authorization_file": "/models/npu_nvme_exp/user7-stack/checkouts/c1-unified-entry/config/raw_test_region.json",
+    "fs_root": "/models/npu_nvme_exp/user7-stack/c1-data",
+    "length": "device_capacity_bytes",
+    "media_version": "V2",
+    "mode": "read_write",
+    "namespace": 1,
+    "offset": 0,
+    "owner": "single",
+    "pci": "0000:83:00.0",
+    "shm_id": 51401,
+    "slot_size_gb": 10
+  },
+  "workload": {
+    "batch": 1,
+    "dataset_revision": "fixed-arithmetic-tokens-v1",
+    "dropout": 0,
+    "dtype": "fp32",
+    "learning_rate": 1e-05,
+    "model_id": "gpt2",
+    "model_revision": "sha256:132237ff20be59328e0ff606a4010357a659bb9b75ad9d235f15499c5ef150f5",
+    "seeds": [
+      41,
+      42,
+      43
+    ],
+    "seq_len": 129,
+    "task": "causal_lm",
+    "training_mode": "single_rank"
+  }
+}

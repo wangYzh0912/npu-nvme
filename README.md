@@ -1,7 +1,7 @@
 # NPU-NVMe Transfer
 
 Ascend NPU 与裸 NVMe 之间的检查点传输实现。C 层通过 ACL、Host DMA 缓冲和 SPDK
-执行分块 I/O；Python 层管理 FULL 训练状态、请求生命周期与多 rank 提交。
+执行分块 I/O；当前 Python 正式入口为单 rank 严格 FULL 训练状态与请求生命周期。
 数据经过 Host DMA 缓冲，不是 NPU 到 SSD 的 PCIe peer-to-peer 通路。
 
 ## 内容与范围
@@ -12,10 +12,15 @@ Ascend NPU 与裸 NVMe 之间的检查点传输实现。C 层通过 ACL、Host D
 - `tests/`：协议、回环、故障、新进程恢复与多 rank 测试。
 - [results](results/README.md)：最新正式实验及解释当前限制所必需的原始证据。
 
-master 不含开发计划、汇报材料和过往实验；历史可从 Git 原提交及实验分支追溯。
-当前正式模型入口为 GPT-2/XL，Qwen 升级与适配尚未实现。已保存记录支持 GPT-2 FULL
-和 2/4-rank 恢复；XL live 的严格续训门禁仍有失败。Delta/R0 是实验实现，协议测试和
-更新统计不等于已验收的增量训练持久化通路。
+本开发分支按长期规划 v1.3 推进。D1 已通过同版本软件与硬件综合验收；默认
+`DirectCheckpoint` 为严格 FULL。历史 nonstrict FULL 与 metadata envelope v1 已退役，
+归档标签为 `archive-legacy-full-20260914`。完整范围和证据见
+[实施状态](results/long-term-v1.3/IMPLEMENTATION_STATUS.md) 与
+[迁移说明](docs/migrations/STRICT_FULL_RETIREMENT.md)。
+
+当前严格硬件验收范围是单卡 GPT-2。FaF/live、Delta、Ours 多 rank 正式写入入口拒绝使用，
+等待各自后续门禁；独立算法和参考 baseline 保留。Qwen TP4 原生框架恢复证据单独登记，
+不表示 Ours TP4 或新环境默认切换完成。
 
 ## 构建
 
@@ -56,15 +61,18 @@ python experiments/benchmarks/run_single_card_full.py \
 ```
 
 入口执行源训练、持久化、源进程退出、新进程恢复及续训门禁，失败返回非零。
-`frozen_async` 和 `live_async` 是独立机制，各自需要正确性验证。
+`serial`、`queue`、`frozen_async` 均使用冻结严格 FULL；`serial` 等待每次完成。
+`live_async`/旧 `async` 模式明确拒绝。保留两代，三个物理槽，一次待提交 FULL，chunk ≤1 MiB。
 硬件运行需核对 NPU/NUMA、hugepages、NVMe 序列号/绑定和动态库路径。裸盘写入会覆盖
 测试区域，只使用专用区域；已有盘不应为了复现重新格式化。首次初始化选项见
 `python python/format_npu_disk.py --help`。SPDK 需要设备与 hugepage 权限；已保存恢复
 记录在 root/PA IOVA 下通过，不承诺普通用户或不同驱动组合可直接 attach。
 
-`include/npu_nvme.h` 定义 C API。`DirectCheckpoint.save/load` 面向模型参数，
-`save_state/load_state` 面向命名组件和控制状态；完整恢复还要涵盖优化器、RNG 和数据
-位置，参照共享状态桥和 FULL runner。异步派发后必须检查完成屏障或句柄的失败状态。
+`include/npu_nvme.h` 定义 C API；现有 batch ABI 的退役属于后续 B2/C2。
+`save_state(..., expected_spec=spec)` 保存模型、优化器与完整控制态；
+`restore_full_state(target_factory, expected_spec, step)` 创建并验证私有新目标，返回 ready
+目标和 receipt。旧 `save/load/load_state/recover` 明确报迁移错误。必须等待句柄确认结果；
+等待超时不取消 I/O，无法证明 DMA 安全时保留资源。
 
 ## 验证
 
