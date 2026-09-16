@@ -137,7 +137,8 @@ def select_recovery_chain(raw_slots):
     if not full_generations:
         raise ValueError("ring contains no retained FULL frame")
     first = max(full_generations)
-    expected = list(range(first, latest + 1))
+    if latest-first+1>len(by_generation):raise ValueError("missing generation after latest FULL")
+    expected = range(first, latest + 1)
     if any(generation not in by_generation for generation in expected):
         raise ValueError("missing generation after latest FULL")
     chain = [by_generation[generation] for generation in expected]

@@ -48,6 +48,19 @@ int npu_nvme_init(NPUNVMEContext **out_ctx, const char *pci_addr, int npu_id,
                   int pipe_depth, uint32_t chunk_size, bool enable_profiling,
                   const char *prof_dir);
 
+#define NPU_NVME_ROLE_COMBINED 0u
+#define NPU_NVME_ROLE_HOST_OWNER 1u
+#define NPU_NVME_ROLE_COPY_RANK 2u
+typedef struct {
+    uint32_t struct_size, version, role, pipe_depth, chunk_size;
+    int32_t npu_id;
+    uint32_t reserved;
+} NPUNVMEInitOptions;
+/* Additive ABI2 initialization. Copy ranks never probe/attach PCI devices;
+ * Host owners never create an ACL context. One context per process remains. */
+int npu_nvme_init_ex(NPUNVMEContext **out_ctx, const char *pci_addr,
+                    const NPUNVMEInitOptions *options, const char *prof_dir);
+
 /** @brief Release all resources (SPDK, ACL, DMA pool, Reactor thread). */
 void npu_nvme_cleanup(NPUNVMEContext *ctx);
 
@@ -75,13 +88,110 @@ int npu_nvme_submit_write_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
                                      int num_items,
                                      NPUNVMERequest **out_request);
 
+/* B2 additive, versioned API. Buffer memory remains caller-owned until
+ * completion or an explicit stop proof; descriptors/results are request-owned.
+ * Flags describe implementation capabilities, not hardware acceptance. */
+#define NPU_NVME_TRANSFER_VERSION 1u
+#define NPU_NVME_TRANSFER_WRITE 0u
+#define NPU_NVME_TRANSFER_READ 1u
+#define NPU_NVME_TRANSFER_META_READ 2u
+#define NPU_NVME_TRANSFER_META_WRITE 3u
+#define NPU_NVME_TRANSFER_FLUSH 4u
+#define NPU_NVME_COPY_D2H 5u
+#define NPU_NVME_COPY_H2D 6u
+#define NPU_NVME_MEMORY_HBM 0u
+#define NPU_NVME_MEMORY_HOST 1u
+#define NPU_NVME_CHECK_CRC32 1u
+#define NPU_NVME_CHECK_SHA256 2u
+
+/* Effective limits apply per request/tick, never to a whole checkpoint.
+ * Scheduler environment overrides are read once at context initialization:
+ * NPU_NVME_{COPY_BYTES,CHECKSUM_BYTES,SUBMIT_ITEMS,QUANTUM_ITEMS,MAX_PENDING}.
+ * Invalid overrides reject initialization; no silent clamping. */
+typedef struct {
+    uint32_t struct_size, version;
+    uint32_t operation_mask, block_size, chunk_size, pipe_depth;
+    uint32_t max_request_items, max_pending_requests;
+    uint32_t copy_bytes_per_tick, checksum_bytes_per_tick;
+    uint32_t submit_items_per_tick, quantum_items;
+    uint64_t max_request_bytes, namespace_bytes, dma_pool_bytes;
+} NPUNVMECapabilities;
+int npu_nvme_get_capabilities(NPUNVMEContext *ctx, NPUNVMECapabilities *out,
+                             uint32_t size);
+
+/* Copy requests use the same reactor, SPDK DMA pool and receipt ownership.
+ * This supports bounded capture hashing and restore application without a
+ * second ACL executor. Neither copy operation submits an NVMe command. */
+typedef struct {
+    uint32_t struct_size, version, operation, checksum_flags;
+    void *source, *destination;
+    uint64_t length;
+    uint32_t expected_crc32, reserved;
+    uint8_t expected_sha256[32];
+} NPUNVMECopySpec;
+int npu_nvme_submit_copy(NPUNVMEContext *ctx, const NPUNVMECopySpec *spec,
+                          NPUNVMERequest **out_request);
+
+typedef struct {
+    void *address;
+    uint64_t offset;
+    uint64_t length;
+    uint32_t expected_crc32;
+    uint32_t reserved;
+    uint8_t expected_sha256[32];
+} NPUNVMETransferItem;
+
+typedef struct {
+    uint32_t struct_size;
+    uint32_t version;
+    uint32_t operation;
+    uint32_t memory_kind;
+    uint32_t checksum_flags;
+    uint32_t item_count;
+    const NPUNVMETransferItem *items;
+} NPUNVMETransferSpec;
+
+typedef struct {
+    uint64_t request_id;
+    uint64_t logical_bytes;
+    uint32_t item_count;
+    uint32_t operation;
+    int32_t result;
+    uint32_t done;
+    uint32_t source_safe;
+    uint32_t transport_safe;
+    uint32_t data_durable; /* transfer completion alone never sets this */
+    uint32_t reserved;
+} NPUNVMETransferReceipt;
+
+typedef struct {
+    uint32_t crc32;
+    uint32_t reserved;
+    uint8_t sha256[32];
+} NPUNVMETransferDigest;
+
+int npu_nvme_submit_transfer(NPUNVMEContext *ctx,
+    const NPUNVMETransferSpec *spec, NPUNVMERequest **out_request);
+/* Receipt/digests available only after completion (-EAGAIN while pending).
+ * Failed receipt is inspectable; digest output requires successful completion.
+ * None of these calls drops the caller's request reference. */
+int npu_nvme_get_transfer_receipt(NPUNVMERequest *request,
+    NPUNVMETransferReceipt *receipt, uint32_t receipt_size);
+int npu_nvme_get_transfer_digests(NPUNVMERequest *request,
+    NPUNVMETransferDigest *digests, uint32_t capacity);
+
 /** @brief Poll a submitted request; result is returned once done is true. */
 int npu_nvme_poll_request(NPUNVMERequest *request, int *done);
 
-/** @brief Wait up to timeout_ms (zero means unbounded). */
+/** @brief Observe for timeout_ms; zero selects the finite request default.
+ * Timeout does not cancel I/O or prove source/destination buffers are safe.
+ */
 int npu_nvme_wait_request(NPUNVMERequest *request, uint32_t timeout_ms);
 
-/** @brief Release a terminal request.  Non-terminal requests are retained. */
+/** @brief Drop caller's request reference, including before completion.
+ * The queue/reactor retains its reference. This never transfers ownership of
+ * caller data buffers: retain those until completion or proven quiescence.
+ */
 void npu_nvme_release_request(NPUNVMERequest *request);
 
 /** @brief Return total NVMe capacity in bytes. */
@@ -106,48 +216,8 @@ int npu_nvme_sync_meta_io(NPUNVMEContext *ctx, uint64_t byte_offset,
 /** @brief Submit and wait for an NVMe namespace flush on the metadata qpair. */
 int npu_nvme_flush(NPUNVMEContext *ctx);
 
-/**
- * @brief Batch write: NPU HBM -> NVMe (blocking).
- *
- * @param ctx          context handle
- * @param npu_ptrs     array of NPU device pointers (source)
- * @param nvme_offsets array of NVMe byte offsets (destination)
- * @param sizes        array of per-chunk byte sizes
- * @param num_items    number of chunks
- * @return 0 on success, -1 on error
- */
-int npu_nvme_write_batch(NPUNVMEContext *ctx, void **npu_ptrs,
-                         uint64_t *nvme_offsets, size_t *sizes, int num_items);
-
-/** @brief HBM write with one CRC32 result per logical (unpadded) chunk. */
-int npu_nvme_write_batch_crc(NPUNVMEContext *ctx, void **npu_ptrs,
-                             uint64_t *nvme_offsets, size_t *sizes,
-                             uint32_t *crc32_out, int num_items);
-
-/**
- * @brief Batch read: NVMe -> NPU HBM (blocking).
- *
- * @param ctx          context handle
- * @param npu_ptrs     array of NPU device pointers (destination)
- * @param nvme_offsets array of NVMe byte offsets (source)
- * @param sizes        array of per-chunk byte sizes
- * @param num_items    number of chunks
- * @return 0 on success, -1 on error
- */
-int npu_nvme_read_batch(NPUNVMEContext *ctx, void **npu_ptrs,
-                        uint64_t *nvme_offsets, size_t *sizes, int num_items);
-
-/**
- * @brief Batch read: NVMe -> Host DRAM (memcpy, no NPU involvement).
- */
-int npu_nvme_read_batch_host(NPUNVMEContext *ctx, void **host_ptrs,
-                              uint64_t *nvme_offsets, size_t *sizes, int num_items);
-
-/**
- * @brief Batch write: Host DRAM -> NVMe (memcpy, no NPU involvement).
- */
-int npu_nvme_write_batch_host(NPUNVMEContext *ctx, void **ptrs,
-                              uint64_t *nvme_offsets, size_t *sizes, int num_items);
+/** ABI major, checked before loading this runtime. */
+uint32_t npu_nvme_abi_version(void);
 
 /**
  * @brief Register parameter pointers for background persistence by the
@@ -209,6 +279,27 @@ uint32_t npu_nvme_get_io_timeout_ms(NPUNVMEContext *ctx);
  * @return 0 when no request remains, -ETIMEDOUT when the bound expires.
  */
 int npu_nvme_wait_quiescent(NPUNVMEContext *ctx, uint32_t timeout_ms);
+
+/** Diagnostic ownership snapshot; no entry authorizes freeing a buffer.
+ * reason: 0 active, 1 event record stop unproven, 2 event query stop unproven,
+ * 3 observation timeout. Free only after request completion/proven quiescence.
+ */
+typedef struct {
+    uint32_t slot;
+    uint32_t reason;
+    uint64_t request_id;
+    uint64_t bytes;
+    uint64_t nvme_offset;
+} NPUNVMERetainedSlot;
+int npu_nvme_get_retained_slots(NPUNVMEContext *ctx, NPUNVMERetainedSlot *slots,
+                                 uint32_t capacity, uint32_t *count);
+
+/** Close admission and wait for reactor exit, retaining context on failure.
+ *  0 timeout selects the finite default. May be retried; does not free ctx.
+ *  -EIO means DMA stop is unproven; buffers and context must remain alive.
+ *  After successful close and joined submitters, cleanup releases the owner.
+ */
+int npu_nvme_close(NPUNVMEContext *ctx, uint32_t timeout_ms);
 
 /* Delta frame I/O: migrated to Python side via build_chunks_host +
  * write_batch_host / read_batch.  The SPSC ring-buffer pipeline handles

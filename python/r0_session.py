@@ -8,6 +8,7 @@ for unit tests and for validating frames produced by an NPU capture path.
 from __future__ import annotations
 
 import hashlib
+import copy
 from typing import Iterable, Mapping
 
 import numpy as np
@@ -22,7 +23,13 @@ class R0Session:
                  base_full_generation: int = 1):
         if set(initial) != {field.canonical_name for field in manifest.fields}:
             raise ValueError("initial state does not match manifest")
-        self.manifest = manifest
+        if type(base_full_generation) is not int or base_full_generation<=0:
+            raise ValueError('FULL root must be a positive integer')
+        for field in manifest.fields:
+            value=np.asarray(initial[field.canonical_name])
+            if tuple(value.shape)!=tuple(field.shape) or value.dtype!=np.dtype(field.dtype):
+                raise ValueError('initial state geometry differs from manifest')
+        self.manifest = copy.deepcopy(manifest)
         self.base_full_generation = int(base_full_generation)
         self.base_state = {name: np.ascontiguousarray(value).copy()
                            for name, value in initial.items()}
@@ -31,6 +38,7 @@ class R0Session:
         self.current = {name: value.copy() for name, value in self.persisted.items()}
         self.persisted_generation = 0
         self._in_flight = None
+        self._last_ack = None
 
     @property
     def in_flight_generation(self):
@@ -48,15 +56,25 @@ class R0Session:
         self.current = {name: np.ascontiguousarray(value).copy()
                         for name, value in state.items()}
 
-    def _changed_records(self):
+    def _changed_records(self, changed_blocks=None):
         records = []
+        block_count=sum(len(field.blocks) for field in self.manifest.fields)
+        if changed_blocks is not None:
+            changed_blocks=np.asarray(changed_blocks)
+            if changed_blocks.dtype!=np.bool_ or changed_blocks.shape!=(block_count,):
+                raise ValueError('R0 NPU changed bitmap geometry')
+        cursor=0
         for field in self.manifest.fields:
             current = self.current[field.canonical_name].reshape(-1)
             persisted = self.persisted[field.canonical_name].reshape(-1)
             for block in field.blocks:
                 start = block.element_offset
                 end = start + block.element_count
-                if not np.array_equal(current[start:end], persisted[start:end]):
+                changed=current[start:end].tobytes() != persisted[start:end].tobytes()
+                if changed_blocks is not None and bool(changed_blocks[cursor])!=changed:
+                    raise ValueError('R0 NPU bitmap differs from exact byte oracle')
+                cursor+=1
+                if changed:
                     records.append({
                         "name": field.canonical_name,
                         "state_index": field.state_index,
@@ -68,7 +86,7 @@ class R0Session:
                     })
         return records
 
-    def observe(self, step: int, generation: int, controls=()) -> bytes:
+    def observe(self, step: int, generation: int, controls=(), changed_blocks=None) -> bytes:
         if self._in_flight is not None:
             raise RuntimeError("an R0 generation is awaiting ACK")
         if generation != self.persisted_generation + 1:
@@ -80,39 +98,58 @@ class R0Session:
             base_full_generation=self.base_full_generation,
             base_delta_generation=self.persisted_generation,
             manifest_digest=self.manifest.digest,
-            block_records=self._changed_records(),
+            block_records=self._changed_records(changed_blocks),
             control_records=control_records)
         self._in_flight = {"generation": generation,
                            "checksum": hashlib.sha256(frame).hexdigest()}
         return frame
 
     def ack(self, frame: bytes):
+        checksum = hashlib.sha256(frame).hexdigest()
+        if self._last_ack is not None and checksum == self._last_ack[0]:
+            return dict(self._last_ack[1])
         info = unpack_r0_frame(frame)
         if info["manifest_digest"] != self.manifest.digest:
             raise ValueError("R0 manifest digest mismatch")
         if self._in_flight is None:
             raise ValueError("R0 ACK has no in-flight generation")
+        if checksum != self._in_flight['checksum']:
+            raise ValueError("R0 ACK differs from pending frame")
         if info["generation"] != self._in_flight["generation"]:
             raise ValueError("R0 ACK generation mismatch")
         if info["base_delta_generation"] != self.persisted_generation:
             raise ValueError("R0 ACK base generation mismatch")
-        by_index = {field.state_index: field for field in self.manifest.fields}
-        for record in info["blocks"]:
-            field = by_index.get(int(record["state_index"]))
-            if field is None or field.canonical_name != record["name"]:
-                raise ValueError("R0 ACK block manifest mismatch")
-            block = field.blocks[int(record["block_index"])]
-            if (block.element_offset != int(record["element_offset"]) or
-                    block.element_count != int(record["element_count"])):
-                raise ValueError("R0 ACK block location mismatch")
-            target = self.persisted[field.canonical_name].reshape(-1)
-            start = block.element_offset
-            target[start:start + block.element_count] = record["value"]
+        updated = self._apply_validated(info, self.persisted)
+        self.persisted = updated
         self.persisted_generation = info["generation"]
         self._in_flight = None
-        return {"generation": info["generation"], "step": info["step"],
+        result = {"generation": info["generation"], "step": info["step"],
                 "blocks": len(info["blocks"]),
                 "controls": len(info["controls"])}
+        self._last_ack = (checksum, dict(result))
+        return result
+
+    def _apply_validated(self, info, state):
+        if info['base_full_generation'] != self.base_full_generation:
+            raise ValueError('R0 FULL root differs')
+        if info['world_size'] != 1 or info['rank_id'] != 0:
+            raise ValueError('R0 session requires single rank')
+        by_index = {field.state_index: field for field in self.manifest.fields}
+        validated = []; seen = set()
+        for record in info['blocks']:
+            field = by_index.get(record['state_index'])
+            index = record['block_index']
+            if field is None or field.canonical_name != record['name'] or type(index) is not int or not 0 <= index < len(field.blocks):
+                raise ValueError('R0 block manifest mismatch')
+            block = field.blocks[index]
+            key = (field.state_index, index)
+            if key in seen or record['element_offset'] != block.element_offset or record['element_count'] != block.element_count or np.dtype(record['dtype']) != np.dtype(field.dtype):
+                raise ValueError('R0 block geometry/dtype mismatch')
+            seen.add(key); validated.append((field, block, record['value']))
+        updated = {name: value.copy() for name, value in state.items()}
+        for field, block, value in validated:
+            updated[field.canonical_name].reshape(-1)[block.element_offset:block.element_offset+block.element_count] = value
+        return updated
 
     def recover(self, frames: Iterable[bytes]):
         state = {name: value.copy() for name, value in self.base_state.items()}
@@ -124,14 +161,7 @@ class R0Session:
                 raise ValueError("R0 recovery manifest mismatch")
             if info["base_delta_generation"] != generation:
                 raise ValueError("R0 recovery generation gap or reordering")
-            by_index = {field.state_index: field for field in self.manifest.fields}
-            for record in info["blocks"]:
-                field = by_index.get(int(record["state_index"]))
-                if field is None or field.canonical_name != record["name"]:
-                    raise ValueError("R0 recovery block mismatch")
-                target = state[field.canonical_name].reshape(-1)
-                start = int(record["element_offset"])
-                target[start:start + int(record["element_count"])] = record["value"]
+            state = self._apply_validated(info, state)
             generation = info["generation"]
             last_step = info["step"]
         return {"state": state, "generation": generation, "last_step": last_step}

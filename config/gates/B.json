@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "profile_id": "B",
+  "scope": "B software exit: G01, G15-01/02, ABI, affected A. Hardware B/H01-compat is separately required in hardware_contract.",
+  "cases": [
+    {
+      "id": "A-admission",
+      "tier": "FAKE",
+      "nodeid": "tests/d1/test_runtime.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-wait-input-result",
+      "tier": "FAKE",
+      "nodeid": "tests/regression/test_full_safety.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-protocol",
+      "tier": "CPU",
+      "nodeid": "tests/python/test_full_checkpoint_protocol.py",
+      "timeout_seconds": 30,
+      "required": true
+    },
+    {
+      "id": "A-evidence",
+      "tier": "CPU",
+      "nodeid": "tests/regression/test_gate_evidence.py",
+      "timeout_seconds": 120,
+      "required": true
+    },
+    {
+      "id": "A-c-safety",
+      "tier": "C_IMPL",
+      "nodeid": "tests/regression/test_c_host_safety.py",
+      "timeout_seconds": 720,
+      "required": true
+    },
+    {
+      "id": "G15-imports",
+      "tier": "CPU",
+      "nodeid": "tests/gates/test_module_boundaries.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "G01-runtime",
+      "tier": "CPU",
+      "nodeid": "tests/gates/test_runtime_ownership.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "G01-metadata",
+      "tier": "CPU",
+      "nodeid": "tests/d1/test_catalog_crash.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "G01-restore",
+      "tier": "CPU",
+      "nodeid": "tests/d1/test_strict.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "ABI",
+      "tier": "CPU",
+      "nodeid": "tests/gates/test_abi_layout.py",
+      "timeout_seconds": 60,
+      "required": true
+    },
+    {
+      "id": "G01-legacy-python",
+      "tier": "FAKE",
+      "nodeid": "tests/python",
+      "timeout_seconds": 120,
+      "required": true
+    }
+  ],
+  "gate_subset": [
+    "G01",
+    "G15-01/02",
+    "ABI",
+    "affected A software"
+  ],
+  "hardware_contract": {
+    "runner": "tests/hardware/b_compatibility.py",
+    "seeds": [
+      41,
+      42,
+      43
+    ],
+    "directions": [
+      "entry-to-exit",
+      "exit-to-entry"
+    ],
+    "continuation_steps": 3,
+    "required": true
+  }
+}

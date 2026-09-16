@@ -8,7 +8,7 @@ Usage:
 
     prof = SpdkProfiler("spdk_bench", output_dir="output/")
     prof.phase("full_write")
-    rc = prof.wrap_c_call("write_batch", lib.npu_nvme_write_batch, ctx, ...)
+    rc = prof.wrap_c_call("submit_transfer", lib.npu_nvme_submit_transfer, ctx, ...)
     prof.ingest_csv("output/profiling/time_write.csv", direction="write")
     prof.end_phase("full_write", total_bytes=2900000000)
     prof.to_json()
