@@ -52,6 +52,22 @@ class Adapter:
         for handle in self.handles:
             self.wait_persisted(handle, timeout)
 
+    def prune(self, retention):
+        if self.name in ('none', 'ours'): return
+        import shutil
+        root = Path(self.config['fs_test_dir']) / 'repro_checkpoints' / self.run_dir.name
+        generations = sorted((p for p in root.glob('generation_*') if p.is_dir() and not p.is_symlink()),
+                             key=lambda p:int(p.name.split('_')[-1]))
+        for path in generations[:-retention]: shutil.rmtree(path)
+
+    def query(self, handle):
+        return handle.as_dict()
+
+    def before_optimizer_update(self):
+        deadline = __import__('time').monotonic() + float(self.config['timeout_seconds'])
+        for handle in self.handles:
+            self.wait_source_release(handle, max(0, deadline-__import__('time').monotonic()))
+
     def close(self):
         return None
 

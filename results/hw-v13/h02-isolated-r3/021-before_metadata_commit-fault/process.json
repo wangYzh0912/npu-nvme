@@ -1,0 +1,41 @@
+{
+  "argv": [
+    "/home/user7/miniconda3/envs/ms_2.5/bin/python",
+    "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/tests/hardware/stage4_fault_lifecycle.py",
+    "--output",
+    "/tmp/h02-isolated-r3/021-before_metadata_commit-fault",
+    "--pci",
+    "0000:83:00.0",
+    "--npu",
+    "7",
+    "--depth",
+    "2",
+    "--shm-id",
+    "312424",
+    "--library",
+    "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3/build_out/lib/libnpu_nvme.so.1.0",
+    "--close-timeout-ms",
+    "5000",
+    "--timeout-bound",
+    "0.2",
+    "--crash-child",
+    "before_metadata_commit"
+  ],
+  "cwd": "/models/npu_nvme_exp/user7-stack/checkouts/long-term-v1.3",
+  "expected_rc": 87,
+  "pid": 414668,
+  "returncode": 87,
+  "seconds": 0.7684724442660809,
+  "status": "pass",
+  "worker": {
+    "case": "before_metadata_commit",
+    "cleanup_safe": false,
+    "crash_boundary": "scratch data flushed; no metadata publish invoked",
+    "init_rc": 0,
+    "pid": 414668,
+    "scope": "process-crash smoke only; no DMA-stop or power-loss proof",
+    "shm_id": 312424,
+    "status": "expected_crash",
+    "superblock_sha256": "3595d57996507a46ba61a6f404b03da576a49de72781d4aff1173e8e93c511a7"
+  }
+}
