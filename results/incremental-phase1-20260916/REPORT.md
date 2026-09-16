@@ -87,6 +87,12 @@
 
 这些是任务包络窗口；核数量占用、窗口内带宽与精确计算指令重合均缺失，不能凭平均指标宣布辅助任务可插入。
 
+稳定区间内，约 9.600 秒的 neither 时间与 HCCL 任务包络重合。HCCL 包络也可能包含等待；该重合不能解释为通信硬件持续满载。
+
+PipeUtilization 导出的计数器（样本为任务，不是独立重复）：{"aic_mac_ratio": {"samples": 236060, "minimum": 0.0, "median": 0.0, "maximum": 0.802}, "aiv_vec_ratio": {"samples": 236060, "minimum": 0.0, "median": 0.04, "maximum": 0.681}, "cube_utilization(%)": {"samples": 236060, "minimum": 0.0, "median": 0.0, "maximum": 98.462}}。
+
+HBM 导出表只有本次采集汇总：[{"Device_id": "0", "Metric": "Average", "Read(MB/s)": "24873.584", "Write(MB/s)": "22010.855"}]；没有候选窗口内带宽。
+
 ## main 空间与工作量预算
 
 权重 32.763 GB，可选择块 124976，小参数 1232896 字节；每次扫描约 65.523 GB。三档 Top-K 均需评分全量候选。
