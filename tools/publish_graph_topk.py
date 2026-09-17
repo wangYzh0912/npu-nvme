@@ -52,7 +52,7 @@ def main():
         runs.append(row)
     (dest / 'runs.json').write_text(json.dumps(dict(updated_at=datetime.datetime.now(datetime.timezone.utc).isoformat(), runs=runs), indent=2) + '\n')
     subprocess.run(['git', 'add', '-f', '--', *relatives, 'results/graph-topk-20260917',
-                    'results/incremental-phase1-20260916/status.json', 'results/incremental-phase1-20260916/README.md'], cwd=WORK, check=True)
+                    'results/incremental-phase1-20260916/status.json', 'results/incremental-phase1-20260916/README.md', 'results/incremental-phase1-20260916/remaining-queue.json', 'results/incremental-phase1-20260916/matrix-auxiliary.json'], cwd=WORK, check=True)
     if subprocess.run(['git', 'diff', '--cached', '--quiet'], cwd=WORK).returncode:
         subprocess.run(['git', 'commit', '-m', 'Record graph Top-K experiment implementation and progress'], cwd=WORK, check=True)
     subprocess.run(['git', 'push', 'origin', 'incremental-phase1-results'], cwd=WORK, check=True, timeout=120)
