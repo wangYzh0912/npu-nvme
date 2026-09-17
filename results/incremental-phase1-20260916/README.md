@@ -1,3 +1,7 @@
+# 旧实验已按用户要求暂停
+
+后续转为真实权重工作集的图内 Top-K 实验。已完成结果保留为完整保存路径的工程证据，不能作为合法并行检测容量结论。
+
 # 增量检查点第一阶段：实验结果
 
 实验尚未全部完成，当前阶段报告见 [REPORT.md](REPORT.md)。 当前状态见 [status.json](status.json)，已核验数据见 [validation-summary.json](validation-summary.json)。

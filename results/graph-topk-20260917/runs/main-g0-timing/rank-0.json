@@ -1,0 +1,64 @@
+{
+  "status": "failed",
+  "options": {
+    "schema_version": 1,
+    "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
+    "hardware_lock": "/models/npu_nvme_exp/user7-stack/hardware-campaign.lock",
+    "models": {
+      "main": "/models/Qwen3-8B",
+      "auxiliary": "/models/Qwen3-4B"
+    },
+    "initial_root": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
+    "initial_identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4",
+    "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
+    "seq_length": 128,
+    "compile_steps": 3,
+    "warmup_steps": 4,
+    "formal_steps": 20,
+    "block_elements": 65536,
+    "ratios": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "scan_fractions": [
+      0.125,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "slowdown_budget": 0.03,
+    "reference_budgets": [
+      0.01,
+      0.05
+    ],
+    "default_repeats": 1,
+    "maximum_repeats": 2,
+    "topk_sorted": true,
+    "reference_rule": "initial_weight * 0.99 + (parameter_index % 17 + 1) * 0.00001",
+    "parallel_acceptance": "compiled dependency and device trace required; requested layout is not evidence of execution overlap",
+    "excluded": [
+      "checkpoint_io",
+      "socket",
+      "json_coordination",
+      "payload_sha",
+      "media_readback",
+      "shadow_loss"
+    ],
+    "output": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g0-timing",
+    "level": 0,
+    "layout": "serial",
+    "scan_fraction": 1.0,
+    "ratio": 0.1,
+    "role": "main",
+    "profile": false,
+    "dump_graphs": false
+  },
+  "rank": 0,
+  "losses": [],
+  "warmup": [],
+  "actual_overlap": "unverified",
+  "parallel_label": "requested_dependency_layout_only",
+  "error": "RuntimeError('The total number of timed out node is 1. Timed out node list is: [const vector]{0}, worker 0 is the first one timed out, please check its log.\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/cluster/topology/meta_server_node.cc:549 UpdateTopoState\\n')",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/user7/npu-nvme/python/npu_nvme/experiments/graph_workload.py\", line 85, in run\n    build_context(config)\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/core/context/build_context.py\", line 458, in build_context\n    ctx = Context(mf_config)\n          ^^^^^^^^^^^^^^^^^^\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/core/context/build_context.py\", line 71, in __init__\n    self.parallel_opr.init_communication()\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/core/context/parallel.py\", line 79, in init_communication\n    init()\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/communication/management.py\", line 214, in init\n    init_cluster()\nRuntimeError: The total number of timed out node is 1. Timed out node list is: [const vector]{0}, worker 0 is the first one timed out, please check its log.\n\n----------------------------------------------------\n- C++ Call Stack: (For framework developers)\n----------------------------------------------------\nmindspore/ccsrc/cluster/topology/meta_server_node.cc:549 UpdateTopoState\n\n"
+}
