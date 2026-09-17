@@ -117,6 +117,17 @@ def build(campaign, output):
         text.append(f"|{100*r['ratio']:.0f}%|{r['working_set']['selected_blocks']}|{r['seconds']:.6f}|{1000*r['auxiliary_seconds']:.3f}|{r['peak_hbm_bytes']/2**30:.3f}|")
     text += ['', '三档都扫描全部 124976 个逻辑块，读取全局 W/R 共 65.523417 GB/轮；本轮只输出设备索引和分数，没有搬运选中权重。TopK 后显式设备 Sort 的成本包含在上述时间内。',
              '', '独立辅助调用在计时后执行三次，表中是四卡调用样本中位数；它不是三次独立训练重复，也不能替代总完成时间。']
+    text += ['', '## 空间预算（全量扫描 K10）','',
+             '|模型|每卡参考 GiB|保留分数/索引/值字节|额外峰值 GiB|总峰值 GiB|采样板卡最少剩余 GiB|',
+             '|---|---:|---:|---:|---:|---:|']
+    for r in formal:
+        if r['level']!=6 or r['ratio']!=.1 or r['scan_fraction']!=1:continue
+        w=r['working_set']
+        output_bytes=4*w['candidate_blocks']+8*w['selected_blocks']+4
+        board=[v for v in r.get('board_memory_peak_mib',{}).values() if v is not None]
+        remaining=f'{(65536-max(board))/1024:.3f}' if board else '缺失'
+        text.append(f"|{r['role']}|{max(w['reference_bytes_per_rank'])/2**30:.3f}|{output_bytes}|{r.get('extra_peak_hbm_bytes',0)/2**30:.3f}|{r['peak_hbm_bytes']/2**30:.3f}|{remaining}|")
+    text += ['', '无显式用户快照或权重输出缓冲；编译器复制和差分/平方中间张量见 BOTTLENECKS.md。索引常量、选择 workspace 等不能只用保留输出大小概括；其同时存活上限未单独测得。板卡剩余空间来自 1 秒采样，可能漏掉瞬时峰值。']
     (output/'REPORT.md').write_text('\n'.join(text)+'\n')
 
 if __name__=='__main__':
