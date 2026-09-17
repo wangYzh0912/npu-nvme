@@ -8,11 +8,11 @@
   },
   "initial_root": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
   "initial_identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4",
-  "strategy": "config/qwen_runtime_schema.json",
+  "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
   "seq_length": 128,
   "compile_steps": 3,
   "warmup_steps": 12,
-  "formal_steps": 20,
+  "formal_steps": 3,
   "block_elements": 65536,
   "ratios": [
     0.05,
@@ -42,5 +42,13 @@
     "payload_sha",
     "media_readback",
     "shadow_loss"
-  ]
+  ],
+  "output": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g1-serial-diagnostic",
+  "level": 1,
+  "layout": "serial",
+  "scan_fraction": 1.0,
+  "ratio": 0.1,
+  "role": "main",
+  "profile": true,
+  "dump_graphs": true
 }

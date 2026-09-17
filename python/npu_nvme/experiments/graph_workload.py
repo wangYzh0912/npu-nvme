@@ -87,7 +87,8 @@ def run(options):
             raise ValueError('TP4 required')
         if options.get('dump_graphs'):
             ms.set_context(save_graphs=2, save_graphs_path=str(directory / 'graphs'))
-        create_group('graph_topk_aux_tp4', [0, 1, 2, 3])  # Common 200 MB communicator allocation control, including G0.
+        if options['level'] >= 5:
+            create_group('graph_topk_aux_tp4', [0, 1, 2, 3])
         ms.set_seed(42); ms.manual_seed(42); np.random.seed(42); random.seed(42)
         tokenizer = AutoTokenizer.from_pretrained(str(source), local_files_only=True, trust_remote_code=False)
         sequence = options['seq_length']
@@ -171,7 +172,8 @@ def run(options):
                     report['begin_ns'] = time.monotonic_ns()
                 if step == total:
                     report['training_end_ns'] = time.monotonic_ns()
-                    drain()  # A_last: final updated weights, no next F/B to hide behind.
+                    if options['layout'] == 'parallel':
+                        drain()  # Diagnostic prologue/epilogue boundary, not accepted formal timing.
                     ms.runtime.synchronize()
                     report['all_done_ns'] = time.monotonic_ns()
                     report['memory_peak_bytes'] = ms.runtime.max_memory_allocated()
@@ -179,7 +181,7 @@ def run(options):
                         profiler.stop()
                     if 'chain' in holder:
                         report['version_end'] = int(holder['chain'].version.asnumpy())
-                        if report['version_end'] - report['version_begin'] != options['formal_steps']:
+                        if report['version_end'] - report['version_begin'] != options['formal_steps'] + int(options['layout'] == 'parallel'):
                             raise ValueError('wrong number of graph auxiliary invocations')
                     report['status'] = 'timing_complete'
                     write(directory / 'progress.json', report)
@@ -216,6 +218,7 @@ def run(options):
                 times.append(time.monotonic_ns() - begin)
             report['standalone_auxiliary_ns'] = times
         report['status'] = 'pass'
+        report['formal_contract'] = 'twenty_updated_weight_detections' if options['layout'] == 'serial' else 'capability_probe_extra_boundary_detection_not_formal_comparison'
         write(directory / 'result.json', report)
         return 0
     except BaseException as error:

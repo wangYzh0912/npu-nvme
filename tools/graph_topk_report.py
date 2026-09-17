@@ -17,7 +17,7 @@ def build(campaign, output):
         ranks = [json.loads((run / f'rank_{r}/result.json').read_text()) for r in range(4)]
         row = dict(name=run.name, role=cfg['role'], level=cfg['level'], layout=cfg['layout'],
                    scan_fraction=cfg['scan_fraction'], ratio=cfg['ratio'], diagnostic=cfg['profile'],
-                   steps=cfg['formal_steps'], seconds=d['completion_seconds'], training_seconds=d['training_seconds'],
+                   warmup_steps=cfg['warmup_steps'], steps=cfg['formal_steps'], seconds=d['completion_seconds'], training_seconds=d['training_seconds'],
                    drain_seconds=max((r['all_done_ns']-r['training_end_ns'])/1e9 for r in ranks),
                    peak_hbm_bytes=max(r['memory_peak_bytes'] for r in ranks),
                    numerical_loss=[r['loss'] for r in ranks[0]['losses']],
@@ -29,7 +29,7 @@ def build(campaign, output):
         if profile.exists():
             p=json.loads(profile.read_text());row['overlap_us']=[r['actual_task_overlap_us'] for r in p['ranks']]
         runs.append(row)
-    formal = [r for r in runs if not r['diagnostic'] and r['steps']==20]
+    formal = [r for r in runs if not r['diagnostic'] and r['steps']==20 and r['warmup_steps']==12 and r['layout']=='serial']
     for row in formal:
         base = [r for r in formal if r['role']==row['role'] and r['level']==0]
         if base:

@@ -172,11 +172,9 @@ def install_wrapper(options, schema, rank, holder):
             # A_(t-1) reads weights from the preceding completed update.
             # Skip only the first formal update; its A is in the next graph.
             aux = Tensor(0.0, ms.float32)
-            if self.optimizer.global_step != self.skip_aux_step:
+            if not self.serial_aux:
                 aux = self.chain()
-            if self.serial_aux:
-                scaling_sens = F.depend(scaling_sens, aux)
-                inputs = F.depend(inputs, aux)
+            # Serial auxiliary executes after the current optimizer below.
             loss, grads, grad_scale_factor = self.grads_for_mcore(scaling_sens, *inputs)
             status, scaling_sens = self.start_overflow_check(loss, scaling_sens)
             grads = self.hyper_map(F.partial(_grad_scale, scaling_sens * grad_scale_factor), grads)
@@ -197,9 +195,30 @@ def install_wrapper(options, schema, rank, holder):
             grads = F.depend(grads, aux)
             if not overflow:
                 loss = F.depend(loss, self.optimizer(grads))
+            if self.serial_aux:
+                aux = F.depend(self.chain(), loss)
+                loss = F.depend(loss, aux)
             return loss, overflow, scaling_sens, learning_rate, global_norm
 
     def create(trainer, network, optimizer):
+        nonlocal schema
+        if options['role'] == 'auxiliary':
+            from npu_nvme.experiments.derive_schema import derive_model_schema
+            template = {t['name']: t for t in schema['tensors'] if t['role'] == 'model'}
+            shapes = {}
+            for parameter in optimizer.parameters:
+                if parameter.name not in template:
+                    raise ValueError('unknown auxiliary parameter: ' + parameter.name)
+                row = template[parameter.name]
+                shape = list(parameter.shape)
+                if row['partition'] == 'sharded':
+                    axis = next(i for i, (g, l) in enumerate(zip(row['global_shape'], row['local_shape'])) if g != l)
+                    if shape[axis] % 4:
+                        raise ValueError('auxiliary parameter cannot be partitioned by TP4')
+                    shape[axis] //= 4
+                shapes[parameter.name] = shape
+            schema = derive_model_schema(schema, shapes, source_run=options['output'], tied_embeddings=True)
+            holder['schema'] = schema
         if options['level'] == 0:
             wrapper = original(trainer, network, optimizer)
         else:
