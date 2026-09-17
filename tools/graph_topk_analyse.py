@@ -2,8 +2,10 @@
 """Same-run device task overlap. Never equate task envelopes with core occupancy."""
 import argparse
 import csv
+from collections import Counter
 import json
 import re
+import statistics
 from pathlib import Path
 
 
@@ -43,6 +45,17 @@ def analyse(run):
         profile = run / f'rank_{rank}/profiler'
         with next(profile.rglob('kernel_details.csv')).open() as f:
             rows = list(csv.DictReader(f))
+        pmu = {}
+        for core in sorted(set(r['Accelerator Core'] for r in rows)):
+            selected = [r for r in rows if r['Accelerator Core']==core]
+            metrics = {}
+            for key in ('Block Dim','Mix Block Dim','aic_mac_ratio','aiv_vec_ratio','cube_utilization(%)'):
+                values = []
+                for r in selected:
+                    try: values.append(float(r[key]))
+                    except (ValueError,KeyError): pass
+                if values:metrics[key]=dict(minimum=min(values),median=statistics.median(values),maximum=max(values))
+            pmu[core]=dict(task_count=len(selected),metrics=metrics)
         tasks = []
         for row in rows:
             name = row['Name']; start = float(row['Start Time(us)'])
@@ -84,13 +97,24 @@ def analyse(run):
             raise ValueError('no named auxiliary tasks: cannot prove execution or overlap')
         overlap = sum(s['auxiliary_training_intersection_us'] for s in steps)
         phase_intervals={phase:[[t['start'],t['end']] for t in tasks if t['phase']==phase and t['stream']!='N/A'] for phase in ('forward','backward','optimizer','auxiliary')}
+        grouped = {}
+        for phase in ('forward','backward','optimizer','auxiliary','other'):
+            totals = Counter()
+            counts = Counter()
+            for t in tasks:
+                if t['phase']==phase:
+                    totals[t['type']]+=t['end']-t['start'];counts[t['type']]+=1
+            grouped[phase]=[dict(type=kind,sum_task_duration_us=total,count=counts[kind])
+                            for kind,total in totals.most_common(20)]
         reports.append(dict(rank=rank, steps=steps, auxiliary_task_count=len(aux_all), phase_intervals=phase_intervals,
+                            task_pmu_statistics=pmu,top_task_types_by_phase=grouped,
                             actual_task_overlap_us=overlap,
                             observed_overlap='present' if overlap > 0 else 'not_observed',
                             tasks=tasks))
     return dict(run=str(run), ranks=reports,
                 clock='same kernel_details device timestamp domain',
                 limits=['Task envelopes are not active-core counts or simultaneous instruction measurements.',
+                        'Block Dim is launch geometry, not time-resolved active-core occupancy. PMU ratios are per-task distributions, not instruction-interval overlap.',
                         'AdamW state writes use Assign-op indices below 3 times model parameter count; later auxiliary Assign nodes may inherit optimizer scope. Validate this mapping against each compiled graph.',
                         'Only complete GetNext-to-GetNext intervals are used; final auxiliary drain is excluded from overlap statistics.',
                         'No window-specific HBM bandwidth claim. Profiling is excluded from performance comparison.'])
