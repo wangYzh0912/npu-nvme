@@ -29,22 +29,23 @@ class MinimalProbe(nn.Cell):
         self.iterations = compute_iterations
         self.sample_elements = min(1 << 20, math.prod(tensor['local_shape'])) if compute_iterations else 16
         self.morph = Morph(self.probe, self.infer_shape, self.infer_dtype).add_prim_attr('self_define_shard', True)
-        self.morph.shard(in_strategy=(weight_layout(tensor),), out_strategy=(layout('None'),))
+        self.morph.shard(in_strategy=(weight_layout(tensor), layout()), out_strategy=(layout('None'),))
 
-    def infer_shape(self, shape):
+    def infer_shape(self, shape, ready_shape):
         return (1,)
 
-    def infer_dtype(self, dtype):
+    def infer_dtype(self, dtype, ready_dtype):
         return dtype
 
-    def probe(self, weight):
+    def probe(self, weight, ready):
+        weight = F.depend(weight, ready)
         value = ops.reshape(weight, (-1,))[:self.sample_elements]
         for _ in range(self.iterations):
             value = value * 1.0001 + value * value * 0.0001
         return ops.reshape(ops.ReduceSum()(value), (1,))
 
-    def construct(self, weight):
-        return self.morph(weight)
+    def construct(self, weight, ready):
+        return self.morph(weight, ready)
 
 
 class ParameterScan(nn.Cell):
@@ -62,18 +63,20 @@ class ParameterScan(nn.Cell):
         self.gather = ops.Gather()
         self.segment = ops.UnsortedSegmentSum()
         self.morph = Morph(self.scan, self.infer_shape, self.infer_dtype).add_prim_attr('self_define_shard', True)
-        self.morph.shard(in_strategy=(weight_layout(tensor), weight_layout(tensor)), out_strategy=(layout('None'),))
+        self.morph.shard(in_strategy=(weight_layout(tensor), weight_layout(tensor), layout()), out_strategy=(layout('None'),))
 
-    def infer_shape(self, weight_shape, reference_shape):
+    def infer_shape(self, weight_shape, reference_shape, ready_shape):
         return (self.count,)
 
-    def infer_dtype(self, weight_dtype, reference_dtype):
+    def infer_dtype(self, weight_dtype, reference_dtype, ready_dtype):
         return weight_dtype
 
-    def construct(self, weight, reference):
-        return self.morph(weight, reference)
+    def construct(self, weight, reference, ready):
+        return self.morph(weight, reference, ready)
 
-    def scan(self, weight, reference):
+    def scan(self, weight, reference, ready):
+        weight = F.depend(weight, ready)
+        reference = F.depend(reference, ready)
         if not self.present:
             return self.zero
         w = ops.reshape(weight, (-1, self.unit))
@@ -126,11 +129,11 @@ class DetectionChain(nn.Cell):
 
     def construct(self, ready):
         if self.level == 1:
-            scores = self.minimal(F.depend(self.first, ready))
+            scores = self.minimal(self.first, ready)
         else:
             pieces = ()
             for i in range(len(self.scanners)):
-                pieces += (self.scanners[i](F.depend(self.sources[i], ready), F.depend(self.references[i], ready)),)
+                pieces += (self.scanners[i](self.sources[i], self.references[i], ready),)
             scores = ops.concat(pieces)
         if self.level >= 5:
             scores = self.allreduce(scores)

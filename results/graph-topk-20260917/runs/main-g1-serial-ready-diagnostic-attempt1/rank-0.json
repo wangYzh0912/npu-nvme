@@ -1,0 +1,71 @@
+{
+  "status": "failed",
+  "options": {
+    "schema_version": 1,
+    "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
+    "hardware_lock": "/models/npu_nvme_exp/user7-stack/hardware-campaign.lock",
+    "models": {
+      "main": "/models/Qwen3-8B",
+      "auxiliary": "/models/Qwen3-4B"
+    },
+    "initial_root": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
+    "initial_identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4",
+    "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
+    "seq_length": 128,
+    "compile_steps": 3,
+    "warmup_steps": 12,
+    "formal_steps": 3,
+    "block_elements": 65536,
+    "ratios": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "scan_fractions": [
+      0.125,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "slowdown_budget": 0.03,
+    "reference_budgets": [
+      0.01,
+      0.05
+    ],
+    "default_repeats": 1,
+    "maximum_repeats": 2,
+    "topk_sorted": true,
+    "reference_rule": "initial_weight * 0.99 + (parameter_index % 17 + 1) * 0.00001",
+    "parallel_acceptance": "compiled dependency and device trace required; requested layout is not evidence of execution overlap",
+    "excluded": [
+      "checkpoint_io",
+      "socket",
+      "json_coordination",
+      "payload_sha",
+      "media_readback",
+      "shadow_loss"
+    ],
+    "output": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g1-serial-ready-diagnostic-attempt1",
+    "level": 1,
+    "layout": "serial",
+    "scan_fraction": 1.0,
+    "ratio": 0.1,
+    "role": "main",
+    "profile": true,
+    "dump_graphs": false,
+    "compute_iterations": 0,
+    "reference_only": false
+  },
+  "rank": 0,
+  "losses": [],
+  "warmup": [],
+  "actual_overlap": "unverified",
+  "parallel_label": "requested_dependency_layout_only",
+  "framework_versions": {
+    "mindspore": "2.7.1",
+    "mindformers": "1.7.0"
+  },
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "error": "RuntimeError(\"Failed to compile model: For primitive[Reshape], the accumulate of x_shape must be equal to out_shape, but got x_shape: [const vector]{}, and out_shape: [const vector]{37984, 4096}\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ops/infer/ops_func_impl//reshape.cc:57 ReshapeCheckSize\\n\\n----------------------------------------------------\\n- The Traceback of Net Construct Code:\\n----------------------------------------------------\\n# 0 In file /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/ops/auto_generate/gen_ops_def.py:2533, 11~35\\n    return reshape_op(input, shape)\\n           ^~~~~~~~~~~~~~~~~~~~~~~~\\n (See file '/home/user7/npu-nvme/rank_0/om/analyze_fail.ir' for more details. Get instructions about `analyze_fail.ir` at https://www.mindspore.cn/search?inputValue=analyze_fail.ir)\")",
+  "traceback": "Traceback (most recent call last):\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/checkpoint/utils.py\", line 445, in compile_model\n    model.build(train_dataset=dataset, epoch=epoch, sink_size=sink_size)\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/train/model.py\", line 1549, in build\n    self._init(train_dataset, valid_dataset, sink_size, epoch, sink_mode)\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/train/model.py\", line 937, in _init\n    train_network.compile(*inputs)\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/nn/cell.py\", line 1723, in compile\n    _cell_graph_executor.compile(self, *compile_args, phase=self.phase,\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/common/api.py\", line 2147, in compile\n    result = self._graph_executor.compile(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: For primitive[Reshape], the accumulate of x_shape must be equal to out_shape, but got x_shape: [const vector]{}, and out_shape: [const vector]{37984, 4096}\n\n----------------------------------------------------\n- C++ Call Stack: (For framework developers)\n----------------------------------------------------\nmindspore/ops/infer/ops_func_impl//reshape.cc:57 ReshapeCheckSize\n\n----------------------------------------------------\n- The Traceback of Net Construct Code:\n----------------------------------------------------\n# 0 In file /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/ops/auto_generate/gen_ops_def.py:2533, 11~35\n    return reshape_op(input, shape)\n           ^~~~~~~~~~~~~~~~~~~~~~~~\n (See file '/home/user7/npu-nvme/rank_0/om/analyze_fail.ir' for more details. Get instructions about `analyze_fail.ir` at https://www.mindspore.cn/search?inputValue=analyze_fail.ir)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/user7/npu-nvme/python/npu_nvme/experiments/graph_workload.py\", line 204, in run\n    trainer.finetune(resume_from_checkpoint=str(source), auto_trans_ckpt=True)\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/_checkparam.py\", line 1398, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/trainer/trainer.py\", line 634, in finetune\n    self.trainer.train(\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/trainer/causal_language_modeling/causal_language_modeling.py\", line 108, in train\n    self.training_process(\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/trainer/base_trainer.py\", line 1406, in training_process\n    transform_and_load_checkpoint(config, model, network, dataset)\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/trainer/utils.py\", line 444, in transform_and_load_checkpoint\n    load_checkpoint_with_safetensors(config, model, network, dataset, do_eval=do_eval,\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/utils/load_checkpoint_utils.py\", line 320, in load_checkpoint_with_safetensors\n    compile_model(\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindformers/checkpoint/utils.py\", line 452, in compile_model\n    raise RuntimeError(f\"Failed to compile model: {str(e)}\") from e\nRuntimeError: Failed to compile model: For primitive[Reshape], the accumulate of x_shape must be equal to out_shape, but got x_shape: [const vector]{}, and out_shape: [const vector]{37984, 4096}\n\n----------------------------------------------------\n- C++ Call Stack: (For framework developers)\n----------------------------------------------------\nmindspore/ops/infer/ops_func_impl//reshape.cc:57 ReshapeCheckSize\n\n----------------------------------------------------\n- The Traceback of Net Construct Code:\n----------------------------------------------------\n# 0 In file /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/ops/auto_generate/gen_ops_def.py:2533, 11~35\n    return reshape_op(input, shape)\n           ^~~~~~~~~~~~~~~~~~~~~~~~\n (See file '/home/user7/npu-nvme/rank_0/om/analyze_fail.ir' for more details. Get instructions about `analyze_fail.ir` at https://www.mindspore.cn/search?inputValue=analyze_fail.ir)\n"
+}
