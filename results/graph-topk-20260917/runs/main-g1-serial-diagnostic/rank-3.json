@@ -1,5 +1,5 @@
 {
-  "status": "compiling",
+  "status": "pass",
   "options": {
     "schema_version": 1,
     "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
@@ -55,8 +55,118 @@
     "dump_graphs": true
   },
   "rank": 3,
-  "losses": [],
-  "warmup": [],
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.3926597535610199,
+      "begin_ns": 3541663349193223,
+      "end_ns": 3541664328483782
+    },
+    {
+      "step": 17,
+      "loss": 0.38036903738975525,
+      "begin_ns": 3541664334309455,
+      "end_ns": 3541665329204235
+    },
+    {
+      "step": 18,
+      "loss": 0.37138673663139343,
+      "begin_ns": 3541665334230745,
+      "end_ns": 3541666361475512
+    }
+  ],
+  "warmup": [
+    {
+      "step": 1,
+      "loss": 0.7609525918960571,
+      "begin_ns": 3541475655919273,
+      "end_ns": 3541489051499371
+    },
+    {
+      "step": 2,
+      "loss": 0.7492045760154724,
+      "begin_ns": 3541489057299304,
+      "end_ns": 3541489822157240
+    },
+    {
+      "step": 3,
+      "loss": 0.7268530130386353,
+      "begin_ns": 3541489829757960,
+      "end_ns": 3541490418567504
+    },
+    {
+      "step": 4,
+      "loss": 0.7609525918960571,
+      "begin_ns": 3541638925911912,
+      "end_ns": 3541656495501176
+    },
+    {
+      "step": 5,
+      "loss": 0.7492045760154724,
+      "begin_ns": 3541656504466131,
+      "end_ns": 3541657120624463
+    },
+    {
+      "step": 6,
+      "loss": 0.7268530130386353,
+      "begin_ns": 3541657126866798,
+      "end_ns": 3541657718424063
+    },
+    {
+      "step": 7,
+      "loss": 0.7174327373504639,
+      "begin_ns": 3541657723782344,
+      "end_ns": 3541658316129572
+    },
+    {
+      "step": 8,
+      "loss": 0.6337726712226868,
+      "begin_ns": 3541658321146662,
+      "end_ns": 3541658935192035
+    },
+    {
+      "step": 9,
+      "loss": 0.6290686726570129,
+      "begin_ns": 3541658940185555,
+      "end_ns": 3541659524195720
+    },
+    {
+      "step": 10,
+      "loss": 0.6072779893875122,
+      "begin_ns": 3541659529283370,
+      "end_ns": 3541660147742861
+    },
+    {
+      "step": 11,
+      "loss": 0.6018533706665039,
+      "begin_ns": 3541660152748930,
+      "end_ns": 3541660785088166
+    },
+    {
+      "step": 12,
+      "loss": 0.4469923675060272,
+      "begin_ns": 3541660790041405,
+      "end_ns": 3541661412924393
+    },
+    {
+      "step": 13,
+      "loss": 0.4367216229438782,
+      "begin_ns": 3541661417878293,
+      "end_ns": 3541662035853771
+    },
+    {
+      "step": 14,
+      "loss": 0.42501887679100037,
+      "begin_ns": 3541662040843461,
+      "end_ns": 3541662618217210
+    },
+    {
+      "step": 15,
+      "loss": 0.4215026795864105,
+      "begin_ns": 3541662623222670,
+      "end_ns": 3541663195282018
+    }
+  ],
   "actual_overlap": "unverified",
   "parallel_label": "requested_dependency_layout_only",
   "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
@@ -68,5 +178,49 @@
     "local_reference_bytes": 0,
     "tp_fragments": 0,
     "parameters": []
-  }
+  },
+  "restore": {
+    "tensors": 952,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:main",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 24575484928,
+  "begin_ns": 3541663344020223,
+  "training_end_ns": 3541666361490212,
+  "all_done_ns": 3541666361605973,
+  "memory_peak_bytes": 42203765248,
+  "version_end": 16,
+  "score_oracle": {
+    "status": "pass",
+    "indices": [
+      0
+    ],
+    "expected": [
+      -0.09864044189453125
+    ],
+    "actual": [
+      -0.09864044189453125
+    ]
+  },
+  "output_check": {
+    "status": "indices_and_values_checked",
+    "score_count": 1,
+    "selected_count": 1,
+    "score_min": -0.09864044189453125,
+    "score_max": -0.09864044189453125,
+    "sampled_indices": [
+      0
+    ],
+    "sampled_values": [
+      -0.09864044189453125
+    ],
+    "independent_score_oracle": "pass"
+  },
+  "standalone_auxiliary_ns": [
+    12052767,
+    2113478,
+    1977808
+  ],
+  "formal_contract": "twenty_updated_weight_detections"
 }

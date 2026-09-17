@@ -1,0 +1,80 @@
+Diagnostic before timing; StepParallel recursion.
+#0  0x0000ffffb98010c8 in std::string::compare(std::string const&) const () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/_c_expression.cpython-311-aarch64-linux-gnu.so
+#0  0x0000ffffb98010c8 in std::string::compare(std::string const&) const () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/_c_expression.cpython-311-aarch64-linux-gnu.so
+#1  0x0000ffffb6842300 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#2  0x0000ffffb6842de8 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#3  0x0000ffffb6b1bee0 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#4  0x0000ffffb68612dc in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#5  0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#6  0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#7  0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#8  0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#9  0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#10 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#11 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#12 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#13 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#14 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#15 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#16 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#17 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#18 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#19 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#20 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#21 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#22 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#23 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#24 0x0000ffffb6861374 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#25 0x0000ffffb6861df4 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#26 0x0000ffffb6865b98 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#27 0x0000ffffb686dff4 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#28 0x0000ffffb6b0c4d0 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#29 0x0000ffffb63ca038 in mindspore::opt::Optimizer::OptProcess(mindspore::opt::OptPass*) () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#30 0x0000ffffb63cc550 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#31 0x0000ffffb63c916c in mindspore::opt::Optimizer::RunFunc(int*, bool) () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#32 0x0000ffffb63cc3a4 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#33 0x0000ffffb63c793c in mindspore::opt::Optimizer::step(std::shared_ptr<mindspore::FuncGraph>, bool, std::shared_ptr<mindspore::pipeline::ResourceBase>) () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#34 0x0000ffffb6f75e64 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#35 0x0000ffffb6f766dc in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#36 0x0000ffffb6dc3350 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#37 0x0000ffffb6dc41a8 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#38 0x0000ffffb6dc48f0 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#39 0x0000ffffb6f9d0b0 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#40 0x0000ffffb6f9ddc0 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#41 0x0000ffffb6fa2050 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#42 0x0000ffffb6e34e50 in mindspore::pipeline::GraphExecutorPy::CompileInner(pybind11::object const&, pybind11::tuple const&, pybind11::dict const&, pybind11::object const&) () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#43 0x0000ffffb6e1d46c in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#44 0x0000ffffb9aeec18 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/_c_expression.cpython-311-aarch64-linux-gnu.so
+#45 0x0000ffffb6e199bc in mindspore::pipeline::ExecutorPy::Compile(pybind11::object const&, pybind11::tuple const&, pybind11::dict const&, pybind11::object const&, pybind11::dict const&) () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/lib/libmindspore_frontend.so
+#46 0x0000ffffb983c94c in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/_c_expression.cpython-311-aarch64-linux-gnu.so
+#47 0x0000ffffb97fea88 in ?? () from /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/_c_expression.cpython-311-aarch64-linux-gnu.so
+#48 0x00000000004d1338 in cfunction_call ()
+#49 0x0000000000484e8c in _PyObject_MakeTpCall ()
+#50 0x0000000000429304 in _PyEval_EvalFrameDefault ()
+#51 0x000000000056fd84 in _PyEval_Vector ()
+#52 0x0000000000488664 in method_vectorcall ()
+#53 0x0000000000484a50 in _PyVectorcall_Call ()
+#54 0x000000000042aca4 in _PyEval_EvalFrameDefault ()
+#55 0x000000000056fd84 in _PyEval_Vector ()
+#56 0x000000000048870c in method_vectorcall ()
+#57 0x000000000042aca4 in _PyEval_EvalFrameDefault ()
+#58 0x000000000056fd84 in _PyEval_Vector ()
+#59 0x0000000000488664 in method_vectorcall ()
+#60 0x0000000000484a50 in _PyVectorcall_Call ()
+#61 0x000000000042aca4 in _PyEval_EvalFrameDefault ()
+#62 0x000000000056fd84 in _PyEval_Vector ()
+#63 0x0000000000484a50 in _PyVectorcall_Call ()
+#64 0x000000000042aca4 in _PyEval_EvalFrameDefault ()
+#65 0x000000000056fd84 in _PyEval_Vector ()
+#66 0x000000000056fe38 in PyEval_EvalCode ()
+#67 0x0000000000568aac in builtin_exec ()
+#68 0x00000000004d1468 in cfunction_vectorcall_FASTCALL_KEYWORDS ()
+#69 0x000000000048565c in PyObject_Vectorcall ()
+#70 0x0000000000429304 in _PyEval_EvalFrameDefault ()
+#71 0x000000000056fd84 in _PyEval_Vector ()
+#72 0x00000000005d9e64 in pymain_run_module ()
+#73 0x00000000005da644 in Py_RunMain ()
+#74 0x00000000005dafb4 in Py_BytesMain ()
+#75 0x0000ffffbed376c4 in ?? () from /usr/lib64/libc.so.6
+#76 0x0000ffffbed377a8 in __libc_start_main () from /usr/lib64/libc.so.6
+#77 0x0000000000432300 in _start ()

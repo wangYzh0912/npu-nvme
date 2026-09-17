@@ -1,5 +1,5 @@
 {
-  "status": "compiling",
+  "status": "pass",
   "options": {
     "schema_version": 1,
     "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
@@ -55,8 +55,118 @@
     "dump_graphs": true
   },
   "rank": 2,
-  "losses": [],
-  "warmup": [],
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.3926597535610199,
+      "begin_ns": 3541663338980113,
+      "end_ns": 3541664344512485
+    },
+    {
+      "step": 17,
+      "loss": 0.38036903738975525,
+      "begin_ns": 3541664349621805,
+      "end_ns": 3541665353651561
+    },
+    {
+      "step": 18,
+      "loss": 0.37138673663139343,
+      "begin_ns": 3541665358887562,
+      "end_ns": 3541666373680710
+    }
+  ],
+  "warmup": [
+    {
+      "step": 1,
+      "loss": 0.7609525918960571,
+      "begin_ns": 3541475377560469,
+      "end_ns": 3541489106992090
+    },
+    {
+      "step": 2,
+      "loss": 0.7492045760154724,
+      "begin_ns": 3541489112866893,
+      "end_ns": 3541489820363523
+    },
+    {
+      "step": 3,
+      "loss": 0.7268530130386353,
+      "begin_ns": 3541489825541244,
+      "end_ns": 3541490418241743
+    },
+    {
+      "step": 4,
+      "loss": 0.7609525918960571,
+      "begin_ns": 3541638926077913,
+      "end_ns": 3541656424745518
+    },
+    {
+      "step": 5,
+      "loss": 0.7492045760154724,
+      "begin_ns": 3541656432288468,
+      "end_ns": 3541657118717156
+    },
+    {
+      "step": 6,
+      "loss": 0.7268530130386353,
+      "begin_ns": 3541657125177261,
+      "end_ns": 3541657716356015
+    },
+    {
+      "step": 7,
+      "loss": 0.7174327373504639,
+      "begin_ns": 3541657721469755,
+      "end_ns": 3541658312565898
+    },
+    {
+      "step": 8,
+      "loss": 0.6337726712226868,
+      "begin_ns": 3541658317782338,
+      "end_ns": 3541658932503754
+    },
+    {
+      "step": 9,
+      "loss": 0.6290686726570129,
+      "begin_ns": 3541658937679865,
+      "end_ns": 3541659518593328
+    },
+    {
+      "step": 10,
+      "loss": 0.6072779893875122,
+      "begin_ns": 3541659523690648,
+      "end_ns": 3541660140741473
+    },
+    {
+      "step": 11,
+      "loss": 0.6018533706665039,
+      "begin_ns": 3541660145829533,
+      "end_ns": 3541660786634742
+    },
+    {
+      "step": 12,
+      "loss": 0.4469923675060272,
+      "begin_ns": 3541660791740402,
+      "end_ns": 3541661409618430
+    },
+    {
+      "step": 13,
+      "loss": 0.4367216229438782,
+      "begin_ns": 3541661414731250,
+      "end_ns": 3541662031216963
+    },
+    {
+      "step": 14,
+      "loss": 0.42501887679100037,
+      "begin_ns": 3541662037401117,
+      "end_ns": 3541662615860981
+    },
+    {
+      "step": 15,
+      "loss": 0.4215026795864105,
+      "begin_ns": 3541662620916381,
+      "end_ns": 3541663192399247
+    }
+  ],
   "actual_overlap": "unverified",
   "parallel_label": "requested_dependency_layout_only",
   "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
@@ -68,5 +178,49 @@
     "local_reference_bytes": 0,
     "tp_fragments": 0,
     "parameters": []
-  }
+  },
+  "restore": {
+    "tensors": 952,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:main",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 24575484928,
+  "begin_ns": 3541663333691822,
+  "training_end_ns": 3541666373689870,
+  "all_done_ns": 3541666373796051,
+  "memory_peak_bytes": 42203765248,
+  "version_end": 16,
+  "score_oracle": {
+    "status": "pass",
+    "indices": [
+      0
+    ],
+    "expected": [
+      -0.102264404296875
+    ],
+    "actual": [
+      -0.102264404296875
+    ]
+  },
+  "output_check": {
+    "status": "indices_and_values_checked",
+    "score_count": 1,
+    "selected_count": 1,
+    "score_min": -0.102264404296875,
+    "score_max": -0.102264404296875,
+    "sampled_indices": [
+      0
+    ],
+    "sampled_values": [
+      -0.102264404296875
+    ],
+    "independent_score_oracle": "pass"
+  },
+  "standalone_auxiliary_ns": [
+    10124660,
+    2107988,
+    2138918
+  ],
+  "formal_contract": "twenty_updated_weight_detections"
 }
