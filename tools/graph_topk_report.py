@@ -42,6 +42,7 @@ def build(campaign, output):
         base = [r for r in formal if r['role']==row['role'] and r['level']==0 and not r['reference_only']]
         if base:
             median=statistics.median(r['seconds'] for r in base)
+            row['baseline_count']=len(base)
             row['T0_seconds']=median;row['slowdown']=(row['seconds']-median)/median
             row['baseline_spread']=(max(r['seconds'] for r in base)-min(r['seconds'] for r in base))/median
             row['loss_matches_G0']=all(abs(a-b)<=1e-6+1e-6*abs(b) for a,b in zip(row['numerical_loss'],base[0]['numerical_loss']))
