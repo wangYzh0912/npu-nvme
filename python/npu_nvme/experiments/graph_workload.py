@@ -124,11 +124,16 @@ def run(options):
                 report['parallel_mode'] = ms.get_auto_parallel_context('parallel_mode')
                 if options.get('reference_only'):
                     import math
+                    from mindspore import Parameter
                     model_schema = holder.get('schema', schema)
                     names = {t['name'] for t in model_schema['tensors'] if t['role']=='model' and math.prod(t['global_shape']) >= options['block_elements']}
+                    references = []
                     with local_graph(ms):
-                        holder['reference_allocations'] = [ms.ops.mul(p, ms.Tensor(.99, ms.float32))
-                            for p in holder['wrapper'].weights if p.name in names]
+                        for parameter in holder['wrapper'].weights:
+                            if parameter.name in names:
+                                references.append(Parameter(ms.ops.mul(parameter, ms.Tensor(.99, ms.float32)),
+                                    name='memory_reference_'+str(len(references)), requires_grad=False))
+                    holder['reference_allocations'] = references
                     ms.runtime.synchronize()
                     report['reference_allocation_bytes'] = sum(int(p.size)*4 for p in holder['reference_allocations'])
                     report['allocation_control'] = 'resident reference tensors; never scanned during formal training'

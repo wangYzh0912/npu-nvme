@@ -87,7 +87,14 @@ def check_consumer(ms, chain, level):
             checked_tiles += len(pairs)
         np.testing.assert_array_equal(output_row, expected)
     reference_tiles = 0
+    update_count_summary = None
     if level == 8:
+        counts = chain.consumer.update_counts.asnumpy()
+        expected_updates = chain.k * 20
+        if int(counts.sum()) != expected_updates or np.any(counts[selected] < 1):
+            raise ValueError('reference update accounting mismatch')
+        update_count_summary = dict(total=int(counts.sum()), expected=expected_updates,
+                                    maximum=int(counts.max()), current_selection_minimum=int(counts[selected].min()))
         for score_index in map(int, selected[positions]):
             parameter, row = next((i, r) for i, r in enumerate(chain.rows)
                                   if r['score_offset'] <= score_index < r['score_offset'] + r['block_count'])
@@ -106,4 +113,5 @@ def check_consumer(ms, chain, level):
     return dict(status='pass', sampled_output_positions=positions,
                 packed_local_tiles_checked=checked_tiles,
                 selected_reference_tiles_checked=reference_tiles,
+                update_counts=update_count_summary,
                 output_semantics='rank-local zero-padded partial; sum across TP reconstructs global selected blocks')
