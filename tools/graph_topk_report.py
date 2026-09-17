@@ -56,7 +56,7 @@ def build(campaign, output):
           '|---|---|---:|---:|---:|---:|---:|---|']
     for r in formal:
         text.append('|'+ '|'.join([r['name'],r['role'],f"{r['seconds']:.6f}",
-            f"{100*r['slowdown']:.3f}%" if 'slowdown' in r and r.get('baseline_spread',1)<=.03 else '未定',
+            f"{100*r['slowdown']:.3f}%" if 'slowdown' in r and r.get('baseline_count',0)>=2 and r.get('baseline_spread',1)<=.03 else '未定',
             f"{100*r['increment_over_G1']:.3f}%" if 'increment_over_G1' in r else '待定',
             f"{r['drain_seconds']:.6f}",f"{r['peak_hbm_bytes']/2**30:.3f}",str(r.get('loss_matches_G0','待定'))])+'|')
     if formal:
