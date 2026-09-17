@@ -26,6 +26,18 @@ def build(campaign, output):
                    auxiliary_seconds=statistics.median([v/1e9 for r in ranks for v in r.get('standalone_auxiliary_ns',[])]) if cfg['level'] else None,
                    score_oracle=all(r.get('score_oracle',{}).get('status')=='pass' for r in ranks) if cfg['level'] else None,
                    actual_parallel_verified=False)
+        step_seconds=[(x['end_ns']-x['begin_ns'])/1e9 for x in ranks[0]['losses']]
+        row['step_seconds_rank0']=dict(minimum=min(step_seconds),median=statistics.median(step_seconds),
+                                       maximum=max(step_seconds),all_steps=step_seconds)
+        if cfg['level']>=2:
+            row['working_set']=dict(candidate_blocks=ranks[0]['geometry']['candidate_blocks'],
+                global_W_R_input_bytes=sum(r['geometry']['local_input_bytes'] for r in ranks),
+                reference_bytes_per_rank=[r['geometry']['local_reference_bytes'] for r in ranks],
+                TP_fragments_per_rank=[r['geometry']['tp_fragments'] for r in ranks],
+                selected_blocks=ranks[0]['output_check']['selected_count'] if cfg['level']>=6 else 0)
+        if cfg['level']>=7:
+            row['device_consumer']=dict(budgets=[r.get('consumer_budget') for r in ranks],
+                validation_passed=all(r.get('consumer_oracle',{}).get('status')=='pass' for r in ranks))
         memory = run / 'board-memory.jsonl'
         if memory.exists():
             begin=min(r['begin_ns'] for r in ranks);end=max(r['all_done_ns'] for r in ranks)
@@ -55,7 +67,7 @@ def build(campaign, output):
             row['loss_matches_G0']=all(abs(a-b)<=1e-6+1e-6*abs(b) for a,b in zip(row['numerical_loss'],base[0]['numerical_loss']))
             row['extra_peak_hbm_bytes']=row['peak_hbm_bytes']-max(r['peak_hbm_bytes'] for r in base)
         controls=[r for r in formal if r['role']==row['role'] and r['level']==1 and not r['compute_iterations'] and r['layout']==row['layout']]
-        if controls and row['level'] > 1:row['increment_over_G1']=row['seconds']/statistics.median(r['seconds'] for r in controls)-1
+        if controls and (row['level'] > 1 or row['compute_iterations']):row['increment_over_G1']=row['seconds']/statistics.median(r['seconds'] for r in controls)-1
     output.mkdir(parents=True,exist_ok=True)
     (output/'measurements.json').write_text(json.dumps(dict(runs=runs),indent=2)+'\n')
     text=['# 图内 Top-K 实验进度','',
