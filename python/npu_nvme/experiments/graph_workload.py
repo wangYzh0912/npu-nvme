@@ -56,6 +56,9 @@ def run(options):
     directory.mkdir(parents=True, exist_ok=True)
     report = dict(status='initializing', options=options, rank=rank, losses=[], warmup=[],
                   actual_overlap='unverified', parallel_label='requested_dependency_layout_only')
+    report['framework_versions'] = dict(mindspore=ms.__version__, mindformers=mindformers.__version__)
+    if ms.__version__ != '2.7.1' or not mindformers.__version__.startswith('1.7.'):
+        raise RuntimeError('unvalidated framework version')
     holder = {}
     profiler = None
     try:
@@ -86,7 +89,7 @@ def run(options):
         if get_group_size() != 4 or get_rank() != rank:
             raise ValueError('TP4 required')
         if options.get('dump_graphs'):
-            ms.set_context(save_graphs=2, save_graphs_path=str(directory / 'graphs'))
+            ms.set_context(save_graphs=1, save_graphs_path=str(directory / 'graphs'))
         if options['level'] >= 5:
             create_group('graph_topk_aux_tp4', [0, 1, 2, 3])
         ms.set_seed(42); ms.manual_seed(42); np.random.seed(42); random.seed(42)
@@ -110,7 +113,7 @@ def run(options):
         def drain():
             if 'chain' in holder:
                 with local_graph(ms):
-                    result = holder['chain']()
+                    result = holder['chain'](ms.Tensor(0.0, ms.float32))
                 return result
             return None
 

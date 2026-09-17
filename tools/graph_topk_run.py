@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import shutil
 import socket
 import subprocess
 import sys
@@ -72,7 +73,7 @@ def main():
                 write(lease, dict(status='running', run=str(output), pid=os.getpid(),
                                  children=[dict(pid=child.pid, process_group=child.pid)], scope='graph_only_no_io'))
                 returncode = child.wait(timeout=14400)
-            reports = [json.loads((output / f'rank_{r}/result.json').read_text()) for r in range(4)]
+            reports = [json.loads((output / f'rank_{r}/result.json').read_text()) if (output / f'rank_{r}/result.json').exists() else dict(status='missing') for r in range(4)]
             changed = [str(p) for p in sources if identity[str(p.relative_to(ROOT))] != hashlib.sha256(p.read_bytes()).hexdigest()]
             if changed:
                 raise RuntimeError('source changed during run: ' + repr(changed))
@@ -95,6 +96,9 @@ def main():
             idle = all(f'No running processes found in NPU {r}' in smi for r in range(4))
             if child is not None and child.poll() is not None and idle:
                 lease.unlink(missing_ok=True)
+                cache = output / 'framework/qwen3_ms_converted_weight'
+                if cache.is_dir():
+                    shutil.rmtree(cache)  # Regenerable HF conversion cache, never initial FULL or evidence.
             elif child is not None:
                 write(lease, dict(status='retained', run=str(output), pid=os.getpid(), child=child.pid))
                 while True:

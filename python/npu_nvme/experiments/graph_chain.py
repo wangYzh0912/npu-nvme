@@ -119,13 +119,13 @@ class DetectionChain(nn.Cell):
         self.reduce = ops.ReduceSum()
         self.zero_index = Tensor([0], ms.int32)
 
-    def construct(self):
+    def construct(self, ready):
         if self.level == 1:
-            scores = self.minimal(self.first)
+            scores = self.minimal(F.depend(self.first, ready))
         else:
             pieces = ()
             for i in range(len(self.scanners)):
-                pieces += (self.scanners[i](self.sources[i], self.references[i]),)
+                pieces += (self.scanners[i](F.depend(self.sources[i], ready), F.depend(self.references[i], ready)),)
             scores = ops.concat(pieces)
         if self.level >= 5:
             scores = self.allreduce(scores)
@@ -173,7 +173,7 @@ def install_wrapper(options, schema, rank, holder):
             # Skip only the first formal update; its A is in the next graph.
             aux = Tensor(0.0, ms.float32)
             if not self.serial_aux:
-                aux = self.chain()
+                aux = self.chain(Tensor(0.0, ms.float32))
             # Serial auxiliary executes after the current optimizer below.
             loss, grads, grad_scale_factor = self.grads_for_mcore(scaling_sens, *inputs)
             status, scaling_sens = self.start_overflow_check(loss, scaling_sens)
@@ -196,7 +196,7 @@ def install_wrapper(options, schema, rank, holder):
             if not overflow:
                 loss = F.depend(loss, self.optimizer(grads))
             if self.serial_aux:
-                aux = F.depend(self.chain(), loss)
+                aux = self.chain(loss)
                 loss = F.depend(loss, aux)
             return loss, overflow, scaling_sens, learning_rate, global_norm
 
