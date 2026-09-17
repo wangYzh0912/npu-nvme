@@ -128,6 +128,9 @@ class DetectionChain(nn.Cell):
         self.version = Parameter(Tensor(0, ms.int32), name='graph_detection_version', requires_grad=False)
         self.allreduce = ops.AllReduce(ops.ReduceOp.SUM, group='graph_topk_aux_tp4') if level >= 5 else None
         self.select = ops.TopK(sorted=True)
+        # Ascend TopK does not globally order large K outputs even when sorted=True.
+        # Enforce the experiment's fixed descending semantics explicitly.
+        self.sort = ops.Sort(axis=-1, descending=True)
         self.reduce = ops.ReduceSum()
         self.zero_index = Tensor([0], ms.int32)
 
@@ -143,6 +146,8 @@ class DetectionChain(nn.Cell):
             scores = self.allreduce(scores)
         if self.level >= 6:
             values, indices = self.select(scores, self.k)
+            values, order = self.sort(values)
+            indices = ops.gather(indices, order, 0)
         else:
             values, indices = ops.expand_dims(self.reduce(scores), 0), self.zero_index
         token = F.assign(self.scores, scores)

@@ -221,6 +221,7 @@ def run(options):
                 threshold = float(np.partition(scores, -chain.k)[-chain.k])
                 order_violations = int(np.count_nonzero(values[:-1] < values[1:]))
                 report['topk_diagnostic'] = dict(sorted_requested=True,
+                    implementation='TopK selection followed by explicit device Sort because large-K Ascend TopK was observed unsorted',
                     order_violations=order_violations, minimum_selected=float(values.min()),
                     last_selected=float(values[-1]), cpu_kth_threshold=threshold,
                     threshold_gap=float(values.min() - threshold))
