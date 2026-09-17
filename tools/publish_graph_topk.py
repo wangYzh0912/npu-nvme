@@ -21,7 +21,7 @@ def publish():
                  'docs/plans/GRAPH_TOPK_EXECUTION.md', 'tools/graph_topk_report.py', 'tools/graph_topk_analyse.py', 'tools/graph_topk_queue.py', 'tools/graph_topk_plot.py', 'config/graph_topk_serial_matrix.json', 'config/graph_topk_followup_matrix.json', 'config/graph_topk_g5_retry_matrix.json', 'config/graph_topk_g6_debug_matrix.json', 'config/graph_topk_g6_retry_matrix.json', 'config/graph_topk_main_completion_matrix.json']
     for pattern in ('python/npu_nvme/experiments/graph_*.py', 'tests/python/test_graph_topk*.py'):
         relatives += [str(p.relative_to(ROOT)) for p in ROOT.glob(pattern)]
-    relatives += ['config/graph_topk_auxiliary_matrix.json', 'config/graph_topk_final_matrix.json']
+    relatives += ['config/graph_topk_auxiliary_matrix.json', 'config/graph_topk_final_matrix.json', 'tools/graph_topk_bottlenecks.py']
     for relative in relatives:
         src = ROOT / relative
         if src.exists():

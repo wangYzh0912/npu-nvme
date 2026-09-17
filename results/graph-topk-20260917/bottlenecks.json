@@ -1,0 +1,101 @@
+{
+  "source": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g6-serial-profile",
+  "diagnostic_only": true,
+  "sampled_complete_rank_steps": 8,
+  "task_type_costs": {
+    "UnsortedSegmentSum": {
+      "min_ms": 54.01925,
+      "median_ms": 55.516125,
+      "max_ms": 57.0415
+    },
+    "hcom_allReduce_": {
+      "min_ms": 0.0645,
+      "median_ms": 44.5345,
+      "max_ms": 80.851
+    },
+    "Sub": {
+      "min_ms": 21.46675,
+      "median_ms": 21.48525,
+      "max_ms": 21.5115
+    },
+    "TensorMove": {
+      "min_ms": 12.65075,
+      "median_ms": 12.661875,
+      "max_ms": 12.68575
+    },
+    "Mul": {
+      "min_ms": 12.17475,
+      "median_ms": 12.182625,
+      "max_ms": 12.1945
+    },
+    "TopK": {
+      "min_ms": 9.526,
+      "median_ms": 9.626625,
+      "max_ms": 9.66575
+    },
+    "ReduceSum": {
+      "min_ms": 6.237,
+      "median_ms": 6.257625,
+      "max_ms": 6.2845
+    },
+    "ConcatD": {
+      "min_ms": 0.189,
+      "median_ms": 0.193625,
+      "max_ms": 0.204
+    },
+    "GatherV2": {
+      "min_ms": 0.0205,
+      "median_ms": 0.02075,
+      "max_ms": 0.0245
+    },
+    "Assign": {
+      "min_ms": 0.01875,
+      "median_ms": 0.0205,
+      "max_ms": 0.02275
+    },
+    "Sort": {
+      "min_ms": 0.02,
+      "median_ms": 0.02025,
+      "max_ms": 0.0205
+    }
+  },
+  "output_tensor_extent_bytes_per_rank_step": {
+    "TensorMove": [
+      7568097284,
+      7568097284,
+      7568097284,
+      7568097284,
+      7568097284,
+      7568097284,
+      7568097284,
+      7568097284
+    ],
+    "Sub": [
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136
+    ],
+    "Mul": [
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136,
+      8190427136
+    ]
+  },
+  "actual_auxiliary_training_overlap_us": 0,
+  "limits": [
+    "Profiled costs include diagnostic perturbation and are not clean performance results.",
+    "Collective duration includes cross-rank arrival waiting, not just transfer.",
+    "Tensor output extents are not simultaneous peak memory or measured HBM bus bytes.",
+    "No causal per-stage critical-path attribution from cumulative single runs."
+  ]
+}
