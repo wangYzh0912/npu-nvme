@@ -65,7 +65,7 @@ class ParameterScan(nn.Cell):
         self.gather = ops.Gather()
         self.segment = ops.UnsortedSegmentSum()
         self.morph = Morph(self.scan, self.infer_shape, self.infer_dtype).add_prim_attr('self_define_shard', True)
-        self.morph.shard(in_strategy=(weight_layout(tensor), weight_layout(tensor), layout(), layout()), out_strategy=(layout('None'),))
+        self.morph.shard(in_strategy=(weight_layout(tensor), layout(*(['None'] * len(row['local_shape']))), layout(), layout()), out_strategy=(layout('None'),))
 
     def infer_shape(self, weight_shape, reference_shape, ready_shape, enabled_shape):
         return (self.count,)
@@ -114,8 +114,8 @@ class DetectionChain(nn.Cell):
             raise ValueError('pre-partition weights do not match global schema')
         self.sources = ParameterTuple(selected)
         self.references = ParameterTuple([
-            Parameter(initializer('zeros', p.shape, ms.float32), name=f'graph_reference_{i}', requires_grad=False)
-            for i, p in enumerate(selected)])
+            Parameter(initializer('zeros', row['local_shape'], ms.float32), name=f'graph_reference_{i}', requires_grad=False)
+            for i, row in enumerate(self.rows)])
         self.scanners = nn.CellList([ParameterScan(r, level, fraction == 1.0, tensors[r['name']]) for r in self.rows], auto_prefix=False)
         self.count = sum(r['block_count'] for r in self.rows) if self.rows else 1
         self.k = max(1, math.ceil(self.count * ratio)) if level >= 6 else 1
