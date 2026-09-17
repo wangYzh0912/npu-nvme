@@ -17,7 +17,7 @@ def main():
     parser.add_argument('--campaign', type=Path, default=Path('/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001'))
     args = parser.parse_args()
     relatives = ['EXECUTION_ENVIRONMENT_AND_COMMANDS.md', 'config/qwen_release_status.json', 'config/graph_topk.json', 'tools/graph_topk_run.py', 'tools/publish_graph_topk.py',
-                 'docs/plans/GRAPH_TOPK_EXECUTION.md', 'tools/graph_topk_report.py', 'tools/graph_topk_analyse.py', 'tools/graph_topk_queue.py', 'config/graph_topk_serial_matrix.json']
+                 'docs/plans/GRAPH_TOPK_EXECUTION.md', 'tools/graph_topk_report.py', 'tools/graph_topk_analyse.py', 'tools/graph_topk_queue.py', 'tools/graph_topk_plot.py', 'config/graph_topk_serial_matrix.json']
     for pattern in ('python/npu_nvme/experiments/graph_*.py', 'tests/python/test_graph_topk*.py'):
         relatives += [str(p.relative_to(ROOT)) for p in ROOT.glob(pattern)]
     for relative in relatives:
@@ -28,6 +28,8 @@ def main():
     dest.mkdir(parents=True, exist_ok=True)
     for src in (ROOT / 'results/graph-topk-20260917').glob('*'):
         if src.is_file(): shutil.copy2(src, dest / src.name)
+    for src in (ROOT / 'results/graph-topk-20260917/figures').glob('*.png'):
+        target=dest/'figures'/src.name;target.parent.mkdir(exist_ok=True);shutil.copy2(src,target)
     runs = []
     for run in sorted(args.campaign.glob('*')):
         if not run.is_dir(): continue
