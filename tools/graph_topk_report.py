@@ -60,7 +60,7 @@ def build(campaign, output):
             f"{100*r['increment_over_G1']:.3f}%" if 'increment_over_G1' in r else '待定',
             f"{r['drain_seconds']:.6f}",f"{r['peak_hbm_bytes']/2**30:.3f}",str(r.get('loss_matches_G0','待定'))])+'|')
     if formal:
-        spreads=[r.get('baseline_spread') for r in formal if r.get('baseline_spread') is not None]
+        spreads=[r.get('baseline_spread') for r in formal if r.get('baseline_spread') is not None and sum(x['role']==r['role'] and x['level']==0 for x in formal)>=2]
         text += ['', '当前同模型 G0 spread：'+(f'{100*max(spreads):.3f}%' if spreads else '待第二次基线')+'。超过 3% 时，减速预算结论标记为未定。']
     text += ['', '每配置默认一次、必要时最多两次；4 个 rank 不作为 4 次独立重复。未完成和失败启动不进入上表。',
              '', '主预算 3%，参考 1%/5%。在稳定基线、输出校验及依赖验证完成前，不宣布预算通过。',
