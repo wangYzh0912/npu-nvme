@@ -32,7 +32,7 @@ def main():
     for run in sorted(args.campaign.glob('*')):
         if not run.is_dir(): continue
         row = dict(run=run.name)
-        for name in ('run-config.json', 'source-identity.json', 'result.json', 'compile-interruption.json', 'lease-reconciliation.json', 'device-overlap-summary.json'):
+        for name in ('run-config.json', 'source-identity.json', 'result.json', 'compile-interruption.json', 'lease-reconciliation.json', 'device-overlap-summary.json', 'dependency-gate.json'):
             src = run / name
             if src.exists():
                 dst = dest / 'runs' / run.name / name; dst.parent.mkdir(parents=True, exist_ok=True)
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         while True:
             try:
                 subprocess.run([sys.executable, str(ROOT / 'tools/graph_topk_report.py')], cwd=ROOT, check=True)
-                main()
+                subprocess.run([sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]], cwd=ROOT, check=True)
             except Exception as error:
                 print(repr(error), flush=True)
             time.sleep(120)

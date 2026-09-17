@@ -1,0 +1,7 @@
+{
+  "numerical_gate": "pass",
+  "version_count_gate": "pass",
+  "source_ready_gate": "fail",
+  "reason": "Auxiliary task starts before last optimizer Assign; output-only Depend is insufficient for the requested full-update readiness edge.",
+  "fix": "Pass optimizer-dependent loss into DetectionChain; place Depend on each W/R input. Requires another device trace."
+}

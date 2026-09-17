@@ -45,12 +45,25 @@
     "remote": "origin",
     "mode": "fast-forward",
     "archive_branches_verified": 27,
-    "local_primary_worktree": "clean"
+    "local_primary_worktree": "experiment_changes_in_progress"
   },
   "incremental_phase1": {
-    "status": "running",
+    "status": "paused_by_user",
     "branch": "incremental-phase1-results",
     "results": "results/incremental-phase1-20260916",
-    "completed_runs": 19
+    "reason": "Superseded by graph-native real-working-set Top-K plan"
+  },
+  "graph_topk": {
+    "status": "G1_compile_capability_debug",
+    "branch": "incremental-phase1-results",
+    "results": "results/graph-topk-20260917",
+    "config": "config/graph_topk.json",
+    "campaign": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001",
+    "scope": "graph detection; no checkpoint I/O",
+    "formal_steps": 20,
+    "post_restore_warmup_steps": 12,
+    "default_repeats": 1,
+    "maximum_repeats": 2,
+    "parallel_execution_verified": false
   }
 }

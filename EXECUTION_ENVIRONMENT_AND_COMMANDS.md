@@ -103,3 +103,13 @@ Hardware jobs use `/models/npu_nvme_exp/user7-stack/hardware-campaign.lock` and
 its lease file. A retained run requires process, DMA and device-state diagnosis;
 do not remove its lease merely to admit another job. Routine training does not
 require an eight-NPU reset or a host reboot.
+
+## Graph Top-K experiment (2026-09-17)
+
+The prior incremental checkpoint queue is paused. The new real-working-set,
+no-checkpoint-I/O experiment uses `config/graph_topk.json` and
+`python3 tools/graph_topk_run.py --level 0 --output /models/NEW_GRAPH_RUN`.
+See [graph experiment protocol](docs/plans/GRAPH_TOPK_EXECUTION.md).
+Parallel configuration names are requested dependency layouts, not proof of
+actual concurrency. Results are published on `incremental-phase1-results`,
+under `results/graph-topk-20260917`.
