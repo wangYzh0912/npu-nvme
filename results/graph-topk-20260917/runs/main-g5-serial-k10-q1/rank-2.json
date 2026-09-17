@@ -1,7 +1,128 @@
 {
-  "status": "compiling",
+  "status": "failed",
   "rank": 2,
-  "losses": [],
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.3926597535610199,
+      "begin_ns": 3546251262005325,
+      "end_ns": 3546251996084298
+    },
+    {
+      "step": 17,
+      "loss": 0.38036903738975525,
+      "begin_ns": 3546252002160592,
+      "end_ns": 3546252744534848
+    },
+    {
+      "step": 18,
+      "loss": 0.37138673663139343,
+      "begin_ns": 3546252750588362,
+      "end_ns": 3546253516252019
+    },
+    {
+      "step": 19,
+      "loss": 0.3635930120944977,
+      "begin_ns": 3546253522298152,
+      "end_ns": 3546254271684626
+    },
+    {
+      "step": 20,
+      "loss": 0.17885880172252655,
+      "begin_ns": 3546254277746049,
+      "end_ns": 3546255037821675
+    },
+    {
+      "step": 21,
+      "loss": 0.15916143357753754,
+      "begin_ns": 3546255043880428,
+      "end_ns": 3546255795908222
+    },
+    {
+      "step": 22,
+      "loss": 0.1486787497997284,
+      "begin_ns": 3546255801971796,
+      "end_ns": 3546256551373189
+    },
+    {
+      "step": 23,
+      "loss": 0.13748541474342346,
+      "begin_ns": 3546256557452703,
+      "end_ns": 3546257288854726
+    },
+    {
+      "step": 24,
+      "loss": 0.12610352039337158,
+      "begin_ns": 3546257294951310,
+      "end_ns": 3546258034392364
+    },
+    {
+      "step": 25,
+      "loss": 0.11736201494932175,
+      "begin_ns": 3546258040517868,
+      "end_ns": 3546258778064896
+    },
+    {
+      "step": 26,
+      "loss": 0.10952559113502502,
+      "begin_ns": 3546258784121329,
+      "end_ns": 3546259512442691
+    },
+    {
+      "step": 27,
+      "loss": 0.10053898394107819,
+      "begin_ns": 3546259518566624,
+      "end_ns": 3546260277712676
+    },
+    {
+      "step": 28,
+      "loss": 0.09244683384895325,
+      "begin_ns": 3546260284615383,
+      "end_ns": 3546261023907647
+    },
+    {
+      "step": 29,
+      "loss": 0.08551149070262909,
+      "begin_ns": 3546261030329252,
+      "end_ns": 3546261777245856
+    },
+    {
+      "step": 30,
+      "loss": 0.0796462818980217,
+      "begin_ns": 3546261783688151,
+      "end_ns": 3546262577888889
+    },
+    {
+      "step": 31,
+      "loss": 0.07200884073972702,
+      "begin_ns": 3546262583929643,
+      "end_ns": 3546263396661873
+    },
+    {
+      "step": 32,
+      "loss": 0.0649050623178482,
+      "begin_ns": 3546263402689327,
+      "end_ns": 3546264177211158
+    },
+    {
+      "step": 33,
+      "loss": 0.0616140216588974,
+      "begin_ns": 3546264183274212,
+      "end_ns": 3546264924093162
+    },
+    {
+      "step": 34,
+      "loss": 0.05605250224471092,
+      "begin_ns": 3546264930283386,
+      "end_ns": 3546265660582175
+    },
+    {
+      "step": 35,
+      "loss": 0.05403253808617592,
+      "begin_ns": 3546265667161731,
+      "end_ns": 3546266397090068
+    }
+  ],
   "actual_overlap": "unverified",
   "parallel_label": "requested_dependency_layout_only",
   "framework_versions": {
@@ -20,5 +141,19 @@
   "compute_control": {
     "iterations": 0,
     "working_elements": 16
-  }
+  },
+  "restore": {
+    "tensors": 952,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:main",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 32769404928,
+  "begin_ns": 3546251255993051,
+  "training_end_ns": 3546266397103288,
+  "all_done_ns": 3546266397229039,
+  "memory_peak_bytes": 50397685248,
+  "version_end": 33,
+  "error": "RuntimeError('Launch kernel failed, name:Default/AllGather-op0\\n\\n----------------------------------------------------\\n- Ascend Error Message:\\n----------------------------------------------------\\n[PID: 2966882] 2026-09-17-09:58:34.025.103 Inconsistent_Collective_Communication_Arguments_Between_Ranks(EI0005): The arguments for collective communication are inconsistent between ranks: tag [AllGather_11.11.10.28%v.100_60000_0_1789609911202708], parameter [count], local [6], remote [5]\\n        Solution: Check whether the training script and ranktable of each NPU are consistent.\\n        TraceBack (most recent call last):\\n        Transport init error. Reason: [Create][DestLink]Create Dest error! createLink para:rank[2]-localUserrank[2]-localIpAddr[11.11.10.28], dst_rank[0]-remoteUserrank[0]-remote_ip_addr[11.11.10.28]\\n\\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn/en for error code description)\\n\\n----------------------------------------------------\\n- C++ Call Stack: (For framework developers)\\n----------------------------------------------------\\nmindspore/ccsrc/runtime/pynative/op_runner.cc:680 LaunchKernels\\n')",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/user7/npu-nvme/python/npu_nvme/experiments/graph_workload.py\", line 224, in run\n    report['score_oracle'] = check_scores(ms, chain, options['level'])\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user7/npu-nvme/python/npu_nvme/experiments/graph_validation.py\", line 40, in check_scores\n    gathered = ms.ops.AllGather(group='graph_topk_aux_tp4')(ms.Tensor(np.asarray(local, np.float32))).asnumpy()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/ops/primitive.py\", line 397, in __call__\n    return _run_op(self, self.name, args)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/ops/primitive.py\", line 1006, in _run_op\n    res = _pynative_executor.run_op_async(obj, op_name, args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/common/api.py\", line 1672, in run_op_async\n    return self._executor.run_op_async(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Launch kernel failed, name:Default/AllGather-op0\n\n----------------------------------------------------\n- Ascend Error Message:\n----------------------------------------------------\n[PID: 2966882] 2026-09-17-09:58:34.025.103 Inconsistent_Collective_Communication_Arguments_Between_Ranks(EI0005): The arguments for collective communication are inconsistent between ranks: tag [AllGather_11.11.10.28%v.100_60000_0_1789609911202708], parameter [count], local [6], remote [5]\n        Solution: Check whether the training script and ranktable of each NPU are consistent.\n        TraceBack (most recent call last):\n        Transport init error. Reason: [Create][DestLink]Create Dest error! createLink para:rank[2]-localUserrank[2]-localIpAddr[11.11.10.28], dst_rank[0]-remoteUserrank[0]-remote_ip_addr[11.11.10.28]\n\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn/en for error code description)\n\n----------------------------------------------------\n- C++ Call Stack: (For framework developers)\n----------------------------------------------------\nmindspore/ccsrc/runtime/pynative/op_runner.cc:680 LaunchKernels\n\n"
 }
