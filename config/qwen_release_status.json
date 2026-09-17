@@ -54,7 +54,7 @@
     "reason": "Superseded by graph-native real-working-set Top-K plan"
   },
   "graph_topk": {
-    "status": "G1_compile_capability_debug",
+    "status": "main_serial_G0_G6_validated_scan_boundary_running",
     "branch": "incremental-phase1-results",
     "results": "results/graph-topk-20260917",
     "config": "config/graph_topk.json",
@@ -64,6 +64,13 @@
     "post_restore_warmup_steps": 12,
     "default_repeats": 1,
     "maximum_repeats": 2,
-    "parallel_execution_verified": false
+    "parallel_execution_verified": false,
+    "parallel_capability": "two StepParallel layout propagation attempts did not compile; no parallel capacity claim",
+    "main_baseline_seconds": [12.8693009499, 12.1430338058],
+    "main_baseline_spread": 0.05807,
+    "three_percent_feasibility": "undetermined_due_to_baseline_variation_and_unverified_parallel_layout",
+    "main_full_scan_G6_seconds": 15.3737048903,
+    "main_full_scan_G6_output_validation": "pass_all_four_ranks",
+    "remaining": ["scan_fraction_curve", "selection_ratio_comparison", "device_consumer_and_reference_update", "G6_device_profile", "Qwen3-4B_representative_points"]
   }
 }
