@@ -13,7 +13,9 @@ def check_scores(ms, chain, level):
         expected = np.asarray([sample.astype(np.float64).sum()])
         np.testing.assert_allclose(actual, expected, rtol=2e-5, atol=1e-6)
         return dict(status='pass', indices=[0], expected=expected.tolist(), actual=actual.tolist())
-    indices = sorted(set([0, len(actual) // 2, len(actual) - 1] +
+    owned = [r for r in chain.rows if r['elements']]
+    owned_indices = [r['score_offset'] + r['segment_ids'][0] for r in (owned[0], owned[len(owned)//2], owned[-1])]
+    indices = sorted(set(owned_indices + [0, len(actual) // 2, len(actual) - 1] +
                          ([int(chain.indices.asnumpy()[0]), int(chain.indices.asnumpy()[-1])] if level >= 6 else [])))
     local = []
     with local_graph(ms):

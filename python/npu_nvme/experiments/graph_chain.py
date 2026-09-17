@@ -152,7 +152,16 @@ class DetectionChain(nn.Cell):
         return self.reduce(token)
 
     def reset_reference(self):
-        # Initialization only, never called in the measured interval.
+        # MindSpore init_parameters_data may drop unsliced nontrainable entries
+        # from ParameterTuple. Recover by registered names, never positional zip.
+        references = []
+        for i in range(len(self.rows)):
+            reference = self._params[f'graph_reference_{i}']
+            reference.sliced = True  # already a physical rank-local buffer
+            references.append(reference)
+        self.references = ParameterTuple(references)
+        if len(self.rows) != len(self.sources) or len(self.rows) != len(self.references):
+            raise ValueError('source/reference registry coverage changed')
         for row, weight, reference in zip(self.rows, self.sources, self.references):
             if tuple(weight.shape) != tuple(row['local_shape']) or tuple(reference.shape) != tuple(row['local_shape']):
                 raise ValueError('compiled W/R must match the physical TP shard geometry')

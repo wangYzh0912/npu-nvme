@@ -34,7 +34,7 @@ def main():
     for run in sorted(args.campaign.glob('*')):
         if not run.is_dir(): continue
         row = dict(run=run.name)
-        for name in ('run-config.json', 'source-identity.json', 'result.json', 'compile-interruption.json', 'lease-reconciliation.json', 'device-overlap-summary.json', 'dependency-gate.json'):
+        for name in ('run-config.json', 'source-identity.json', 'result.json', 'compile-interruption.json', 'lease-reconciliation.json', 'device-overlap-summary.json', 'dependency-gate.json', 'validation-exclusion.json', 'timing-exclusion.json'):
             src = run / name
             if src.exists():
                 dst = dest / 'runs' / run.name / name; dst.parent.mkdir(parents=True, exist_ok=True)

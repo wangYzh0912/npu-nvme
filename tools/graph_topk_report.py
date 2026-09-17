@@ -12,7 +12,7 @@ def build(campaign, output):
         result = run / 'result.json'
         if not result.exists(): continue
         d = json.loads(result.read_text())
-        if d.get('status') != 'pass': continue
+        if d.get('status') != 'pass' or (run/'validation-exclusion.json').exists() or (run/'timing-exclusion.json').exists(): continue
         cfg = json.loads((run / 'run-config.json').read_text())
         ranks = [json.loads((run / f'rank_{r}/result.json').read_text()) for r in range(4)]
         row = dict(reference_only=cfg.get('reference_only',False), compute_iterations=cfg.get('compute_iterations',0), name=run.name, role=cfg['role'], level=cfg['level'], layout=cfg['layout'],
