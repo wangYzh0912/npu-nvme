@@ -209,7 +209,7 @@ def install_wrapper(options, schema, rank, holder):
             if not overflow:
                 loss = F.depend(loss, self.optimizer(grads))
             if self.serial_aux:
-                aux = self.chain(ops.reshape(loss, ()))
+                aux = self.chain(ops.reshape(loss, ()), Tensor(True, ms.bool_))
                 loss = F.depend(loss, aux)
             return loss, overflow, scaling_sens, learning_rate, global_norm
 

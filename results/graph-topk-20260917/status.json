@@ -1,5 +1,5 @@
 {
-  "status": "G1_parallel_compiling",
+  "status": "G1_serial_formal_running",
   "updated_at": "2026-09-16T23:58:44.599604+00:00",
   "old_campaign": "paused_by_user",
   "old_interrupted_run": "auxiliary-k20-rep0",
@@ -38,5 +38,11 @@
   },
   "serial_dependency_gate": "pass",
   "G0_completion_seconds": 12.869300949852914,
-  "remote_live_update": true
+  "remote_live_update": true,
+  "parallel_capability": {
+    "status": "implementation_gap",
+    "tested_variants": 2,
+    "failure": "recursive StepParallel compiler processing before training",
+    "actual_parallel_measured": false
+  }
 }
