@@ -1618,6 +1618,130 @@
       "loss_matches_G0": true,
       "extra_peak_hbm_bytes": 8194030592,
       "increment_over_G1": 0.22046298357029492
+    },
+    {
+      "reference_only": false,
+      "compute_iterations": 0,
+      "name": "main-g6-serial-k5-q1",
+      "role": "main",
+      "level": 6,
+      "layout": "serial",
+      "scan_fraction": 1.0,
+      "ratio": 0.05,
+      "diagnostic": false,
+      "warmup_steps": 12,
+      "steps": 20,
+      "seconds": 14.607155427336693,
+      "training_seconds": 14.607028286,
+      "drain_seconds": 0.000127141,
+      "peak_hbm_bytes": 50397733888,
+      "post_restore_warmup_seconds": [
+        10.830375174,
+        0.970063466,
+        0.71758934,
+        0.696993478,
+        0.704925359,
+        0.714498758,
+        0.734934949,
+        0.749339287,
+        0.76259691,
+        0.771263294,
+        0.757220587,
+        0.757126767
+      ],
+      "numerical_loss": [
+        0.3926597535610199,
+        0.38036903738975525,
+        0.37138673663139343,
+        0.3635930120944977,
+        0.17885880172252655,
+        0.15916143357753754,
+        0.1486787497997284,
+        0.13748541474342346,
+        0.12610352039337158,
+        0.11736201494932175,
+        0.10952559113502502,
+        0.10053898394107819,
+        0.09244683384895325,
+        0.08551149070262909,
+        0.0796462818980217,
+        0.07200884073972702,
+        0.0649050623178482,
+        0.0616140216588974,
+        0.05605250224471092,
+        0.05403253808617592
+      ],
+      "maximum_first_step_seconds": 0.747912491,
+      "auxiliary_seconds": 0.151923055,
+      "score_oracle": true,
+      "actual_parallel_verified": false,
+      "step_seconds_rank0": {
+        "minimum": 0.690343822,
+        "median": 0.728751249,
+        "maximum": 0.768349142,
+        "all_steps": [
+          0.747912491,
+          0.748326263,
+          0.747227448,
+          0.747942651,
+          0.748591003,
+          0.747136208,
+          0.725423831,
+          0.715933674,
+          0.768349142,
+          0.696996588,
+          0.691137814,
+          0.708442383,
+          0.690343822,
+          0.694370418,
+          0.696860357,
+          0.701515316,
+          0.704281387,
+          0.736197124,
+          0.732078667,
+          0.736653396
+        ]
+      },
+      "working_set": {
+        "candidate_blocks": 124976,
+        "global_W_R_input_bytes": 65523417088,
+        "reference_bytes_per_rank": [
+          8190427136,
+          8190427136,
+          8190427136,
+          8190427136
+        ],
+        "TP_fragments_per_rank": [
+          316940,
+          326156,
+          326156,
+          316940
+        ],
+        "selected_blocks": 6249
+      },
+      "board_memory_peak_mib": {
+        "0": 53706,
+        "1": 53709,
+        "2": 53709,
+        "3": 53709
+      },
+      "board_sampling_limits": "One-second sampling may miss short peaks; includes allocations outside framework allocator.",
+      "baseline_count": 2,
+      "T0_seconds": 12.506167377810925,
+      "slowdown": 0.16799615630072623,
+      "baseline_spread": 0.05807271901482437,
+      "slowdown_baseline_range": [
+        0.1350387627312144,
+        0.20292471065979378
+      ],
+      "budget_assessment": {
+        "0.01": "above_budget_for_both_baselines",
+        "0.03": "above_budget_for_both_baselines",
+        "0.05": "above_budget_for_both_baselines"
+      },
+      "loss_matches_G0": true,
+      "extra_peak_hbm_bytes": 8193980416,
+      "increment_over_G1": 0.1596093863895418
     }
   ]
 }
