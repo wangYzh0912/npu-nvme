@@ -29,14 +29,21 @@ def main():
     parser.add_argument('--ratio', type=float, default=.1)
     parser.add_argument('--role', choices=['main', 'auxiliary'], default='main')
     parser.add_argument('--steps', type=int)
+    parser.add_argument('--compute-iterations', type=int, default=0)
+    parser.add_argument('--reference-only', action='store_true')
     parser.add_argument('--profile', action='store_true')
     parser.add_argument('--dump-graphs', action='store_true')
     args = parser.parse_args()
     options = json.loads(args.config.read_text())
     options.update(output=str(args.output.resolve()), level=args.level, layout=args.layout,
                    scan_fraction=args.scan_fraction, ratio=args.ratio, role=args.role,
-                   profile=args.profile, dump_graphs=args.dump_graphs)
+                   profile=args.profile, dump_graphs=args.dump_graphs,
+                   compute_iterations=args.compute_iterations, reference_only=args.reference_only)
     options['strategy'] = str((ROOT / options['strategy']).resolve())
+    if args.compute_iterations and args.level != 1:
+        raise ValueError('compute-only control uses G1')
+    if args.reference_only and args.level != 0:
+        raise ValueError('reference-only control uses original G0')
     if args.steps:
         options['formal_steps'] = args.steps
     output = Path(options['output']); output.mkdir(parents=True, exist_ok=False)
@@ -66,6 +73,10 @@ def main():
                    'python', '-m', 'npu_nvme.experiments.graph_workload', '--config', str(output / 'run-config.json')]
         write(output / 'command.json', command)
         child = None
+        monitor_stop = output / 'stop-memory-monitor'
+        monitor = subprocess.Popen([sys.executable, str(ROOT / 'tools/incremental_memory_monitor.py'),
+            '--output', str(output / 'board-memory.jsonl'), '--stop-file', str(monitor_stop)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             with (output / 'training.log').open('w') as log:
                 child = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
@@ -91,6 +102,11 @@ def main():
             write(output / 'result.json', dict(status='failed', error=repr(error)))
             raise
         finally:
+            monitor_stop.touch()
+            try:
+                monitor.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                monitor.terminate(); monitor.wait(timeout=10)
             # Never erase a lease while live device workers remain.
             smi = subprocess.check_output(['npu-smi', 'info'], text=True)
             idle = all(f'No running processes found in NPU {r}' in smi for r in range(4))

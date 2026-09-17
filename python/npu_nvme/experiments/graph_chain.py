@@ -24,8 +24,10 @@ def weight_layout(tensor):
 
 
 class MinimalProbe(nn.Cell):
-    def __init__(self, tensor):
+    def __init__(self, tensor, compute_iterations=0):
         super().__init__(auto_prefix=False)
+        self.iterations = compute_iterations
+        self.sample_elements = min(1 << 20, math.prod(tensor['local_shape'])) if compute_iterations else 16
         self.morph = Morph(self.probe, self.infer_shape, self.infer_dtype).add_prim_attr('self_define_shard', True)
         self.morph.shard(in_strategy=(weight_layout(tensor),), out_strategy=(layout('None'),))
 
@@ -36,7 +38,10 @@ class MinimalProbe(nn.Cell):
         return dtype
 
     def probe(self, weight):
-        return ops.reshape(ops.ReduceSum()(ops.reshape(weight, (-1,))[:16]), (1,))
+        value = ops.reshape(weight, (-1,))[:self.sample_elements]
+        for _ in range(self.iterations):
+            value = value * 1.0001 + value * value * 0.0001
+        return ops.reshape(ops.ReduceSum()(value), (1,))
 
     def construct(self, weight):
         return self.morph(weight)
@@ -87,7 +92,7 @@ class ParameterScan(nn.Cell):
 
 
 class DetectionChain(nn.Cell):
-    def __init__(self, weights, schema, rank, level, fraction, ratio):
+    def __init__(self, weights, schema, rank, level, fraction, ratio, compute_iterations=0):
         super().__init__(auto_prefix=False)
         if level not in range(1, 7):
             raise ValueError('this detection implementation covers G1 through G6')
@@ -96,7 +101,7 @@ class DetectionChain(nn.Cell):
         registry = {p.name: p for p in weights}
         self.first = weights[0]
         tensors = {t['name']: t for t in schema['tensors'] if t['role'] == 'model'}
-        self.minimal = MinimalProbe(tensors[self.first.name])
+        self.minimal = MinimalProbe(tensors[self.first.name], compute_iterations)
         selected = [registry[r['name']] for r in self.rows]
         if any(tuple(p.shape) != tuple(tensors[r['name']]['global_shape']) for p, r in zip(selected, self.rows)):
             raise ValueError('pre-partition weights do not match global schema')
@@ -162,7 +167,7 @@ def install_wrapper(options, schema, rank, holder):
             if self.use_legacy or self.local_norm or self.dump_device_local_norm or self.use_graceful_exit or self.use_skip_data_by_global_norm:
                 raise ValueError('unsupported training wrapper feature; do not silently change training')
             self.chain = DetectionChain(self.weights, schema, rank, options['level'],
-                                        options['scan_fraction'], options['ratio'])
+                                        options['scan_fraction'], options['ratio'], options.get('compute_iterations', 0))
             self.serial_aux = options['layout'] == 'serial'
             self.skip_aux_step = options['warmup_steps']
             holder['chain'] = self.chain

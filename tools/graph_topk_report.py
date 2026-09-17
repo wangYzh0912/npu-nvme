@@ -15,7 +15,7 @@ def build(campaign, output):
         if d.get('status') != 'pass': continue
         cfg = json.loads((run / 'run-config.json').read_text())
         ranks = [json.loads((run / f'rank_{r}/result.json').read_text()) for r in range(4)]
-        row = dict(name=run.name, role=cfg['role'], level=cfg['level'], layout=cfg['layout'],
+        row = dict(reference_only=cfg.get('reference_only',False), compute_iterations=cfg.get('compute_iterations',0), name=run.name, role=cfg['role'], level=cfg['level'], layout=cfg['layout'],
                    scan_fraction=cfg['scan_fraction'], ratio=cfg['ratio'], diagnostic=cfg['profile'],
                    warmup_steps=cfg['warmup_steps'], steps=cfg['formal_steps'], seconds=d['completion_seconds'], training_seconds=d['training_seconds'],
                    drain_seconds=max((r['all_done_ns']-r['training_end_ns'])/1e9 for r in ranks),
@@ -31,14 +31,14 @@ def build(campaign, output):
         runs.append(row)
     formal = [r for r in runs if not r['diagnostic'] and r['steps']==20 and r['warmup_steps']==12 and r['layout']=='serial']
     for row in formal:
-        base = [r for r in formal if r['role']==row['role'] and r['level']==0]
+        base = [r for r in formal if r['role']==row['role'] and r['level']==0 and not r['reference_only']]
         if base:
             median=statistics.median(r['seconds'] for r in base)
             row['T0_seconds']=median;row['slowdown']=(row['seconds']-median)/median
             row['baseline_spread']=(max(r['seconds'] for r in base)-min(r['seconds'] for r in base))/median
             row['loss_matches_G0']=all(abs(a-b)<=1e-6+1e-6*abs(b) for a,b in zip(row['numerical_loss'],base[0]['numerical_loss']))
             row['extra_peak_hbm_bytes']=row['peak_hbm_bytes']-max(r['peak_hbm_bytes'] for r in base)
-        controls=[r for r in formal if r['role']==row['role'] and r['level']==1 and r['layout']==row['layout']]
+        controls=[r for r in formal if r['role']==row['role'] and r['level']==1 and not r['compute_iterations'] and r['layout']==row['layout']]
         if controls:row['increment_over_G1']=row['seconds']/statistics.median(r['seconds'] for r in controls)-1
     output.mkdir(parents=True,exist_ok=True)
     (output/'measurements.json').write_text(json.dumps(dict(runs=runs),indent=2)+'\n')

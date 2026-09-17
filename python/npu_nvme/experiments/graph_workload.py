@@ -122,11 +122,22 @@ def run(options):
                 network = context.original_args().train_network
                 holder['network'] = network
                 report['parallel_mode'] = ms.get_auto_parallel_context('parallel_mode')
+                if options.get('reference_only'):
+                    import math
+                    model_schema = holder.get('schema', schema)
+                    names = {t['name'] for t in model_schema['tensors'] if t['role']=='model' and math.prod(t['global_shape']) >= options['block_elements']}
+                    with local_graph(ms):
+                        holder['reference_allocations'] = [ms.ops.mul(p, ms.Tensor(.99, ms.float32))
+                            for p in holder['wrapper'].weights if p.name in names]
+                    ms.runtime.synchronize()
+                    report['reference_allocation_bytes'] = sum(int(p.size)*4 for p in holder['reference_allocations'])
+                    report['allocation_control'] = 'resident reference tensors; never scanned during formal training'
                 if 'chain' in holder:
                     holder['chain'].reset_reference()
                     drain()  # Compile the final drain graph before any measurement.
                     ms.runtime.synchronize()
                     report['geometry'] = summarize(holder['chain'].rows)
+                    report['compute_control'] = dict(iterations=holder['chain'].minimal.iterations, working_elements=holder['chain'].minimal.sample_elements)
                 report['status'] = 'compiling'
                 write(directory / 'progress.json', report)
 

@@ -7,7 +7,9 @@ def check_scores(ms, chain, level):
     actual = chain.scores.asnumpy()
     if level == 1:
         with local_graph(ms):
-            sample = ms.ops.reshape(chain.first, (-1,))[:16].asnumpy()
+            sample = ms.ops.reshape(chain.first, (-1,))[:chain.minimal.sample_elements].asnumpy()
+        for _ in range(chain.minimal.iterations):
+            sample = sample * np.float32(1.0001) + sample * sample * np.float32(.0001)
         expected = np.asarray([sample.astype(np.float64).sum()])
         np.testing.assert_allclose(actual, expected, rtol=2e-5, atol=1e-6)
         return dict(status='pass', indices=[0], expected=expected.tolist(), actual=actual.tolist())
