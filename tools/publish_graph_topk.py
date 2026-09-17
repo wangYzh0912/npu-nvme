@@ -15,7 +15,7 @@ def main():
     parser.add_argument('--campaign', type=Path, default=Path('/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001'))
     args = parser.parse_args()
     relatives = ['config/graph_topk.json', 'tools/graph_topk_run.py', 'tools/publish_graph_topk.py',
-                 'docs/plans/GRAPH_TOPK_EXECUTION.md']
+                 'docs/plans/GRAPH_TOPK_EXECUTION.md', 'tools/graph_topk_report.py', 'tools/graph_topk_analyse.py']
     for pattern in ('python/npu_nvme/experiments/graph_*.py', 'tests/python/test_graph_topk*.py'):
         relatives += [str(p.relative_to(ROOT)) for p in ROOT.glob(pattern)]
     for relative in relatives:

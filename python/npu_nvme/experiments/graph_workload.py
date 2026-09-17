@@ -87,7 +87,7 @@ def run(options):
             raise ValueError('TP4 required')
         if options.get('dump_graphs'):
             ms.set_context(save_graphs=2, save_graphs_path=str(directory / 'graphs'))
-        create_group('graph_topk_aux_tp4', [0, 1, 2, 3])
+        create_group('graph_topk_aux_tp4', [0, 1, 2, 3])  # Common 200 MB communicator allocation control, including G0.
         ms.set_seed(42); ms.manual_seed(42); np.random.seed(42); random.seed(42)
         tokenizer = AutoTokenizer.from_pretrained(str(source), local_files_only=True, trust_remote_code=False)
         sequence = options['seq_length']
@@ -204,10 +204,12 @@ def run(options):
                 np.testing.assert_allclose(values, scores[indices], rtol=1e-6, atol=1e-6)
                 if np.any(values[:-1] < values[1:]) or values[-1] < np.partition(scores, -chain.k)[-chain.k] - 1e-5:
                     raise ValueError('Top-K ordering or threshold mismatch')
+            from npu_nvme.experiments.graph_validation import check_scores
+            report['score_oracle'] = check_scores(ms, chain, options['level'])
             report['output_check'] = dict(status='indices_and_values_checked', score_count=len(scores),
                 selected_count=len(indices), score_min=float(scores.min()), score_max=float(scores.max()),
                 sampled_indices=indices[:16].tolist(), sampled_values=values[:16].tolist(),
-                independent_score_oracle='pending')
+                independent_score_oracle=report['score_oracle']['status'])
             times = []
             for _ in range(3):
                 begin = time.monotonic_ns(); drain(); ms.runtime.synchronize()

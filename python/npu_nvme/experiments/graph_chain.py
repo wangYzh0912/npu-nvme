@@ -4,14 +4,46 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, Parameter, ParameterTuple, Tensor
 from mindspore.common.initializer import initializer
+from mindspore.ops.operations import Morph
+from mindformers.parallel_core.training_graph.device_matrix import layout
 from mindformers.wrapper.wrapper import MFTrainOneStepCell, _grad_scale
 from mindspore.ops import functional as F
 
 from npu_nvme.experiments.graph_geometry import geometry, summarize
 
 
+def weight_layout(tensor):
+    names = ['None'] * len(tensor['global_shape'])
+    if tensor['partition'] == 'sharded':
+        shard = tensor['shards'][0]
+        axes = [i for i, (a, b, n) in enumerate(zip(shard['start'], shard['end'], tensor['global_shape'])) if b-a != n]
+        if len(axes) != 1:
+            raise ValueError('expected one TP axis')
+        names[axes[0]] = 'tp'
+    return layout(*names)
+
+
+class MinimalProbe(nn.Cell):
+    def __init__(self, tensor):
+        super().__init__(auto_prefix=False)
+        self.morph = Morph(self.probe, self.infer_shape, self.infer_dtype).add_prim_attr('self_define_shard', True)
+        self.morph.shard(in_strategy=(weight_layout(tensor),), out_strategy=(layout('None'),))
+
+    def infer_shape(self, shape):
+        return (1,)
+
+    def infer_dtype(self, dtype):
+        return dtype
+
+    def probe(self, weight):
+        return ops.reshape(ops.ReduceSum()(ops.reshape(weight, (-1,))[:16]), (1,))
+
+    def construct(self, weight):
+        return self.morph(weight)
+
+
 class ParameterScan(nn.Cell):
-    def __init__(self, row, level, full_scan):
+    def __init__(self, row, level, full_scan, tensor):
         super().__init__(auto_prefix=False)
         self.unit = row['unit']
         self.count = row['block_count']
@@ -24,8 +56,19 @@ class ParameterScan(nn.Cell):
         self.reduce = ops.ReduceSum()
         self.gather = ops.Gather()
         self.segment = ops.UnsortedSegmentSum()
+        self.morph = Morph(self.scan, self.infer_shape, self.infer_dtype).add_prim_attr('self_define_shard', True)
+        self.morph.shard(in_strategy=(weight_layout(tensor), weight_layout(tensor)), out_strategy=(layout('None'),))
+
+    def infer_shape(self, weight_shape, reference_shape):
+        return (self.count,)
+
+    def infer_dtype(self, weight_dtype, reference_dtype):
+        return weight_dtype
 
     def construct(self, weight, reference):
+        return self.morph(weight, reference)
+
+    def scan(self, weight, reference):
         if not self.present:
             return self.zero
         w = ops.reshape(weight, (-1, self.unit))
@@ -52,14 +95,16 @@ class DetectionChain(nn.Cell):
         self.rows = geometry(schema, rank, fraction) if level >= 2 else []
         registry = {p.name: p for p in weights}
         self.first = weights[0]
+        tensors = {t['name']: t for t in schema['tensors'] if t['role'] == 'model'}
+        self.minimal = MinimalProbe(tensors[self.first.name])
         selected = [registry[r['name']] for r in self.rows]
-        if any(tuple(p.shape) != tuple(r['local_shape']) for p, r in zip(selected, self.rows)):
-            raise ValueError('auxiliary weights are not the expected physical TP shards')
+        if any(tuple(p.shape) != tuple(tensors[r['name']]['global_shape']) for p, r in zip(selected, self.rows)):
+            raise ValueError('pre-partition weights do not match global schema')
         self.sources = ParameterTuple(selected)
         self.references = ParameterTuple([
             Parameter(initializer('zeros', p.shape, ms.float32), name=f'graph_reference_{i}', requires_grad=False)
             for i, p in enumerate(selected)])
-        self.scanners = nn.CellList([ParameterScan(r, level, fraction == 1.0) for r in self.rows], auto_prefix=False)
+        self.scanners = nn.CellList([ParameterScan(r, level, fraction == 1.0, tensors[r['name']]) for r in self.rows], auto_prefix=False)
         self.count = sum(r['block_count'] for r in self.rows) if self.rows else 1
         self.k = max(1, math.ceil(self.count * ratio)) if level >= 6 else 1
         self.scores = Parameter(initializer('zeros', (self.count,), ms.float32),
@@ -76,7 +121,7 @@ class DetectionChain(nn.Cell):
 
     def construct(self):
         if self.level == 1:
-            scores = ops.reshape(self.reduce(ops.reshape(self.first, (-1,))[:16]), (1,))
+            scores = self.minimal(self.first)
         else:
             pieces = ()
             for i in range(len(self.scanners)):
@@ -97,6 +142,8 @@ class DetectionChain(nn.Cell):
     def reset_reference(self):
         # Initialization only, never called in the measured interval.
         for row, weight, reference in zip(self.rows, self.sources, self.references):
+            if tuple(weight.shape) != tuple(row['local_shape']) or tuple(reference.shape) != tuple(row['local_shape']):
+                raise ValueError('compiled W/R must match the physical TP shard geometry')
             array = weight.asnumpy().astype(np.float32, copy=True)
             array *= np.float32(.99)
             array += np.float32((row['parameter_index'] % 17 + 1) * .00001)
