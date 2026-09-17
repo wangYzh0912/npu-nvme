@@ -5,6 +5,8 @@ import datetime
 import json
 import shutil
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,7 +32,7 @@ def main():
     for run in sorted(args.campaign.glob('*')):
         if not run.is_dir(): continue
         row = dict(run=run.name)
-        for name in ('run-config.json', 'source-identity.json', 'result.json'):
+        for name in ('run-config.json', 'source-identity.json', 'result.json', 'compile-interruption.json', 'lease-reconciliation.json'):
             src = run / name
             if src.exists():
                 dst = dest / 'runs' / run.name / name; dst.parent.mkdir(parents=True, exist_ok=True)
@@ -53,4 +55,15 @@ def main():
         subprocess.run(['git', 'commit', '-m', 'Record graph Top-K experiment implementation and progress'], cwd=WORK, check=True)
     subprocess.run(['git', 'push', 'origin', 'incremental-phase1-results'], cwd=WORK, check=True, timeout=120)
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    if '--loop' in sys.argv:
+        sys.argv.remove('--loop')
+        while True:
+            try:
+                subprocess.run([sys.executable, str(ROOT / 'tools/graph_topk_report.py')], cwd=ROOT, check=True)
+                main()
+            except Exception as error:
+                print(repr(error), flush=True)
+            time.sleep(120)
+    else:
+        main()
