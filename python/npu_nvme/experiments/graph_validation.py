@@ -14,9 +14,17 @@ def check_scores(ms, chain, level):
         np.testing.assert_allclose(actual, expected, rtol=2e-5, atol=1e-6)
         return dict(status='pass', indices=[0], expected=expected.tolist(), actual=actual.tolist())
     owned = [r for r in chain.rows if r['elements']]
-    owned_indices = [r['score_offset'] + r['segment_ids'][0] for r in (owned[0], owned[len(owned)//2], owned[-1])]
-    indices = sorted(set(owned_indices + [0, len(actual) // 2, len(actual) - 1] +
-                         ([int(chain.indices.asnumpy()[0]), int(chain.indices.asnumpy()[-1])] if level >= 6 else [])))
+    # A collective oracle must issue the same element count and ordering on every rank.
+    # Local-only stages also sample rank-owned fragments so zero-filled shards cannot pass.
+    if level >= 5:
+        indices = [0, len(actual) // 2, len(actual) - 1]
+        if level >= 6:
+            indices += [int(chain.indices.asnumpy()[0]), int(chain.indices.asnumpy()[-1])]
+        indices = sorted(set(indices))
+    else:
+        owned_indices = [r['score_offset'] + r['segment_ids'][0]
+                         for r in (owned[0], owned[len(owned)//2], owned[-1])]
+        indices = sorted(set(owned_indices + [0, len(actual) // 2, len(actual) - 1]))
     local = []
     with local_graph(ms):
         for score_index in indices:
