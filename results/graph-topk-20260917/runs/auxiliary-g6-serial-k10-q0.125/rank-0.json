@@ -1,0 +1,242 @@
+{
+  "status": "pass",
+  "rank": 0,
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.47678497433662415,
+      "begin_ns": 3553337598356033,
+      "end_ns": 3553338165953034
+    },
+    {
+      "step": 17,
+      "loss": 0.47035712003707886,
+      "begin_ns": 3553338171611117,
+      "end_ns": 3553338742379251
+    },
+    {
+      "step": 18,
+      "loss": 0.45638740062713623,
+      "begin_ns": 3553338748028544,
+      "end_ns": 3553339325549505
+    },
+    {
+      "step": 19,
+      "loss": 0.45059436559677124,
+      "begin_ns": 3553339331215847,
+      "end_ns": 3553339944625581
+    },
+    {
+      "step": 20,
+      "loss": 0.27022117376327515,
+      "begin_ns": 3553339950405154,
+      "end_ns": 3553340645588464
+    },
+    {
+      "step": 21,
+      "loss": 0.2523244619369507,
+      "begin_ns": 3553340663094014,
+      "end_ns": 3553341257255221
+    },
+    {
+      "step": 22,
+      "loss": 0.24251650273799896,
+      "begin_ns": 3553341267035120,
+      "end_ns": 3553341855882707
+    },
+    {
+      "step": 23,
+      "loss": 0.23613250255584717,
+      "begin_ns": 3553341861867031,
+      "end_ns": 3553342457340483
+    },
+    {
+      "step": 24,
+      "loss": 0.22410309314727783,
+      "begin_ns": 3553342463319677,
+      "end_ns": 3553343142983735
+    },
+    {
+      "step": 25,
+      "loss": 0.21361958980560303,
+      "begin_ns": 3553343148867809,
+      "end_ns": 3553343752448954
+    },
+    {
+      "step": 26,
+      "loss": 0.20472095906734467,
+      "begin_ns": 3553343758257647,
+      "end_ns": 3553344364643563
+    },
+    {
+      "step": 27,
+      "loss": 0.1889040619134903,
+      "begin_ns": 3553344370525496,
+      "end_ns": 3553344971211950
+    },
+    {
+      "step": 28,
+      "loss": 0.17014998197555542,
+      "begin_ns": 3553344984467322,
+      "end_ns": 3553345588746210
+    },
+    {
+      "step": 29,
+      "loss": 0.15995053946971893,
+      "begin_ns": 3553345597649606,
+      "end_ns": 3553346198690591
+    },
+    {
+      "step": 30,
+      "loss": 0.15216484665870667,
+      "begin_ns": 3553346204632944,
+      "end_ns": 3553346887581205
+    },
+    {
+      "step": 31,
+      "loss": 0.1450224667787552,
+      "begin_ns": 3553346893193868,
+      "end_ns": 3553347530236416
+    },
+    {
+      "step": 32,
+      "loss": 0.13875161111354828,
+      "begin_ns": 3553347537043553,
+      "end_ns": 3553348196317420
+    },
+    {
+      "step": 33,
+      "loss": 0.13283242285251617,
+      "begin_ns": 3553348202730646,
+      "end_ns": 3553348966930731
+    },
+    {
+      "step": 34,
+      "loss": 0.12002266943454742,
+      "begin_ns": 3553348972912554,
+      "end_ns": 3553349597065211
+    },
+    {
+      "step": 35,
+      "loss": 0.09489588439464569,
+      "begin_ns": 3553349602790634,
+      "end_ns": 3553350194146090
+    }
+  ],
+  "actual_overlap": "unverified",
+  "parallel_label": "requested_dependency_layout_only",
+  "framework_versions": {
+    "mindspore": "2.7.1",
+    "mindformers": "1.7.0"
+  },
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "parallel_mode": "semi_auto_parallel",
+  "geometry": {
+    "candidate_blocks": 7690,
+    "local_elements": 125403648,
+    "local_input_bytes": 1003229184,
+    "local_reference_bytes": 4022272000,
+    "tp_fragments": 24810
+  },
+  "compute_control": {
+    "iterations": 0,
+    "working_elements": 16
+  },
+  "restore": {
+    "tensors": 949,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:auxiliary",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 16094469632,
+  "begin_ns": 3553337592465829,
+  "training_end_ns": 3553350194165580,
+  "all_done_ns": 3553350194313821,
+  "memory_peak_bytes": 24918794240,
+  "version_end": 33,
+  "topk_diagnostic": {
+    "sorted_requested": true,
+    "implementation": "TopK selection followed by explicit device Sort because large-K Ascend TopK was observed unsorted",
+    "order_violations": 0,
+    "minimum_selected": 0.0054535940289497375,
+    "last_selected": 0.0054535940289497375,
+    "cpu_kth_threshold": 0.0054535940289497375,
+    "threshold_gap": 0.0
+  },
+  "score_oracle": {
+    "status": "pass",
+    "indices": [
+      0,
+      3845,
+      4425,
+      4833,
+      7689
+    ],
+    "expected": [
+      0.0034489878453314304,
+      0.004747421480715275,
+      0.008363397791981697,
+      0.005453594494611025,
+      0.00034432532265782356
+    ],
+    "actual": [
+      0.0034489878453314304,
+      0.004747421480715275,
+      0.008363397791981697,
+      0.0054535940289497375,
+      0.00034432532265782356
+    ],
+    "max_absolute_error": 4.656612873077393e-10,
+    "oracle": "CPU FP64 summation of real TP fragments; independent of device segment reduction"
+  },
+  "output_check": {
+    "status": "indices_and_values_checked",
+    "score_count": 7690,
+    "selected_count": 769,
+    "score_min": 0.00034432532265782356,
+    "score_max": 0.008363397791981697,
+    "sampled_indices": [
+      4425,
+      3277,
+      3266,
+      6943,
+      4434,
+      3267,
+      4435,
+      5399,
+      6561,
+      3256,
+      6939,
+      6066,
+      6932,
+      6069,
+      5588,
+      3662
+    ],
+    "sampled_values": [
+      0.008363397791981697,
+      0.008065424859523773,
+      0.007968178018927574,
+      0.007687035016715527,
+      0.007650076411664486,
+      0.007574757561087608,
+      0.007555855438113213,
+      0.007555713877081871,
+      0.0075110625475645065,
+      0.007504613138735294,
+      0.007424161769449711,
+      0.007410462014377117,
+      0.007389244623482227,
+      0.007362404838204384,
+      0.007305215112864971,
+      0.00722154788672924
+    ],
+    "independent_score_oracle": "pass"
+  },
+  "standalone_auxiliary_ns": [
+    287075393,
+    112460808,
+    111621204
+  ],
+  "formal_contract": "twenty_updated_weight_detections"
+}
