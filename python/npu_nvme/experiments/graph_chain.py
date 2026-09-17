@@ -101,8 +101,8 @@ class ParameterScan(nn.Cell):
 class DetectionChain(nn.Cell):
     def __init__(self, weights, schema, rank, level, fraction, ratio, compute_iterations=0):
         super().__init__(auto_prefix=False)
-        if level not in range(1, 7):
-            raise ValueError('this detection implementation covers G1 through G6')
+        if level not in range(1, 9):
+            raise ValueError('this auxiliary implementation covers G1 through G8')
         self.level = level
         self.rows = geometry(schema, rank, fraction) if level >= 2 else []
         registry = {p.name: p for p in weights}
@@ -133,6 +133,10 @@ class DetectionChain(nn.Cell):
         self.sort = ops.Sort(axis=-1, descending=True)
         self.reduce = ops.ReduceSum()
         self.zero_index = Tensor([0], ms.int32)
+        if level >= 7:
+            from npu_nvme.experiments.graph_pack import DeviceConsumer
+            self.consumer = DeviceConsumer(self.sources, self.references, schema,
+                                           self.rows, rank, self.k, level == 8)
 
     def construct(self, ready, enabled):
         if self.level == 1:
@@ -154,7 +158,10 @@ class DetectionChain(nn.Cell):
         token = F.depend(token, F.assign(self.indices, indices))
         token = F.depend(token, F.assign(self.values, values))
         token = F.depend(token, F.assign_add(self.version, ops.cast(enabled, ms.int32)))
-        return self.reduce(token)
+        completed = self.reduce(token)
+        if self.level >= 7:
+            completed = F.depend(completed, self.consumer(indices, completed))
+        return completed
 
     def reset_reference(self):
         # MindSpore init_parameters_data may drop unsliced nontrainable entries
@@ -165,6 +172,9 @@ class DetectionChain(nn.Cell):
             reference.sliced = True  # already a physical rank-local buffer
             references.append(reference)
         self.references = ParameterTuple(references)
+        if self.level >= 7:
+            self.consumer.sources = self.sources
+            self.consumer.references = self.references
         if len(self.rows) != len(self.sources) or len(self.rows) != len(self.references):
             raise ValueError('source/reference registry coverage changed')
         for row, weight, reference in zip(self.rows, self.sources, self.references):
@@ -175,6 +185,8 @@ class DetectionChain(nn.Cell):
             array += np.float32((row['parameter_index'] % 17 + 1) * .00001)
             reference.set_data(Tensor(array))
         self.version.set_data(Tensor(0, ms.int32))
+        if self.level >= 7:
+            self.consumer.reset_state()
 
 
 def install_wrapper(options, schema, rank, holder):

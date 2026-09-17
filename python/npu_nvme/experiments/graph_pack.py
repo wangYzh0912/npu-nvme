@@ -31,10 +31,11 @@ class ReferenceProjection(nn.Cell):
         self.unit=unit
         self.mask_indices=Tensor(np.asarray(mapping['reference_mask_indices'],np.int32))
         self.morph=Morph(self.project,self.infer_shape,self.infer_dtype).add_prim_attr('self_define_shard',True)
-        self.morph.shard(in_strategy=(weight_layout(tensor),weight_layout(tensor),layout('None')),
-                         out_strategy=(weight_layout(tensor),))
+        local_layout = layout(*(['None'] * len(tensor['local_shape'])))
+        self.morph.shard(in_strategy=(weight_layout(tensor), local_layout, layout('None')),
+                         out_strategy=(local_layout,))
 
-    def infer_shape(self,w,r,m):return w
+    def infer_shape(self,w,r,m):return r
     def infer_dtype(self,w,r,m):return w
     def project(self,weight,reference,mask):
         take=ops.reshape(ops.gather(mask,self.mask_indices,0),(-1,1))
@@ -58,13 +59,22 @@ class DeviceConsumer(nn.Cell):
         self.lookup=Tensor(np.asarray(tables['lookup'],np.int32))
         self.zero=Tensor(np.zeros((1,tables['unit']),np.float32))
         self.output=Parameter(initializer('zeros',(k,65536),ms.float32),name='graph_device_output',requires_grad=False)
+        self.update_counts=Parameter(initializer('zeros',(len(tables['lookup']),),ms.int32),
+                                     name='graph_reference_update_counts',requires_grad=False)
         self.empty_mask=Tensor(np.zeros(len(tables['lookup'])+1,np.bool_))
         self.ones=Tensor(np.ones(k,np.bool_))
+        self.count_ones=Tensor(np.ones(k,np.int32))
         self.advance=advance
         self.k=k
-        self.budget=dict(output_bytes=k*65536*4,candidate_buffer_bytes=tables['candidate_buffer_elements']*4,
+        self.budget=dict(output_bytes_per_rank=k*65536*4,
+                         aggregate_output_bytes=4*k*65536*4,
+                         candidate_buffer_bytes_per_rank=tables['candidate_buffer_elements']*4,
                          lookup_bytes=self.lookup.nbytes,packing=tables['packing'],
                          reference_update_implementation='full-sized where + assign; unselected values preserved exactly')
+
+    def reset_state(self):
+        self.output.set_data(Tensor(np.zeros(self.output.shape,np.float32)))
+        self.update_counts.set_data(Tensor(np.zeros(self.update_counts.shape,np.int32)))
 
     def construct(self,indices,ready):
         pieces=(self.zero,)
@@ -78,7 +88,8 @@ class DeviceConsumer(nn.Cell):
         if self.advance:
             mask=ops.tensor_scatter_update(self.empty_mask,ops.reshape(indices+1,(-1,1)),self.ones)
             mask=F.depend(mask,consumed)
-            updates=()
+            counts=ops.tensor_scatter_add(self.update_counts,ops.reshape(indices,(-1,1)),self.count_ones)
+            updates=(F.assign(self.update_counts,counts),)
             for i in range(len(self.projections)):
                 new_reference=self.projections[i](self.sources[i],self.references[i],mask)
                 updates+=(F.assign(self.references[i],new_reference),)

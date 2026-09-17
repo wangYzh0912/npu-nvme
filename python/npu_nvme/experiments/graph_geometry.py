@@ -24,7 +24,7 @@ def geometry(schema, rank, fraction=1.0, block_elements=65536):
                      if f['rank'] == rank and f['block_index'] in selected]
         all_local = [f for f in logical_fragments(tensor, block_elements) if f['rank'] == rank]
         unit = reduce(math.gcd, (f['element_count'] for f in all_local), block_elements)
-        tile_indices, segment_ids = [], []
+        tile_indices, segment_ids, slot_ids = [], [], []
         for fragment in fragments:
             first = fragment['local_element_offset'] // unit
             count = fragment['element_count'] // unit
@@ -32,9 +32,11 @@ def geometry(schema, rank, fraction=1.0, block_elements=65536):
                 raise ValueError('unaligned tile')
             tile_indices.extend(range(first, first + count))
             segment_ids.extend([selected[fragment['block_index']]] * count)
+            first_slot = (fragment['global_element_offset'] % block_elements) // unit
+            slot_ids.extend(range(first_slot, first_slot + count))
         rows.append(dict(name=tensor['name'], parameter_index=parameter_index,
                          local_shape=tensor['local_shape'], unit=unit,
-                         tile_indices=tile_indices, segment_ids=segment_ids,
+                         tile_indices=tile_indices, segment_ids=segment_ids, slot_ids=slot_ids,
                          global_blocks=chosen, score_offset=base,
                          block_count=len(chosen), fragment_count=len(fragments),
                          elements=len(tile_indices) * unit,
@@ -50,5 +52,5 @@ def summarize(rows):
                 local_input_bytes=8 * sum(r['elements'] for r in rows),
                 local_reference_bytes=4 * sum(r['all_local_elements'] for r in rows),
                 tp_fragments=sum(r['fragment_count'] for r in rows),
-                parameters=[{k: v for k, v in r.items() if k not in ('tile_indices', 'segment_ids', 'global_blocks')}
+                parameters=[{k: v for k, v in r.items() if k not in ('tile_indices', 'segment_ids', 'slot_ids', 'global_blocks')}
                             for r in rows])

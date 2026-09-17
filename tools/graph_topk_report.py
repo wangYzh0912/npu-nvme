@@ -48,7 +48,7 @@ def build(campaign, output):
             row['loss_matches_G0']=all(abs(a-b)<=1e-6+1e-6*abs(b) for a,b in zip(row['numerical_loss'],base[0]['numerical_loss']))
             row['extra_peak_hbm_bytes']=row['peak_hbm_bytes']-max(r['peak_hbm_bytes'] for r in base)
         controls=[r for r in formal if r['role']==row['role'] and r['level']==1 and not r['compute_iterations'] and r['layout']==row['layout']]
-        if controls:row['increment_over_G1']=row['seconds']/statistics.median(r['seconds'] for r in controls)-1
+        if controls and row['level'] > 1:row['increment_over_G1']=row['seconds']/statistics.median(r['seconds'] for r in controls)-1
     output.mkdir(parents=True,exist_ok=True)
     (output/'measurements.json').write_text(json.dumps(dict(runs=runs),indent=2)+'\n')
     text=['# 图内 Top-K 实验进度','',

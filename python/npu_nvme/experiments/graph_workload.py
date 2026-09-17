@@ -172,6 +172,9 @@ def run(options):
                     ms.runtime.synchronize()
                     barrier()
                     if 'chain' in holder:
+                        if options['level'] == 8:
+                            # Formal reference history begins from the same stable post-warmup state.
+                            holder['chain'].reset_reference()
                         report['version_begin'] = int(holder['chain'].version.asnumpy())
                     if options.get('profile'):
                         from mindspore.profiler import ProfilerLevel, AicoreMetrics
@@ -229,8 +232,11 @@ def run(options):
                     raise ValueError('Top-K sorted=True output is not descending: ' + repr(report['topk_diagnostic']))
                 if values.min() < threshold - 1e-5:
                     raise ValueError('Top-K selected set is below CPU threshold: ' + repr(report['topk_diagnostic']))
-            from npu_nvme.experiments.graph_validation import check_scores
+            from npu_nvme.experiments.graph_validation import check_scores, check_consumer
             report['score_oracle'] = check_scores(ms, chain, options['level'])
+            if options['level'] >= 7:
+                report['consumer_oracle'] = check_consumer(ms, chain, options['level'])
+                report['consumer_budget'] = chain.consumer.budget
             report['output_check'] = dict(status='indices_and_values_checked', score_count=len(scores),
                 selected_count=len(indices), score_min=float(scores.min()), score_max=float(scores.max()),
                 sampled_indices=indices[:16].tolist(), sampled_values=values[:16].tolist(),

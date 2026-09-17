@@ -18,8 +18,12 @@ def check_scores(ms, chain, level):
     # Local-only stages also sample rank-owned fragments so zero-filled shards cannot pass.
     if level >= 5:
         indices = [0, len(actual) // 2, len(actual) - 1]
-        if level >= 6:
+        if level >= 6 and level < 8:
             indices += [int(chain.indices.asnumpy()[0]), int(chain.indices.asnumpy()[-1])]
+        if level >= 8:
+            selected = set(map(int, chain.indices.asnumpy()))
+            indices = [i for i in np.linspace(0, len(actual) - 1, 32, dtype=np.int64)
+                       if int(i) not in selected][:5]
         indices = sorted(set(indices))
     else:
         owned_indices = [r['score_offset'] + r['segment_ids'][0]
@@ -54,3 +58,52 @@ def check_scores(ms, chain, level):
     return dict(status='pass', indices=indices, expected=expected.tolist(), actual=observed.tolist(),
                 max_absolute_error=float(np.max(np.abs(observed - expected))),
                 oracle='CPU FP64 summation of real TP fragments; independent of device segment reduction')
+
+
+def check_consumer(ms, chain, level):
+    """Validate sampled packed TP partials and the final G8 reference update."""
+    positions = sorted(set([0, chain.k // 2, chain.k - 1]))
+    from npu_nvme.experiments.device_score import local_graph
+    with local_graph(ms):
+        output = ms.ops.gather(chain.consumer.output,
+                               ms.Tensor(np.asarray(positions, np.int32)), 0).asnumpy()
+    selected = chain.indices.asnumpy()
+    checked_tiles = 0
+    for output_row, position in zip(output, positions):
+        score_index = int(selected[position])
+        parameter, row = next((i, r) for i, r in enumerate(chain.rows)
+                              if r['score_offset'] <= score_index < r['score_offset'] + r['block_count'])
+        segment = score_index - row['score_offset']
+        pairs = [(tile, slot) for tile, sid, slot in
+                 zip(row['tile_indices'], row['segment_ids'], row['slot_ids']) if sid == segment]
+        expected = np.zeros(65536, np.float32)
+        if pairs:
+            tiles = ms.Tensor(np.asarray([p[0] for p in pairs], np.int32))
+            with local_graph(ms):
+                values = ms.ops.gather(ms.ops.reshape(chain.sources[parameter], (-1, row['unit'])),
+                                       tiles, 0).asnumpy()
+            for value, (_, slot) in zip(values, pairs):
+                expected[slot * row['unit']:(slot + 1) * row['unit']] = value
+            checked_tiles += len(pairs)
+        np.testing.assert_array_equal(output_row, expected)
+    reference_tiles = 0
+    if level == 8:
+        for score_index in map(int, selected[positions]):
+            parameter, row = next((i, r) for i, r in enumerate(chain.rows)
+                                  if r['score_offset'] <= score_index < r['score_offset'] + r['block_count'])
+            segment = score_index - row['score_offset']
+            tiles = [tile for tile, sid in zip(row['tile_indices'], row['segment_ids']) if sid == segment]
+            if not tiles:
+                continue
+            tile_tensor = ms.Tensor(np.asarray(tiles, np.int32))
+            with local_graph(ms):
+                weight = ms.ops.gather(ms.ops.reshape(chain.sources[parameter], (-1, row['unit'])),
+                                       tile_tensor, 0).asnumpy()
+                reference = ms.ops.gather(ms.ops.reshape(chain.references[parameter], (-1, row['unit'])),
+                                          tile_tensor, 0).asnumpy()
+            np.testing.assert_array_equal(reference, weight)
+            reference_tiles += len(tiles)
+    return dict(status='pass', sampled_output_positions=positions,
+                packed_local_tiles_checked=checked_tiles,
+                selected_reference_tiles_checked=reference_tiles,
+                output_semantics='rank-local zero-padded partial; sum across TP reconstructs global selected blocks')
