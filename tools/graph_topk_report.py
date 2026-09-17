@@ -20,11 +20,19 @@ def build(campaign, output):
                    warmup_steps=cfg['warmup_steps'], steps=cfg['formal_steps'], seconds=d['completion_seconds'], training_seconds=d['training_seconds'],
                    drain_seconds=max((r['all_done_ns']-r['training_end_ns'])/1e9 for r in ranks),
                    peak_hbm_bytes=max(r['memory_peak_bytes'] for r in ranks),
+                   post_restore_warmup_seconds=[(x['end_ns']-x['begin_ns'])/1e9 for x in ranks[0]['warmup'][-cfg['warmup_steps']:]],
                    numerical_loss=[r['loss'] for r in ranks[0]['losses']],
                    maximum_first_step_seconds=max((r['losses'][0]['end_ns']-r['losses'][0]['begin_ns'])/1e9 for r in ranks),
                    auxiliary_seconds=statistics.median([v/1e9 for r in ranks for v in r.get('standalone_auxiliary_ns',[])]) if cfg['level'] else None,
                    score_oracle=all(r.get('score_oracle',{}).get('status')=='pass' for r in ranks) if cfg['level'] else None,
                    actual_parallel_verified=False)
+        memory = run / 'board-memory.jsonl'
+        if memory.exists():
+            begin=min(r['begin_ns'] for r in ranks);end=max(r['all_done_ns'] for r in ranks)
+            samples=[json.loads(line) for line in memory.read_text().splitlines()]
+            points=[x for x in samples if begin<=x.get('monotonic_ns',0)<=end]
+            row['board_memory_peak_mib']={str(rank):max((v['used_mib'] for sample in points for v in sample.get('devices',[]) if v['device']==rank), default=None) for rank in range(4)}
+            row['board_sampling_limits']='One-second sampling may miss short peaks; includes allocations outside framework allocator.'
         profile = run / 'device-overlap.json'
         if profile.exists():
             p=json.loads(profile.read_text());row['overlap_us']=[r['actual_task_overlap_us'] for r in p['ranks']]
