@@ -29,6 +29,8 @@ def intersection(left, right):
 
 def analyse(run):
     reports = []
+    configuration = json.loads((run / 'run-config.json').read_text())
+    serial = configuration['layout'] == 'serial'
     for rank in range(4):
         profile = run / f'rank_{rank}/profiler'
         with next(profile.rglob('kernel_details.csv')).open() as f:
@@ -52,14 +54,19 @@ def analyse(run):
             updates = [t for t in selected if t['phase'] == 'optimizer' and 'Assign' in t['name']]
             ai = [(t['start'], t['end']) for t in aux]
             ti = [(t['start'], t['end']) for t in train]
-            deadline = min((t['start'] for t in updates), default=None)
+            next_updates = [t for t in tasks if t['start'] >= b and t['phase']=='optimizer' and 'Assign' in t['name']]
+            deadline = min((t['start'] for t in (next_updates if serial else updates)), default=None)
+            source_updates = updates if serial else [t for t in tasks if t['end'] <= a and t['phase']=='optimizer' and 'Assign' in t['name']]
+            ready = max((t['end'] for t in source_updates), default=None)
+            first = min((t['start'] for t in aux), default=None)
             last = max((t['end'] for t in aux), default=None)
             steps.append(dict(step=index, interval_us=b-a, auxiliary_tasks=len(aux),
                 auxiliary_busy_union_us=duration(ai), training_fb_busy_union_us=duration(ti),
                 auxiliary_training_intersection_us=intersection(ai, ti),
                 auxiliary_envelope_us=max(t['end'] for t in aux)-min(t['start'] for t in aux) if aux else 0,
                 auxiliary_streams=sorted(set(t['stream'] for t in aux)), training_streams=sorted(set(t['stream'] for t in train)),
-                last_auxiliary_end_us=last, earliest_optimizer_assign_us=deadline,
+                source_ready_us=ready, first_auxiliary_start_us=first, starts_after_source_update=(first >= ready) if first is not None and ready is not None else None,
+                last_auxiliary_end_us=last, earliest_next_writing_optimizer_assign_us=deadline,
                 finished_before_all_optimizer_assigns=(last <= deadline) if last is not None and deadline is not None else None))
         aux_all = [t for t in tasks if t['phase'] == 'auxiliary']
         if not aux_all:
@@ -82,6 +89,8 @@ def main():
     args = parser.parse_args(); report = analyse(args.run)
     output = args.run / 'device-overlap.json'
     output.write_text(json.dumps(report, indent=2) + '\n')
+    summary=dict(report, ranks=[{k:v for k,v in r.items() if k!='tasks'} for r in report['ranks']])
+    (args.run / 'device-overlap-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
     print(output)
 
 if __name__ == '__main__': main()
