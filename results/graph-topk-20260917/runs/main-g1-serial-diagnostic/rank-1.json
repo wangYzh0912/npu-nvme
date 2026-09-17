@@ -1,0 +1,72 @@
+{
+  "status": "compiling",
+  "options": {
+    "schema_version": 1,
+    "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
+    "hardware_lock": "/models/npu_nvme_exp/user7-stack/hardware-campaign.lock",
+    "models": {
+      "main": "/models/Qwen3-8B",
+      "auxiliary": "/models/Qwen3-4B"
+    },
+    "initial_root": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
+    "initial_identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4",
+    "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
+    "seq_length": 128,
+    "compile_steps": 3,
+    "warmup_steps": 12,
+    "formal_steps": 3,
+    "block_elements": 65536,
+    "ratios": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "scan_fractions": [
+      0.125,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "slowdown_budget": 0.03,
+    "reference_budgets": [
+      0.01,
+      0.05
+    ],
+    "default_repeats": 1,
+    "maximum_repeats": 2,
+    "topk_sorted": true,
+    "reference_rule": "initial_weight * 0.99 + (parameter_index % 17 + 1) * 0.00001",
+    "parallel_acceptance": "compiled dependency and device trace required; requested layout is not evidence of execution overlap",
+    "excluded": [
+      "checkpoint_io",
+      "socket",
+      "json_coordination",
+      "payload_sha",
+      "media_readback",
+      "shadow_loss"
+    ],
+    "output": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g1-serial-diagnostic",
+    "level": 1,
+    "layout": "serial",
+    "scan_fraction": 1.0,
+    "ratio": 0.1,
+    "role": "main",
+    "profile": true,
+    "dump_graphs": true
+  },
+  "rank": 1,
+  "losses": [],
+  "warmup": [],
+  "actual_overlap": "unverified",
+  "parallel_label": "requested_dependency_layout_only",
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "parallel_mode": "semi_auto_parallel",
+  "geometry": {
+    "candidate_blocks": 0,
+    "local_elements": 0,
+    "local_input_bytes": 0,
+    "local_reference_bytes": 0,
+    "tp_fragments": 0,
+    "parameters": []
+  }
+}
