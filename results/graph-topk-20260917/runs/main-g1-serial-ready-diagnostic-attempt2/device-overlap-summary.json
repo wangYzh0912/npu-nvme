@@ -124704,6 +124704,480 @@
           ]
         ]
       },
+      "task_pmu_statistics": {
+        "AI_CORE": {
+          "task_count": 1623,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 12.0,
+              "median": 19.0,
+              "maximum": 20.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.176,
+              "median": 0.358,
+              "maximum": 0.795
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "cube_utilization(%)": {
+              "minimum": 56.133,
+              "median": 84.413,
+              "maximum": 97.105
+            }
+          }
+        },
+        "AI_CPU": {
+          "task_count": 3,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "AI_VECTOR_CORE": {
+          "task_count": 32142,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 40.0,
+              "maximum": 40.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.0,
+              "median": 0.04,
+              "maximum": 0.675
+            },
+            "cube_utilization(%)": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "COMMUNICATION": {
+          "task_count": 1650,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "MIX_AIC": {
+          "task_count": 330,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 4.0,
+              "maximum": 20.0
+            },
+            "Mix Block Dim": {
+              "minimum": 2.0,
+              "median": 8.0,
+              "maximum": 40.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.034,
+              "median": 0.04,
+              "maximum": 0.524
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.011,
+              "median": 0.087,
+              "maximum": 0.276
+            },
+            "cube_utilization(%)": {
+              "minimum": 4.974,
+              "median": 19.497500000000002,
+              "maximum": 96.76
+            }
+          }
+        },
+        "MIX_AIV": {
+          "task_count": 1338,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 32.0,
+              "maximum": 40.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 80.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.009,
+              "median": 0.066,
+              "maximum": 0.451
+            },
+            "cube_utilization(%)": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        }
+      },
+      "top_task_types_by_phase": {
+        "forward": [
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 132702.0,
+            "count": 3732
+          },
+          {
+            "type": "Add",
+            "sum_task_duration_us": 75054.25,
+            "count": 2517
+          },
+          {
+            "type": "hcom_allGather_",
+            "sum_task_duration_us": 57914.75,
+            "count": 435
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 37767.0,
+            "count": 2415
+          },
+          {
+            "type": "AllFinite",
+            "sum_task_duration_us": 24503.25,
+            "count": 873
+          },
+          {
+            "type": "Transpose",
+            "sum_task_duration_us": 18024.0,
+            "count": 1086
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 16255.0,
+            "count": 885
+          },
+          {
+            "type": "RmsNorm",
+            "sum_task_duration_us": 10554.5,
+            "count": 867
+          },
+          {
+            "type": "FlashAttentionScore",
+            "sum_task_duration_us": 7489.75,
+            "count": 216
+          },
+          {
+            "type": "SplitV",
+            "sum_task_duration_us": 3065.75,
+            "count": 432
+          },
+          {
+            "type": "Neg",
+            "sum_task_duration_us": 2393.75,
+            "count": 435
+          },
+          {
+            "type": "ConcatD",
+            "sum_task_duration_us": 1914.0,
+            "count": 435
+          },
+          {
+            "type": "Swish",
+            "sum_task_duration_us": 1645.25,
+            "count": 216
+          },
+          {
+            "type": "hcom_allReduce_",
+            "sum_task_duration_us": 1323.75,
+            "count": 15
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 1151.0,
+            "count": 3
+          },
+          {
+            "type": "Split",
+            "sum_task_duration_us": 1099.5,
+            "count": 432
+          },
+          {
+            "type": "Cos",
+            "sum_task_duration_us": 586.25,
+            "count": 111
+          },
+          {
+            "type": "Sin",
+            "sum_task_duration_us": 562.5,
+            "count": 111
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 494.25,
+            "count": 441
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 181.25,
+            "count": 15
+          }
+        ],
+        "backward": [
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 32802.25,
+            "count": 864
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 17098.75,
+            "count": 1311
+          },
+          {
+            "type": "hcom_allReduce_",
+            "sum_task_duration_us": 13722.5,
+            "count": 435
+          },
+          {
+            "type": "RmsNormGrad",
+            "sum_task_duration_us": 10961.5,
+            "count": 435
+          },
+          {
+            "type": "hcom_reduceScatter_",
+            "sum_task_duration_us": 10430.0,
+            "count": 219
+          },
+          {
+            "type": "hcom_allGather_",
+            "sum_task_duration_us": 9645.25,
+            "count": 219
+          },
+          {
+            "type": "FlashAttentionScoreGrad",
+            "sum_task_duration_us": 9032.5,
+            "count": 108
+          },
+          {
+            "type": "Transpose",
+            "sum_task_duration_us": 8857.75,
+            "count": 546
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 5941.5,
+            "count": 654
+          },
+          {
+            "type": "AddN",
+            "sum_task_duration_us": 3373.5,
+            "count": 432
+          },
+          {
+            "type": "MatMulV3",
+            "sum_task_duration_us": 2305.75,
+            "count": 6
+          },
+          {
+            "type": "ConcatD",
+            "sum_task_duration_us": 2110.25,
+            "count": 432
+          },
+          {
+            "type": "MemSet",
+            "sum_task_duration_us": 1234.75,
+            "count": 3
+          },
+          {
+            "type": "Neg",
+            "sum_task_duration_us": 1233.0,
+            "count": 216
+          },
+          {
+            "type": "SiluGrad",
+            "sum_task_duration_us": 1089.75,
+            "count": 108
+          },
+          {
+            "type": "Split",
+            "sum_task_duration_us": 562.25,
+            "count": 216
+          },
+          {
+            "type": "EmbeddingDenseGradV2",
+            "sum_task_duration_us": 91.75,
+            "count": 3
+          },
+          {
+            "type": "Sort",
+            "sum_task_duration_us": 10.25,
+            "count": 3
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 8.0,
+            "count": 6
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          }
+        ],
+        "optimizer": [
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 104375.0,
+            "count": 3492
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 78479.5,
+            "count": 1749
+          },
+          {
+            "type": "Addcmul",
+            "sum_task_duration_us": 70347.5,
+            "count": 873
+          },
+          {
+            "type": "Assign",
+            "sum_task_duration_us": 65056.5,
+            "count": 2619
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 51939.75,
+            "count": 879
+          },
+          {
+            "type": "Sqrt",
+            "sum_task_duration_us": 16800.25,
+            "count": 873
+          },
+          {
+            "type": "Pow",
+            "sum_task_duration_us": 26.25,
+            "count": 6
+          },
+          {
+            "type": "AssignAdd",
+            "sum_task_duration_us": 5.25,
+            "count": 3
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 4.25,
+            "count": 3
+          }
+        ],
+        "auxiliary": [
+          {
+            "type": "Assign",
+            "sum_task_duration_us": 40.5,
+            "count": 9
+          },
+          {
+            "type": "StridedSlice",
+            "sum_task_duration_us": 29.75,
+            "count": 3
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 25.25,
+            "count": 9
+          }
+        ],
+        "other": [
+          {
+            "type": "TensorMove",
+            "sum_task_duration_us": 157977.75,
+            "count": 3495
+          },
+          {
+            "type": "hcom_reduceScatter_",
+            "sum_task_duration_us": 96671.0,
+            "count": 327
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 24459.0,
+            "count": 756
+          },
+          {
+            "type": "GetNext",
+            "sum_task_duration_us": 571.75,
+            "count": 3
+          },
+          {
+            "type": "GatherV2",
+            "sum_task_duration_us": 32.25,
+            "count": 3
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 32.25,
+            "count": 3
+          },
+          {
+            "type": "Equal",
+            "sum_task_duration_us": 5.25,
+            "count": 3
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 4.75,
+            "count": 3
+          },
+          {
+            "type": "Minimum",
+            "sum_task_duration_us": 4.75,
+            "count": 3
+          },
+          {
+            "type": "Relu",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 3.75,
+            "count": 3
+          }
+        ]
+      },
       "actual_task_overlap_us": 0,
       "observed_overlap": "not_observed"
     },
@@ -249408,6 +249882,480 @@
             1789606916690062.5,
             1789606916690064.5
           ]
+        ]
+      },
+      "task_pmu_statistics": {
+        "AI_CORE": {
+          "task_count": 1623,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 12.0,
+              "median": 19.0,
+              "maximum": 20.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.176,
+              "median": 0.355,
+              "maximum": 0.794
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "cube_utilization(%)": {
+              "minimum": 56.539,
+              "median": 84.102,
+              "maximum": 98.111
+            }
+          }
+        },
+        "AI_CPU": {
+          "task_count": 3,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "AI_VECTOR_CORE": {
+          "task_count": 32142,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 40.0,
+              "maximum": 40.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.0,
+              "median": 0.042,
+              "maximum": 0.681
+            },
+            "cube_utilization(%)": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "COMMUNICATION": {
+          "task_count": 1650,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "MIX_AIC": {
+          "task_count": 330,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 4.0,
+              "maximum": 20.0
+            },
+            "Mix Block Dim": {
+              "minimum": 2.0,
+              "median": 8.0,
+              "maximum": 40.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.034,
+              "median": 0.04,
+              "maximum": 0.522
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.011,
+              "median": 0.087,
+              "maximum": 0.28
+            },
+            "cube_utilization(%)": {
+              "minimum": 4.976,
+              "median": 19.505000000000003,
+              "maximum": 96.661
+            }
+          }
+        },
+        "MIX_AIV": {
+          "task_count": 1338,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 32.0,
+              "maximum": 40.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 80.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.009,
+              "median": 0.067,
+              "maximum": 0.454
+            },
+            "cube_utilization(%)": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        }
+      },
+      "top_task_types_by_phase": {
+        "forward": [
+          {
+            "type": "hcom_allGather_",
+            "sum_task_duration_us": 368914.25,
+            "count": 435
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 132244.25,
+            "count": 3732
+          },
+          {
+            "type": "Add",
+            "sum_task_duration_us": 75466.5,
+            "count": 2517
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 37889.75,
+            "count": 2415
+          },
+          {
+            "type": "AllFinite",
+            "sum_task_duration_us": 24482.5,
+            "count": 873
+          },
+          {
+            "type": "Transpose",
+            "sum_task_duration_us": 18544.75,
+            "count": 1086
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 16502.25,
+            "count": 885
+          },
+          {
+            "type": "RmsNorm",
+            "sum_task_duration_us": 10116.25,
+            "count": 867
+          },
+          {
+            "type": "hcom_allReduce_",
+            "sum_task_duration_us": 8708.75,
+            "count": 15
+          },
+          {
+            "type": "FlashAttentionScore",
+            "sum_task_duration_us": 7459.5,
+            "count": 216
+          },
+          {
+            "type": "SplitV",
+            "sum_task_duration_us": 3322.25,
+            "count": 432
+          },
+          {
+            "type": "Neg",
+            "sum_task_duration_us": 2404.0,
+            "count": 435
+          },
+          {
+            "type": "ConcatD",
+            "sum_task_duration_us": 1908.5,
+            "count": 435
+          },
+          {
+            "type": "Swish",
+            "sum_task_duration_us": 1463.5,
+            "count": 216
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 1123.75,
+            "count": 3
+          },
+          {
+            "type": "Split",
+            "sum_task_duration_us": 1091.5,
+            "count": 432
+          },
+          {
+            "type": "Cos",
+            "sum_task_duration_us": 587.0,
+            "count": 111
+          },
+          {
+            "type": "Sin",
+            "sum_task_duration_us": 561.0,
+            "count": 111
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 491.5,
+            "count": 441
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 179.25,
+            "count": 15
+          }
+        ],
+        "backward": [
+          {
+            "type": "hcom_allReduce_",
+            "sum_task_duration_us": 484228.5,
+            "count": 435
+          },
+          {
+            "type": "hcom_allGather_",
+            "sum_task_duration_us": 289268.75,
+            "count": 219
+          },
+          {
+            "type": "hcom_reduceScatter_",
+            "sum_task_duration_us": 186741.0,
+            "count": 219
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 33025.25,
+            "count": 864
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 17275.0,
+            "count": 1311
+          },
+          {
+            "type": "RmsNormGrad",
+            "sum_task_duration_us": 10822.5,
+            "count": 435
+          },
+          {
+            "type": "Transpose",
+            "sum_task_duration_us": 9460.5,
+            "count": 546
+          },
+          {
+            "type": "FlashAttentionScoreGrad",
+            "sum_task_duration_us": 8951.0,
+            "count": 108
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 5808.5,
+            "count": 654
+          },
+          {
+            "type": "AddN",
+            "sum_task_duration_us": 3030.5,
+            "count": 432
+          },
+          {
+            "type": "MatMulV3",
+            "sum_task_duration_us": 2299.5,
+            "count": 6
+          },
+          {
+            "type": "ConcatD",
+            "sum_task_duration_us": 2101.5,
+            "count": 432
+          },
+          {
+            "type": "MemSet",
+            "sum_task_duration_us": 1228.25,
+            "count": 3
+          },
+          {
+            "type": "Neg",
+            "sum_task_duration_us": 1221.5,
+            "count": 216
+          },
+          {
+            "type": "SiluGrad",
+            "sum_task_duration_us": 1089.5,
+            "count": 108
+          },
+          {
+            "type": "Split",
+            "sum_task_duration_us": 554.75,
+            "count": 216
+          },
+          {
+            "type": "EmbeddingDenseGradV2",
+            "sum_task_duration_us": 298.75,
+            "count": 3
+          },
+          {
+            "type": "Sort",
+            "sum_task_duration_us": 10.75,
+            "count": 3
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 7.75,
+            "count": 6
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          }
+        ],
+        "optimizer": [
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 105608.0,
+            "count": 3492
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 78876.75,
+            "count": 1749
+          },
+          {
+            "type": "Addcmul",
+            "sum_task_duration_us": 69975.0,
+            "count": 873
+          },
+          {
+            "type": "Assign",
+            "sum_task_duration_us": 65182.0,
+            "count": 2619
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 52223.75,
+            "count": 879
+          },
+          {
+            "type": "Sqrt",
+            "sum_task_duration_us": 16949.25,
+            "count": 873
+          },
+          {
+            "type": "Pow",
+            "sum_task_duration_us": 26.0,
+            "count": 6
+          },
+          {
+            "type": "AssignAdd",
+            "sum_task_duration_us": 5.25,
+            "count": 3
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          }
+        ],
+        "auxiliary": [
+          {
+            "type": "Assign",
+            "sum_task_duration_us": 40.25,
+            "count": 9
+          },
+          {
+            "type": "StridedSlice",
+            "sum_task_duration_us": 28.0,
+            "count": 3
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 25.75,
+            "count": 9
+          }
+        ],
+        "other": [
+          {
+            "type": "hcom_reduceScatter_",
+            "sum_task_duration_us": 772724.0,
+            "count": 327
+          },
+          {
+            "type": "TensorMove",
+            "sum_task_duration_us": 157942.25,
+            "count": 3495
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 24256.75,
+            "count": 756
+          },
+          {
+            "type": "GetNext",
+            "sum_task_duration_us": 579.5,
+            "count": 3
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 31.0,
+            "count": 3
+          },
+          {
+            "type": "GatherV2",
+            "sum_task_duration_us": 30.5,
+            "count": 3
+          },
+          {
+            "type": "Equal",
+            "sum_task_duration_us": 5.25,
+            "count": 3
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 5.0,
+            "count": 3
+          },
+          {
+            "type": "Relu",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          },
+          {
+            "type": "Minimum",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 3.75,
+            "count": 3
+          }
         ]
       },
       "actual_task_overlap_us": 0,
@@ -374116,6 +375064,480 @@
           ]
         ]
       },
+      "task_pmu_statistics": {
+        "AI_CORE": {
+          "task_count": 1623,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 12.0,
+              "median": 19.0,
+              "maximum": 20.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.174,
+              "median": 0.357,
+              "maximum": 0.796
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "cube_utilization(%)": {
+              "minimum": 56.909,
+              "median": 83.947,
+              "maximum": 97.789
+            }
+          }
+        },
+        "AI_CPU": {
+          "task_count": 3,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "AI_VECTOR_CORE": {
+          "task_count": 32142,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 40.0,
+              "maximum": 40.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.0,
+              "median": 0.042,
+              "maximum": 0.677
+            },
+            "cube_utilization(%)": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "COMMUNICATION": {
+          "task_count": 1650,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "MIX_AIC": {
+          "task_count": 330,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 4.0,
+              "maximum": 20.0
+            },
+            "Mix Block Dim": {
+              "minimum": 2.0,
+              "median": 8.0,
+              "maximum": 40.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.034,
+              "median": 0.041,
+              "maximum": 0.514
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.011,
+              "median": 0.088,
+              "maximum": 0.276
+            },
+            "cube_utilization(%)": {
+              "minimum": 4.975,
+              "median": 19.4745,
+              "maximum": 97.672
+            }
+          }
+        },
+        "MIX_AIV": {
+          "task_count": 1338,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 32.0,
+              "maximum": 40.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 80.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.009,
+              "median": 0.068,
+              "maximum": 0.451
+            },
+            "cube_utilization(%)": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        }
+      },
+      "top_task_types_by_phase": {
+        "forward": [
+          {
+            "type": "hcom_allGather_",
+            "sum_task_duration_us": 367359.5,
+            "count": 435
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 132153.25,
+            "count": 3732
+          },
+          {
+            "type": "Add",
+            "sum_task_duration_us": 75005.75,
+            "count": 2517
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 38854.25,
+            "count": 2415
+          },
+          {
+            "type": "AllFinite",
+            "sum_task_duration_us": 24449.25,
+            "count": 873
+          },
+          {
+            "type": "Transpose",
+            "sum_task_duration_us": 17900.25,
+            "count": 1086
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 16480.75,
+            "count": 885
+          },
+          {
+            "type": "RmsNorm",
+            "sum_task_duration_us": 10114.0,
+            "count": 867
+          },
+          {
+            "type": "hcom_allReduce_",
+            "sum_task_duration_us": 8694.0,
+            "count": 15
+          },
+          {
+            "type": "FlashAttentionScore",
+            "sum_task_duration_us": 7416.5,
+            "count": 216
+          },
+          {
+            "type": "SplitV",
+            "sum_task_duration_us": 3141.0,
+            "count": 432
+          },
+          {
+            "type": "Neg",
+            "sum_task_duration_us": 2099.75,
+            "count": 435
+          },
+          {
+            "type": "ConcatD",
+            "sum_task_duration_us": 1923.0,
+            "count": 435
+          },
+          {
+            "type": "Swish",
+            "sum_task_duration_us": 1470.25,
+            "count": 216
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 1135.25,
+            "count": 3
+          },
+          {
+            "type": "Split",
+            "sum_task_duration_us": 1081.75,
+            "count": 432
+          },
+          {
+            "type": "Cos",
+            "sum_task_duration_us": 562.5,
+            "count": 111
+          },
+          {
+            "type": "Sin",
+            "sum_task_duration_us": 543.0,
+            "count": 111
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 490.25,
+            "count": 441
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 181.25,
+            "count": 15
+          }
+        ],
+        "backward": [
+          {
+            "type": "hcom_allReduce_",
+            "sum_task_duration_us": 484103.0,
+            "count": 435
+          },
+          {
+            "type": "hcom_allGather_",
+            "sum_task_duration_us": 288263.75,
+            "count": 219
+          },
+          {
+            "type": "hcom_reduceScatter_",
+            "sum_task_duration_us": 187076.25,
+            "count": 219
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 32979.25,
+            "count": 864
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 18197.5,
+            "count": 1311
+          },
+          {
+            "type": "RmsNormGrad",
+            "sum_task_duration_us": 10962.25,
+            "count": 435
+          },
+          {
+            "type": "Transpose",
+            "sum_task_duration_us": 9189.75,
+            "count": 546
+          },
+          {
+            "type": "FlashAttentionScoreGrad",
+            "sum_task_duration_us": 9012.25,
+            "count": 108
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 5773.0,
+            "count": 654
+          },
+          {
+            "type": "AddN",
+            "sum_task_duration_us": 3016.25,
+            "count": 432
+          },
+          {
+            "type": "MatMulV3",
+            "sum_task_duration_us": 2300.0,
+            "count": 6
+          },
+          {
+            "type": "ConcatD",
+            "sum_task_duration_us": 2121.5,
+            "count": 432
+          },
+          {
+            "type": "MemSet",
+            "sum_task_duration_us": 1233.25,
+            "count": 3
+          },
+          {
+            "type": "SiluGrad",
+            "sum_task_duration_us": 1084.5,
+            "count": 108
+          },
+          {
+            "type": "Neg",
+            "sum_task_duration_us": 1078.25,
+            "count": 216
+          },
+          {
+            "type": "Split",
+            "sum_task_duration_us": 555.5,
+            "count": 216
+          },
+          {
+            "type": "EmbeddingDenseGradV2",
+            "sum_task_duration_us": 323.5,
+            "count": 3
+          },
+          {
+            "type": "Sort",
+            "sum_task_duration_us": 11.0,
+            "count": 3
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 7.75,
+            "count": 6
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 4.75,
+            "count": 3
+          }
+        ],
+        "optimizer": [
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 105111.75,
+            "count": 3492
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 78761.0,
+            "count": 1749
+          },
+          {
+            "type": "Addcmul",
+            "sum_task_duration_us": 74843.0,
+            "count": 873
+          },
+          {
+            "type": "Assign",
+            "sum_task_duration_us": 64715.5,
+            "count": 2619
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 51949.5,
+            "count": 879
+          },
+          {
+            "type": "Sqrt",
+            "sum_task_duration_us": 16599.0,
+            "count": 873
+          },
+          {
+            "type": "Pow",
+            "sum_task_duration_us": 25.75,
+            "count": 6
+          },
+          {
+            "type": "AssignAdd",
+            "sum_task_duration_us": 5.25,
+            "count": 3
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 4.25,
+            "count": 3
+          }
+        ],
+        "auxiliary": [
+          {
+            "type": "Assign",
+            "sum_task_duration_us": 41.0,
+            "count": 9
+          },
+          {
+            "type": "StridedSlice",
+            "sum_task_duration_us": 28.0,
+            "count": 3
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 25.25,
+            "count": 9
+          }
+        ],
+        "other": [
+          {
+            "type": "hcom_reduceScatter_",
+            "sum_task_duration_us": 820367.25,
+            "count": 327
+          },
+          {
+            "type": "TensorMove",
+            "sum_task_duration_us": 158278.0,
+            "count": 3495
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 24161.75,
+            "count": 756
+          },
+          {
+            "type": "GetNext",
+            "sum_task_duration_us": 541.25,
+            "count": 3
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 29.5,
+            "count": 3
+          },
+          {
+            "type": "GatherV2",
+            "sum_task_duration_us": 26.5,
+            "count": 3
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 5.25,
+            "count": 3
+          },
+          {
+            "type": "Equal",
+            "sum_task_duration_us": 5.0,
+            "count": 3
+          },
+          {
+            "type": "Relu",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          },
+          {
+            "type": "Minimum",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 3.75,
+            "count": 3
+          }
+        ]
+      },
       "actual_task_overlap_us": 0,
       "observed_overlap": "not_observed"
     },
@@ -498822,6 +500244,480 @@
           ]
         ]
       },
+      "task_pmu_statistics": {
+        "AI_CORE": {
+          "task_count": 1623,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 12.0,
+              "median": 19.0,
+              "maximum": 20.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.175,
+              "median": 0.361,
+              "maximum": 0.798
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "cube_utilization(%)": {
+              "minimum": 56.608,
+              "median": 83.615,
+              "maximum": 98.224
+            }
+          }
+        },
+        "AI_CPU": {
+          "task_count": 3,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "AI_VECTOR_CORE": {
+          "task_count": 32142,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 40.0,
+              "maximum": 40.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.0,
+              "median": 0.042,
+              "maximum": 0.68
+            },
+            "cube_utilization(%)": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "COMMUNICATION": {
+          "task_count": 1650,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        },
+        "MIX_AIC": {
+          "task_count": 330,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 4.0,
+              "maximum": 20.0
+            },
+            "Mix Block Dim": {
+              "minimum": 2.0,
+              "median": 8.0,
+              "maximum": 40.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.034,
+              "median": 0.04,
+              "maximum": 0.519
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.011,
+              "median": 0.087,
+              "maximum": 0.28
+            },
+            "cube_utilization(%)": {
+              "minimum": 4.973,
+              "median": 19.500999999999998,
+              "maximum": 97.366
+            }
+          }
+        },
+        "MIX_AIV": {
+          "task_count": 1338,
+          "metrics": {
+            "Block Dim": {
+              "minimum": 1.0,
+              "median": 32.0,
+              "maximum": 40.0
+            },
+            "Mix Block Dim": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 80.0
+            },
+            "aic_mac_ratio": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            },
+            "aiv_vec_ratio": {
+              "minimum": 0.009,
+              "median": 0.0685,
+              "maximum": 0.452
+            },
+            "cube_utilization(%)": {
+              "minimum": 0.0,
+              "median": 0.0,
+              "maximum": 0.0
+            }
+          }
+        }
+      },
+      "top_task_types_by_phase": {
+        "forward": [
+          {
+            "type": "hcom_allGather_",
+            "sum_task_duration_us": 317447.0,
+            "count": 435
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 132145.25,
+            "count": 3732
+          },
+          {
+            "type": "Add",
+            "sum_task_duration_us": 74957.5,
+            "count": 2517
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 39729.0,
+            "count": 2415
+          },
+          {
+            "type": "AllFinite",
+            "sum_task_duration_us": 24380.25,
+            "count": 873
+          },
+          {
+            "type": "Transpose",
+            "sum_task_duration_us": 17561.0,
+            "count": 1086
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 16290.25,
+            "count": 885
+          },
+          {
+            "type": "RmsNorm",
+            "sum_task_duration_us": 10083.5,
+            "count": 867
+          },
+          {
+            "type": "hcom_allReduce_",
+            "sum_task_duration_us": 7686.75,
+            "count": 15
+          },
+          {
+            "type": "FlashAttentionScore",
+            "sum_task_duration_us": 7465.5,
+            "count": 216
+          },
+          {
+            "type": "SplitV",
+            "sum_task_duration_us": 3292.75,
+            "count": 432
+          },
+          {
+            "type": "Neg",
+            "sum_task_duration_us": 2375.5,
+            "count": 435
+          },
+          {
+            "type": "ConcatD",
+            "sum_task_duration_us": 1901.25,
+            "count": 435
+          },
+          {
+            "type": "Swish",
+            "sum_task_duration_us": 1471.75,
+            "count": 216
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 1125.5,
+            "count": 3
+          },
+          {
+            "type": "Split",
+            "sum_task_duration_us": 1089.75,
+            "count": 432
+          },
+          {
+            "type": "Cos",
+            "sum_task_duration_us": 602.5,
+            "count": 111
+          },
+          {
+            "type": "Sin",
+            "sum_task_duration_us": 583.25,
+            "count": 111
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 490.0,
+            "count": 441
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 179.75,
+            "count": 15
+          }
+        ],
+        "backward": [
+          {
+            "type": "hcom_allReduce_",
+            "sum_task_duration_us": 479164.5,
+            "count": 435
+          },
+          {
+            "type": "hcom_allGather_",
+            "sum_task_duration_us": 285598.75,
+            "count": 219
+          },
+          {
+            "type": "hcom_reduceScatter_",
+            "sum_task_duration_us": 186251.5,
+            "count": 219
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 32927.25,
+            "count": 864
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 18970.0,
+            "count": 1311
+          },
+          {
+            "type": "RmsNormGrad",
+            "sum_task_duration_us": 10782.0,
+            "count": 435
+          },
+          {
+            "type": "FlashAttentionScoreGrad",
+            "sum_task_duration_us": 8961.0,
+            "count": 108
+          },
+          {
+            "type": "Transpose",
+            "sum_task_duration_us": 8819.25,
+            "count": 546
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 5789.75,
+            "count": 654
+          },
+          {
+            "type": "AddN",
+            "sum_task_duration_us": 3026.75,
+            "count": 432
+          },
+          {
+            "type": "MatMulV3",
+            "sum_task_duration_us": 2284.5,
+            "count": 6
+          },
+          {
+            "type": "ConcatD",
+            "sum_task_duration_us": 2087.0,
+            "count": 432
+          },
+          {
+            "type": "MemSet",
+            "sum_task_duration_us": 1232.25,
+            "count": 3
+          },
+          {
+            "type": "Neg",
+            "sum_task_duration_us": 1221.75,
+            "count": 216
+          },
+          {
+            "type": "SiluGrad",
+            "sum_task_duration_us": 1078.75,
+            "count": 108
+          },
+          {
+            "type": "Split",
+            "sum_task_duration_us": 553.0,
+            "count": 216
+          },
+          {
+            "type": "EmbeddingDenseGradV2",
+            "sum_task_duration_us": 348.25,
+            "count": 3
+          },
+          {
+            "type": "Sort",
+            "sum_task_duration_us": 10.0,
+            "count": 3
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 8.0,
+            "count": 6
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 4.75,
+            "count": 3
+          }
+        ],
+        "optimizer": [
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 105168.5,
+            "count": 3492
+          },
+          {
+            "type": "RealDiv",
+            "sum_task_duration_us": 78777.5,
+            "count": 1749
+          },
+          {
+            "type": "Addcmul",
+            "sum_task_duration_us": 71602.75,
+            "count": 873
+          },
+          {
+            "type": "Assign",
+            "sum_task_duration_us": 64167.75,
+            "count": 2619
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 52203.25,
+            "count": 879
+          },
+          {
+            "type": "Sqrt",
+            "sum_task_duration_us": 16577.0,
+            "count": 873
+          },
+          {
+            "type": "Pow",
+            "sum_task_duration_us": 25.75,
+            "count": 6
+          },
+          {
+            "type": "AssignAdd",
+            "sum_task_duration_us": 4.75,
+            "count": 3
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          }
+        ],
+        "auxiliary": [
+          {
+            "type": "Assign",
+            "sum_task_duration_us": 44.0,
+            "count": 9
+          },
+          {
+            "type": "StridedSlice",
+            "sum_task_duration_us": 34.25,
+            "count": 3
+          },
+          {
+            "type": "ReduceSum",
+            "sum_task_duration_us": 26.0,
+            "count": 9
+          }
+        ],
+        "other": [
+          {
+            "type": "hcom_reduceScatter_",
+            "sum_task_duration_us": 609909.0,
+            "count": 327
+          },
+          {
+            "type": "TensorMove",
+            "sum_task_duration_us": 157794.5,
+            "count": 3495
+          },
+          {
+            "type": "MatMulV2",
+            "sum_task_duration_us": 24155.25,
+            "count": 756
+          },
+          {
+            "type": "GetNext",
+            "sum_task_duration_us": 560.25,
+            "count": 3
+          },
+          {
+            "type": "GatherV2",
+            "sum_task_duration_us": 32.0,
+            "count": 3
+          },
+          {
+            "type": "Mul",
+            "sum_task_duration_us": 30.5,
+            "count": 3
+          },
+          {
+            "type": "Equal",
+            "sum_task_duration_us": 5.25,
+            "count": 3
+          },
+          {
+            "type": "Sub",
+            "sum_task_duration_us": 5.0,
+            "count": 3
+          },
+          {
+            "type": "Relu",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          },
+          {
+            "type": "Minimum",
+            "sum_task_duration_us": 4.5,
+            "count": 3
+          },
+          {
+            "type": "Cast",
+            "sum_task_duration_us": 3.75,
+            "count": 3
+          }
+        ]
+      },
       "actual_task_overlap_us": 0,
       "observed_overlap": "not_observed"
     }
@@ -498829,6 +500725,7 @@
   "clock": "same kernel_details device timestamp domain",
   "limits": [
     "Task envelopes are not active-core counts or simultaneous instruction measurements.",
+    "Block Dim is launch geometry, not time-resolved active-core occupancy. PMU ratios are per-task distributions, not instruction-interval overlap.",
     "AdamW state writes use Assign-op indices below 3 times model parameter count; later auxiliary Assign nodes may inherit optimizer scope. Validate this mapping against each compiled graph.",
     "Only complete GetNext-to-GetNext intervals are used; final auxiliary drain is excluded from overlap statistics.",
     "No window-specific HBM bandwidth claim. Profiling is excluded from performance comparison."

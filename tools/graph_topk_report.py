@@ -87,6 +87,23 @@ def build(campaign, output):
              '', 'G0 区间是相对两次独立基线的敏感性范围，不是统计置信区间。独立辅助时间在正式区间之外测量，不能直接等同训练关键路径增量。',
              '', '主预算 3%，参考 1%/5%。在稳定基线、输出校验及依赖验证完成前，不宣布预算通过。',
              '', '暂未获得的截止点等待、训练计算段变化、设备实际重叠和窗口 HBM 指标保持缺失，不用 Host 提交耗时代替。']
+    text += ['', '## 扫描负载与预算', '',
+             '|模型|q|候选块|全局 W/R 输入 GB|TP 片段合计|3% 判定|',
+             '|---|---:|---:|---:|---:|---|']
+    for r in sorted(formal,key=lambda r:(r['role'],r['scan_fraction'])):
+        if r['level']!=6 or r['ratio']!=.1:continue
+        work=r['working_set']
+        assessment=r.get('budget_assessment',{}).get('0.03','undetermined')
+        label={'above_budget_for_both_baselines':'对两次基线均超预算',
+               'undetermined_baseline_variation':'未定：基线不足或波动',
+               'measured_feasible_point':'已测可行点','above_budget':'超预算'}.get(assessment,assessment)
+        text.append(f"|{r['role']}|{r['scan_fraction']}|{work['candidate_blocks']}|{work['global_W_R_input_bytes']/1e9:.6f}|{sum(work['TP_fragments_per_rank'])}|{label}|")
+    text += ['', '表中 q<1 是跨层、跨参数类型的真实逻辑块子集；仍常驻完整参考。K 比例固定为候选块数的 10%，与 q 独立。曲线不预设单调，不外推未测负载。',
+             '', '## 结论边界', '',
+             '两次目标并行图未通过 MindSpore StepParallel 编译；因此本表仅报告串行图附加成本，不能回答有多少成本可以被下一步前向/反向隐藏。',
+             '', 'G7/G8 按条件入口决定：当前主模型最小 q=1/8 对两次基线均超出 5%，没有通过或接近预算的配置，未进入其硬件验证。设备端实现及 CPU 几何测试保留，不作为持久化或持续运行证据。',
+             '', '仅分配参考控制因未能证实正式区间 HBM 驻留而排除；完整参考的有效内存证据来自 G2–G6 实测额外峰值约 7.63 GiB/卡。峰值差不能证明没有差分、平方等中间张量：串行辅助临时空间可低于训练峰值而被掩盖。',
+             '', 'NVMe、D2H、socket、payload SHA、介质回读和影子 loss 不在本轮主计时中。旧完整保存路径仅保留为独立工程证据。']
     (output/'REPORT.md').write_text('\n'.join(text)+'\n')
 
 if __name__=='__main__':
