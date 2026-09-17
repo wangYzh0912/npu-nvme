@@ -114,7 +114,7 @@ class DetectionChain(nn.Cell):
             raise ValueError('pre-partition weights do not match global schema')
         self.sources = ParameterTuple(selected)
         self.references = ParameterTuple([
-            Parameter(initializer('zeros', row['local_shape'], ms.float32), name=f'graph_reference_{i}', requires_grad=False)
+            Parameter(initializer('zeros', row['local_shape'], ms.float32), name=f'graph_reference_{i}', requires_grad=False, layerwise_parallel=True)
             for i, row in enumerate(self.rows)])
         self.scanners = nn.CellList([ParameterScan(r, level, fraction == 1.0, tensors[r['name']]) for r in self.rows], auto_prefix=False)
         self.count = sum(r['block_count'] for r in self.rows) if self.rows else 1
@@ -156,7 +156,9 @@ class DetectionChain(nn.Cell):
         # from ParameterTuple. Recover by registered names, never positional zip.
         references = []
         for i in range(len(self.rows)):
-            reference = self._params[f'graph_reference_{i}']
+            reference = self._params.get(f'graph_reference_{i}', self.references[i] if i < len(self.references) else None)
+            if reference is None:
+                raise ValueError('missing registered physical reference '+str(i))
             reference.sliced = True  # already a physical rank-local buffer
             references.append(reference)
         self.references = ParameterTuple(references)
