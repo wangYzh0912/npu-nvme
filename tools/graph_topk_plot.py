@@ -2,6 +2,7 @@
 """Standalone scientific figures from graph measurements and same-run traces."""
 import argparse
 import json
+import statistics
 from pathlib import Path
 import sys
 sys.path.insert(0,'/models/npu_nvme_exp/user7-stack/incremental-report-packages')
@@ -34,15 +35,18 @@ def main():
         fig,axes=plt.subplots(1,2,figsize=(12,4))
         for role in ('main','auxiliary'):
             selected=[r for r in rows if r['role']==role and r['level'] in (0,1,2,3,4,5,6) and r['scan_fraction']==1 and r['ratio']==.1 and not r['reference_only'] and not r['compute_iterations']]
-            selected.sort(key=lambda r:r['level'])
-            axes[0].plot([r['level'] for r in selected],[r['seconds'] for r in selected],'o-',label=role)
+            if not selected:continue
+            levels=sorted(set(r['level'] for r in selected))
+            values=[statistics.median(r['seconds'] for r in selected if r['level']==level) for level in levels]
+            axes[0].plot(levels,values,'o-',label=role)
+            axes[0].scatter([r['level'] for r in selected],[r['seconds'] for r in selected],s=12,alpha=.5)
         axes[0].set_xlabel('Cumulative graph level');axes[0].set_ylabel('20-step completion time (s)');axes[0].legend()
-        for level in (4,6):
-            selected=sorted([r for r in rows if r['level']==level and r['role']=='main' and r['ratio']==.1],key=lambda r:r['scan_fraction'])
+        for role in ('main','auxiliary'):
+            selected=sorted([r for r in rows if r['level']==6 and r['role']==role and r['ratio']==.1],key=lambda r:r['scan_fraction'])
             if selected:
                 xs=[r['scan_fraction'] for r in selected]
                 ys=[100*r['slowdown'] for r in selected]
-                axes[1].plot(xs,ys,'o-',label='G'+str(level))
+                axes[1].plot(xs,ys,'o-',label=role+' G6')
                 lower=[100*r.get('slowdown_baseline_range',[r['slowdown']]*2)[0] for r in selected]
                 upper=[100*r.get('slowdown_baseline_range',[r['slowdown']]*2)[1] for r in selected]
                 axes[1].fill_between(xs,lower,upper,alpha=.15)
