@@ -1,0 +1,338 @@
+{
+  "status": "pass",
+  "options": {
+    "schema_version": 1,
+    "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
+    "hardware_lock": "/models/npu_nvme_exp/user7-stack/hardware-campaign.lock",
+    "models": {
+      "main": "/models/Qwen3-8B",
+      "auxiliary": "/models/Qwen3-4B"
+    },
+    "initial_root": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
+    "initial_identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4",
+    "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
+    "seq_length": 128,
+    "compile_steps": 3,
+    "warmup_steps": 12,
+    "formal_steps": 20,
+    "block_elements": 65536,
+    "ratios": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "scan_fractions": [
+      0.125,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "slowdown_budget": 0.03,
+    "reference_budgets": [
+      0.01,
+      0.05
+    ],
+    "default_repeats": 1,
+    "maximum_repeats": 2,
+    "topk_sorted": true,
+    "reference_rule": "initial_weight * 0.99 + (parameter_index % 17 + 1) * 0.00001",
+    "parallel_acceptance": "compiled dependency and device trace required; requested layout is not evidence of execution overlap",
+    "excluded": [
+      "checkpoint_io",
+      "socket",
+      "json_coordination",
+      "payload_sha",
+      "media_readback",
+      "shadow_loss"
+    ],
+    "output": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g1-serial-timing",
+    "level": 1,
+    "layout": "serial",
+    "scan_fraction": 1.0,
+    "ratio": 0.1,
+    "role": "main",
+    "profile": false,
+    "dump_graphs": false,
+    "compute_iterations": 0,
+    "reference_only": false
+  },
+  "rank": 0,
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.3926597535610199,
+      "begin_ns": 3543755724863693,
+      "end_ns": 3543756355356324
+    },
+    {
+      "step": 17,
+      "loss": 0.38036903738975525,
+      "begin_ns": 3543756360588205,
+      "end_ns": 3543756974442391
+    },
+    {
+      "step": 18,
+      "loss": 0.37138673663139343,
+      "begin_ns": 3543756979632921,
+      "end_ns": 3543757598433656
+    },
+    {
+      "step": 19,
+      "loss": 0.3635930120944977,
+      "begin_ns": 3543757603649257,
+      "end_ns": 3543758222876744
+    },
+    {
+      "step": 20,
+      "loss": 0.17885880172252655,
+      "begin_ns": 3543758228190025,
+      "end_ns": 3543758843831188
+    },
+    {
+      "step": 21,
+      "loss": 0.15916143357753754,
+      "begin_ns": 3543758849041938,
+      "end_ns": 3543759460932746
+    },
+    {
+      "step": 22,
+      "loss": 0.1486787497997284,
+      "begin_ns": 3543759466149207,
+      "end_ns": 3543760079006429
+    },
+    {
+      "step": 23,
+      "loss": 0.13748541474342346,
+      "begin_ns": 3543760084273669,
+      "end_ns": 3543760704549110
+    },
+    {
+      "step": 24,
+      "loss": 0.12610352039337158,
+      "begin_ns": 3543760709785301,
+      "end_ns": 3543761337823222
+    },
+    {
+      "step": 25,
+      "loss": 0.11736201494932175,
+      "begin_ns": 3543761343062663,
+      "end_ns": 3543761961755288
+    },
+    {
+      "step": 26,
+      "loss": 0.10952559113502502,
+      "begin_ns": 3543761966947698,
+      "end_ns": 3543762582423030
+    },
+    {
+      "step": 27,
+      "loss": 0.10053898394107819,
+      "begin_ns": 3543762587669181,
+      "end_ns": 3543763227853640
+    },
+    {
+      "step": 28,
+      "loss": 0.09244683384895325,
+      "begin_ns": 3543763233085601,
+      "end_ns": 3543763853759673
+    },
+    {
+      "step": 29,
+      "loss": 0.08551149070262909,
+      "begin_ns": 3543763858963634,
+      "end_ns": 3543764516836702
+    },
+    {
+      "step": 30,
+      "loss": 0.0796462818980217,
+      "begin_ns": 3543764522118763,
+      "end_ns": 3543765137978477
+    },
+    {
+      "step": 31,
+      "loss": 0.07200884073972702,
+      "begin_ns": 3543765143209167,
+      "end_ns": 3543765790793765
+    },
+    {
+      "step": 32,
+      "loss": 0.0649050623178482,
+      "begin_ns": 3543765796168476,
+      "end_ns": 3543766413929387
+    },
+    {
+      "step": 33,
+      "loss": 0.0616140216588974,
+      "begin_ns": 3543766419190538,
+      "end_ns": 3543767057390239
+    },
+    {
+      "step": 34,
+      "loss": 0.05605250224471092,
+      "begin_ns": 3543767062608260,
+      "end_ns": 3543767693357542
+    },
+    {
+      "step": 35,
+      "loss": 0.05403253808617592,
+      "begin_ns": 3543767698573522,
+      "end_ns": 3543768315802452
+    }
+  ],
+  "warmup": [
+    {
+      "step": 1,
+      "loss": 0.7609525918960571,
+      "begin_ns": 3543676550843302,
+      "end_ns": 3543701027795176
+    },
+    {
+      "step": 2,
+      "loss": 0.7492045760154724,
+      "begin_ns": 3543701035971308,
+      "end_ns": 3543701713743874
+    },
+    {
+      "step": 3,
+      "loss": 0.7268530130386353,
+      "begin_ns": 3543701722347928,
+      "end_ns": 3543702345254619
+    },
+    {
+      "step": 4,
+      "loss": 0.7609525918960571,
+      "begin_ns": 3543740088760430,
+      "end_ns": 3543748793899948
+    },
+    {
+      "step": 5,
+      "loss": 0.7492045760154724,
+      "begin_ns": 3543748799404140,
+      "end_ns": 3543749425286783
+    },
+    {
+      "step": 6,
+      "loss": 0.7268530130386353,
+      "begin_ns": 3543749432131910,
+      "end_ns": 3543750015403046
+    },
+    {
+      "step": 7,
+      "loss": 0.7174327373504639,
+      "begin_ns": 3543750021656470,
+      "end_ns": 3543750618438839
+    },
+    {
+      "step": 8,
+      "loss": 0.6337726712226868,
+      "begin_ns": 3543750624202482,
+      "end_ns": 3543751248306218
+    },
+    {
+      "step": 9,
+      "loss": 0.6290686726570129,
+      "begin_ns": 3543751253655449,
+      "end_ns": 3543751888893529
+    },
+    {
+      "step": 10,
+      "loss": 0.6072779893875122,
+      "begin_ns": 3543751894095839,
+      "end_ns": 3543752505392115
+    },
+    {
+      "step": 11,
+      "loss": 0.6018533706665039,
+      "begin_ns": 3543752510572865,
+      "end_ns": 3543753120968638
+    },
+    {
+      "step": 12,
+      "loss": 0.4469923675060272,
+      "begin_ns": 3543753126198258,
+      "end_ns": 3543753737209833
+    },
+    {
+      "step": 13,
+      "loss": 0.4367216229438782,
+      "begin_ns": 3543753742476393,
+      "end_ns": 3543754353913330
+    },
+    {
+      "step": 14,
+      "loss": 0.42501887679100037,
+      "begin_ns": 3543754359641612,
+      "end_ns": 3543754974708193
+    },
+    {
+      "step": 15,
+      "loss": 0.4215026795864105,
+      "begin_ns": 3543754979879333,
+      "end_ns": 3543755694133283
+    }
+  ],
+  "actual_overlap": "unverified",
+  "parallel_label": "requested_dependency_layout_only",
+  "framework_versions": {
+    "mindspore": "2.7.1",
+    "mindformers": "1.7.0"
+  },
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "parallel_mode": "semi_auto_parallel",
+  "geometry": {
+    "candidate_blocks": 0,
+    "local_elements": 0,
+    "local_input_bytes": 0,
+    "local_reference_bytes": 0,
+    "tp_fragments": 0,
+    "parameters": []
+  },
+  "compute_control": {
+    "iterations": 0,
+    "working_elements": 16
+  },
+  "restore": {
+    "tensors": 952,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:main",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 24575485952,
+  "begin_ns": 3543755719385032,
+  "training_end_ns": 3543768315809692,
+  "all_done_ns": 3543768315879662,
+  "memory_peak_bytes": 42203766272,
+  "version_end": 33,
+  "score_oracle": {
+    "status": "pass",
+    "indices": [
+      0
+    ],
+    "expected": [
+      0.0138092041015625
+    ],
+    "actual": [
+      0.0138092041015625
+    ]
+  },
+  "output_check": {
+    "status": "indices_and_values_checked",
+    "score_count": 1,
+    "selected_count": 1,
+    "score_min": 0.0138092041015625,
+    "score_max": 0.0138092041015625,
+    "sampled_indices": [
+      0
+    ],
+    "sampled_values": [
+      0.0138092041015625
+    ],
+    "independent_score_oracle": "pass"
+  },
+  "standalone_auxiliary_ns": [
+    4606708,
+    2606330,
+    2904191
+  ],
+  "formal_contract": "twenty_updated_weight_detections"
+}

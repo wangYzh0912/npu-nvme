@@ -83,7 +83,8 @@ def analyse(run):
         if not aux_all:
             raise ValueError('no named auxiliary tasks: cannot prove execution or overlap')
         overlap = sum(s['auxiliary_training_intersection_us'] for s in steps)
-        reports.append(dict(rank=rank, steps=steps, auxiliary_task_count=len(aux_all),
+        phase_intervals={phase:[[t['start'],t['end']] for t in tasks if t['phase']==phase and t['stream']!='N/A'] for phase in ('forward','backward','optimizer','auxiliary')}
+        reports.append(dict(rank=rank, steps=steps, auxiliary_task_count=len(aux_all), phase_intervals=phase_intervals,
                             actual_task_overlap_us=overlap,
                             observed_overlap='present' if overlap > 0 else 'not_observed',
                             tasks=tasks))

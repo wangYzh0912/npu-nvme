@@ -18,9 +18,9 @@ def main():
     for profile in a.campaign.glob('*/device-overlap.json'):
         doc=json.loads(profile.read_text());fig,axes=plt.subplots(4,1,figsize=(12,7),sharex=True)
         for ax,rank in zip(axes,doc['ranks']):
-            tasks=rank['tasks'];begin=min(t['start'] for t in tasks);end=max(t['end'] for t in tasks)
+            intervals=rank['phase_intervals'];begin=min(left for rows in intervals.values() for left,right in rows);end=max(right for rows in intervals.values() for left,right in rows)
             for y,(phase,color) in enumerate(palette.items()):
-                spans=[((t['start']-begin)/1000,(t['end']-t['start'])/1000) for t in tasks if t['phase']==phase and t['stream']!='N/A']
+                spans=[((left-begin)/1000,(right-left)/1000) for left,right in intervals[phase]]
                 ax.broken_barh(spans,(y-.3,.6),facecolors=color)
             ax.set_yticks(range(4),palette.keys(),fontsize=7);ax.set_ylabel('rank '+str(rank['rank']));ax.grid(axis='x',alpha=.2)
         axes[-1].set_xlabel('Same-run device timeline (ms from first task)')
