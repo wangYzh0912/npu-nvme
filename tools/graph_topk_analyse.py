@@ -149,6 +149,14 @@ def main():
     output.write_text(json.dumps(report, indent=2) + '\n')
     summary=dict(report, ranks=[{k:v for k,v in r.items() if k!='tasks'} for r in report['ranks']])
     (args.run / 'device-overlap-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+    observed=[step for rank in report['ranks'] for step in rank['steps']]
+    gate=dict(status='pass' if observed and all(s['starts_after_source_update'] is True and
+                    s['finished_before_all_optimizer_assigns'] is True for s in observed) else 'unverified',
+              complete_intervals=len(observed), source_ready_and_write_deadline_checked=True,
+              actual_task_overlap_us=sum(r['actual_task_overlap_us'] for r in report['ranks']),
+              scope='sampled device intervals; no host-synchronize or parallel capability claim',
+              phase_classification='operator scopes; forward scopes include recomputation, unscoped training tasks remain other')
+    (args.run / 'dependency-gate.json').write_text(json.dumps(gate,indent=2)+'\n')
     print(output)
 
 if __name__ == '__main__': main()
