@@ -3,6 +3,7 @@
 import argparse
 import csv
 import json
+import re
 from pathlib import Path
 
 
@@ -31,6 +32,13 @@ def analyse(run):
     reports = []
     configuration = json.loads((run / 'run-config.json').read_text())
     serial = configuration['layout'] == 'serial'
+    schema = json.loads(Path(configuration['strategy']).read_text())
+    model_parameters = sum(t['role']=='model' for t in schema['tensors'])
+    # AdamW: three Assign nodes per model parameter; later Assign nodes are
+    # auxiliary output buffers despite inheriting optimizer scope in profiling.
+    def is_state_write(task):
+        match=re.search(r'optimizer-AdamW/Assign-op(\d+)/',task['name'])
+        return bool(match and int(match.group(1)) < 3*model_parameters)
     for rank in range(4):
         profile = run / f'rank_{rank}/profiler'
         with next(profile.rglob('kernel_details.csv')).open() as f:
@@ -38,7 +46,10 @@ def analyse(run):
         tasks = []
         for row in rows:
             name = row['Name']; start = float(row['Start Time(us)'])
-            phase = ('auxiliary' if any(s in name for s in ('chain-DetectionChain', 'ParameterScan')) else
+            # Morph expansion strips scopes from these minimal-probe tasks.
+            minimal_morph = configuration['level']==1 and ('Default/StridedSlice-op' in name or 'Default/ReduceSum-op' in name)
+            auxiliary_assign = bool(re.search(r'optimizer-AdamW/Assign-op(\d+)/', name)) and not is_state_write(dict(name=name))
+            phase = ('auxiliary' if (minimal_morph or auxiliary_assign or any(s in name for s in ('chain-DetectionChain', 'ParameterScan'))) else
                      'optimizer' if 'optimizer-' in name else
                      'backward' if 'Gradients/' in name else
                      'forward' if 'network-' in name else 'other')
@@ -51,12 +62,12 @@ def analyse(run):
             selected = [t for t in tasks if a <= t['start'] < b]
             aux = [t for t in selected if t['phase'] == 'auxiliary']
             train = [t for t in selected if t['phase'] in ('forward', 'backward')]
-            updates = [t for t in selected if t['phase'] == 'optimizer' and 'Assign' in t['name']]
+            updates = [t for t in selected if is_state_write(t)]
             ai = [(t['start'], t['end']) for t in aux]
             ti = [(t['start'], t['end']) for t in train]
-            next_updates = [t for t in tasks if t['start'] >= b and t['phase']=='optimizer' and 'Assign' in t['name']]
+            next_updates = [t for t in tasks if t['start'] >= b and is_state_write(t)]
             deadline = min((t['start'] for t in (next_updates if serial else updates)), default=None)
-            source_updates = updates if serial else [t for t in tasks if t['end'] <= a and t['phase']=='optimizer' and 'Assign' in t['name']]
+            source_updates = updates if serial else [t for t in tasks if t['end'] <= a and is_state_write(t)]
             ready = max((t['end'] for t in source_updates), default=None)
             first = min((t['start'] for t in aux), default=None)
             last = max((t['end'] for t in aux), default=None)
@@ -79,7 +90,7 @@ def analyse(run):
     return dict(run=str(run), ranks=reports,
                 clock='same kernel_details device timestamp domain',
                 limits=['Task envelopes are not active-core counts or simultaneous instruction measurements.',
-                        'Earliest optimizer Assign includes optimizer state; sufficient but not necessary source protection deadline.',
+                        'AdamW state writes use Assign-op indices below 3 times model parameter count; later auxiliary Assign nodes may inherit optimizer scope. Validate this mapping against each compiled graph.',
                         'Only complete GetNext-to-GetNext intervals are used; final auxiliary drain is excluded from overlap statistics.',
                         'No window-specific HBM bandwidth claim. Profiling is excluded from performance comparison.'])
 

@@ -1,5 +1,5 @@
 {
-  "status": "timing_complete",
+  "status": "pass",
   "options": {
     "schema_version": 1,
     "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
@@ -200,5 +200,37 @@
   "training_end_ns": 3542869883361601,
   "all_done_ns": 3542869883455701,
   "memory_peak_bytes": 42203765248,
-  "version_end": 16
+  "version_end": 16,
+  "score_oracle": {
+    "status": "pass",
+    "indices": [
+      0
+    ],
+    "expected": [
+      -0.09864044189453125
+    ],
+    "actual": [
+      -0.09864044189453125
+    ]
+  },
+  "output_check": {
+    "status": "indices_and_values_checked",
+    "score_count": 1,
+    "selected_count": 1,
+    "score_min": -0.09864044189453125,
+    "score_max": -0.09864044189453125,
+    "sampled_indices": [
+      0
+    ],
+    "sampled_values": [
+      -0.09864044189453125
+    ],
+    "independent_score_oracle": "pass"
+  },
+  "standalone_auxiliary_ns": [
+    12149008,
+    2704271,
+    2548670
+  ],
+  "formal_contract": "twenty_updated_weight_detections"
 }
