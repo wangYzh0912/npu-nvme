@@ -1,61 +1,5 @@
 {
   "status": "pass",
-  "options": {
-    "schema_version": 1,
-    "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
-    "hardware_lock": "/models/npu_nvme_exp/user7-stack/hardware-campaign.lock",
-    "models": {
-      "main": "/models/Qwen3-8B",
-      "auxiliary": "/models/Qwen3-4B"
-    },
-    "initial_root": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
-    "initial_identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4",
-    "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
-    "seq_length": 128,
-    "compile_steps": 3,
-    "warmup_steps": 12,
-    "formal_steps": 20,
-    "block_elements": 65536,
-    "ratios": [
-      0.05,
-      0.1,
-      0.2
-    ],
-    "scan_fractions": [
-      0.125,
-      0.25,
-      0.5,
-      1.0
-    ],
-    "slowdown_budget": 0.03,
-    "reference_budgets": [
-      0.01,
-      0.05
-    ],
-    "default_repeats": 1,
-    "maximum_repeats": 2,
-    "topk_sorted": true,
-    "reference_rule": "initial_weight * 0.99 + (parameter_index % 17 + 1) * 0.00001",
-    "parallel_acceptance": "compiled dependency and device trace required; requested layout is not evidence of execution overlap",
-    "excluded": [
-      "checkpoint_io",
-      "socket",
-      "json_coordination",
-      "payload_sha",
-      "media_readback",
-      "shadow_loss"
-    ],
-    "output": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g1-serial-timing",
-    "level": 1,
-    "layout": "serial",
-    "scan_fraction": 1.0,
-    "ratio": 0.1,
-    "role": "main",
-    "profile": false,
-    "dump_graphs": false,
-    "compute_iterations": 0,
-    "reference_only": false
-  },
   "rank": 3,
   "losses": [
     {
@@ -179,98 +123,6 @@
       "end_ns": 3543768312346648
     }
   ],
-  "warmup": [
-    {
-      "step": 1,
-      "loss": 0.7609525918960571,
-      "begin_ns": 3543676493473127,
-      "end_ns": 3543700716583636
-    },
-    {
-      "step": 2,
-      "loss": 0.7492045760154724,
-      "begin_ns": 3543700722086068,
-      "end_ns": 3543701712949631
-    },
-    {
-      "step": 3,
-      "loss": 0.7268530130386353,
-      "begin_ns": 3543701721288434,
-      "end_ns": 3543702343902184
-    },
-    {
-      "step": 4,
-      "loss": 0.7609525918960571,
-      "begin_ns": 3543740087962017,
-      "end_ns": 3543748789273360
-    },
-    {
-      "step": 5,
-      "loss": 0.7492045760154724,
-      "begin_ns": 3543748794795022,
-      "end_ns": 3543749421599428
-    },
-    {
-      "step": 6,
-      "loss": 0.7268530130386353,
-      "begin_ns": 3543749428712526,
-      "end_ns": 3543750010940138
-    },
-    {
-      "step": 7,
-      "loss": 0.7174327373504639,
-      "begin_ns": 3543750016105219,
-      "end_ns": 3543750615058296
-    },
-    {
-      "step": 8,
-      "loss": 0.6337726712226868,
-      "begin_ns": 3543750620257886,
-      "end_ns": 3543751243788560
-    },
-    {
-      "step": 9,
-      "loss": 0.6290686726570129,
-      "begin_ns": 3543751249410962,
-      "end_ns": 3543751884495851
-    },
-    {
-      "step": 10,
-      "loss": 0.6072779893875122,
-      "begin_ns": 3543751889899873,
-      "end_ns": 3543752501948831
-    },
-    {
-      "step": 11,
-      "loss": 0.6018533706665039,
-      "begin_ns": 3543752507554993,
-      "end_ns": 3543753116940912
-    },
-    {
-      "step": 12,
-      "loss": 0.4469923675060272,
-      "begin_ns": 3543753122073682,
-      "end_ns": 3543753733213647
-    },
-    {
-      "step": 13,
-      "loss": 0.4367216229438782,
-      "begin_ns": 3543753738358657,
-      "end_ns": 3543754350091515
-    },
-    {
-      "step": 14,
-      "loss": 0.42501887679100037,
-      "begin_ns": 3543754355364526,
-      "end_ns": 3543754970722397
-    },
-    {
-      "step": 15,
-      "loss": 0.4215026795864105,
-      "begin_ns": 3543754975818387,
-      "end_ns": 3543755690068467
-    }
-  ],
   "actual_overlap": "unverified",
   "parallel_label": "requested_dependency_layout_only",
   "framework_versions": {
@@ -284,8 +136,7 @@
     "local_elements": 0,
     "local_input_bytes": 0,
     "local_reference_bytes": 0,
-    "tp_fragments": 0,
-    "parameters": []
+    "tp_fragments": 0
   },
   "compute_control": {
     "iterations": 0,

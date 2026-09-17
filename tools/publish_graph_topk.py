@@ -46,6 +46,10 @@ def main():
             if not src.exists(): src = run / f'rank_{rank}/progress.json'
             if src.exists():
                 payload = json.loads(src.read_text())
+                # Publish compact rank evidence. Full per-step and geometry tables stay local.
+                payload.pop('options',None);payload.pop('warmup',None)
+                if 'geometry' in payload:
+                    payload['geometry']={k:v for k,v in payload['geometry'].items() if k!='parameters'}
                 target = dest / 'runs' / run.name / f'rank-{rank}.json'; target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(json.dumps(payload, indent=2) + '\n')
                 row['ranks'].append(dict(rank=rank, status=payload['status']))
