@@ -45,6 +45,13 @@ def build(campaign, output):
             row['baseline_count']=len(base)
             row['T0_seconds']=median;row['slowdown']=(row['seconds']-median)/median
             row['baseline_spread']=(max(r['seconds'] for r in base)-min(r['seconds'] for r in base))/median
+            row['slowdown_baseline_range']=[row['seconds']/max(r['seconds'] for r in base)-1,
+                                            row['seconds']/min(r['seconds'] for r in base)-1]
+            row['budget_assessment']={str(budget): (
+                'above_budget_for_both_baselines' if len(base)>=2 and row['slowdown_baseline_range'][0]>budget
+                else 'undetermined_baseline_variation' if len(base)<2 or row['baseline_spread']>.03
+                else 'measured_feasible_point' if row['slowdown']<=budget else 'above_budget')
+                for budget in (.01,.03,.05)}
             row['loss_matches_G0']=all(abs(a-b)<=1e-6+1e-6*abs(b) for a,b in zip(row['numerical_loss'],base[0]['numerical_loss']))
             row['extra_peak_hbm_bytes']=row['peak_hbm_bytes']-max(r['peak_hbm_bytes'] for r in base)
         controls=[r for r in formal if r['role']==row['role'] and r['level']==1 and not r['compute_iterations'] and r['layout']==row['layout']]
@@ -53,17 +60,19 @@ def build(campaign, output):
     (output/'measurements.json').write_text(json.dumps(dict(runs=runs),indent=2)+'\n')
     text=['# 图内 Top-K 实验进度','',
           '结果仅属于图内检测成本实验。目标并行布局必须通过设备轨迹验收；未验收数据不作为实际并行容量证据。固定参考不代表持续保存参考语义，设备结果不代表持久化。','',
-          '|配置|模型|20 步总完成秒|相对 G0|相对 G1|排空秒|峰值 HBM GiB|训练 loss 一致|',
+          '|配置|模型|20 步总完成秒|相对 G0 区间|相对 G1|独立辅助 ms|峰值 HBM GiB|训练 loss 一致|',
           '|---|---|---:|---:|---:|---:|---:|---|']
     for r in formal:
         text.append('|'+ '|'.join([r['name'],r['role'],f"{r['seconds']:.6f}",
-            f"{100*r['slowdown']:.3f}%" if 'slowdown' in r and r.get('baseline_count',0)>=2 and r.get('baseline_spread',1)<=.03 else '未定',
+            '～'.join(f'{100*v:.3f}%' for v in r['slowdown_baseline_range']) if r.get('baseline_count',0)>=2 else '待第二次基线',
             f"{100*r['increment_over_G1']:.3f}%" if 'increment_over_G1' in r else '待定',
-            f"{r['drain_seconds']:.6f}",f"{r['peak_hbm_bytes']/2**30:.3f}",str(r.get('loss_matches_G0','待定'))])+'|')
+            f"{1000*r['auxiliary_seconds']:.3f}" if r['auxiliary_seconds'] is not None else '—',
+            f"{r['peak_hbm_bytes']/2**30:.3f}",str(r.get('loss_matches_G0','待定'))])+'|')
     if formal:
         spreads=[r.get('baseline_spread') for r in formal if r.get('baseline_spread') is not None and sum(x['role']==r['role'] and x['level']==0 for x in formal)>=2]
         text += ['', '当前同模型 G0 spread：'+(f'{100*max(spreads):.3f}%' if spreads else '待第二次基线')+'。超过 3% 时，减速预算结论标记为未定。']
     text += ['', '每配置默认一次、必要时最多两次；4 个 rank 不作为 4 次独立重复。未完成和失败启动不进入上表。',
+             '', 'G0 区间是相对两次独立基线的敏感性范围，不是统计置信区间。独立辅助时间在正式区间之外测量，不能直接等同训练关键路径增量。',
              '', '主预算 3%，参考 1%/5%。在稳定基线、输出校验及依赖验证完成前，不宣布预算通过。',
              '', '暂未获得的截止点等待、训练计算段变化、设备实际重叠和窗口 HBM 指标保持缺失，不用 Host 提交耗时代替。']
     (output/'REPORT.md').write_text('\n'.join(text)+'\n')

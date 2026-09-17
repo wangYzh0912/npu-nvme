@@ -39,12 +39,18 @@ def main():
         axes[0].set_xlabel('Cumulative graph level');axes[0].set_ylabel('20-step completion time (s)');axes[0].legend()
         for level in (4,6):
             selected=sorted([r for r in rows if r['level']==level and r['role']=='main' and r['ratio']==.1],key=lambda r:r['scan_fraction'])
-            if selected:axes[1].plot([r['scan_fraction'] for r in selected],[100*r['slowdown'] for r in selected],'o-',label='G'+str(level))
+            if selected:
+                xs=[r['scan_fraction'] for r in selected]
+                ys=[100*r['slowdown'] for r in selected]
+                axes[1].plot(xs,ys,'o-',label='G'+str(level))
+                lower=[100*r.get('slowdown_baseline_range',[r['slowdown']]*2)[0] for r in selected]
+                upper=[100*r.get('slowdown_baseline_range',[r['slowdown']]*2)[1] for r in selected]
+                axes[1].fill_between(xs,lower,upper,alpha=.15)
         for budget,color in ((1,'gray'),(3,'#bf4747'),(5,'gray')):
             axes[1].axhline(budget,color=color,ls='--',lw=.8,label=str(budget)+'% budget')
         axes[1].set_xlabel('Real block scan fraction q');axes[1].set_ylabel('Slowdown vs G0 (%)');axes[1].legend(fontsize=8)
         for ax in axes:ax.grid(alpha=.2)
-        fig.suptitle('Serial graph costs; parallel execution not established')
+        fig.suptitle('Serial graph costs; parallel execution not established\nShading: two-baseline sensitivity, not confidence interval')
         fig.tight_layout();fig.savefig(a.output/'graph-costs.png',dpi=160);plt.close(fig)
 
 if __name__=='__main__':main()
