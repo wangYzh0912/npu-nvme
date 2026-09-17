@@ -104,6 +104,14 @@ def build(campaign, output):
              '', 'G7/G8 按条件入口决定：当前主模型最小 q=1/8 对两次基线均超出 5%，没有通过或接近预算的配置，未进入其硬件验证。设备端实现及 CPU 几何测试保留，不作为持久化或持续运行证据。',
              '', '仅分配参考控制因未能证实正式区间 HBM 驻留而排除；完整参考的有效内存证据来自 G2–G6 实测额外峰值约 7.63 GiB/卡。峰值差不能证明没有差分、平方等中间张量：串行辅助临时空间可低于训练峰值而被掩盖。',
              '', 'NVMe、D2H、socket、payload SHA、介质回读和影子 loss 不在本轮主计时中。旧完整保存路径仅保留为独立工程证据。']
+    text += ['', '## 全量扫描的 Top-K 比例对照', '',
+             '|K 比例|选中块|20 步秒|独立检测 ms|峰值 HBM GiB|',
+             '|---:|---:|---:|---:|---:|']
+    for r in sorted(formal,key=lambda r:r['ratio']):
+        if r['role']!='main' or r['level']!=6 or r['scan_fraction']!=1:continue
+        text.append(f"|{100*r['ratio']:.0f}%|{r['working_set']['selected_blocks']}|{r['seconds']:.6f}|{1000*r['auxiliary_seconds']:.3f}|{r['peak_hbm_bytes']/2**30:.3f}|")
+    text += ['', '三档都扫描全部 124976 个逻辑块，读取全局 W/R 共 65.523417 GB/轮；本轮只输出设备索引和分数，没有搬运选中权重。TopK 后显式设备 Sort 的成本包含在上述时间内。',
+             '', '独立辅助调用在计时后执行三次，表中是四卡调用样本中位数；它不是三次独立训练重复，也不能替代总完成时间。']
     (output/'REPORT.md').write_text('\n'.join(text)+'\n')
 
 if __name__=='__main__':
