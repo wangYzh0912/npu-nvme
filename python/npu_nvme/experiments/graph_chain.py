@@ -29,23 +29,25 @@ class MinimalProbe(nn.Cell):
         self.iterations = compute_iterations
         self.sample_elements = min(1 << 20, math.prod(tensor['local_shape'])) if compute_iterations else 16
         self.morph = Morph(self.probe, self.infer_shape, self.infer_dtype).add_prim_attr('self_define_shard', True)
-        self.morph.shard(in_strategy=(weight_layout(tensor), layout()), out_strategy=(layout('None'),))
+        self.morph.shard(in_strategy=(weight_layout(tensor), layout(), layout()), out_strategy=(layout('None'),))
 
-    def infer_shape(self, shape, ready_shape):
+    def infer_shape(self, shape, ready_shape, enabled_shape):
         return (1,)
 
-    def infer_dtype(self, dtype, ready_dtype):
+    def infer_dtype(self, dtype, ready_dtype, enabled_dtype):
         return dtype
 
-    def probe(self, weight, ready):
+    def probe(self, weight, ready, enabled):
+        if not enabled:
+            return Tensor([0.0], ms.float32)
         weight = F.depend(weight, ready)
         value = ops.reshape(weight, (-1,))[:self.sample_elements]
         for _ in range(self.iterations):
             value = value * 1.0001 + value * value * 0.0001
         return ops.reshape(ops.ReduceSum()(value), (1,))
 
-    def construct(self, weight, ready):
-        return self.morph(weight, ready)
+    def construct(self, weight, ready, enabled):
+        return self.morph(weight, ready, enabled)
 
 
 class ParameterScan(nn.Cell):
@@ -63,18 +65,20 @@ class ParameterScan(nn.Cell):
         self.gather = ops.Gather()
         self.segment = ops.UnsortedSegmentSum()
         self.morph = Morph(self.scan, self.infer_shape, self.infer_dtype).add_prim_attr('self_define_shard', True)
-        self.morph.shard(in_strategy=(weight_layout(tensor), weight_layout(tensor), layout()), out_strategy=(layout('None'),))
+        self.morph.shard(in_strategy=(weight_layout(tensor), weight_layout(tensor), layout(), layout()), out_strategy=(layout('None'),))
 
-    def infer_shape(self, weight_shape, reference_shape, ready_shape):
+    def infer_shape(self, weight_shape, reference_shape, ready_shape, enabled_shape):
         return (self.count,)
 
-    def infer_dtype(self, weight_dtype, reference_dtype, ready_dtype):
+    def infer_dtype(self, weight_dtype, reference_dtype, ready_dtype, enabled_dtype):
         return weight_dtype
 
-    def construct(self, weight, reference, ready):
-        return self.morph(weight, reference, ready)
+    def construct(self, weight, reference, ready, enabled):
+        return self.morph(weight, reference, ready, enabled)
 
-    def scan(self, weight, reference, ready):
+    def scan(self, weight, reference, ready, enabled):
+        if not enabled:
+            return self.zero
         weight = F.depend(weight, ready)
         reference = F.depend(reference, ready)
         if not self.present:
@@ -127,13 +131,13 @@ class DetectionChain(nn.Cell):
         self.reduce = ops.ReduceSum()
         self.zero_index = Tensor([0], ms.int32)
 
-    def construct(self, ready):
+    def construct(self, ready, enabled):
         if self.level == 1:
-            scores = self.minimal(self.first, ready)
+            scores = self.minimal(self.first, ready, enabled)
         else:
             pieces = ()
             for i in range(len(self.scanners)):
-                pieces += (self.scanners[i](self.sources[i], self.references[i], ready),)
+                pieces += (self.scanners[i](self.sources[i], self.references[i], ready, enabled),)
             scores = ops.concat(pieces)
         if self.level >= 5:
             scores = self.allreduce(scores)
@@ -144,7 +148,7 @@ class DetectionChain(nn.Cell):
         token = F.assign(self.scores, scores)
         token = F.depend(token, F.assign(self.indices, indices))
         token = F.depend(token, F.assign(self.values, values))
-        token = F.depend(token, F.assign_add(self.version, Tensor(1, ms.int32)))
+        token = F.depend(token, F.assign_add(self.version, ops.cast(enabled, ms.int32)))
         return self.reduce(token)
 
     def reset_reference(self):
@@ -181,7 +185,8 @@ def install_wrapper(options, schema, rank, holder):
             # Skip only the first formal update; its A is in the next graph.
             aux = Tensor(0.0, ms.float32)
             if not self.serial_aux:
-                aux = self.chain(Tensor(0.0, ms.float32))
+                enabled = ops.reshape(self.optimizer.global_step != self.skip_aux_step, ())
+                aux = self.chain(Tensor(0.0, ms.float32), enabled)
             # Serial auxiliary executes after the current optimizer below.
             loss, grads, grad_scale_factor = self.grads_for_mcore(scaling_sens, *inputs)
             status, scaling_sens = self.start_overflow_check(loss, scaling_sens)

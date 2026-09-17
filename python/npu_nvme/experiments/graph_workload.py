@@ -113,7 +113,7 @@ def run(options):
         def drain():
             if 'chain' in holder:
                 with local_graph(ms):
-                    result = holder['chain'](ms.Tensor(0.0, ms.float32))
+                    result = holder['chain'](ms.Tensor(0.0, ms.float32), ms.Tensor(True, ms.bool_))
                 return result
             return None
 
@@ -195,7 +195,7 @@ def run(options):
                         profiler.stop()
                     if 'chain' in holder:
                         report['version_end'] = int(holder['chain'].version.asnumpy())
-                        if report['version_end'] - report['version_begin'] != options['formal_steps'] + int(options['layout'] == 'parallel'):
+                        if report['version_end'] - report['version_begin'] != options['formal_steps']:
                             raise ValueError('wrong number of graph auxiliary invocations')
                     report['status'] = 'timing_complete'
                     write(directory / 'progress.json', report)
@@ -232,7 +232,7 @@ def run(options):
                 times.append(time.monotonic_ns() - begin)
             report['standalone_auxiliary_ns'] = times
         report['status'] = 'pass'
-        report['formal_contract'] = 'twenty_updated_weight_detections' if options['layout'] == 'serial' else 'capability_probe_extra_boundary_detection_not_formal_comparison'
+        report['formal_contract'] = 'twenty_updated_weight_detections'
         write(directory / 'result.json', report)
         return 0
     except BaseException as error:

@@ -1,5 +1,5 @@
 {
-  "status": "G1_fixed_readiness_runtime_validation",
+  "status": "G1_parallel_gate_diagnostic",
   "updated_at": "2026-09-16T23:58:44.599604+00:00",
   "old_campaign": "paused_by_user",
   "old_interrupted_run": "auxiliary-k20-rep0",
@@ -29,5 +29,11 @@
   "g1_dependency": "retrying input dependency inside TP Morph",
   "first_parallel_compile": "interrupted StepParallel recursion",
   "first_serial_trace": "nonempty output and losses correct; readiness gate rejected",
-  "current_fix": "input readiness dependency inside TP Morph; explicit scalar shape for readiness token"
+  "current_fix": "input readiness dependency inside TP Morph; explicit scalar shape for readiness token",
+  "serial_G1": {
+    "output": "pass",
+    "training_loss": "exact G0 match",
+    "dependency": "pass after correcting optimizer-scoped auxiliary Assign labels",
+    "actual_aux_train_task_overlap_us": 0
+  }
 }

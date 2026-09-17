@@ -1,0 +1,22 @@
+Compiled graph: /models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g1-serial-diagnostic/rank_0/graphs/rank_0/hwopt_d_end_opt_acl_graph_after_kernel_select_1_0466.ir
+
+  %12025(CNode_71278) = PrimFunc_Assign(%para881_graph_last_scores, %12023, %12024) primitive_attrs: {IsFeatureMapOutput: Bool(1), IsFeatureMapInputList: (0, 1), side_effect_mem: Bool(1)} cnode_attrs: {checkpoint: Bool(1), is_dynamic_len: Bool(0)}
+      : (<Ref[Tensor[Float32]], (1), ref_key=graph_last_scores, is_parameter, is_inplace>, <Tensor[Float32], (1)>, <UMonad, NoShape>) -> (<Ref[Tensor[Float32]], (1), ref_key=graph_last_scores, is_parameter, is_inplace>)
+      : (<Float32xDefaultFormat[const vector]{1}>, <Float32xDefaultFormat[const vector]{1}>) -> (<Float32xDefaultFormat[const vector]{1}>)
+      : (Tensor, Tensor) -> (Tensor)
+      # Fullname with scope: (Default/network-GraphTrain/optimizer-AdamW/Assign-op873)
+      # In file /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/train/dataset_helper.py:119~121, 4~37/    def construct(self):/
+
+  %12026(CNode_71279) = PrimFunc_Assign(%para880_graph_last_indices, Tensor(shape=[1], dtype=Int32, value=[0]), %12024) primitive_attrs: {IsFeatureMapOutput: Bool(1), IsFeatureMapInputList: (0, 1), side_effect_mem: Bool(1)} cnode_attrs: {checkpoint: Bool(1), is_dynamic_len: Bool(0)}
+      : (<Ref[Tensor[Int32]], (1), ref_key=graph_last_indices, is_parameter, is_inplace>, <Tensor[Int32], (1), value=...>, <UMonad, NoShape>) -> (<Ref[Tensor[Int32]], (1), ref_key=graph_last_indices, is_parameter, is_inplace>)
+      : (<Int32xDefaultFormat[const vector]{1}>, <Int32xDefaultFormat[const vector]{1}>) -> (<Int32xDefaultFormat[const vector]{1}>)
+      : (Tensor, Tensor) -> (Tensor)
+      # Fullname with scope: (Default/network-GraphTrain/optimizer-AdamW/Assign-op874)
+      # In file /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/train/dataset_helper.py:119~121, 4~37/    def construct(self):/
+
+  %12030(CNode_71282) = PrimFunc_Assign(%para879_graph_last_values, %12029, %12024) primitive_attrs: {IsFeatureMapOutput: Bool(1), IsFeatureMapInputList: (0, 1), side_effect_mem: Bool(1)} cnode_attrs: {checkpoint: Bool(1), is_dynamic_len: Bool(0)}
+      : (<Ref[Tensor[Float32]], (1), ref_key=graph_last_values, is_parameter, is_inplace>, <Tensor[Float32], (1)>, <UMonad, NoShape>) -> (<Ref[Tensor[Float32]], (1), ref_key=graph_last_values, is_parameter, is_inplace>)
+      : (<Float32xDefaultFormat[const vector]{1}>, <Float32xDefaultFormat[const vector]{1}>) -> (<Float32xDefaultFormat[const vector]{1}>)
+      : (Tensor, Tensor) -> (Tensor)
+      # Fullname with scope: (Default/network-GraphTrain/optimizer-AdamW/Assign-op875)
+      # In file /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/mindspore/train/dataset_helper.py:119~121, 4~37/    def construct(self):/
