@@ -1,0 +1,204 @@
+{
+  "status": "timing_complete",
+  "options": {
+    "schema_version": 1,
+    "environment_manifest": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/environments.json",
+    "hardware_lock": "/models/npu_nvme_exp/user7-stack/hardware-campaign.lock",
+    "models": {
+      "main": "/models/Qwen3-8B",
+      "auxiliary": "/models/Qwen3-4B"
+    },
+    "initial_root": "/models/npu_nvme_exp/user7-stack/incremental-phase1-20260916-006",
+    "initial_identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4",
+    "strategy": "/home/user7/npu-nvme/config/qwen_runtime_schema.json",
+    "seq_length": 128,
+    "compile_steps": 3,
+    "warmup_steps": 12,
+    "formal_steps": 3,
+    "block_elements": 65536,
+    "ratios": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "scan_fractions": [
+      0.125,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "slowdown_budget": 0.03,
+    "reference_budgets": [
+      0.01,
+      0.05
+    ],
+    "default_repeats": 1,
+    "maximum_repeats": 2,
+    "topk_sorted": true,
+    "reference_rule": "initial_weight * 0.99 + (parameter_index % 17 + 1) * 0.00001",
+    "parallel_acceptance": "compiled dependency and device trace required; requested layout is not evidence of execution overlap",
+    "excluded": [
+      "checkpoint_io",
+      "socket",
+      "json_coordination",
+      "payload_sha",
+      "media_readback",
+      "shadow_loss"
+    ],
+    "output": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001/main-g1-serial-ready-diagnostic-attempt2",
+    "level": 1,
+    "layout": "serial",
+    "scan_fraction": 1.0,
+    "ratio": 0.1,
+    "role": "main",
+    "profile": true,
+    "dump_graphs": false,
+    "compute_iterations": 0,
+    "reference_only": false
+  },
+  "rank": 0,
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.3926597535610199,
+      "begin_ns": 3542866518745655,
+      "end_ns": 3542867592798109
+    },
+    {
+      "step": 17,
+      "loss": 0.38036903738975525,
+      "begin_ns": 3542867598739053,
+      "end_ns": 3542868786472556
+    },
+    {
+      "step": 18,
+      "loss": 0.37138673663139343,
+      "begin_ns": 3542868792103538,
+      "end_ns": 3542869860335490
+    }
+  ],
+  "warmup": [
+    {
+      "step": 1,
+      "loss": 0.7609525918960571,
+      "begin_ns": 3542785962799258,
+      "end_ns": 3542801113173843
+    },
+    {
+      "step": 2,
+      "loss": 0.7492045760154724,
+      "begin_ns": 3542801118855785,
+      "end_ns": 3542801727830346
+    },
+    {
+      "step": 3,
+      "loss": 0.7268530130386353,
+      "begin_ns": 3542801737060513,
+      "end_ns": 3542802329069317
+    },
+    {
+      "step": 4,
+      "loss": 0.7609525918960571,
+      "begin_ns": 3542846235512082,
+      "end_ns": 3542858651941677
+    },
+    {
+      "step": 5,
+      "loss": 0.7492045760154724,
+      "begin_ns": 3542858663466953,
+      "end_ns": 3542859264761754
+    },
+    {
+      "step": 6,
+      "loss": 0.7268530130386353,
+      "begin_ns": 3542859272646605,
+      "end_ns": 3542859877756160
+    },
+    {
+      "step": 7,
+      "loss": 0.7174327373504639,
+      "begin_ns": 3542859883299802,
+      "end_ns": 3542860798450841
+    },
+    {
+      "step": 8,
+      "loss": 0.6337726712226868,
+      "begin_ns": 3542860804612015,
+      "end_ns": 3542861487563008
+    },
+    {
+      "step": 9,
+      "loss": 0.6290686726570129,
+      "begin_ns": 3542861494012683,
+      "end_ns": 3542862156913937
+    },
+    {
+      "step": 10,
+      "loss": 0.6072779893875122,
+      "begin_ns": 3542862162308728,
+      "end_ns": 3542862797741083
+    },
+    {
+      "step": 11,
+      "loss": 0.6018533706665039,
+      "begin_ns": 3542862804073458,
+      "end_ns": 3542863444825775
+    },
+    {
+      "step": 12,
+      "loss": 0.4469923675060272,
+      "begin_ns": 3542863450283846,
+      "end_ns": 3542864143907381
+    },
+    {
+      "step": 13,
+      "loss": 0.4367216229438782,
+      "begin_ns": 3542864149326662,
+      "end_ns": 3542865005410078
+    },
+    {
+      "step": 14,
+      "loss": 0.42501887679100037,
+      "begin_ns": 3542865010825879,
+      "end_ns": 3542865725430857
+    },
+    {
+      "step": 15,
+      "loss": 0.4215026795864105,
+      "begin_ns": 3542865732306124,
+      "end_ns": 3542866337103108
+    }
+  ],
+  "actual_overlap": "unverified",
+  "parallel_label": "requested_dependency_layout_only",
+  "framework_versions": {
+    "mindspore": "2.7.1",
+    "mindformers": "1.7.0"
+  },
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "parallel_mode": "semi_auto_parallel",
+  "geometry": {
+    "candidate_blocks": 0,
+    "local_elements": 0,
+    "local_input_bytes": 0,
+    "local_reference_bytes": 0,
+    "tp_fragments": 0,
+    "parameters": []
+  },
+  "compute_control": {
+    "iterations": 0,
+    "working_elements": 16
+  },
+  "restore": {
+    "tensors": 952,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:main",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 24575483904,
+  "begin_ns": 3542866511780937,
+  "training_end_ns": 3542869860354420,
+  "all_done_ns": 3542869860496251,
+  "memory_peak_bytes": 42203764224,
+  "version_end": 16
+}

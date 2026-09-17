@@ -1,5 +1,5 @@
 {
-  "status": "G1_readiness_dependency_diagnostic",
+  "status": "G1_fixed_readiness_runtime_validation",
   "updated_at": "2026-09-16T23:58:44.599604+00:00",
   "old_campaign": "paused_by_user",
   "old_interrupted_run": "auxiliary-k20-rep0",
@@ -26,5 +26,8 @@
   "parallel_gate": "blocked in first compiler layout variant; simpler graph under test",
   "G0_warm12_seconds": 12.869300949852914,
   "g1_numerics": "pass",
-  "g1_dependency": "retrying input dependency inside TP Morph"
+  "g1_dependency": "retrying input dependency inside TP Morph",
+  "first_parallel_compile": "interrupted StepParallel recursion",
+  "first_serial_trace": "nonempty output and losses correct; readiness gate rejected",
+  "current_fix": "input readiness dependency inside TP Morph; explicit scalar shape for readiness token"
 }
