@@ -140,7 +140,7 @@ class DetectionChain(nn.Cell):
         if self.level >= 6:
             values, indices = self.select(scores, self.k)
         else:
-            values, indices = ops.reshape(self.reduce(scores), (1,)), self.zero_index
+            values, indices = ops.expand_dims(self.reduce(scores), 0), self.zero_index
         token = F.assign(self.scores, scores)
         token = F.depend(token, F.assign(self.indices, indices))
         token = F.depend(token, F.assign(self.values, values))
@@ -204,7 +204,7 @@ def install_wrapper(options, schema, rank, holder):
             if not overflow:
                 loss = F.depend(loss, self.optimizer(grads))
             if self.serial_aux:
-                aux = self.chain(loss)
+                aux = self.chain(ops.reshape(loss, ()))
                 loss = F.depend(loss, aux)
             return loss, overflow, scaling_sens, learning_rate, global_norm
 
