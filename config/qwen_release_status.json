@@ -54,7 +54,7 @@
     "reason": "Superseded by graph-native real-working-set Top-K plan"
   },
   "graph_topk": {
-    "status": "main_scan_curve_complete_selection_and_auxiliary_pending",
+    "status": "completed_conditional_matrix_with_capability_gaps",
     "branch": "incremental-phase1-results",
     "results": "results/graph-topk-20260917",
     "config": "config/graph_topk.json",
@@ -67,11 +67,26 @@
     "parallel_execution_verified": false,
     "parallel_capability": "two StepParallel layout propagation attempts did not compile; no parallel capacity claim",
     "main_baseline_seconds": [12.8693009499, 12.1430338058],
-    "main_baseline_spread": 0.05807,
+    "main_baseline_spread": 0.05807271901482437,
     "three_percent_feasibility": "no_measured_serial_q_passes_even_against_slower_G0; parallel_capacity_unresolved",
     "main_full_scan_G6_seconds": 15.3737048903,
     "main_full_scan_G6_output_validation": "pass_all_four_ranks",
     "device_consumer_entry": "not_entered_q0.125_detection_exceeds_5_percent_for_both_baselines",
-    "remaining": ["selection_ratio_comparison", "G6_device_profile", "Qwen3-4B_representative_points"]
+    "auxiliary_validation": "completed",
+    "auxiliary_baseline_seconds": [12.6155050243, 11.0995273963],
+    "auxiliary_baseline_spread": 0.12784950922077634,
+    "auxiliary_G6_full_scan_seconds": 13.5925042089,
+    "auxiliary_G6_eighth_scan_seconds": 12.6028520358,
+    "auxiliary_eighth_scan_budget": "undetermined_due_to_baseline_variation",
+    "valid_formal_configurations": 19,
+    "all_rank_loss_equality": "exact",
+    "formal_output_audit": "pass",
+    "serial_G6_profile_dependency_gate": "pass_8_complete_rank_step_intervals_zero_auxiliary_training_overlap",
+    "related_unit_tests_passed": 8,
+    "summary": "results/graph-topk-20260917/SUMMARY.md",
+    "audit": "results/graph-topk-20260917/FINAL_AUDIT.json",
+    "remaining_authorized_runs": [],
+    "unresolved_measurements": ["parallel_capacity", "independent_deadline_wait", "unprofiled_training_compute_segment_delta", "window_HBM_bandwidth", "simultaneous_workspace_peak"],
+    "not_entered_by_condition": ["G7_hardware_validation", "G8_hardware_validation"]
   }
 }

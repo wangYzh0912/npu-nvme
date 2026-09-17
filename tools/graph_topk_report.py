@@ -71,7 +71,8 @@ def build(campaign, output):
         if controls and (row['level'] > 1 or row['compute_iterations']):row['increment_over_G1']=row['seconds']/statistics.median(r['seconds'] for r in controls)-1
     output.mkdir(parents=True,exist_ok=True)
     (output/'measurements.json').write_text(json.dumps(dict(runs=runs),indent=2)+'\n')
-    text=['# 图内 Top-K 实验进度','',
+    text=['# 图内 Top-K 实验最终报告' if (output/'FINAL_AUDIT.json').exists() else '# 图内 Top-K 实验进度','',
+          'main = Qwen3-8B；auxiliary = Qwen3-4B。两者 TP4、seq128、micro-batch1、FP32 权重/BF16 计算。','',
           '结果仅属于图内检测成本实验。目标并行布局必须通过设备轨迹验收；未验收数据不作为实际并行容量证据。固定参考不代表持续保存参考语义，设备结果不代表持久化。','',
           '|配置|模型|20 步总完成秒|相对 G0 区间|相对 G1|独立辅助 ms|峰值 HBM GiB|训练 loss 一致|',
           '|---|---|---:|---:|---:|---:|---:|---|']
@@ -91,7 +92,7 @@ def build(campaign, output):
     text += ['', '每配置默认一次、必要时最多两次；4 个 rank 不作为 4 次独立重复。未完成和失败启动不进入上表。',
              '', 'G0 区间是相对两次独立基线的敏感性范围，不是统计置信区间。独立辅助时间在正式区间之外测量，不能直接等同训练关键路径增量。',
              '', '主预算 3%，参考 1%/5%。在稳定基线、输出校验及依赖验证完成前，不宣布预算通过。',
-             '', '暂未获得的截止点等待、训练计算段变化、设备实际重叠和窗口 HBM 指标保持缺失，不用 Host 提交耗时代替。']
+             '', '完整 G6 的设备轨迹已确认串行依赖和 0 任务重叠，详见 BOTTLENECKS.md。独立的截止点等待、无 profiler 训练计算段变化和窗口 HBM 指标仍缺失，不用 Host 提交耗时代替。']
     text += ['', '## 扫描负载与预算', '',
              '|模型|q|候选块|全局 W/R 输入 GB|TP 片段合计|内部归约 tile|3% 判定|',
              '|---|---:|---:|---:|---:|---:|---|']
@@ -107,7 +108,7 @@ def build(campaign, output):
              '', '## 结论边界', '',
              '两次目标并行图未通过 MindSpore StepParallel 编译；因此本表仅报告串行图附加成本，不能回答有多少成本可以被下一步前向/反向隐藏。',
              '', 'G7/G8 按条件入口决定：当前主模型最小 q=1/8 对两次基线均超出 5%，没有通过或接近预算的配置，未进入其硬件验证。设备端实现及 CPU 几何测试保留，不作为持久化或持续运行证据。',
-             '', '仅分配参考控制因未能证实正式区间 HBM 驻留而排除；完整参考的有效内存证据来自 G2–G6 实测额外峰值约 7.63 GiB/卡。峰值差不能证明没有差分、平方等中间张量：串行辅助临时空间可低于训练峰值而被掩盖。',
+             '', '仅分配参考控制因未能证实正式区间 HBM 驻留而排除；主模型完整参考的有效内存证据来自 G2–G6 实测额外峰值约 7.63 GiB/卡。峰值差不能证明没有差分、平方等中间张量：串行辅助临时空间可低于训练峰值而被掩盖。',
              '', 'NVMe、D2H、socket、payload SHA、介质回读和影子 loss 不在本轮主计时中。旧完整保存路径仅保留为独立工程证据。']
     text += ['', '## 全量扫描的 Top-K 比例对照', '',
              '|K 比例|选中块|20 步秒|独立检测 ms|峰值 HBM GiB|',
@@ -116,7 +117,7 @@ def build(campaign, output):
         if r['role']!='main' or r['level']!=6 or r['scan_fraction']!=1:continue
         text.append(f"|{100*r['ratio']:.0f}%|{r['working_set']['selected_blocks']}|{r['seconds']:.6f}|{1000*r['auxiliary_seconds']:.3f}|{r['peak_hbm_bytes']/2**30:.3f}|")
     text += ['', '三档都扫描全部 124976 个逻辑块，读取全局 W/R 共 65.523417 GB/轮；本轮只输出设备索引和分数，没有搬运选中权重。TopK 后显式设备 Sort 的成本包含在上述时间内。',
-             '', '独立辅助调用在计时后执行三次，表中是四卡调用样本中位数；它不是三次独立训练重复，也不能替代总完成时间。']
+             '', '独立辅助调用在计时后执行三次，表中是四卡调用样本中位数；它不是三次独立训练重复，也不能替代总完成时间。独立调用使用已分片参数的 stand_alone 图上下文，可能与训练图中的融合、复制及调度不同。']
     text += ['', '## 空间预算（全量扫描 K10）','',
              '|模型|每卡参考 GiB|保留分数/索引/值字节|额外峰值 GiB|总峰值 GiB|采样板卡最少剩余 GiB|',
              '|---|---:|---:|---:|---:|---:|']
@@ -128,6 +129,10 @@ def build(campaign, output):
         remaining=f'{(65536-max(board))/1024:.3f}' if board else '缺失'
         text.append(f"|{r['role']}|{max(w['reference_bytes_per_rank'])/2**30:.3f}|{output_bytes}|{r.get('extra_peak_hbm_bytes',0)/2**30:.3f}|{r['peak_hbm_bytes']/2**30:.3f}|{remaining}|")
     text += ['', '无显式用户快照或权重输出缓冲；编译器复制和差分/平方中间张量见 BOTTLENECKS.md。索引常量、选择 workspace 等不能只用保留输出大小概括；其同时存活上限未单独测得。板卡剩余空间来自 1 秒采样，可能漏掉瞬时峰值。']
+    text += ['', '## 审计与产物','',
+             '[逐 rank 最终审计](FINAL_AUDIT.json) · [瓶颈归因](BOTTLENECKS.md) · [机器可读测量](measurements.json) · [条件入口](consumer-entry-gate.json)',
+             '', '![图成本与扫描曲线](figures/graph-costs.png)',
+             '', '![完整 G6 设备时间线](figures/main-g6-serial-profile-timeline.png)']
     (output/'REPORT.md').write_text('\n'.join(text)+'\n')
 
 if __name__=='__main__':
