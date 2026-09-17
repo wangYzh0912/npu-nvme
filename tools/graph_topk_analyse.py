@@ -36,6 +36,7 @@ def analyse(run):
     serial = configuration['layout'] == 'serial'
     schema = json.loads(Path(configuration['strategy']).read_text())
     model_parameters = sum(t['role']=='model' for t in schema['tensors'])
+    candidate_parameters = len(json.loads((run/'rank_0/result.json').read_text()).get('geometry',{}).get('parameters',[]))
     # AdamW: three Assign nodes per model parameter; later Assign nodes are
     # auxiliary output buffers despite inheriting optimizer scope in profiling.
     def is_state_write(task):
@@ -61,15 +62,34 @@ def analyse(run):
             name = row['Name']; start = float(row['Start Time(us)'])
             # Morph expansion strips scopes from these minimal-probe tasks.
             minimal_morph = configuration['level']==1 and ('Default/StridedSlice-op' in name or 'Default/ReduceSum-op' in name)
+            scanner_match = re.search(r'KernelLaunch::Default/(Sub|Mul|ReduceSum|UnsortedSegmentSum)-op(\d+)/',name)
+            scanner_morph = False
+            if configuration['level']>=2 and scanner_match:
+                kind,number=scanner_match[1],int(scanner_match[2])
+                scanner_morph = (1<=number<=candidate_parameters if kind in ('Sub','Mul')
+                                 else 0<=number<candidate_parameters)
             auxiliary_assign = bool(re.search(r'optimizer-AdamW/Assign-op(\d+)/', name)) and not is_state_write(dict(name=name))
-            phase = ('auxiliary' if (minimal_morph or auxiliary_assign or any(s in name for s in ('chain-DetectionChain', 'ParameterScan'))) else
+            phase = ('auxiliary' if (minimal_morph or scanner_morph or auxiliary_assign or any(s in name for s in ('chain-DetectionChain', 'ParameterScan'))) else
                      'optimizer' if 'optimizer-' in name else
                      'backward' if 'Gradients/' in name else
                      'forward' if 'network-' in name else 'other')
             tasks.append(dict(name=name, phase=phase, start=start, end=start + float(row['Duration(us)']),
-                              stream=row['Stream ID'], type=row['Type'], core=row['Accelerator Core']))
+                              stream=row['Stream ID'], type=row['Type'], core=row['Accelerator Core'],
+                              output_shape=row['Output Shapes'], output_dtype=row['Output Data Types']))
         with next(profile.rglob('op_summary*.csv')).open() as f:
             bounds = sorted(set(float(r['Task Start Time(us)'].strip()) for r in csv.DictReader(f) if r['OP Type'] == 'GetNext'))
+        # In the accepted serial layout, compiler TensorMove copies between the
+        # last Adam write and the named chain's end belong to auxiliary capture.
+        # Scanner identity above is independent of this time-window attribution.
+        if serial and configuration['level']>=2:
+            for a,b in zip(bounds,bounds[1:]+[max(t['end'] for t in tasks)+1]):
+                current=[t for t in tasks if a<=t['start']<b]
+                ready=max((t['end'] for t in current if is_state_write(t)),default=None)
+                end=max((t['end'] for t in current if t['phase']=='auxiliary'),default=None)
+                if ready is not None and end is not None:
+                    for t in current:
+                        if ready<=t['start']<end and t['type']=='TensorMove':
+                            t['phase']='auxiliary';t['attribution']='post-update compiler capture copy'
         steps = []
         for index, (a, b) in enumerate(zip(bounds[:-1], bounds[1:]), 1):
             selected = [t for t in tasks if a <= t['start'] < b]
@@ -96,7 +116,7 @@ def analyse(run):
         if not aux_all:
             raise ValueError('no named auxiliary tasks: cannot prove execution or overlap')
         overlap = sum(s['auxiliary_training_intersection_us'] for s in steps)
-        phase_intervals={phase:[[t['start'],t['end']] for t in tasks if t['phase']==phase and t['stream']!='N/A'] for phase in ('forward','backward','optimizer','auxiliary')}
+        phase_intervals={phase:[[t['start'],t['end']] for t in tasks if t['phase']==phase] for phase in ('forward','backward','optimizer','auxiliary')}
         grouped = {}
         for phase in ('forward','backward','optimizer','auxiliary','other'):
             totals = Counter()
@@ -115,6 +135,8 @@ def analyse(run):
                 clock='same kernel_details device timestamp domain',
                 limits=['Task envelopes are not active-core counts or simultaneous instruction measurements.',
                         'Block Dim is launch geometry, not time-resolved active-core occupancy. PMU ratios are per-task distributions, not instruction-interval overlap.',
+                        'HCCL rows with stream N/A are collective envelopes including rank waiting, not individual arithmetic kernels; their duration is not pure link-transfer time.',
+                        'Expanded scanner Sub/Mul op indices 1..candidate_parameters and ReduceSum/UnsortedSegmentSum 0..candidate_parameters-1 identify the cumulative G6 scanner. Serial post-update TensorMove copies are separately attributed by time window.',
                         'AdamW state writes use Assign-op indices below 3 times model parameter count; later auxiliary Assign nodes may inherit optimizer scope. Validate this mapping against each compiled graph.',
                         'Only complete GetNext-to-GetNext intervals are used; final auxiliary drain is excluded from overlap statistics.',
                         'No window-specific HBM bandwidth claim. Profiling is excluded from performance comparison.'])
