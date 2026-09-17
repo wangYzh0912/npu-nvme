@@ -1,0 +1,159 @@
+{
+  "status": "failed",
+  "rank": 0,
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.3926597535610199,
+      "begin_ns": 3547176943334539,
+      "end_ns": 3547177668782216
+    },
+    {
+      "step": 17,
+      "loss": 0.38036903738975525,
+      "begin_ns": 3547177679496699,
+      "end_ns": 3547178450014815
+    },
+    {
+      "step": 18,
+      "loss": 0.37138673663139343,
+      "begin_ns": 3547178457300754,
+      "end_ns": 3547179195505872
+    },
+    {
+      "step": 19,
+      "loss": 0.3635930120944977,
+      "begin_ns": 3547179201728616,
+      "end_ns": 3547179927820117
+    },
+    {
+      "step": 20,
+      "loss": 0.17885880172252655,
+      "begin_ns": 3547179934070411,
+      "end_ns": 3547180654333989
+    },
+    {
+      "step": 21,
+      "loss": 0.15916143357753754,
+      "begin_ns": 3547180660585333,
+      "end_ns": 3547181399776906
+    },
+    {
+      "step": 22,
+      "loss": 0.1486787497997284,
+      "begin_ns": 3547181407151225,
+      "end_ns": 3547182141670648
+    },
+    {
+      "step": 23,
+      "loss": 0.13748541474342346,
+      "begin_ns": 3547182154340889,
+      "end_ns": 3547182877810489
+    },
+    {
+      "step": 24,
+      "loss": 0.12610352039337158,
+      "begin_ns": 3547182884167084,
+      "end_ns": 3547183620024143
+    },
+    {
+      "step": 25,
+      "loss": 0.11736201494932175,
+      "begin_ns": 3547183626308828,
+      "end_ns": 3547184385527209
+    },
+    {
+      "step": 26,
+      "loss": 0.10952559113502502,
+      "begin_ns": 3547184393545091,
+      "end_ns": 3547185163289833
+    },
+    {
+      "step": 27,
+      "loss": 0.10053898394107819,
+      "begin_ns": 3547185175546282,
+      "end_ns": 3547185938027746
+    },
+    {
+      "step": 28,
+      "loss": 0.09244683384895325,
+      "begin_ns": 3547185943579038,
+      "end_ns": 3547186698156821
+    },
+    {
+      "step": 29,
+      "loss": 0.08551149070262909,
+      "begin_ns": 3547186703686693,
+      "end_ns": 3547187447598404
+    },
+    {
+      "step": 30,
+      "loss": 0.0796462818980217,
+      "begin_ns": 3547187453411867,
+      "end_ns": 3547188186036453
+    },
+    {
+      "step": 31,
+      "loss": 0.07200884073972702,
+      "begin_ns": 3547188191816916,
+      "end_ns": 3547188925324255
+    },
+    {
+      "step": 32,
+      "loss": 0.0649050623178482,
+      "begin_ns": 3547188930996478,
+      "end_ns": 3547189666991197
+    },
+    {
+      "step": 33,
+      "loss": 0.0616140216588974,
+      "begin_ns": 3547189672655090,
+      "end_ns": 3547190428345397
+    },
+    {
+      "step": 34,
+      "loss": 0.05605250224471092,
+      "begin_ns": 3547190434021250,
+      "end_ns": 3547191167191788
+    },
+    {
+      "step": 35,
+      "loss": 0.05403253808617592,
+      "begin_ns": 3547191172733870,
+      "end_ns": 3547191906974742
+    }
+  ],
+  "actual_overlap": "unverified",
+  "parallel_label": "requested_dependency_layout_only",
+  "framework_versions": {
+    "mindspore": "2.7.1",
+    "mindformers": "1.7.0"
+  },
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "parallel_mode": "semi_auto_parallel",
+  "geometry": {
+    "candidate_blocks": 124976,
+    "local_elements": 2047606784,
+    "local_input_bytes": 16380854272,
+    "local_reference_bytes": 8190427136,
+    "tp_fragments": 316940
+  },
+  "compute_control": {
+    "iterations": 0,
+    "working_elements": 16
+  },
+  "restore": {
+    "tensors": 952,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:main",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 32769502208,
+  "begin_ns": 3547176937022484,
+  "training_end_ns": 3547191907007023,
+  "all_done_ns": 3547191907215793,
+  "memory_peak_bytes": 50397782528,
+  "version_end": 33,
+  "error": "ValueError('Top-K ordering or threshold mismatch')",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/user7/npu-nvme/python/npu_nvme/experiments/graph_workload.py\", line 222, in run\n    raise ValueError('Top-K ordering or threshold mismatch')\nValueError: Top-K ordering or threshold mismatch\n"
+}
