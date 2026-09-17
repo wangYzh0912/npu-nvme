@@ -1,7 +1,26 @@
 {
-  "status": "compiling",
+  "status": "pass",
   "rank": 2,
-  "losses": [],
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.3926597535610199,
+      "begin_ns": 3551928886755183,
+      "end_ns": 3551930135775067
+    },
+    {
+      "step": 17,
+      "loss": 0.38036903738975525,
+      "begin_ns": 3551930143002876,
+      "end_ns": 3551931429516200
+    },
+    {
+      "step": 18,
+      "loss": 0.37138673663139343,
+      "begin_ns": 3551931436786029,
+      "end_ns": 3551932855423629
+    }
+  ],
   "actual_overlap": "unverified",
   "parallel_label": "requested_dependency_layout_only",
   "framework_versions": {
@@ -20,5 +39,102 @@
   "compute_control": {
     "iterations": 0,
     "working_elements": 16
-  }
+  },
+  "restore": {
+    "tensors": 952,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:main",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 32769503744,
+  "begin_ns": 3551928879562174,
+  "training_end_ns": 3551932855434239,
+  "all_done_ns": 3551932855571990,
+  "memory_peak_bytes": 50397784064,
+  "version_end": 16,
+  "topk_diagnostic": {
+    "sorted_requested": true,
+    "implementation": "TopK selection followed by explicit device Sort because large-K Ascend TopK was observed unsorted",
+    "order_violations": 0,
+    "minimum_selected": 0.006455504801124334,
+    "last_selected": 0.006455504801124334,
+    "cpu_kth_threshold": 0.006455504801124334,
+    "threshold_gap": 0.0
+  },
+  "score_oracle": {
+    "status": "pass",
+    "indices": [
+      0,
+      62488,
+      66592,
+      84394,
+      124975
+    ],
+    "expected": [
+      0.003829497378319502,
+      0.00491472939029336,
+      0.0064555046847090125,
+      0.044792043045163155,
+      0.0002991815563291311
+    ],
+    "actual": [
+      0.003829497378319502,
+      0.00491472939029336,
+      0.006455504801124334,
+      0.044792044907808304,
+      0.0002991815563291311
+    ],
+    "max_absolute_error": 1.862645149230957e-09,
+    "oracle": "CPU FP64 summation of real TP fragments; independent of device segment reduction"
+  },
+  "output_check": {
+    "status": "indices_and_values_checked",
+    "score_count": 124976,
+    "selected_count": 12498,
+    "score_min": 5.3330251830630004e-05,
+    "score_max": 0.044792044907808304,
+    "sampled_indices": [
+      84394,
+      4824,
+      23835,
+      1880,
+      93144,
+      25432,
+      87822,
+      87338,
+      23786,
+      37208,
+      90200,
+      31320,
+      84312,
+      49732,
+      28376,
+      87794
+    ],
+    "sampled_values": [
+      0.044792044907808304,
+      0.03685058280825615,
+      0.019349772483110428,
+      0.019207196310162544,
+      0.017738064751029015,
+      0.01751907914876938,
+      0.015937911346554756,
+      0.015743503347039223,
+      0.015452403575181961,
+      0.015275033190846443,
+      0.01457945816218853,
+      0.014246406964957714,
+      0.014121920801699162,
+      0.013397973030805588,
+      0.013294745236635208,
+      0.013144997879862785
+    ],
+    "independent_score_oracle": "pass"
+  },
+  "standalone_auxiliary_ns": [
+    224174903,
+    161012501,
+    163453081
+  ],
+  "formal_contract": "twenty_updated_weight_detections"
 }
