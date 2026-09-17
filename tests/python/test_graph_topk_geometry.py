@@ -39,10 +39,9 @@ def test_partial_scores_match_global_oracle(fraction):
                 tiles = local.reshape(-1, row['unit'])[row['tile_indices']]
                 partial = np.zeros(row['block_count'])
                 np.add.at(partial, row['segment_ids'], np.square(tiles).sum(axis=1))
-                reconstructed = np.zeros((row['block_count'], 64))
                 for tile, segment, slot in zip(tiles, row['segment_ids'], row['slot_ids']):
-                    reconstructed[segment, slot * row['unit']:(slot + 1) * row['unit']] = tile
-                assert np.count_nonzero(reconstructed) <= np.count_nonzero(tiles)
+                    begin = row['global_blocks'][segment] * 64 + slot * row['unit']
+                    np.testing.assert_array_equal(tile, values[t['name']].reshape(-1)[begin:begin + row['unit']])
             else:
                 partial = np.zeros(row['block_count'])
             for block, score in zip(row['global_blocks'], partial):
