@@ -2,6 +2,7 @@
 """Publish allowlisted graph experiment source and compact measurements."""
 import argparse
 import datetime
+import fcntl
 import json
 import shutil
 import subprocess
@@ -12,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT.parent / 'npu-nvme-results'
 
-def main():
+def publish():
     parser = argparse.ArgumentParser()
     parser.add_argument('--campaign', type=Path, default=Path('/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001'))
     args = parser.parse_args()
@@ -61,6 +62,13 @@ def main():
     if subprocess.run(['git', 'diff', '--cached', '--quiet'], cwd=WORK).returncode:
         subprocess.run(['git', 'commit', '-m', 'Record graph Top-K experiment implementation and progress'], cwd=WORK, check=True)
     subprocess.run(['git', 'push', 'origin', 'incremental-phase1-results'], cwd=WORK, check=True, timeout=120)
+
+
+def main():
+    # Queue completion and the live loop share a worktree and remote branch.
+    with (WORK / '.graph-topk-publish.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        publish()
 
 if __name__ == '__main__':
     if '--loop' in sys.argv:
