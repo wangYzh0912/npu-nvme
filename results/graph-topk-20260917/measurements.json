@@ -1866,6 +1866,80 @@
       "loss_matches_G0": true,
       "extra_peak_hbm_bytes": 8193980416,
       "increment_over_G1": 0.1596093863895418
+    },
+    {
+      "reference_only": false,
+      "compute_iterations": 0,
+      "name": "main-g6-serial-profile",
+      "role": "main",
+      "level": 6,
+      "layout": "serial",
+      "scan_fraction": 1.0,
+      "ratio": 0.1,
+      "diagnostic": true,
+      "warmup_steps": 12,
+      "steps": 3,
+      "seconds": 3.9844276988878846,
+      "training_seconds": 3.984289948,
+      "drain_seconds": 0.000137751,
+      "peak_hbm_bytes": 50397784064,
+      "post_restore_warmup_seconds": [
+        8.943021937,
+        0.765052857,
+        0.773041389,
+        0.742756008,
+        0.75316722,
+        0.715068848,
+        0.719148824,
+        0.77071891,
+        0.742873028,
+        0.752813528,
+        0.742169596,
+        0.750918221
+      ],
+      "numerical_loss": [
+        0.3926597535610199,
+        0.38036903738975525,
+        0.37138673663139343
+      ],
+      "maximum_first_step_seconds": 1.258330611,
+      "auxiliary_seconds": 0.162450052,
+      "score_oracle": true,
+      "actual_parallel_verified": false,
+      "step_seconds_rank0": {
+        "minimum": 1.252806199,
+        "median": 1.287755559,
+        "maximum": 1.419548924,
+        "all_steps": [
+          1.252806199,
+          1.287755559,
+          1.419548924
+        ]
+      },
+      "working_set": {
+        "candidate_blocks": 124976,
+        "global_W_R_input_bytes": 65523417088,
+        "reference_bytes_per_rank": [
+          8190427136,
+          8190427136,
+          8190427136,
+          8190427136
+        ],
+        "TP_fragments_per_rank": [
+          316940,
+          326156,
+          326156,
+          316940
+        ],
+        "selected_blocks": 12498
+      },
+      "board_memory_peak_mib": {
+        "0": 53717,
+        "1": 53720,
+        "2": 53720,
+        "3": 53720
+      },
+      "board_sampling_limits": "One-second sampling may miss short peaks; includes allocations outside framework allocator."
     }
   ]
 }
