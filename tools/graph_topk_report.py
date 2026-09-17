@@ -34,6 +34,7 @@ def build(campaign, output):
                 global_W_R_input_bytes=sum(r['geometry']['local_input_bytes'] for r in ranks),
                 reference_bytes_per_rank=[r['geometry']['local_reference_bytes'] for r in ranks],
                 TP_fragments_per_rank=[r['geometry']['tp_fragments'] for r in ranks],
+                internal_reduction_tiles=sum(p['elements']//p['unit'] for r in ranks for p in r['geometry']['parameters']),
                 selected_blocks=ranks[0]['output_check']['selected_count'] if cfg['level']>=6 else 0)
         if cfg['level']>=7:
             row['device_consumer']=dict(budgets=[r.get('consumer_budget') for r in ranks],
@@ -92,8 +93,8 @@ def build(campaign, output):
              '', '主预算 3%，参考 1%/5%。在稳定基线、输出校验及依赖验证完成前，不宣布预算通过。',
              '', '暂未获得的截止点等待、训练计算段变化、设备实际重叠和窗口 HBM 指标保持缺失，不用 Host 提交耗时代替。']
     text += ['', '## 扫描负载与预算', '',
-             '|模型|q|候选块|全局 W/R 输入 GB|TP 片段合计|3% 判定|',
-             '|---|---:|---:|---:|---:|---|']
+             '|模型|q|候选块|全局 W/R 输入 GB|TP 片段合计|内部归约 tile|3% 判定|',
+             '|---|---:|---:|---:|---:|---:|---|']
     for r in sorted(formal,key=lambda r:(r['role'],r['scan_fraction'])):
         if r['level']!=6 or r['ratio']!=.1:continue
         work=r['working_set']
@@ -101,7 +102,7 @@ def build(campaign, output):
         label={'above_budget_for_both_baselines':'对两次基线均超预算',
                'undetermined_baseline_variation':'未定：基线不足或波动',
                'measured_feasible_point':'已测可行点','above_budget':'超预算'}.get(assessment,assessment)
-        text.append(f"|{r['role']}|{r['scan_fraction']}|{work['candidate_blocks']}|{work['global_W_R_input_bytes']/1e9:.6f}|{sum(work['TP_fragments_per_rank'])}|{label}|")
+        text.append(f"|{r['role']}|{r['scan_fraction']}|{work['candidate_blocks']}|{work['global_W_R_input_bytes']/1e9:.6f}|{sum(work['TP_fragments_per_rank'])}|{work['internal_reduction_tiles']}|{label}|")
     text += ['', '表中 q<1 是跨层、跨参数类型的真实逻辑块子集；仍常驻完整参考。K 比例固定为候选块数的 10%，与 q 独立。曲线不预设单调，不外推未测负载。',
              '', '## 结论边界', '',
              '两次目标并行图未通过 MindSpore StepParallel 编译；因此本表仅报告串行图附加成本，不能回答有多少成本可以被下一步前向/反向隐藏。',
