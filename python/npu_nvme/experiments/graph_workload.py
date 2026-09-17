@@ -62,7 +62,7 @@ def run(options):
         source = Path(options['models'][options['role']])
         template = Path(mindformers.__file__).parent.parent / 'configs/qwen3/finetune_qwen3.yaml'
         config = MindFormerConfig(str(template))
-        config.output_dir = str(directory / 'framework')
+        config.output_dir = str(Path(options['output']) / 'framework')
         config.pretrained_model_dir = str(source)
         config.load_checkpoint = str(source)
         config.use_legacy = False
