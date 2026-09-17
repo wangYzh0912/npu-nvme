@@ -218,8 +218,16 @@ def run(options):
                 if len(set(map(int, indices))) != chain.k or np.any(indices < 0) or np.any(indices >= chain.count):
                     raise ValueError('invalid Top-K index set')
                 np.testing.assert_allclose(values, scores[indices], rtol=1e-6, atol=1e-6)
-                if np.any(values[:-1] < values[1:]) or values[-1] < np.partition(scores, -chain.k)[-chain.k] - 1e-5:
-                    raise ValueError('Top-K ordering or threshold mismatch')
+                threshold = float(np.partition(scores, -chain.k)[-chain.k])
+                order_violations = int(np.count_nonzero(values[:-1] < values[1:]))
+                report['topk_diagnostic'] = dict(sorted_requested=True,
+                    order_violations=order_violations, minimum_selected=float(values.min()),
+                    last_selected=float(values[-1]), cpu_kth_threshold=threshold,
+                    threshold_gap=float(values.min() - threshold))
+                if order_violations:
+                    raise ValueError('Top-K sorted=True output is not descending: ' + repr(report['topk_diagnostic']))
+                if values.min() < threshold - 1e-5:
+                    raise ValueError('Top-K selected set is below CPU threshold: ' + repr(report['topk_diagnostic']))
             from npu_nvme.experiments.graph_validation import check_scores
             report['score_oracle'] = check_scores(ms, chain, options['level'])
             report['output_check'] = dict(status='indices_and_values_checked', score_count=len(scores),
