@@ -81,8 +81,12 @@ def build(campaign, output):
             f"{1000*r['auxiliary_seconds']:.3f}" if r['auxiliary_seconds'] is not None else '—',
             f"{r['peak_hbm_bytes']/2**30:.3f}",str(r.get('loss_matches_G0','待定'))])+'|')
     if formal:
-        spreads=[r.get('baseline_spread') for r in formal if r.get('baseline_spread') is not None and sum(x['role']==r['role'] and x['level']==0 for x in formal)>=2]
-        text += ['', '当前同模型 G0 spread：'+(f'{100*max(spreads):.3f}%' if spreads else '待第二次基线')+'。超过 3% 时，减速预算结论标记为未定。']
+        for role in sorted(set(r['role'] for r in formal)):
+            baselines=[r for r in formal if r['role']==role and r['level']==0 and not r['reference_only']]
+            if len(baselines)>=2:
+                spread=100*baselines[0]['baseline_spread']
+                text += ['', f'{role} G0 spread：{spread:.3f}%。超过 3% 时不宣布预算通过；对两次基线均超预算的配置仍可排除。']
+            else:text += ['', f'{role} G0：待第二次独立基线。']
     text += ['', '每配置默认一次、必要时最多两次；4 个 rank 不作为 4 次独立重复。未完成和失败启动不进入上表。',
              '', 'G0 区间是相对两次独立基线的敏感性范围，不是统计置信区间。独立辅助时间在正式区间之外测量，不能直接等同训练关键路径增量。',
              '', '主预算 3%，参考 1%/5%。在稳定基线、输出校验及依赖验证完成前，不宣布预算通过。',
