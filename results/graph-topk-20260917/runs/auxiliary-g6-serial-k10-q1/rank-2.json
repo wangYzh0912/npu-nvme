@@ -1,0 +1,242 @@
+{
+  "status": "pass",
+  "rank": 2,
+  "losses": [
+    {
+      "step": 16,
+      "loss": 0.47678497433662415,
+      "begin_ns": 3552976379715394,
+      "end_ns": 3552977057959206
+    },
+    {
+      "step": 17,
+      "loss": 0.47035712003707886,
+      "begin_ns": 3552977063767709,
+      "end_ns": 3552977774437911
+    },
+    {
+      "step": 18,
+      "loss": 0.45638740062713623,
+      "begin_ns": 3552977780180824,
+      "end_ns": 3552978448906568
+    },
+    {
+      "step": 19,
+      "loss": 0.45059436559677124,
+      "begin_ns": 3552978454756182,
+      "end_ns": 3552979122728483
+    },
+    {
+      "step": 20,
+      "loss": 0.27022117376327515,
+      "begin_ns": 3552979128514196,
+      "end_ns": 3552979795889935
+    },
+    {
+      "step": 21,
+      "loss": 0.2523244619369507,
+      "begin_ns": 3552979801668608,
+      "end_ns": 3552980469804981
+    },
+    {
+      "step": 22,
+      "loss": 0.24251650273799896,
+      "begin_ns": 3552980475677284,
+      "end_ns": 3552981143215574
+    },
+    {
+      "step": 23,
+      "loss": 0.23613250255584717,
+      "begin_ns": 3552981149060097,
+      "end_ns": 3552981817358850
+    },
+    {
+      "step": 24,
+      "loss": 0.22410309314727783,
+      "begin_ns": 3552981823723815,
+      "end_ns": 3552982492956162
+    },
+    {
+      "step": 25,
+      "loss": 0.21361958980560303,
+      "begin_ns": 3552982498811775,
+      "end_ns": 3552983167333629
+    },
+    {
+      "step": 26,
+      "loss": 0.20472095906734467,
+      "begin_ns": 3552983173522184,
+      "end_ns": 3552983843293312
+    },
+    {
+      "step": 27,
+      "loss": 0.1889040619134903,
+      "begin_ns": 3552983849201116,
+      "end_ns": 3552984522383748
+    },
+    {
+      "step": 28,
+      "loss": 0.17014998197555542,
+      "begin_ns": 3552984528230151,
+      "end_ns": 3552985197659659
+    },
+    {
+      "step": 29,
+      "loss": 0.15995053946971893,
+      "begin_ns": 3552985203547392,
+      "end_ns": 3552985871941205
+    },
+    {
+      "step": 30,
+      "loss": 0.15216484665870667,
+      "begin_ns": 3552985877803329,
+      "end_ns": 3552986547131406
+    },
+    {
+      "step": 31,
+      "loss": 0.1450224667787552,
+      "begin_ns": 3552986553008339,
+      "end_ns": 3552987230128967
+    },
+    {
+      "step": 32,
+      "loss": 0.13875161111354828,
+      "begin_ns": 3552987236014581,
+      "end_ns": 3552987910817899
+    },
+    {
+      "step": 33,
+      "loss": 0.13283242285251617,
+      "begin_ns": 3552987916618662,
+      "end_ns": 3552988593089508
+    },
+    {
+      "step": 34,
+      "loss": 0.12002266943454742,
+      "begin_ns": 3552988599172582,
+      "end_ns": 3552989282851796
+    },
+    {
+      "step": 35,
+      "loss": 0.09489588439464569,
+      "begin_ns": 3552989289322922,
+      "end_ns": 3552989966263409
+    }
+  ],
+  "actual_overlap": "unverified",
+  "parallel_label": "requested_dependency_layout_only",
+  "framework_versions": {
+    "mindspore": "2.7.1",
+    "mindformers": "1.7.0"
+  },
+  "data_sha256": "da78ee37ff49bb7bd1f2c3a37b9612757100a2c38be0a9d02b72891945dd8504",
+  "parallel_mode": "semi_auto_parallel",
+  "geometry": {
+    "candidate_blocks": 61375,
+    "local_elements": 1005568000,
+    "local_input_bytes": 8044544000,
+    "local_reference_bytes": 4022272000,
+    "tp_fragments": 198405
+  },
+  "compute_control": {
+    "iterations": 0,
+    "working_elements": 16
+  },
+  "restore": {
+    "tensors": 949,
+    "identity": "5c1daef1489481e6ec80e7771e913bd437c13283b65e914ba1641eb9de5e0be4:auxiliary",
+    "verified_input_sha": true
+  },
+  "version_begin": 13,
+  "memory_start_bytes": 16100342784,
+  "begin_ns": 3552976374029521,
+  "training_end_ns": 3552989966269519,
+  "all_done_ns": 3552989966356710,
+  "memory_peak_bytes": 24924667392,
+  "version_end": 33,
+  "topk_diagnostic": {
+    "sorted_requested": true,
+    "implementation": "TopK selection followed by explicit device Sort because large-K Ascend TopK was observed unsorted",
+    "order_violations": 0,
+    "minimum_selected": 0.005440956447273493,
+    "last_selected": 0.005440956447273493,
+    "cpu_kth_threshold": 0.005440956447273493,
+    "threshold_gap": 0.0
+  },
+  "score_oracle": {
+    "status": "pass",
+    "indices": [
+      0,
+      9789,
+      12328,
+      30687,
+      61374
+    ],
+    "expected": [
+      0.004278545267879963,
+      0.005440956447273493,
+      0.01852269470691681,
+      0.004747421480715275,
+      0.0003443245659582317
+    ],
+    "actual": [
+      0.004278545267879963,
+      0.005440956447273493,
+      0.01852269470691681,
+      0.004747421480715275,
+      0.0003443245659582317
+    ],
+    "max_absolute_error": 0.0,
+    "oracle": "CPU FP64 summation of real TP fragments; independent of device segment reduction"
+  },
+  "output_check": {
+    "status": "indices_and_values_checked",
+    "score_count": 61375,
+    "selected_count": 6138,
+    "score_min": 0.0003443245659582317,
+    "score_max": 0.01852269470691681,
+    "sampled_indices": [
+      12328,
+      43880,
+      13080,
+      45420,
+      12320,
+      45800,
+      35240,
+      35317,
+      16160,
+      25982,
+      50420,
+      26100,
+      48880,
+      35315,
+      27550,
+      1140
+    ],
+    "sampled_values": [
+      0.01852269470691681,
+      0.015216397121548653,
+      0.0123579241335392,
+      0.011118550784885883,
+      0.010578494518995285,
+      0.009883820079267025,
+      0.009126674383878708,
+      0.008972357958555222,
+      0.008918920531868935,
+      0.00865813996642828,
+      0.008473082445561886,
+      0.008425732143223286,
+      0.008368711918592453,
+      0.008363397791981697,
+      0.008305600844323635,
+      0.00828548613935709
+    ],
+    "independent_score_oracle": "pass"
+  },
+  "standalone_auxiliary_ns": [
+    177850269,
+    170652620,
+    135022708
+  ],
+  "formal_contract": "twenty_updated_weight_detections"
+}
