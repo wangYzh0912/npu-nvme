@@ -48,6 +48,21 @@ def test_crash_before_publication_recovers_previous_generation(flush_phase):
     assert r.current['sequence']==1
 
 
+@pytest.mark.parametrize('point,sequence',[
+    ('after_payload_flush',1),('after_metadata_flush',1),('after_anchor_flush',2),
+])
+def test_named_post_flush_faults_have_a_single_recoverable_generation(point,sequence):
+    disk=CrashDisk();base=fresh(disk);base.format(region_id='unit');commit(base,1)
+    def injected(observed):
+        if observed==point:raise OSError(observed)
+    failing=Region(disk,offset=0,length=len(disk.data),retention=3,fault_hook=injected)
+    failing.mount()
+    with pytest.raises(OSError,match=point):commit(failing,2)
+    disk.crash();mounted=fresh(disk);mounted.mount()
+    assert mounted.current['sequence']==sequence
+    assert mounted.verify_payloads(mounted.current['state']['generations'][0])
+
+
 def test_corrupted_latest_anchor_falls_back_without_overwriting_payload():
     disk=CrashDisk();r=fresh(disk);r.format(region_id='unit');commit(r,1);commit(r,2)
     disk.data[(r.current['slot']+1)*BLOCK+5]^=1

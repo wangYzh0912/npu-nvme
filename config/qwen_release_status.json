@@ -24,6 +24,13 @@
     "storage": "SPDK raw NVMe",
     "restore_process": "fresh"
   },
+  "d2_validation_20260918": {
+    "candidate_fault_matrix": "pass",
+    "candidate_tp2_tp4_fresh_process_fixture": "pass",
+    "real_d1_to_d2_migration": "deferred_no_valid_d1_source_on_current_raw_device",
+    "evidence_root": "/models/npu_nvme_exp/user7-stack/d2-final-validation-20260918-001",
+    "scope": "validation region [1280,1408) GiB only; no power-loss or Qwen full-state claim"
+  },
   "acceptance_scope": {
     "single_npu": "transport only; no single-NPU Qwen workload claim",
     "multi_npu": "Qwen TP4 and deterministic TP2/TP4 checkpoint fixtures",

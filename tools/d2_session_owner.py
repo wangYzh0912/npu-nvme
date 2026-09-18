@@ -10,6 +10,7 @@ import subprocess
 import sys
 import threading
 import time
+import pwd
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'python'))
 from npu_nvme.storage.bindings import load_backend
@@ -29,6 +30,8 @@ def main():
     p.add_argument('--world-size',type=int,choices=[2,4],default=4)
     p.add_argument('--shm-id',type=int,required=True);p.add_argument('--step',type=int,default=8)
     p.add_argument('--strategy',type=Path);p.add_argument('--generation',type=int);p.add_argument('--timeout',type=int,default=7200)
+    p.add_argument('--region-config',type=Path,default=ROOT/'config/d2_qwen_region.json')
+    p.add_argument('--socket-owner',help='user allowed to connect to this owner socket')
     a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
     report=dict(status='running',pid=os.getpid(),operation=a.operation,world_size=a.world_size,
         library=str(a.library),library_sha256=hashlib.sha256(a.library.read_bytes()).hexdigest(),
@@ -38,7 +41,9 @@ def main():
     record();transport=None;connections={};listener=None
     try:
         if a.timeout<=0 or len(a.socket.encode())>=104:raise ValueError('session deadline/socket bounds')
-        registration=registration_from_config(ROOT/'config/d2_qwen_region.json')
+        registration=registration_from_config(a.region_config)
+        report['region_config']=str(a.region_config)
+        report['region_config_sha256']=hashlib.sha256(a.region_config.read_bytes()).hexdigest()
         for pci,driver in ((registration['pci_addr'],'uio_pci_generic'),(registration['protected_pci_addr'],'nvme')):
             if (Path('/sys/bus/pci/devices')/pci/'driver').resolve().name!=driver:raise ValueError('device binding differs')
         os.environ['SPDK_SHM_ID']=str(a.shm_id)
@@ -50,7 +55,10 @@ def main():
         region=Region(backend,offset=backend.base,length=backend.end-backend.base,retention=3)
         report['mount_errors']=region.mount()
         if region.header['region_id']!=registration['region_id']:raise ValueError('D2 identity differs')
-        listener=socket.socket(socket.AF_UNIX);listener.bind(a.socket);os.chmod(a.socket,0o600);listener.listen(a.world_size)
+        listener=socket.socket(socket.AF_UNIX);listener.bind(a.socket)
+        if a.socket_owner:
+            account=pwd.getpwnam(a.socket_owner);os.chown(a.socket,account.pw_uid,account.pw_gid)
+        os.chmod(a.socket,0o600);listener.listen(a.world_size)
         deadline=time.monotonic()+a.timeout
         (a.out/'ready.json').write_text(json.dumps(dict(socket=a.socket,epoch=a.epoch,pid=os.getpid())))
         for _ in range(a.world_size):

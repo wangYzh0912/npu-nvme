@@ -14,26 +14,40 @@ ROOT=Path(__file__).resolve().parents[2];sys.path[:0]=[str(ROOT),str(ROOT/'pytho
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--out',type=Path,required=True);p.add_argument('--shm-id',type=int,required=True)
-    p.add_argument('--step',type=int,default=3);a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
+    p.add_argument('--step',type=int);p.add_argument('--library',type=Path,required=True)
+    p.add_argument('--region-config',type=Path,required=True);a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
     os.environ['SPDK_SHM_ID']=str(a.shm_id)
     from npu_nvme.storage.bindings import load_backend
     from npu_nvme.storage.full_transport import FullTransport
-    from npu_nvme.d2.backend import RegisteredBackend,ReadOnlyV2
+    from npu_nvme.d2.backend import RegisteredBackend,ReadOnlyV2,registration_from_config,stage_config_from_config
     from npu_nvme.d2.format import Region
     from npu_nvme.d2.v2_migration import migrate
-    config=json.loads((ROOT/'config/d2_fault_region.json').read_text())
-    for pci,driver in ((config['pci_addr'],'uio_pci_generic'),(config['protected_pci_addr'],'nvme')):
+    config=stage_config_from_config(a.region_config,required_purpose='validation')
+    registration=registration_from_config(config,required_purpose='validation')
+    for pci,driver in ((registration['pci_addr'],'uio_pci_generic'),(registration['protected_pci_addr'],'nvme')):
         if (Path('/sys/bus/pci/devices')/pci/'driver').resolve().name!=driver:raise ValueError('binding differs')
-    transport=FullTransport(load_backend(),pci=config['pci_addr'],npu=-1,depth=4,chunk_size=4<<20,profiling_dir=a.out,role='host_owner')
-    report=dict(status='running',scope='strict D1 parser + real NVMe migration + fresh mount byte verification; no TP conversion')
+    transport=FullTransport(load_backend(a.library),pci=registration['pci_addr'],npu=-1,depth=4,chunk_size=4<<20,profiling_dir=a.out,role='host_owner')
+    report=dict(status='running',scope='strict D1 parser + real NVMe migration + fresh mount byte verification; no TP conversion',
+        region_config=str(a.region_config),region_config_sha256=hashlib.sha256(a.region_config.read_bytes()).hexdigest(),
+        library=str(a.library),library_sha256=hashlib.sha256(a.library.read_bytes()).hexdigest())
     def write():(a.out/'result.json').write_text(json.dumps(report,indent=2)+'\n')
     try:
         state=SimpleNamespace();transport.metadata.mount(state,transport.total_bytes,0)
-        record=state.meta_dict['checkpoints'][str(a.step)]
+        from npu_nvme.runtime.d1_schema import validate_record
+        candidates=[]
+        for key,record in state.meta_dict.get('checkpoints',{}).items():
+            try:
+                validate_record(record,state.layout)
+            except (TypeError,ValueError,KeyError):
+                continue
+            if a.step is None or record['state_step']==a.step:candidates.append((record['state_step'],record['generation'],str(key),record))
+        if not candidates:raise ValueError('no valid strict D1 FULL source record')
+        _,_,source_key,record=max(candidates)
+        report['source_checkpoint_key']=source_key;report['source_step']=record['state_step'];report['source_generation']=record['generation']
         header=transport.read(0,1<<20);(a.out/'source-header-before.bin').write_bytes(header)
         (a.out/'source-record.json').write_text(json.dumps(record,indent=2)+'\n')
-        backend=RegisteredBackend(transport,config,region_id=config['region_id'])
-        region=Region(backend,offset=backend.base,length=config['length'],retention=3);region.mount()
+        backend=RegisteredBackend(transport,registration,region_id=registration['region_id'])
+        region=Region(backend,offset=backend.base,length=registration['length'],retention=3);region.mount()
         if region.header['region_id']!=config['region_id']:raise ValueError('scratch identity differs')
         def aligned_read(offset,length):
             start=offset//4096*4096;end=(offset+length+4095)//4096*4096

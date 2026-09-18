@@ -9,8 +9,10 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--manifest',type=Path,required=True)
-    p.add_argument('--shm-base',type=int,required=True);a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
-    prefix=[sys.executable,'scripts/run_user_environment.py','--manifest',str(a.manifest),'--profile','old','--','python','tests/hardware/d2_fault_campaign.py']
+    p.add_argument('--region-config',type=Path,required=True);p.add_argument('--shm-base',type=int,required=True);a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
+    manifest=json.loads(a.manifest.read_text());library=manifest['profiles']['candidate']['library']
+    prefix=[sys.executable,'scripts/run_user_environment.py','--manifest',str(a.manifest),'--profile','candidate','--','python','tests/hardware/d2_fault_campaign.py',
+            '--library',library,'--region-config',str(a.region_config)]
     for phase in ('inspect','execute'):
         cmd=prefix+['--out',str(a.out/phase),'--shm-id',str(a.shm_base+(phase=='execute'))]
         if phase=='inspect':cmd+=['--inspect']

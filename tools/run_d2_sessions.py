@@ -14,19 +14,22 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--out',type=Path,required=True)
-    p.add_argument('--manifest',type=Path,required=True);p.add_argument('--shm-base',type=int,default=68000)
+    p.add_argument('--manifest',type=Path,required=True);p.add_argument('--region-config',type=Path,required=True)
+    p.add_argument('--shm-base',type=int,default=68000)
     a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
     manifest=json.loads(a.manifest.read_text());runs=[];counter=0
     sources={str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for directory in ('python','tools','tests/hardware') for f in (ROOT/directory).rglob('*.py')}
     (a.out/'sources.json').write_text(json.dumps(sources,indent=2))
     def write():
         (a.out/'result.json').write_text(json.dumps(dict(status='running',runs=runs),indent=2))
+    if os.geteuid()!=0:raise PermissionError('hardware rank fixture requires raw NVMe authorization')
     def launch(profile,args,log):
         command=[sys.executable,str(ROOT/'scripts/run_user_environment.py'),'--manifest',str(a.manifest),
                  '--profile',profile,'--','python',*args]
         stream=log.open('w');proc=subprocess.Popen(command,cwd=ROOT,stdout=stream,stderr=subprocess.STDOUT);stream.close()
         return proc
-    for profile in ('old','candidate'):
+    if json.loads(a.region_config.read_text()).get('purpose')!='validation':raise ValueError('session harness requires validation-only region')
+    for profile in ('candidate',):
         for world in (2,4):
             group=a.out/f'{profile}-tp{world}';group.mkdir()
             identity=group/'identity.json';identity.write_text(json.dumps(dict(scope='D2 fresh process fixture',world_size=world)))
@@ -41,6 +44,7 @@ def main():
                 args=['tools/d2_session_owner.py','--operation',operation,'--out',str(out/'owner'),
                     '--socket',path,'--library',lib,'--identity',str(identity),'--epoch',epoch,
                     '--request-id',epoch,'--world-size',str(world),'--shm-id',str(shm),'--timeout','300']
+                args+=['--region-config',str(a.region_config)]
                 if generation is not None:args+=['--generation',str(generation)]
                 owner=launch(profile,args,out/'owner.log');children=[owner]
                 record=dict(profile=profile,world_size=world,operation=operation,pids=[owner.pid],status='running');runs.append(record);write()

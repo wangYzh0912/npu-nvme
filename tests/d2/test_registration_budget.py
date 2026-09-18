@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 import pytest
-from npu_nvme.d2.backend import RegisteredBackend, registration_from_config
+from npu_nvme.d2.backend import RegisteredBackend, registration_from_config, stage_config_from_config
 from tools.qwen_resource_plan import plan
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -18,6 +18,13 @@ def test_registered_formal_extent_accepts_exact_end_and_rejects_escape():
     for offset in (backend.base-4096,backend.end):
         with pytest.raises(ValueError):backend.write(offset,b'x'*4096)
     assert writes==[(backend.end-4096,4096)]
+
+
+def test_validation_region_requires_its_explicit_purpose():
+    config=ROOT/'config/d2_validation_region.json'
+    validation=stage_config_from_config(config,required_purpose='validation')
+    assert validation['offset_bytes']==1280<<30 and validation['length_bytes']==128<<30
+    with pytest.raises(ValueError):stage_config_from_config(ROOT/'config/d2_qwen_region.json',required_purpose='validation')
 
 
 def test_socket_budget_counts_private_rank_pools_and_one_pin():

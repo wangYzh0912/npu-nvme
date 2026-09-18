@@ -62,10 +62,13 @@ indirection. Passing attempt 004 directly to `--reuse-multicycle` therefore
 rejects reuse and reruns the groups. Supporting chained evidence reuse remains
 a later convenience improvement. Repeated timing always runs again.
 
-Additional deferred hardware validation includes the complete D2 commit-fault
-and V2 offline-migration matrices, and injected rank disconnect/owner failure
-under the final candidate environment. Existing normal-path results and CPU
-fault tests do not replace those hardware cases.
+The candidate D2 commit-fault matrix and TP2/TP4 fresh-process rank fixture
+passed on 2026-09-18. Their evidence and exact scope are recorded in
+`docs/plans/D2_FINAL_VALIDATION_20260918.md`. The real V2 offline-migration
+acceptance remains deferred because the current raw device has no valid strict
+D1 source superblock. It requires a preserved D1 source image; do not format
+the low-address region to manufacture it. Injected multi-process rank
+disconnect/owner-failure hardware campaigns also remain deferred.
 
 ## Later product work
 

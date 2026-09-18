@@ -8,20 +8,36 @@ from pathlib import Path
 import json
 
 
-def registration_from_config(config):
-    """Translate a stage configuration into the one checked backend contract."""
+_STAGE_FIELDS = {'schema_version','pci','protected_pci_addr','region_id','write_authorized',
+                 'offset_bytes','length_bytes','chunk_bytes','retention','transport','owner','ranks','npu_ids'}
+
+
+def stage_config_from_config(config, *, required_purpose=None):
+    """Load a bounded D2 stage configuration before any native I/O.
+
+    Validation-only callers must name the validation purpose explicitly.  This
+    prevents a fault harness from silently falling back to the formal Qwen
+    extent when its command line or configuration evolves.
+    """
     if isinstance(config, (str, Path)):
         config = json.loads(Path(config).read_text())
-    required = {'schema_version','pci','protected_pci_addr','region_id','write_authorized',
-                'offset_bytes','length_bytes','chunk_bytes','retention','transport','owner','ranks','npu_ids'}
-    if set(config) != required or config['schema_version'] != 1:
+    allowed = _STAGE_FIELDS | {'purpose'}
+    if set(config) not in (_STAGE_FIELDS, allowed) or config['schema_version'] != 1:
         raise ValueError('invalid D2 stage configuration')
+    if required_purpose is not None and config.get('purpose') != required_purpose:
+        raise ValueError('D2 configuration purpose differs')
     if config['transport'] != 'socket_host_bridge' or config['owner'] != 'single_spdk_nvme_owner':
         raise ValueError('unsupported D2 transport/owner')
     if config['ranks'] != [0,1,2,3] or config['npu_ids'] != [0,1,2,3]:
         raise ValueError('D2 Qwen requires explicit TP4 mapping')
     if config['retention'] != 3 or config['chunk_bytes'] not in (1<<20,4<<20,16<<20):
         raise ValueError('invalid D2 retention/chunk configuration')
+    return dict(config)
+
+
+def registration_from_config(config, *, required_purpose=None):
+    """Translate a checked stage configuration into the backend contract."""
+    config = stage_config_from_config(config, required_purpose=required_purpose)
     return dict(schema_version=1,pci_addr=config['pci'],protected_pci_addr=config['protected_pci_addr'],
                 region_id=config['region_id'],offset=config['offset_bytes'],length=config['length_bytes'],
                 write_authorized=config['write_authorized'],format='D2')
@@ -52,6 +68,7 @@ class RegisteredBackend:
         return b''.join(self.transport.read(offset+i,min(self.chunk,length-i)) for i in range(0,length,self.chunk))
 
     def write(self,offset,raw):
+        raw=bytes(raw)
         self._check(offset,len(raw))
         for i in range(0,len(raw),self.chunk):self.transport.write(offset+i,raw[i:i+self.chunk])
 

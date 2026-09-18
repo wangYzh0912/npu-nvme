@@ -121,12 +121,18 @@ class Region:
     manifest/catalog flush -> alternate anchor flush. Failures poison this owner;
     an explicit fresh mount resolves uncertain anchor durability.
     """
-    def __init__(self,backend,*,offset,length,retention=2,page_bytes=65536,metadata_budget_bytes=MAX_JSON):
+    def __init__(self,backend,*,offset,length,retention=2,page_bytes=65536,metadata_budget_bytes=MAX_JSON,fault_hook=None):
         if type(offset) is not int or type(length) is not int or offset<0 or offset>2**64-length or offset%BLOCK or length%BLOCK or length<16*BLOCK or type(retention) is not int or retention not in (2,3):raise ValueError('region geometry')
         self.backend=backend;self.base=offset;self.end=offset+length;self.data_base=offset+3*BLOCK
         self.local_metadata_budget=metadata_budget_bytes
+        if fault_hook is not None and not callable(fault_hook):raise ValueError('fault hook')
         self.retention=retention;self.codec=PageCodec(page_bytes,metadata_budget_bytes);self.lock=threading.RLock()
         self.roots=[None,None];self.current=None;self.pins={};self.pending=None;self.poisoned=False
+        # Test-only injection point. Production construction leaves it unset.
+        self.fault_hook=fault_hook
+
+    def _fault(self,point):
+        if self.fault_hook is not None:self.fault_hook(point)
 
     def format(self,*,region_id,features=()):
         # Caller must authorize this independently registered extent. Never
@@ -311,7 +317,7 @@ class Region:
         with self.lock:
             if not self.pending or self.poisoned:raise RuntimeError('no writable transaction')
             try:
-                self.backend.flush()
+                self.backend.flush();self._fault('after_payload_flush')
                 rows=json.loads(canonical(list(rows)))
                 inherited=json.loads(canonical(list(inherited_payloads)))
                 if inherited and SHARED_PAYLOAD not in self.header['required_flags']:
@@ -339,11 +345,11 @@ class Region:
                 catalog_bytes=align(HEADER.size+len(canonical(disk_state)))
                 if catalog_bytes>self.codec.max_bytes:raise ValueError('catalog aggregate budget exceeded')
                 catalog=self._put(pack('catalog',disk_state,catalog_bytes))
-                self.backend.flush()
+                self.backend.flush();self._fault('after_metadata_flush')
                 slot=1-self.current['slot'] if self.current else 0
                 anchor=dict(sequence=sequence,region_id=self.header['region_id'],catalog=catalog)
                 self.backend.write(self.base+(slot+1)*BLOCK,pack('anchor',anchor,BLOCK))
-                self.backend.flush()
+                self.backend.flush();self._fault('after_anchor_flush')
                 root=dict(slot=slot,sequence=sequence,catalog=catalog,state=state)
                 self.roots[slot]=root;self.current=root;self.pending=None
                 return receipt

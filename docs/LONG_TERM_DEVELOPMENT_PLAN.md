@@ -1444,3 +1444,18 @@ The mainline supported workload is fixed Qwen TP4 on NPU 0--3. Single-device
 transport evidence does not advertise a single-device Qwen workload. Incremental,
 Qwen live, reshard, candidate GPT-2/XL, multi-owner and power-loss claims remain
 outside this publication.
+
+## D2 validation update, 2026-09-18
+
+The candidate ABI2 D2-format controlled fault matrix and the small deterministic
+TP2/TP4 D2-rank fresh-process fixture passed in the separately registered
+validation range `[1280, 1408) GiB`. The rank fixture exercised sharded,
+replicated and per-rank-control payloads, all-rank commit, and all-rank restore
+ready before release. The formal Qwen D2 range `[256, 1280) GiB` was not used.
+
+This advances the D2 implementation evidence but does not close the full D2
+stage: the current raw device has no valid strict D1 superblock, so a real
+D1-to-D2 migration acceptance requires a preserved D1 source image. Injected
+multi-process disconnect/owner-failure cases and Qwen full-state E2 remain
+separate work. Exact commands, hashes and evidence paths are in
+`docs/plans/D2_FINAL_VALIDATION_20260918.md`.

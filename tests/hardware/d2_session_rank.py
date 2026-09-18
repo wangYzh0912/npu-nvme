@@ -26,32 +26,44 @@ def main():
     p.add_argument('--out',type=Path,required=True)
     a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
     deadline=time.monotonic()+300;backend=load_backend(a.library);executor=None;device=C.c_void_p();sock=socket.socket(socket.AF_UNIX)
-    size=(4<<20)+8197;expected=bytes((i*131+a.rank)&255 for i in range(size))
+    sizes=dict(sharded=(4<<20)+8197,replicated=4099,per_rank=2051)
+    starts={};cursor=0
+    for name,size in sizes.items():starts[name]=cursor;cursor+=size
+    expected=dict(
+        sharded=bytes((i*131+a.rank)&255 for i in range(sizes['sharded'])),
+        replicated=bytes((i*17+9)&255 for i in range(sizes['replicated'])),
+        per_rank=bytes((i*19+a.rank*7)&255 for i in range(sizes['per_rank'])),
+    )
     affinity_before=sorted(os.sched_getaffinity(0))
     try:
         executor=RankCopyExecutor(backend,dict(chunk_bytes=4<<20,shm_id=a.shm_id),npu_id=a.rank,depth=4,timeout_ms=120000)
         assert sorted(os.sched_getaffinity(0))==affinity_before
-        assert backend.acl_lib.aclrtMalloc(C.byref(device),size,0)==0
-        initial=C.create_string_buffer(expected if a.operation=='save' else bytes(size),size)
-        assert backend.acl_lib.aclrtMemcpy(device,size,initial,size,1)==0
+        assert backend.acl_lib.aclrtMalloc(C.byref(device),cursor,0)==0
+        initial=C.create_string_buffer(b''.join(expected[name] for name in sizes) if a.operation=='save' else bytes(cursor),cursor)
+        assert backend.acl_lib.aclrtMemcpy(device,cursor,initial,cursor,1)==0
         sock.connect(a.socket);wire.send(sock,dict(kind='connect',rank=a.rank,epoch=a.epoch),b'',deadline=deadline,max_payload=0)
         session=RankSession(sock,rank=a.rank,epoch=a.epoch,identity=json.loads(a.identity.read_text()),
-            schema=[dict(rank=a.rank,name='tensor',shape=[size],dtype='uint8',partition='sharded',bytes=size)],chunk_bytes=4<<20,deadline=deadline)
+            schema=[
+                dict(rank=a.rank,name='per_rank',shape=[sizes['per_rank']],dtype='uint8',partition='per_rank_control',bytes=sizes['per_rank']),
+                dict(rank=a.rank,name='replicated',shape=[sizes['replicated']],dtype='uint8',partition='replicated',bytes=sizes['replicated']),
+                dict(rank=a.rank,name='sharded',shape=[sizes['sharded']],dtype='uint8',partition='sharded',bytes=sizes['sharded']),
+            ],chunk_bytes=4<<20,deadline=deadline)
         if a.operation=='save':
             @contextmanager
             def read(name,offset,length):
-                with executor.d2h(device.value+offset,length,owners=(device,)) as data:yield data
+                with executor.d2h(device.value+starts[name]+offset,length,owners=(device,)) as data:yield data
             receipt=session.save(read,dict(cursor=8,rank=a.rank),step=8)
         else:
-            def apply(name,offset,data,digest):executor.h2d(device.value+offset,data,expected_sha256=digest,owners=(device,))
+            def apply(name,offset,data,digest):executor.h2d(device.value+starts[name]+offset,data,expected_sha256=digest,owners=(device,))
             def controls(value,step):
                 assert value==dict(cursor=8,rank=a.rank) and step==8
-                h=hashlib.sha256()
-                for offset in range(0,size,4<<20):
-                    with executor.d2h(device.value+offset,min(4<<20,size-offset),owners=(device,)) as data:h.update(data)
-                assert h.hexdigest()==hashlib.sha256(expected).hexdigest()
+                for name,size in sizes.items():
+                    h=hashlib.sha256()
+                    for offset in range(0,size,4<<20):
+                        with executor.d2h(device.value+starts[name]+offset,min(4<<20,size-offset),owners=(device,)) as data:h.update(data)
+                    assert h.hexdigest()==hashlib.sha256(expected[name]).hexdigest()
             receipt=session.restore(apply,controls)
-        (a.out/'result.json').write_text(json.dumps(dict(status='pass',receipt=receipt,operation=a.operation,rank=a.rank,bytes=size,cpu_affinity=affinity_before)))
+        (a.out/'result.json').write_text(json.dumps(dict(status='pass',receipt=receipt,operation=a.operation,rank=a.rank,bytes=sum(sizes.values()),schema=list(sizes),cpu_affinity=affinity_before)))
     finally:
         sock.close()
         if executor and not executor.close():
