@@ -1459,3 +1459,20 @@ D1-to-D2 migration acceptance requires a preserved D1 source image. Injected
 multi-process disconnect/owner-failure cases and Qwen full-state E2 remain
 separate work. Exact commands, hashes and evidence paths are in
 `docs/plans/D2_FINAL_VALIDATION_20260918.md`.
+
+## D2 implementation update, 2026-09-20
+
+Strict D1 file-image migration to the real registered validation region and
+separate-process verification now pass. Validation tools enforce the exact
+physical registration, and duplicate session saves return the committed
+receipt without another write. D1/D2 software regression and independent
+process/socket failure tests pass; TP2/TP4 hardware save/restart fixtures and
+the seven-case NVMe fault matrix have been rerun successfully.
+
+The formal Qwen region currently fails read-only metadata inspection with
+`invalid page header`; historical on-media state must not be advertised as
+recoverable. No formal-region writes were made in this campaign. Next work is
+raw-writer boundary reconciliation, explicit region rebuild and fresh Qwen
+acceptance, followed by NPU/DMA process-failure validation. Full D2/E2 closure
+is not claimed. Evidence and remaining scope:
+`docs/plans/D2_COMPLETION_20260920.md`.

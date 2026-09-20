@@ -1,5 +1,9 @@
 # D2 final validation - 2026-09-18
 
+Follow-up: migration and process-failure results, plus the current formal-region
+inspection failure, are recorded in `D2_COMPLETION_20260920.md`. This document
+retains the 2026-09-18 evidence boundary.
+
 Candidate ABI2 validation used only `0000:83:00.0` range `[1280, 1408) GiB`.
 `0000:84:00.0` and the formal Qwen range `[256, 1280) GiB` were not opened by
 the fault or rank harnesses. `config/d2_validation_region.json` carries the

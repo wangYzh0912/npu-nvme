@@ -1,0 +1,70 @@
+{
+  "status": "pass",
+  "closed": true,
+  "scope": "strict D1 offline migration; no historical Qwen/TP conversion claim",
+  "library_sha256": "ba6dc8156be8d1f9c353d309e881afe6e0391916471be6152df390aa13c4d2b7",
+  "region_config_sha256": "9560a2ccdb73cf467d4c0f95563657bcec96a8a84fb85382b2f7a4f8a116d4b1",
+  "source_checkpoint_key": "generation_3",
+  "source_step": 12,
+  "source_generation": 3,
+  "source_before": "b9150979595627d87854d40e9fdb206c31a5667f077c4976d2552a47f944e9e4",
+  "receipt": {
+    "request_id": "migration-migration",
+    "identity": {
+      "source_manifest_sha256": "26a3bfaecd376d07be72adb1a6d05a1f78ccbfa310346d45965eb5022cb84987",
+      "spec": {
+        "applicability": {
+          "data_cursor": "required",
+          "loss_scale": "required",
+          "model": "required",
+          "optimizer": "required",
+          "rng": "required",
+          "scheduler": "not_applicable:fixed LR"
+        },
+        "control_names": [
+          "data_cursor",
+          "global_step",
+          "loss_scale",
+          "mindspore_rng",
+          "mindspore_seed",
+          "numpy_rng",
+          "python_rng"
+        ],
+        "identity": {
+          "model": "strict-D1-host-fixture",
+          "optimizer": "adam-fixture",
+          "world_size": 1
+        },
+        "parameters": {
+          "model/weight": {
+            "dtype": "float32",
+            "shape": [
+              1050625
+            ],
+            "size": 4202500
+          },
+          "optimizer/m": {
+            "dtype": "float32",
+            "shape": [
+              1050625
+            ],
+            "size": 4202500
+          },
+          "optimizer/v": {
+            "dtype": "float32",
+            "shape": [
+              1050625
+            ],
+            "size": 4202500
+          }
+        }
+      }
+    },
+    "generation": 13
+  },
+  "source_unchanged": true,
+  "fields": 10,
+  "generation": 13,
+  "verification_only": false,
+  "logical_bytes": 12607951
+}

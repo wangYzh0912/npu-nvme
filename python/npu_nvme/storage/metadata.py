@@ -7,71 +7,81 @@ from .format import pack_metadata, unpack_metadata, pack_superblock, unpack_supe
 from .layout import SUPERBLOCK_OFFSET, META_SLOT_A_OFFSET, META_SLOT_B_OFFSET, META_SLOT_BYTES
 
 
+def mount_readonly(reader, total_bytes):
+    """Parse a bounded V2 image using the same commit selection as native mount."""
+    from npu_nvme.runtime.commit import MetadataState
+    state = MetadataState()
+    def read_exact(offset, size):
+        if offset < 0 or size <= 0 or offset > total_bytes-size:
+            raise ValueError('V2 metadata exceeds source')
+        raw = reader(offset, size)
+        if len(raw) != size:
+            raise ValueError('short V2 metadata read')
+        return raw
+    try:
+        state.layout = unpack_superblock(read_exact(SUPERBLOCK_OFFSET, 4096))
+    except ValueError as error:
+        raise RuntimeError(
+            f"Superblock verification failed: {error}. "
+            "Select a verified strict D1 source; migration never initializes it.") from error
+    if state.layout.total_bytes != total_bytes:
+        raise RuntimeError("superblock capacity does not match NVMe capacity")
+    sb_active_meta_slot = state.layout.active_meta_slot
+    sb_generation = state.layout.generation
+    state.active_meta_slot = sb_active_meta_slot
+    state.metadata_generation = sb_generation
+    state.stack_start_bytes = state.layout.full_base
+
+    valid = []
+    for slot, target_offset in enumerate((META_SLOT_A_OFFSET,
+                                           META_SLOT_B_OFFSET)):
+        try:
+            generation, payload = unpack_metadata(read_exact(target_offset, META_SLOT_BYTES))
+            valid.append((generation, slot, payload))
+        except (ValueError, OSError, json.JSONDecodeError):
+            continue
+    # The superblock is the commit point.  A valid-looking inactive
+    # replica may be a torn/future write and must not become visible just
+    # because it has a larger generation.  The designated slot must
+    # match the superblock generation; the other slot is only a usable
+    # previous committed replica.
+    committed = [item for item in valid
+                 if item[1] == sb_active_meta_slot
+                 and item[0] == sb_generation]
+    if committed:
+        generation, slot, payload = committed[0]
+    else:
+        previous = [item for item in valid
+                    if item[1] != sb_active_meta_slot
+                    and item[0] < sb_generation]
+        if not previous:
+            raise RuntimeError(
+                "no metadata replica matches the committed superblock")
+        generation, slot, payload = max(previous, key=lambda item: item[0])
+    state.metadata_generation = generation
+    state.active_meta_slot = slot
+    state.meta_dict = payload
+    state.layout = replace(state.layout, generation=generation,
+                          active_meta_slot=slot)
+    return state
+
+
 class MetadataIO:
     def __init__(self, binding, context=None):
         self.binding = binding
         self.ctx = context
 
     def mount(self, state, total_bytes, rank_id):
-        sb_buf = ctypes.create_string_buffer(4096)
-        rc = self.binding.npu_nvme_sync_meta_io(
-            self.ctx, SUPERBLOCK_OFFSET, 4096, 1,
-            ctypes.c_void_p(ctypes.addressof(sb_buf)))
-        if rc != 0:
-            raise RuntimeError("Failed to read Superblock.")
-
-        try:
-            state.layout = unpack_superblock(sb_buf.raw)
-        except ValueError as error:
-            raise RuntimeError(
-                f"Superblock verification failed: {error}. "
-                "Run format_npu_disk.py with the V2 layout to initialize the disk.") from error
-        if state.layout.total_bytes != total_bytes:
-            raise RuntimeError("superblock capacity does not match NVMe capacity")
-        sb_active_meta_slot = state.layout.active_meta_slot
-        sb_generation = state.layout.generation
-        state.active_meta_slot = sb_active_meta_slot
-        state.metadata_generation = sb_generation
-        state.stack_start_bytes = state.layout.full_base
-
-        valid = []
-        for slot, target_offset in enumerate((META_SLOT_A_OFFSET,
-                                               META_SLOT_B_OFFSET)):
-            meta_buf = ctypes.create_string_buffer(META_SLOT_BYTES)
-            rc = self.binding.npu_nvme_sync_meta_io(
-                self.ctx, target_offset, META_SLOT_BYTES, 1,
-                ctypes.c_void_p(ctypes.addressof(meta_buf)))
+        def read(offset, size):
+            buffer = ctypes.create_string_buffer(size)
+            rc = self.binding.npu_nvme_sync_meta_io(self.ctx, offset, size, 1,
+                ctypes.c_void_p(ctypes.addressof(buffer)))
             if rc != 0:
-                continue
-            try:
-                generation, payload = unpack_metadata(meta_buf.raw)
-                valid.append((generation, slot, payload))
-            except (ValueError, json.JSONDecodeError):
-                continue
-        # The superblock is the commit point.  A valid-looking inactive
-        # replica may be a torn/future write and must not become visible just
-        # because it has a larger generation.  The designated slot must
-        # match the superblock generation; the other slot is only a usable
-        # previous committed replica.
-        committed = [item for item in valid
-                     if item[1] == sb_active_meta_slot
-                     and item[0] == sb_generation]
-        if committed:
-            generation, slot, payload = committed[0]
-        else:
-            previous = [item for item in valid
-                        if item[1] != sb_active_meta_slot
-                        and item[0] < sb_generation]
-            if not previous:
-                raise RuntimeError(
-                    "no metadata replica matches the committed superblock")
-            generation, slot, payload = max(previous, key=lambda item: item[0])
-        state.metadata_generation = generation
-        state.active_meta_slot = slot
-        state.meta_dict = payload
-        state.layout = replace(state.layout, generation=generation,
-                              active_meta_slot=slot)
-
+                raise OSError(f'metadata read failed (rc={rc})')
+            return buffer.raw
+        mounted = mount_readonly(read, total_bytes)
+        state.__dict__.update(mounted.__dict__)
+        generation, slot = state.metadata_generation, state.active_meta_slot
         print(f"[Rank {rank_id}] FileSystem Mounted. "
               f"V{2} generation={generation} "
               f"Active Slot: {'A' if state.active_meta_slot == 0 else 'B'}")

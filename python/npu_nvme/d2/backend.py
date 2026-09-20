@@ -26,6 +26,11 @@ def stage_config_from_config(config, *, required_purpose=None):
         raise ValueError('invalid D2 stage configuration')
     if required_purpose is not None and config.get('purpose') != required_purpose:
         raise ValueError('D2 configuration purpose differs')
+    if required_purpose == 'validation':
+        actual = tuple(config[k] for k in ('pci', 'protected_pci_addr', 'region_id', 'offset_bytes', 'length_bytes'))
+        expected = ('0000:83:00.0', '0000:84:00.0', 'd2-validation-1280g-128g', 1280 << 30, 128 << 30)
+        if actual != expected or config['write_authorized'] is not True:
+            raise ValueError('validation physical registration differs')
     if config['transport'] != 'socket_host_bridge' or config['owner'] != 'single_spdk_nvme_owner':
         raise ValueError('unsupported D2 transport/owner')
     if config['ranks'] != [0,1,2,3] or config['npu_ids'] != [0,1,2,3]:

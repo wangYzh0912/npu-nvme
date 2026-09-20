@@ -10,10 +10,19 @@ def migrate(*,source,record,destination,request_id,identity,chunk_bytes,source_l
     if type(chunk_bytes) is not int or chunk_bytes<=0 or chunk_bytes%4096:raise ValueError('chunk geometry')
     # V2 source and D2 destination may share the authorized physical device.
     # Reject overlap before admitting any destination write.
-    for info in record['params'].values():
-        start=info['offset'];end=start+(info['size']+4095)//4096*4096
-        if start<destination.end and destination.base<end:raise ValueError('V2 source overlaps D2 destination')
-    replay=destination.begin(request_id,identity)
+    if getattr(source, 'storage_identity', ('raw',))[0] != 'file':
+        extents = [(info['offset'], (info['size']+4095)//4096*4096) for info in record['params'].values()]
+        if source_layout is not None:
+            extents += [(0, source_layout.full_end), (source_layout.delta_base, source_layout.delta_bytes)]
+        for start, length in extents:
+            if start < destination.end and destination.base < start+length:
+                raise ValueError('V2 source overlaps D2 destination')
+    from .region_budget import region_budget
+    budget = region_budget(state_bytes=sum(v['size'] for v in record['params'].values()),
+        descriptor_count=sum((v['size']+chunk_bytes-1)//chunk_bytes for v in record['params'].values()),
+        page_bytes=destination.codec.page_bytes,retention=destination.retention,active_pins=0)
+    reserve=(budget['per_generation_upper_bytes']+4*destination.codec.page_bytes+4095)//4096*4096
+    replay=destination.begin(request_id,identity,reserve_bytes=reserve)
     if replay is not None:return replay
     rows=[];whole_state=hashlib.sha256()
     try:

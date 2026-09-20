@@ -65,10 +65,18 @@ a later convenience improvement. Repeated timing always runs again.
 The candidate D2 commit-fault matrix and TP2/TP4 fresh-process rank fixture
 passed on 2026-09-18. Their evidence and exact scope are recorded in
 `docs/plans/D2_FINAL_VALIDATION_20260918.md`. The real V2 offline-migration
-acceptance remains deferred because the current raw device has no valid strict
-D1 source superblock. It requires a preserved D1 source image; do not format
-the low-address region to manufacture it. Injected multi-process rank
-disconnect/owner-failure hardware campaigns also remain deferred.
+acceptance subsequently passed using an independently generated strict D1
+image on 2026-09-20, including separate-process remount and byte comparison.
+See `docs/plans/D2_COMPLETION_20260920.md`. This is not historical Qwen recovery.
+Real process/socket disconnect, owner exit and control rejection passed on a
+durable file backend. NPU/DMA fault injection remains deferred.
+
+The formal Qwen region failed read-only metadata inspection on 2026-09-20
+(`invalid page header`). Its historical checkpoints are not currently usable.
+Before another Qwen acceptance, reconcile all raw writers and preserve the
+diagnostic evidence, then explicitly rebuild the formal region and run a fresh
+save/restart/oracle comparison. Do not resume from old catalogs or infer media
+integrity from previously passing training evidence.
 
 ## Later product work
 

@@ -45,6 +45,9 @@ def test_save_fresh_mount_restore(world):
     run('save',r)
     fresh=Region(disk,offset=0,length=len(disk.data),retention=3);assert fresh.mount()==[]
     run('restore',fresh)
+    sequence=fresh.current['sequence']
+    run('save',fresh)
+    assert fresh.current['sequence']==sequence and fresh.pending is None
 
 
 def test_bad_chunk_wakes_idle_peer_without_waiting_deadline():

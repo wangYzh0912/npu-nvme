@@ -1,0 +1,42 @@
+{
+  "status": "pass",
+  "cases": [
+    {
+      "case": "after_payload_flush",
+      "status": "pass",
+      "selected": 1
+    },
+    {
+      "case": "after_metadata_flush",
+      "status": "pass",
+      "selected": 1
+    },
+    {
+      "case": "after_anchor_flush",
+      "status": "pass",
+      "selected": 2
+    },
+    {
+      "case": "retry-and-expired",
+      "status": "pass"
+    },
+    {
+      "case": "reader-pin-retention",
+      "status": "pass"
+    },
+    {
+      "case": "anchor-fallback",
+      "status": "pass"
+    },
+    {
+      "case": "no-space",
+      "status": "pass"
+    }
+  ],
+  "scope": "real registered NVMe controlled flush failures/corruption; no power-loss claim",
+  "region_config": "config/d2_validation_region.json",
+  "region_config_sha256": "9560a2ccdb73cf467d4c0f95563657bcec96a8a84fb85382b2f7a4f8a116d4b1",
+  "library": "/models/npu_nvme_exp/user7-stack/qwen-release-runtime-20260916-001/build/libnpu_nvme.so.2.0",
+  "library_sha256": "ba6dc8156be8d1f9c353d309e881afe6e0391916471be6152df390aa13c4d2b7",
+  "header_sha256": "cfd17ec563477f4b52e5f84a134bcd6d69e12cf58b4691e2c4fd007aed5c3360"
+}

@@ -79,7 +79,18 @@ class OwnerSession:
             page_bytes=self.region.codec.page_bytes,retention=self.region.retention,active_pins=0,
             control_bytes=self.world*wire.MAX_CONTROL)
         reserve=(budget['per_generation_upper_bytes']+4*self.region.codec.page_bytes+4095)//4096*4096
-        self.region.begin(self.request,self.identity,reserve_bytes=reserve)
+        replay=self.region.begin(self.request,self.identity,reserve_bytes=reserve)
+        if replay is not None:
+            # A receipt can outlive its retained manifest. Never guess that a
+            # changed request has the same state after the manifest expires.
+            with self.region.selected(replay['generation']) as selected:
+                if selected['step'] != step or selected['topology'] != self.topology:
+                    raise ValueError('replayed request step/topology differs')
+                rows=list(self.region.codec.read(self.region.backend,selected['pages'],self.region.data_base,self.region.end))
+                manifest_schema.validate(rows,expected,world_size=self.world,chunk_bytes=self.chunk)
+            for rank in self.connections:
+                self.send(rank,dict(kind='committed',step=step,receipt=replay))
+            return replay
         for rank in self.connections:self.send(rank,dict(kind='admitted',step=step,request_id=self.request))
         return RankService(collective,self.region,wire,max_payload=self.chunk,deadline=self.deadline,
                            tensor_schema=expected).run(self.connections,step=step,topology=self.topology)
@@ -122,6 +133,11 @@ class RankSession:
     def hello(self,operation):self.send(dict(kind='hello',rank=self.rank,epoch=self.epoch,identity=self.identity,schema=self.schema,operation=operation))
     def save(self,read_chunk,controls,*,step):
         self.hello('save');admission,payload=self.receive()
+        if not payload and admission.get('kind')=='committed':
+            receipt=admission.get('receipt',{})
+            if admission.get('step')!=step or receipt.get('identity')!=self.identity or receipt.get('replayed') is not True:
+                raise ValueError('replayed commit identity differs')
+            return receipt
         if payload or admission.get('kind')!='admitted' or admission.get('step')!=step:raise ValueError('save admission differs')
         request=admission['request_id'];lease=0
         for tensor in sorted(self.schema,key=lambda v:v['name']):
