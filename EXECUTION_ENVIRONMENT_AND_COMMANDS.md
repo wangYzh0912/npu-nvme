@@ -99,6 +99,12 @@ Raw access is limited to PCI device `0000:83:00.0`. The Qwen D2 region begins
 at 256 GiB and has length 1 TiB. Device `0000:84:00.0` contains the protected
 `/models` filesystem and must not be rebound or formatted.
 
+The formal region was rebuilt and reaccepted on 2026-09-23. Use the new
+catalog identified in `docs/plans/QWEN_REGION_RECOVERY_20260923.md`; older
+catalogs are not valid recovery inputs. Whole-device test authorization is
+disabled in this branch. Older dirty worktrees still have overlapping raw
+experiment configurations and must not run against the retained Qwen media.
+
 Hardware jobs use `/models/npu_nvme_exp/user7-stack/hardware-campaign.lock` and
 its lease file. A retained run requires process, DMA and device-state diagnosis;
 do not remove its lease merely to admit another job. Routine training does not

@@ -71,12 +71,19 @@ See `docs/plans/D2_COMPLETION_20260920.md`. This is not historical Qwen recovery
 Real process/socket disconnect, owner exit and control rejection passed on a
 durable file backend. NPU/DMA fault injection remains deferred.
 
-The formal Qwen region failed read-only metadata inspection on 2026-09-20
+Historical incident: the formal Qwen region failed read-only metadata inspection on 2026-09-20
 (`invalid page header`). Its historical checkpoints are not currently usable.
 Before another Qwen acceptance, reconcile all raw writers and preserve the
 diagnostic evidence, then explicitly rebuild the formal region and run a fresh
 save/restart/oracle comparison. Do not resume from old catalogs or infer media
 integrity from previously passing training evidence.
+
+Resolved for the usable TP4 mainline on 2026-09-23: explicit formal-region
+rebuild, fresh step4/8 saves, new-process restore at step8, continuation and
+save at step12 all passed against a new 24-step oracle. Only the new catalog
+is usable. See `QWEN_REGION_RECOVERY_20260923.md` for evidence and conflicting
+whole-device writer restrictions. NPU/DMA faults and the exhaustive matrix
+remain deferred.
 
 ## Later product work
 

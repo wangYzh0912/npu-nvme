@@ -1,0 +1,65 @@
+{
+  "status": "pass",
+  "pid": 3593858,
+  "operations": [
+    {
+      "epoch": "3f662f711ed8468294a9f5c36938b800",
+      "generation": 3,
+      "kind": "operation",
+      "operation": "restore",
+      "sequence": 0,
+      "step": 8,
+      "receipt": {
+        "epoch": "3f662f711ed8468294a9f5c36938b800:0",
+        "generation": 3,
+        "manifest_sha256": "ebdc2c658fbe89e00acf38b3adc993016bc06eba867090aa6daecf95296c4150",
+        "world_size": 4,
+        "ranks": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "token": "b34383f9d9c80cb56ee0f4270110973130e3b0ce60af18b05f25e01f52d75078"
+      }
+    },
+    {
+      "epoch": "3f662f711ed8468294a9f5c36938b800",
+      "generation": null,
+      "kind": "operation",
+      "operation": "save",
+      "sequence": 1,
+      "step": 12,
+      "receipt": {
+        "request_id": "3f662f711ed8468294a9f5c36938b800:1",
+        "identity": {
+          "compute_dtype": "bfloat16",
+          "data_fixture": "checkpoint-recovery-fixed-text-v1",
+          "default_generator_seed": 42,
+          "dropout": 0,
+          "environment_id": "957589429f649e9202db9b51f74319a25fdc8e66292bb5263188abc39aac32ba",
+          "framework_template_sha256": "b48e426de99fa7b5d7e1fb262861591ae6f27124469dbb986eb8e7b12ebce2d7",
+          "lr_horizon": 24,
+          "model": "Qwen3-8B",
+          "model_config_sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
+          "optimizer": "mindformers-1.7-qwen3-template",
+          "params_dtype": "float32",
+          "seed": 42,
+          "sequence_length": 128,
+          "state_scope": "full_state",
+          "strategy_sha256": "6fc9ea0d69ea8a21870a18b0322295ccea97c7b7d907528bf738f7278566ff9b",
+          "topology": {
+            "dp": 1,
+            "pp": 1,
+            "tp": 4
+          },
+          "weights_sha256": "da844ab63b97bf1b3c5416026bbc0b4dc1a34d8feea8a188ea2e81f0a1c3b541"
+        },
+        "generation": 4
+      }
+    }
+  ],
+  "closed": true,
+  "mount_errors": [],
+  "operation_count": 2
+}

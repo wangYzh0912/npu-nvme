@@ -5,7 +5,12 @@
   "workload": {
     "model": "Qwen3-8B",
     "topology": "TP4/DP1/PP1",
-    "devices": [0, 1, 2, 3],
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
     "state_scope": "FULL model, Adam, training position and RNG controls"
   },
   "accepted": {
@@ -48,5 +53,21 @@
     "mode": "fast-forward",
     "archive_branches_verified": 27,
     "local_primary_worktree": "clean"
+  },
+  "formal_region_recovery_20260923": {
+    "status": "pass",
+    "evidence_root": "/models/npu_nvme_exp/user7-stack/qwen-region-recovery-20260923-001",
+    "oracle_final_step": 24,
+    "source_steps": [
+      4,
+      8
+    ],
+    "restore_step": 8,
+    "continued_and_saved_step": 12,
+    "topology": "TP4",
+    "state_comparison": "exact SHA256 and geometry",
+    "controls_comparison": "exact",
+    "owner_closed": true,
+    "whole_device_default_authorization": false
   }
 }

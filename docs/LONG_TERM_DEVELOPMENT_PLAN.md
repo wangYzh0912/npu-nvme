@@ -1476,3 +1476,18 @@ raw-writer boundary reconciliation, explicit region rebuild and fresh Qwen
 acceptance, followed by NPU/DMA process-failure validation. Full D2/E2 closure
 is not claimed. Evidence and remaining scope:
 `docs/plans/D2_COMPLETION_20260920.md`.
+
+## Formal Qwen region recovery, 2026-09-23
+
+The unreadable formal region was explicitly rebuilt after preserving and
+matching its header digest. Fresh Qwen TP4 FULL step4/8 saves, process exit,
+step8 restore, continuation and step12 save passed; every rank's step12 state
+and controls matched a new uninterrupted 24-step oracle exactly. Both owners
+closed and the hardware lease cleared. D1/D2 regression: 128 passed.
+
+Whole-device default write authorization is revoked in this delivery branch;
+the untouched dirty main worktree's incremental writer can overlap Qwen and
+must not be rerun without region isolation. Current scope is the usable TP4
+mainline, not single/eight-NPU Qwen or full D2/E2 closure. Remaining DMA fault
+and exhaustive campaign work is in `docs/plans/DEFERRED_VALIDATION.md`.
+Evidence and commands: `docs/plans/QWEN_REGION_RECOVERY_20260923.md`.
