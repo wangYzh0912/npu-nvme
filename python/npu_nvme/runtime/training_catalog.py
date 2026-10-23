@@ -111,24 +111,99 @@ def verify_files(directory,files):
 
 
 def publish(path, *, world=4):
-    path=Path(path);reservation=read_checked(path/'reservation.json');rows=[]
+    path=Path(path)
     with catalog_lock(path.parent):
-        if (path/'checkpoint.json').exists():raise ValueError('generation already published')
-        for rank in range(world):
-            entry=read_checked(path/f'rank_{rank}'/'complete.json')
-            if (entry['rank'],entry['generation'],entry['step'],entry['method'],entry['identity'])!=(
-                    rank,reservation['generation'],reservation['step'],reservation['method'],reservation['identity']):
-                raise ValueError('rank completion identity differs')
-            if not entry.get('state') or not entry.get('controls'):
-                raise ValueError('FULL rank completion requires state and controls')
-            rows.append(entry)
-        if reservation['method']=='ours':
-            receipts=[row['backend']['receipt'] for row in rows]
-            if any(row!=receipts[0] for row in receipts) or type(receipts[0].get('generation')) is not int:
-                raise ValueError('rank media receipts differ')
-        value=dict(reservation,ranks=rows,status='committed',world_size=world)
-        write_checked(path/'checkpoint.json',value)
+        return _publish_locked(path,world)
+
+
+def _publish_locked(path,world,*,recovered=False):
+    reservation=read_checked(path/'reservation.json');rows=[]
+    if (path/'checkpoint.json').exists():raise ValueError('generation already published')
+    for rank in range(world):
+        entry=read_checked(path/f'rank_{rank}'/'complete.json')
+        _rank_identity(entry,reservation,rank)
+        rows.append(entry)
+    if reservation['method']=='ours':
+        receipts=[row['backend']['receipt'] for row in rows]
+        if any(row!=receipts[0] for row in receipts) or type(receipts[0].get('generation')) is not int:
+            raise ValueError('rank media receipts differ')
+    value=dict(reservation,ranks=rows,status='committed',world_size=world)
+    if recovered:value['recovered']=True
+    validate_publication(value,path)
+    write_checked(path/'checkpoint.json',value)
     return value
+
+
+def _rank_identity(entry,reservation,rank):
+    if (entry['rank'],entry['generation'],entry['step'],entry['method'],entry['identity'])!=(
+            rank,reservation['generation'],reservation['step'],reservation['method'],reservation['identity']):
+        raise ValueError('rank completion identity differs')
+    if not entry.get('state') or not entry.get('controls'):
+        raise ValueError('FULL rank completion requires state and controls')
+
+
+def reconcile(root, inventory):
+    """Recover only journaled publications proven by a retained raw commit.
+
+    Called under the hardware lease, before new writers or readers start. An
+    absent receipt means unknown or retired, not proof that a commit aborted.
+    Existing corrupt files remain evidence and are never repaired in place.
+    """
+    root=Path(root);report=dict(recovered=[],rejected=[])
+    if not root.exists():return report
+    by_request={row['receipt']['request_id']:row for row in inventory}
+    with catalog_lock(root):
+        for path in sorted(root.glob('generation-*')):
+            if not path.is_dir():continue
+            try:
+                if (path/'checkpoint.json').exists():
+                    validate_publication(read_checked(path/'checkpoint.json'),path)
+                    continue
+                reservation=read_checked(path/'reservation.json')
+                if reservation['method']!='ours':continue
+                header=read_checked(root/'lineage.json')
+                if any(reservation[k]!=header[k] for k in ('lineage_id','identity','method')):
+                    raise ValueError('reservation lineage differs')
+                prepared=[read_checked(path/f'rank_{rank}/prepared.json') for rank in range(4)]
+                for rank,row in enumerate(prepared):
+                    _rank_identity(row,reservation,rank)
+                    if row['preparation_version']!=1:raise ValueError('unknown preparation version')
+                request=prepared[0]['raw_request_id']
+                if any(row['raw_request_id']!=request for row in prepared):raise ValueError('rank request identities differ')
+                raw=by_request.get(request)
+                if raw is None:raise ValueError('raw commit unknown or no longer retained')
+                receipt=raw['receipt']
+                controls=[dict(rank=r,step=row['step'],controls=row['controls']) for r,row in enumerate(prepared)]
+                if (receipt['identity']!=reservation['identity'] or raw['step']!=reservation['step'] or
+                        raw['topology']!={'world_size':4} or
+                        raw['controls_sha256']!=hashlib.sha256(canonical(controls)).hexdigest()):
+                    raise ValueError('raw commit differs from prepared publication')
+                completed=[]
+                for rank,row in enumerate(prepared):
+                    complete=path/f'rank_{rank}/complete.json'
+                    if complete.exists():
+                        entry=read_checked(complete)
+                        _rank_identity(entry,reservation,rank)
+                        if (entry['backend']['receipt']!=receipt or entry['state']!=row['state'] or
+                                entry['controls']!=row['controls']):raise ValueError('completion conflicts with prepared commit')
+                    else:
+                        entry={k:v for k,v in row.items() if k not in ('preparation_version','raw_request_id')}
+                        entry.update(backend=dict(row['backend'],receipt=receipt),recovered=True,save_seconds=None,
+                            files=[dict(path='prepared.json',bytes=(complete.parent/'prepared.json').stat().st_size,
+                                        sha256=digest_file(complete.parent/'prepared.json'))])
+                    completed.append((complete,entry))
+                # Validate the entire set before creating any missing completion.
+                validate_publication(dict(reservation,ranks=[entry for _,entry in completed],
+                    status='committed',world_size=4),path)
+                for complete,entry in completed:
+                    verify_files(complete.parent,entry['files'])
+                for complete,entry in completed:
+                    if not complete.exists():write_checked(complete,entry)
+                _publish_locked(path,4,recovered=True)
+                report['recovered'].append(reservation['generation'])
+            except (ValueError,KeyError,TypeError,OSError) as error:
+                report['rejected'].append(dict(path=str(path),reason=str(error)))
+    return report
 
 
 def validate_publication(value,path):

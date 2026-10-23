@@ -110,16 +110,6 @@ void *reactor_loop(void *arg) {
     NPUNVMEContext *ctx = (NPUNVMEContext *)arg;
     spdk_set_thread(ctx->reactor_thread);
 
-    /* Reset registered tasks to IDLE. */
-    pthread_mutex_lock(&ctx->state_lock);
-    for (int i = 0; i < ctx->listener.num_registered_tasks; i++) {
-        ctx->listener.registered_tasks[i].state = CHUNK_IDLE;
-        ctx->listener.registered_tasks[i].buf_idx = -1;
-    }
-    pthread_mutex_unlock(&ctx->state_lock);
-
-    ctx->last_step_seen = -1;
-
     /* Ring and admission limits are distinct; reserve a full pending window. */
     size_t ring_size=2;
     while (ring_size<=EFFECTIVE(ctx->max_pending_requests,64)) ring_size*=2;
@@ -145,17 +135,15 @@ void *reactor_loop(void *arg) {
     ctx->meta_req = NULL;
 
     /* Register pollers. */
-    ctx->step_poller      = spdk_poller_register(step_poller_fn, ctx,
-                                                  STEP_POLLER_PERIOD_US);
     ctx->write_fsm_poller = spdk_poller_register(write_fsm_poller_fn, ctx, 0);
     ctx->read_fsm_poller  = spdk_poller_register(read_fsm_poller_fn, ctx, 0);
     ctx->meta_poller      = spdk_poller_register(meta_poller_fn, ctx, 0);
-    fprintf(stderr, "[Diag] reactor: rings w=%p r=%p m=%p pollers s=%p w=%p r=%p m=%p\n",
+    fprintf(stderr, "[Diag] reactor: rings w=%p r=%p m=%p pollers w=%p r=%p m=%p\n",
             (void *)ctx->write_ring, (void *)ctx->read_ring, (void *)ctx->meta_ring,
-            (void *)ctx->step_poller, (void *)ctx->write_fsm_poller,
+            (void *)ctx->write_fsm_poller,
             (void *)ctx->read_fsm_poller, (void *)ctx->meta_poller);
 
-    if (!ctx->step_poller || !ctx->write_fsm_poller ||
+    if (!ctx->write_fsm_poller ||
         !ctx->read_fsm_poller || !ctx->meta_poller) {
         fprintf(stderr, "[Fatal] Reactor poller registration failed.\n");
         ctx->reactor_init_result = -1;
@@ -165,8 +153,7 @@ void *reactor_loop(void *arg) {
 
     pthread_barrier_wait(&ctx->init_barrier);
 
-    /* Once shutdown is requested, stop accepting new step triggers but keep
-     * polling until any in-flight data request has returned its DMA slots. */
+    /* Drain accepted requests before releasing device resources. */
     while (!ctx->app_should_stop ||
            ctx->write_fsm.state != WRITE_FSM_IDLE ||
            ctx->read_fsm.state != READ_FSM_IDLE ||
@@ -188,7 +175,6 @@ void *reactor_loop(void *arg) {
 
 reactor_cleanup:
     cancel_queued_requests(ctx);
-    if (ctx->step_poller) spdk_poller_unregister(&ctx->step_poller);
     if (ctx->write_fsm_poller) spdk_poller_unregister(&ctx->write_fsm_poller);
     if (ctx->read_fsm_poller) spdk_poller_unregister(&ctx->read_fsm_poller);
     if (ctx->meta_poller) spdk_poller_unregister(&ctx->meta_poller);

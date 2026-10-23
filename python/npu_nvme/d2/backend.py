@@ -28,8 +28,8 @@ def stage_config_from_config(config, *, required_purpose=None):
         raise ValueError('D2 configuration purpose differs')
     if config['transport'] != 'socket_host_bridge' or config['owner'] != 'single_spdk_nvme_owner':
         raise ValueError('unsupported D2 transport/owner')
-    if config['ranks'] != [0,1,2,3] or config['npu_ids'] != [0,1,2,3]:
-        raise ValueError('D2 Qwen requires explicit TP4 mapping')
+    if config['ranks'] != [0,1,2,3] or config['npu_ids'] not in ([0,1,2,3],[4,5,6,7]):
+        raise ValueError('D2 Qwen requires explicit supported TP4 mapping')
     if config['retention'] != 3 or config['chunk_bytes'] not in (1<<20,4<<20,16<<20):
         raise ValueError('invalid D2 retention/chunk configuration')
     return dict(config)

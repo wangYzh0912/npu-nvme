@@ -8,6 +8,23 @@ class UnknownTensorAddress(RuntimeError):
     """The allocation's location or extent cannot be proved before DMA."""
 
 
+def tensor_inventory(framework, network):
+    """Rank-local geometry without allocating Host copies or inspecting payloads."""
+    import numpy as np
+    seen=set();names=set()
+    for _,param in network.parameters_and_names():
+        if id(param) in seen:continue
+        seen.add(id(param))
+        if param.name in names:raise ValueError('duplicate parameter '+param.name)
+        names.add(param.name)
+        dtype=np.dtype(framework.dtype_to_nptype(param.dtype))
+        shape=list(getattr(param,'sliced_shape',None) or param.shape)
+        if hasattr(param,'data') and math.prod(param.data.shape)<math.prod(shape):shape=list(param.data.shape)
+        size=math.prod(shape)*dtype.itemsize
+        if size<=0:raise ValueError('empty state tensor '+param.name)
+        yield param,dtype,shape,size
+
+
 @dataclass(frozen=True)
 class TensorAddress:
     placement: str

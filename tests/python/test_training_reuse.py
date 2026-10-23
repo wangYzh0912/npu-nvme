@@ -51,3 +51,19 @@ def test_changed_inputs_or_completion_prevent_reuse(tmp_path,monkeypatch,damage)
     if damage=='rank':write_checked(previous/'trajectory-none/rank_3/training.json',dict(status='running',final_step=24))
     accepted,rejected=verified_runs(previous,config,current)
     assert not accepted and rejected[0]['method']=='none'
+
+
+def test_new_evidence_includes_untracked_execution_sources(tmp_path,monkeypatch):
+    previous,current,config=fixture(tmp_path,monkeypatch)
+    path=previous/'trajectory-none/source-identity.json'
+    identity=json.loads(path.read_text())
+    frozen=dict(sources={'python/untracked.py':'digest'},source_digest='digest')
+    identity['execution_sources']=frozen
+    path.write_text(json.dumps(identity))
+    monkeypatch.setattr('npu_nvme.cli.contracts.source_identity',lambda repo:frozen)
+    accepted,_=verified_runs(previous,config,current)
+    assert 'trajectory-none' in accepted
+    monkeypatch.setattr('npu_nvme.cli.contracts.source_identity',
+        lambda repo:frozen if Path(repo).name=='old' else dict(sources={}))
+    accepted,rejected=verified_runs(previous,config,current)
+    assert not accepted and 'untracked' in rejected[0]['reason']

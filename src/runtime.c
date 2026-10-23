@@ -7,6 +7,38 @@
 static pthread_mutex_t native_owner_guard = PTHREAD_MUTEX_INITIALIZER;
 static NPUNVMEContext *native_owner;
 
+static int open_native_owner_file(const char *path) {
+    int fd = open(path, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
+    if (fd >= 0 || errno != ENOENT) return fd;
+    fd = open(path, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0666);
+    if (fd >= 0 || errno != EEXIST) return fd;
+    return open(path, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
+}
+
+/* ACL uses visible ordinals; cross-process ownership keys must use physical IDs. */
+static int copy_owner_address(int logical_npu, char *address, size_t size) {
+    int physical_npu = logical_npu;
+    const char *visible = getenv("ASCEND_RT_VISIBLE_DEVICES");
+    if (logical_npu < 0 || logical_npu > 7) return -EINVAL;
+    if (visible) {
+        const char *value = visible;
+        for (int index = 0; index <= logical_npu; ++index) {
+            errno = 0;
+            char *end = NULL;
+            long parsed = strtol(value, &end, 10);
+            if (errno || end == value || parsed < 0 || parsed > 7 ||
+                (*end && *end != ',')) return -EINVAL;
+            physical_npu = (int)parsed;
+            if (index < logical_npu) {
+                if (*end != ',') return -EINVAL;
+                value = end + 1;
+            }
+        }
+    }
+    int written = snprintf(address, size, "ffff:%02x:00.0", physical_npu);
+    return written < 0 || (size_t)written >= size ? -EINVAL : 0;
+}
+
 static int acquire_native_owner(NPUNVMEContext *ctx, const char *address) {
     unsigned domain, bus, device, function;
     char tail, path[128];
@@ -16,7 +48,7 @@ static int acquire_native_owner(NPUNVMEContext *ctx, const char *address) {
              domain, bus, device, function);
     pthread_mutex_lock(&native_owner_guard);
     if (native_owner) { pthread_mutex_unlock(&native_owner_guard); return -EBUSY; }
-    int fd = open(path, O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0666);
+    int fd = open_native_owner_file(path);
     if (fd < 0) { int rc = -errno; pthread_mutex_unlock(&native_owner_guard); return rc; }
     if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
         int rc = errno == EWOULDBLOCK ? -EBUSY : -errno;
@@ -179,8 +211,13 @@ static int initialize_role(NPUNVMEContext **out_ctx, const char *pci_addr, int n
         free(ctx); return -EINVAL;
     }
     char rank_lock[64];
-    snprintf(rank_lock,sizeof(rank_lock),"ffff:%02x:00.0",npu_id);
-    int owner_rc = acquire_native_owner(ctx, role==NPU_NVME_ROLE_COPY_RANK ? rank_lock : pci_addr);
+    const char *owner_address = pci_addr;
+    if (role == NPU_NVME_ROLE_COPY_RANK) {
+        int rc = copy_owner_address(npu_id, rank_lock, sizeof(rank_lock));
+        if (rc) { free(ctx); return rc; }
+        owner_address = rank_lock;
+    }
+    int owner_rc = acquire_native_owner(ctx, owner_address);
     if (owner_rc != 0) { free(ctx); return owner_rc; }
 
     atomic_init(&ctx->refs, 1);
@@ -221,9 +258,6 @@ static int initialize_role(NPUNVMEContext **out_ctx, const char *pci_addr, int n
     } else {
         strcpy(ctx->profiling_dir, ".");
     }
-    /* Listener-state lock — protects registered_tasks, dev_step_ptr,
-     * probe_flag_* from concurrent Python <-> reactor access.  I/O is
-     * async via rings and does NOT use this lock.  Non-recursive. */
     if (pthread_mutex_init(&ctx->state_lock, NULL) != 0) {
         fprintf(stderr, "[Fatal] Failed to init state_lock.\n");
         release_native_owner(ctx);
@@ -486,14 +520,6 @@ static int initialize_role(NPUNVMEContext **out_ctx, const char *pci_addr, int n
     }
     }
 
-    /* Listener poller runs on the reactor thread (registered in reactor_loop).
-     * The NPU_NVME_NO_LISTENER env var still controls whether the step poller
-     * is active — it does nothing until dev_step_ptr is set. */
-    ctx->listener.probe_flag_dev_ptr = NULL;
-    ctx->listener.probe_flag_host = NULL;
-    ctx->listener.dev_step_ptr = NULL;
-    ctx->listener.step_poll_buf = NULL;
-
     *out_ctx = ctx;
     printf("[Init] Initialisation complete.\n");
     return 0;
@@ -593,14 +619,6 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     }
     if (ctx->acl.copy_stream) aclrtDestroyStream(ctx->acl.copy_stream);
 
-    /* Release listener host buffers */
-    if (ctx->listener.probe_flag_host)
-        aclrtFreeHost(ctx->listener.probe_flag_host);
-    if (ctx->listener.step_poll_buf)
-        aclrtFreeHost(ctx->listener.step_poll_buf);
-    if (ctx->listener.owns_probe_flag && ctx->listener.probe_flag_dev_ptr)
-        aclrtFree(ctx->listener.probe_flag_dev_ptr);
-
     /* Release DMA pool */
     if (ctx->dma.pool) {
         for (int i = 0; i < ctx->dma.max_pipe_depth; i++) {
@@ -617,17 +635,6 @@ void npu_nvme_cleanup(NPUNVMEContext *ctx) {
     if (ctx->qpair) spdk_nvme_ctrlr_free_io_qpair(ctx->qpair);
     if (ctx->meta_qpair) spdk_nvme_ctrlr_free_io_qpair(ctx->meta_qpair);
     if (ctx->ctrlr) spdk_nvme_detach(ctx->ctrlr);
-
-    /* Release registered tasks (both current and deferred-free). */
-    if (ctx->listener.registered_tasks) {
-        free(ctx->listener.registered_tasks);
-        ctx->listener.registered_tasks = NULL;
-        ctx->listener.num_registered_tasks = 0;
-    }
-    if (ctx->listener.old_tasks) {
-        free(ctx->listener.old_tasks);
-        ctx->listener.old_tasks = NULL;
-    }
 
     context_put(ctx);
 }

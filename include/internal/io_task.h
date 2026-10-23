@@ -138,8 +138,6 @@ typedef struct NPUNVMERequest {
 typedef struct {
     write_fsm_state_t state;
     write_request_t *req;       /* current active request, NULL when idle */
-    write_request_t faf_req;    /* pre-allocated FaF request (reused each trigger) */
-    uint32_t faf_step;          /* step number that triggered current FaF write */
     int next_submit_idx;        /* next chunk index to DMA-copy */
     int next_spdk_submit_idx;   /* next NPU_DONE chunk to submit to SPDK */
     int completed_count;        /* number of fully completed chunks */

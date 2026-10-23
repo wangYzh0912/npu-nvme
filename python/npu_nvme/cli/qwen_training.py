@@ -26,6 +26,9 @@ def write(path,value):
 
 
 def preflight(config):
+    from npu_nvme.runtime.resources import qwen_capacity
+    capacity=qwen_capacity(config) if config['method']=='ours' else None
+    if capacity and not capacity['admitted']:raise MemoryError('FULL preflight resource admission rejected: '+json.dumps(capacity))
     from user_environment import read_profile,with_python_identity,isolated_environment,verify_library_paths,verify_runtime_abi
     profile=with_python_identity(read_profile(config['environment_manifest'],'candidate',ROOT))
     env=isolated_environment(profile,ROOT)
@@ -43,14 +46,16 @@ def preflight(config):
     config['identity']['framework_template_sha256']=catalog.digest_file(template)
     config['identity']['environment_id']=profile['environment_id']
     smi=subprocess.check_output(['npu-smi','info'],text=True,timeout=30)
-    idle=all(f'No running processes found in NPU {r}' in smi for r in range(4))
+    idle=all(f'No running processes found in NPU {r}' in smi for r in config['npu_ids'])
     lease=Path(config['hardware_lock']).with_suffix('.lease.json')
     return dict(status='pass',profile=profile,resolved_libraries=resolved,runtime_abi=abi,
-        model_shards=shards,npu_info=smi,devices_idle=idle,pending_lease=str(lease) if lease.exists() else None)
+        model_shards=shards,npu_info=smi,devices_idle=idle,capacity=capacity,
+        pending_lease=str(lease) if lease.exists() else None)
 
 
 def run_fit(config, output, *, restore='latest', resume=False):
     from tools.run_campaign import members,source_snapshot
+    from npu_nvme.cli.contracts import source_identity
     output=Path(output).resolve();output.mkdir(parents=True,exist_ok=False)
     config=dict(config,output=str(output),run_id=uuid.uuid4().hex,start_step=0)
     config.setdefault('checkpoint_root',str(output/'checkpoints'))
@@ -64,11 +69,12 @@ def run_fit(config, output, *, restore='latest', resume=False):
             lock=stack.enter_context(lock_path.open('a+'));fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
             lease=lock_path.with_suffix('.lease.json')
             if lease.exists():raise RuntimeError('unreconciled hardware lease: '+str(lease))
-            snapshot_plan=dict(stages=[dict(cwd=str(ROOT))])
-            sources=source_snapshot(snapshot_plan)
+            sources=source_snapshot(dict(stages=[dict(cwd=str(ROOT))]))
+            execution_sources=source_identity(ROOT)
             extensions={str(path.relative_to(ROOT)):catalog.digest_file(path)
                         for path in (ROOT/'python/npu_nvme/framework').glob('_address_native*.so')}
-            write(output/'source-identity.json',dict(sources=sources,extensions=extensions))
+            write(output/'source-identity.json',dict(sources=sources,extensions=extensions,
+                execution_sources=execution_sources))
             audit=preflight(config);write(output/'preflight.json',audit)
             if not audit['devices_idle']:raise RuntimeError('TP4 devices are occupied')
             def select_restore(media_receipts=None):
@@ -89,8 +95,10 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 write(output/'restore-selection.json',dict(path=str(path),generation=value['generation'],rejected=rejected))
             prefix=[sys.executable,str(ROOT/'scripts/run_user_environment.py'),'--manifest',config['environment_manifest'],
                     '--profile','candidate','--','python']
-            env=dict(os.environ,ASCEND_RT_VISIBLE_DEVICES='0,1,2,3',RUN_MODE='finetune',PYTHONUNBUFFERED='1',
-                HCCL_CONNECT_TIMEOUT='300',MS_COMPILER_CACHE_PATH=str(output/'compiler-cache'))
+            visible_devices=','.join(str(device) for device in config['npu_ids'])
+            env=dict(os.environ,ASCEND_RT_VISIBLE_DEVICES=visible_devices,RUN_MODE='finetune',PYTHONUNBUFFERED='1',
+                HCCL_CONNECT_TIMEOUT='300',MS_COMPILER_CACHE_PATH=str(output/'compiler-cache'),
+                LOCAL_DEFAULT_PATH=str(output/'framework-output'))
             deadline=time.monotonic()+config['timeout_seconds']
             owned_lease=dict(status='running',run=str(output),pid=os.getpid(),children=[])
             write(lease,owned_lease);lease_owned=True
@@ -107,7 +115,8 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 epoch=uuid.uuid4().hex
                 connection=dict(socket='/tmp/qwen-training-'+epoch+'.sock',epoch=epoch,
                     identity=config['identity'],library=audit['profile']['library'],
-                    region=json.loads(Path(config['region']).read_text()),strategy=json.loads(Path(config['strategy']).read_text()),
+                    region=dict(json.loads(Path(config['region']).read_text()),npu_ids=config['npu_ids']),
+                    strategy=json.loads(Path(config['strategy']).read_text()),
                     retention=config['retention'],owner_shm_id=config['shm_base'],rank_shm_base=config['shm_base']+1,
                     timeout_seconds=config['timeout_seconds'],operation_timeout_seconds=config['operation_timeout_seconds'],
                     copy_timeout_ms=config['copy_timeout_ms'],depth=4,chunk_bytes=4<<20,host_tensor_budget_bytes=2<<30)
@@ -118,7 +127,10 @@ def run_fit(config, output, *, restore='latest', resume=False):
                     if time.monotonic()>deadline:raise TimeoutError('owner readiness timeout')
                     time.sleep(.1)
             try:
-                receipts=json.loads((output/'owner/ready.json').read_text())['receipts'] if owner else None
+                ready=json.loads((output/'owner/ready.json').read_text()) if owner else None
+                receipts=ready['receipts'] if ready else None
+                if ready:
+                    write(output/'reconciliation.json',catalog.reconcile(config['checkpoint_root'],ready['publications']))
                 select_restore(receipts)
                 if config['start_step']>=config['stop_step']:raise ValueError('stop_step must exceed restored step')
             except BaseException:
@@ -151,7 +163,7 @@ def run_fit(config, output, *, restore='latest', resume=False):
             if owner:
                 owner_report=json.loads((output/'owner/result.json').read_text())
                 if owner_report['status']!='pass' or not owner_report['closed']:raise RuntimeError('owner close not verified')
-            if source_snapshot(snapshot_plan)!=sources or any(catalog.digest_file(ROOT/name)!=digest for name,digest in extensions.items()):
+            if source_identity(ROOT)!=execution_sources or any(catalog.digest_file(ROOT/name)!=digest for name,digest in extensions.items()):
                 raise RuntimeError('training source or allocation extension changed during execution')
             result.update(execution_status='completed',validation_status='pass',final_step=config['stop_step'])
         except BaseException as error:
@@ -214,5 +226,5 @@ def main(argv=None):
             if args.output is None:raise ValueError('--output required')
             from npu_nvme.runtime.training_benchmark import campaign
             return campaign(config,args.output,profile=args.profile,reuse=args.reuse_multicycle)
-    except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as error:
+    except (OSError,ValueError,RuntimeError,MemoryError,subprocess.SubprocessError) as error:
         parser.exit(2,str(error)+'\n')

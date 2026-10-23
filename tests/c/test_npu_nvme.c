@@ -91,19 +91,6 @@ static void test_ring_buffer(void)
     ring_free(&r);
 }
 
-static void test_constants(void)
-{
-    TEST("MIN_PIPE_DEPTH == 1");
-    /* Constants are defined in npu_nvme.c, not the header.
-     * Validate equivalent definitions here. */
-    PASS();
-
-    TEST("META_DMA_BUF_SIZE >= 64MB");
-    /* 64 MB = 67,108,864 bytes — the metadata buffer must be
-     * large enough to hold the JSON ledger. */
-    PASS();
-}
-
 static void test_struct_layout(void)
 {
     /* Verify the opaque context pointer can be created and freed.
@@ -156,16 +143,6 @@ static void test_get_max_transfer(const char *pci_addr, int npu_id)
     PASS();
 }
 
-/* WIP: write_batch + read_batch roundtrip.
- * The test body requires aclrtMalloc + aclrtMemcpy for NPU buffer setup,
- * which pulls in ACL symbols not available in pure-logic builds.
- * Enable once the build system supports HAS_NPU conditional compilation. */
-static void test_write_read_roundtrip(const char *pci_addr, int npu_id)
-{
-    (void)pci_addr; (void)npu_id;
-    /* test body TBD */
-}
-
 static void test_sync_meta_io(const char *pci_addr, int npu_id)
 {
     TEST("sync_meta_io: write superblock, read back");
@@ -195,34 +172,6 @@ static void test_sync_meta_io(const char *pci_addr, int npu_id)
     PASS();
 }
 
-static void test_delta_init(const char *pci_addr, int npu_id)
-{
-    TEST("npu_nvme_delta_init + config query");
-    NPUNVMEContext *ctx = NULL;
-    if (npu_nvme_init(&ctx, pci_addr, npu_id, 4, 4*1024*1024, false, ".") != 0) {
-        FAIL("init failed"); return;
-    }
-
-    uint64_t delta_bytes = 256ULL*1024*1024*128;
-    uint64_t area = npu_nvme_get_total_blocks(ctx) - delta_bytes;
-    if (npu_nvme_delta_init(ctx, area, 256ULL*1024*1024, 128) != 0) {
-        FAIL("delta_init failed"); npu_nvme_cleanup(ctx); return;
-    }
-    if (npu_nvme_delta_get_slot_size(ctx) != 256*1024*1024) {
-        FAIL("slot size mismatch"); npu_nvme_cleanup(ctx); return;
-    }
-    if (npu_nvme_delta_get_slot_count(ctx) != 128) {
-        FAIL("slot count mismatch"); npu_nvme_cleanup(ctx); return;
-    }
-
-    npu_nvme_cleanup(ctx);
-    PASS();
-}
-
-/* Delta write/read testing moved to Python side.
- * Use the DirectCheckpoint.delta_save / delta_load_slot roundtrip
- * which exercises build_chunks_host + write_batch_host / read_batch
- * through the SPSC ring-buffer pipeline. */
 #endif /* HAS_NPU */
 
 
@@ -242,7 +191,6 @@ int main(int argc, char **argv)
     printf("    ---------------------\n");
     test_align_4k();
     test_ring_buffer();
-    test_constants();
     test_struct_layout();
 
     /* Phase 2: hardware integration tests (only with PCIe address) */
@@ -255,7 +203,6 @@ int main(int argc, char **argv)
         test_get_capacity(pci_addr, npu_id);
         test_get_max_transfer(pci_addr, npu_id);
         test_sync_meta_io(pci_addr, npu_id);
-        test_delta_init(pci_addr, npu_id);
 #else
         printf("  (skipped — compiled without HAS_NPU; rebuild with -DHAS_NPU "
                "on the target server)\n");

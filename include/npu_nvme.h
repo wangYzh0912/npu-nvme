@@ -219,52 +219,6 @@ int npu_nvme_flush(NPUNVMEContext *ctx);
 /** ABI major, checked before loading this runtime. */
 uint32_t npu_nvme_abi_version(void);
 
-/**
- * @brief Register parameter pointers for background persistence by the
- *        Reactor step poller.
- */
-int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
-                            uint64_t *nvme_offsets, size_t *sizes, int num_items);
-
-// -- FaF listener control (I2) --
-
-/** @brief Set the NPU-side probe-flag device address. */
-int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
-
-int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
-
-/**
- * @brief Register the step_counter device pointer for the Reactor poller.
- *
- * @param ctx           context handle
- * @param dev_ptr       step_counter device (HBM) pointer
- * @param ckpt_interval trigger a write every N steps
- * @return 0 on success, -1 on error
- */
-int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval);
-
-/** @brief Return the self-allocated probe-flag device pointer (or NULL). */
-void* npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx);
-
-// -- Delta frame I/O (I3) --
-
-/**
- * @brief Initialise the delta ring-buffer layout on disk.
- *
- * @param ctx              context handle
- * @param delta_slot_size  bytes per delta slot (256 MB = 268435456 recommended)
- * @param delta_slot_count number of slots in the ring (128 recommended)
- * @return 0 on success, -1 on error
- */
-int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t area_offset,
-                        uint64_t delta_slot_size, uint32_t delta_slot_count);
-
-/** @brief Return the byte offset of the delta ring on the NVMe device. */
-uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx);
-
-uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx);
-uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
-
 /** @brief Set the bounded timeout used by blocking C API calls. */
 int npu_nvme_set_io_timeout_ms(NPUNVMEContext *ctx, uint32_t timeout_ms);
 

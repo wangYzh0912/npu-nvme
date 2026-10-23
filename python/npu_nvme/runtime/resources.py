@@ -11,6 +11,42 @@ def positive(value,name):
     return value
 
 
+def available_host_bytes():
+    meminfo=dict(line.split(':',1) for line in Path('/proc/meminfo').read_text().splitlines())
+    available=int(meminfo['MemAvailable'].split()[0])*1024
+    limit=Path('/sys/fs/cgroup/memory.max')
+    if limit.exists() and limit.read_text().strip()!='max':
+        available=min(available,max(0,int(limit.read_text())-int(limit.with_name('memory.current').read_text())))
+    return available
+
+
+def qwen_capacity(config, *, hbm_free=None, resident_host=0):
+    import json
+    schema=json.loads(Path(config['strategy']).read_text())
+    region=json.loads(Path(config['region']).read_text())
+    report=qwen_plan(schema,chunk=4<<20,depth=4,mode='blocking',
+        hbm_free=0 if hbm_free is None else hbm_free,host_free=available_host_bytes(),
+        hbm_headroom=0 if hbm_free is None else config['hbm_headroom_bytes'],
+        host_headroom=config['host_headroom_bytes'],control_bytes=4<<20,
+        region_bytes=region['length_bytes'])
+    # Existing pools are accounted as resident, not charged again to free RAM.
+    report['resident_host_bytes']=resident_host
+    hugepages=report['owner_pool_bytes']+report['rank_pools_bytes']+report['metadata_pool_bytes']
+    resident_normal=max(0,resident_host-hugepages)
+    future=max(0,report['aggregate_host_required']-hugepages-resident_normal)
+    report['host_required_remaining']=future
+    report['aggregate_host_admitted']=future+config['host_headroom_bytes']<=report['admission_per_rank']['host_free']
+    report['hbm_measured']=hbm_free is not None
+    meminfo=dict(line.split(':',1) for line in Path('/proc/meminfo').read_text().splitlines())
+    report['hugepage_free_bytes']=int(meminfo['HugePages_Free'])*int(meminfo['Hugepagesize'].split()[0])*1024
+    report['hugepage_required_remaining']=max(0,hugepages-min(resident_host,hugepages))
+    report['admitted']=(report['aggregate_host_admitted'] and report['disk']['admitted'] and
+        report['hugepage_required_remaining']<=report['hugepage_free_bytes'])
+    if hbm_free is not None:
+        report['admitted'] &= report['admission_per_rank']['required_hbm']+config['hbm_headroom_bytes']<=hbm_free
+    return report
+
+
 @dataclass(frozen=True)
 class Allocation:
     key: str
@@ -81,3 +117,51 @@ def framework_memory_snapshot(framework,*,rank,phase,external=()):
                 external=allocation_totals(external),process_status=Path('/proc/self/status').read_text(),
                 meminfo=Path('/proc/meminfo').read_text(),
                 note='framework reserved includes allocated; do not sum the two; external entries exclude framework allocations')
+
+def qwen_plan(schema,*,chunk,depth,mode,hbm_free,host_free,hbm_headroom,host_headroom,
+         control_bytes=0,active_pins=1,region_bytes=1<<40):
+    from npu_nvme.d2.region_budget import region_budget
+    if chunk not in (1<<20,4<<20,16<<20) or depth not in (1,4,8,16,32,64):raise ValueError('unsupported probe configuration')
+    if schema['topology']!={'tp':4,'dp':1,'pp':1}:raise ValueError('expected actual TP4 schema')
+    tensors=[row for row in schema['tensors'] if row.get('placement')!='native_container_metadata']
+    names=set();sizes=[];partitions={}
+    for tensor in tensors:
+        name=tensor['name'];size=tensor['logical_bytes_per_rank']
+        if name in names or type(size) is not int or size<=0:raise ValueError('invalid tensor inventory')
+        names.add(name);sizes.append(size)
+        partition=tensor['partition'];partitions[partition]=partitions.get(partition,0)+1
+    state=sum(sizes);chunks=sum((n+chunk-1)//chunk for n in sizes)
+    if type(control_bytes) is not int or control_bytes<0 or type(active_pins) is not int or not 0<=active_pins<=1:
+        raise ValueError('control budget or reader pin limit')
+    pool=chunk*depth
+    # Four private rank pools and one owner pool. Socket queues and wire/copy
+    # temporaries are separate physical allocations, never shared aliases.
+    pools=5*pool+(1<<20)
+    sockets=4*2*2*min(chunk,4<<20)  # both endpoints, send+receive requested budgets
+    temporaries=4*3*chunk+3*chunk  # wire payload/hash temporaries and owner staging
+    descriptors=chunks*4*2048  # conservative Python metadata admission estimate
+    controls=control_bytes*4  # decode/encode residency, not four ranks again
+    scratch=4*3*max(sizes)
+    transport=pools+sockets+temporaries+descriptors+controls+scratch
+    admission=capture_admission(mode=mode,state_bytes=state,hbm_free=hbm_free,host_free=host_free,
+        hbm_headroom=hbm_headroom,host_headroom=host_headroom,transport_host=transport,
+        transport_hbm=max(sizes))
+    aggregate_host=transport+(4*state if mode=='host_snapshot' else 0)
+    disk=region_budget(state_bytes=state*4,descriptor_count=chunks*4,page_bytes=65536,
+                       retention=3,active_pins=active_pins,control_bytes=control_bytes)
+    disk['safety_margin_bytes']=region_bytes//10
+    disk['admitted']=disk['required_region_bytes']+disk['safety_margin_bytes']<=region_bytes
+    return dict(aggregate_host_required=aggregate_host,
+        aggregate_host_admitted=aggregate_host+host_headroom<=host_free,scope='schema-derived plan; capacities must come from a fresh real probe, not framework max_device_memory',
+        rank_count=4,tensor_count_per_rank=len(sizes),partition_counts=partitions,
+        state_bytes_per_rank=state,state_bytes_total=state*4,max_tensor_bytes=max(sizes),
+        descriptors_per_rank=chunks,descriptors_total=chunks*4,chunk_bytes=chunk,depth=depth,
+        transport='socket_host_bridge',owner_pool_bytes=pool,rank_pools_bytes=4*pool,metadata_pool_bytes=1<<20,
+        socket_buffer_budget_bytes=sockets,temporary_budget_bytes=temporaries,
+        descriptor_residency_budget_bytes=descriptors,control_residency_budget_bytes=controls,
+        tensor_scratch_budget_bytes=scratch,
+        tensor_hbm_scratch_budget_bytes=max(sizes),
+        disk=disk,admission_per_rank=admission,
+        required_followup=['per-rank control JSON budget','actual framework peak and ACL free memory',
+                           'actual socket buffer sizes and native pool allocation','snapshot mode pilot','phase deadlines'],
+        caveat='Schema-derived upper estimate, not a measured peak; actual socket buffers and allocator residency must be checked.')

@@ -56,7 +56,8 @@ def main():
         state=region.current['state'] if region.current else dict(receipts=[],generations=[])
         retained={row['generation'] for row in state['generations']}
         (args.out/'ready.json').write_text(json.dumps(dict(epoch=c['epoch'],socket=c['socket'],
-            receipts=[row for row in state['receipts'] if row['generation'] in retained])))
+            receipts=[row for row in state['receipts'] if row['generation'] in retained],
+            publications=region.publication_inventory())))
         for _ in range(4):
             listener.settimeout(max(.001,deadline-time.monotonic()));connection,_=listener.accept()
             try:

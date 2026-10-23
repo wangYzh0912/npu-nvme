@@ -6,27 +6,19 @@ this placement is recorded before capture, never selected after a DMA failure.
 """
 from contextlib import contextmanager
 import hashlib
-import math
 import numpy as np
-from .parameters import describe_tensor
+from .parameters import describe_tensor, tensor_inventory
 
 
 class BlockingState:
     def __init__(self,framework,network,*,rank,executor,host_tensor_budget,partitions):
         self.framework=framework;self.executor=executor;self.rank=rank
-        self.entries={};self.schema=[];seen=set();self.host_tensor_budget=host_tensor_budget
+        self.entries={};self.schema=[];self.host_tensor_budget=host_tensor_budget
         self.host_source=None;self.host_source_name=None
         self.host_target=None;self.host_target_name=None
         framework.hal.synchronize()
-        for _,param in network.parameters_and_names():
-            if id(param) in seen:continue
-            seen.add(id(param));name=param.name
-            if name in self.entries:raise ValueError('duplicate parameter '+name)
-            dtype=np.dtype(framework.dtype_to_nptype(param.dtype))
-            shape=list(getattr(param,'sliced_shape',None) or param.shape)
-            if hasattr(param,'data') and math.prod(param.data.shape)<math.prod(shape):shape=list(param.data.shape)
-            size=math.prod(shape)*dtype.itemsize
-            if size<=0:raise ValueError('empty state tensor '+name)
+        for param,dtype,shape,size in tensor_inventory(framework,network):
+            name=param.name
             address=describe_tensor(param,expected_device=executor.npu_id,required_bytes=size)
             pointer=address.pointer
             if not pointer and size>host_tensor_budget:raise MemoryError('Host tensor capture budget exceeded: '+name)

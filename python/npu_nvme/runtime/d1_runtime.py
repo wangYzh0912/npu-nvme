@@ -42,10 +42,8 @@ class FullRuntime:
         self.prepare, self.freeze, self.release = prepare, freeze, release
         self.chunk_size = chunk_size
         self.changed = threading.Condition()
-        self._busy = False
         self._closing = False
-        self._handles = set()
-        self._restore_busy = False
+        self._operations = {}
         self.quarantined = []
         self.restore_session = StrictRestoreSession(coordinator=coordinator, reader=transport.read,
             layout=coordinator.state.layout, quiescent=transport.quiescent,
@@ -59,7 +57,7 @@ class FullRuntime:
         if not math.isfinite(timeout) or timeout < 0: raise ValueError('invalid admission timeout')
         deadline = time.monotonic() + timeout
         with self.changed:
-            while self._busy:
+            while 'save' in self._operations.values():
                 if self._closing: raise RuntimeError('admission is closed')
                 if admission == 'try': raise CheckpointBusyError('FULL slot is busy')
                 remaining = deadline - time.monotonic()
@@ -67,15 +65,15 @@ class FullRuntime:
                 self.changed.wait(remaining)
             if self._closing: raise RuntimeError('admission is closed')
             reservation = self.commit.reserve(step=step)
-            self._busy = True
+            lease = object()
+            self._operations[lease] = 'save'
         frozen = None
         try:
             params = self.prepare(components, controls, spec)
             frozen = self.freeze(params, reservation.generation)
-            handle = FullHandle(reservation, lambda rid: self._save_worker(handle, reservation, frozen, spec))
+            handle = FullHandle(reservation, lambda rid: self._save_worker(handle, reservation, frozen, spec, lease))
             handle.api_enter_ns = api_enter_ns
             handle.events.append(dict(state="CREATED", monotonic_ns=time.monotonic_ns()))
-            with self.changed: self._handles.add(handle)
             handle.start()
             return handle
         except BaseException as error:
@@ -84,12 +82,11 @@ class FullRuntime:
             finally:
                 self.commit.abort(reservation, error)
                 with self.changed:
-                    if 'handle' in locals(): self._handles.discard(handle)
-                    self._busy = False
+                    del self._operations[lease]
                     self.changed.notify_all()
             raise
 
-    def _save_worker(self, handle, reservation, frozen, spec):
+    def _save_worker(self, handle, reservation, frozen, spec, lease):
         try:
             base = self.commit.state.layout.full_base + reservation.slot * self.commit.state.layout.full_slot_bytes
             record = dict(strict_contract='D1', type='TRAINING_STATE_FULL', schema_version=1,
@@ -146,8 +143,7 @@ class FullRuntime:
                 self._release_or_retain(frozen)
             finally:
                 with self.changed:
-                    self._busy = False
-                    self._handles.discard(handle)
+                    del self._operations[lease]
                     self.changed.notify_all()
 
     def _release_or_retain(self, frozen):
@@ -166,21 +162,19 @@ class FullRuntime:
         spec = deepcopy(spec_validate(spec))
         with self.changed:
             if self._closing: raise RuntimeError('admission is closed')
-            if self._restore_busy: raise CheckpointBusyError('one restore session is already active')
-            self._restore_busy = True
+            if 'restore' in self._operations.values(): raise CheckpointBusyError('one restore session is already active')
+            lease = object()
+            self._operations[lease] = 'restore'
             def operation(request_id):
                 try: return self.restore_session.restore_full_state(factory, spec, step, request_id=request_id)
                 finally:
                     with self.changed:
-                        self._restore_busy = False
-                        self._handles.discard(handle)
+                        del self._operations[lease]
                         self.changed.notify_all()
-            handle = RestoreHandle(operation)
-            self._handles.add(handle)
-            try: return handle.start()
+            try: return RestoreHandle(operation).start()
             except BaseException:
-                self._handles.discard(handle)
-                self._restore_busy = False
+                del self._operations[lease]
+                self.changed.notify_all()
                 raise
 
     def drain(self, timeout=120):
@@ -188,8 +182,8 @@ class FullRuntime:
         if not math.isfinite(timeout) or timeout < 0: raise ValueError('invalid drain timeout')
         deadline = time.monotonic() + timeout
         with self.changed:
-            watermark = set(self._handles)
-            while watermark & self._handles or self._busy and not watermark:
+            watermark = set(self._operations)
+            while watermark.intersection(self._operations):
                 remaining = deadline - time.monotonic()
                 if remaining <= 0: raise TimeoutError('FULL drain timed out')
                 self.changed.wait(remaining)

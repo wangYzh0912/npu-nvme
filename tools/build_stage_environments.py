@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build both ABI2 runtimes without replacing historical installations."""
+"""Build both ABI3 runtimes without replacing historical installations."""
 import argparse
 import hashlib
 import json
@@ -50,8 +50,8 @@ def main():
             if result.returncode:
                 write(directory/'result.json',dict(status='failed',returncode=result.returncode))
                 return result.returncode
-        profile['library'] = str((build/'libnpu_nvme.so.2').resolve())
-        profile['required_abi_major'] = 2
+        profile['library'] = str((build/'libnpu_nvme.so.3').resolve())
+        profile['required_abi_major'] = 3
         write(out/'environments.json', manifest)
         identity = with_python_identity(read_profile(out/'environments.json',name,ROOT))
         environment = isolated_environment(identity,ROOT)
@@ -59,7 +59,7 @@ def main():
         runtime = verify_runtime_abi(identity,environment)
         write(directory/'environment.lock.json',dict(identity, resolved_libraries=resolved,runtime_abi=runtime))
         results.append(dict(profile=name,library=profile['library'],sha256=identity['library_sha256'],abi=runtime['abi_major']))
-        print(name+': build, dependency isolation and ABI2 load passed',flush=True)
+        print(name+': build, dependency isolation and ABI3 load passed',flush=True)
     write(out/'result.json',dict(status='pass',scope='build and load only; no hardware I/O',profiles=results))
     return 0
 

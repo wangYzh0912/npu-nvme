@@ -134,61 +134,35 @@ def load_backend(library_path=None, acl_library="libascendcl.so"):
         acl_lib.aclrtEventElapsedTime.argtypes = [
             ctypes.POINTER(ctypes.c_float), ctypes.c_void_p, ctypes.c_void_p]
         acl_lib.aclrtEventElapsedTime.restype = ctypes.c_int
-        _set_device = getattr(acl_lib, "aclrtSetDevice", None)
-        if _set_device is not None:
-            _set_device.argtypes = [ctypes.c_int]
-            _set_device.restype = ctypes.c_int
+        acl_lib.aclrtSetDevice.argtypes = [ctypes.c_int]
+        acl_lib.aclrtSetDevice.restype = ctypes.c_int
+        acl_lib.aclrtGetMemInfo.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_size_t), ctypes.POINTER(ctypes.c_size_t)]
+        acl_lib.aclrtGetMemInfo.restype = ctypes.c_int
     except Exception as e:
         raise BackendUnavailable(f"ACL backend unavailable: {e}") from e
 
 
     try:
         lib = ctypes.CDLL(_LIB_PATH)
+        lib.npu_nvme_abi_version.argtypes = []
+        lib.npu_nvme_abi_version.restype = ctypes.c_uint32
+        if lib.npu_nvme_abi_version() != 3:
+            raise BackendUnavailable('ABI major mismatch: expected3')
 
-        # -- FaF listener control --
-        if hasattr(lib, "npu_nvme_set_probe_flag_ptr"):
-            lib.npu_nvme_set_probe_flag_ptr.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-            lib.npu_nvme_set_probe_flag_ptr.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_set_probe_flag_value"):
-            lib.npu_nvme_set_probe_flag_value.argtypes = [
-                ctypes.POINTER(NPUNVMEContext), ctypes.c_uint32]
-            lib.npu_nvme_set_probe_flag_value.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_get_probe_flag_dev_ptr"):
-            lib.npu_nvme_get_probe_flag_dev_ptr.argtypes = [ctypes.c_void_p]
-            lib.npu_nvme_get_probe_flag_dev_ptr.restype = ctypes.c_void_p
-        if hasattr(lib, "npu_nvme_set_step_ptr"):
-            lib.npu_nvme_set_step_ptr.argtypes = [
-                ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
-            lib.npu_nvme_set_step_ptr.restype = ctypes.c_int
-
-        # -- Task registration --
-        if hasattr(lib, 'npu_nvme_register_tasks'):
-            lib.npu_nvme_register_tasks.argtypes = [
-                ctypes.c_void_p,
-                ctypes.POINTER(ctypes.c_void_p),
-                ctypes.POINTER(ctypes.c_uint64),
-                ctypes.POINTER(ctypes.c_size_t),
-                ctypes.c_int,
-            ]
-            lib.npu_nvme_register_tasks.restype = ctypes.c_int
-
-        # B2 additive ABI; absence is explicit at the selected transport boundary.
-        if hasattr(lib, "npu_nvme_get_capabilities"):
-            lib.npu_nvme_get_capabilities.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(NPUNVMECapabilities), ctypes.c_uint32]
-            lib.npu_nvme_get_capabilities.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_submit_copy"):
-            lib.npu_nvme_submit_copy.argtypes = [ctypes.POINTER(NPUNVMEContext),ctypes.POINTER(NPUNVMECopySpec),ctypes.POINTER(ctypes.POINTER(NPUNVMERequest))]
-            lib.npu_nvme_submit_copy.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_submit_transfer"):
-            lib.npu_nvme_submit_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext),
-                ctypes.POINTER(NPUNVMETransferSpec), ctypes.POINTER(ctypes.POINTER(NPUNVMERequest))]
-            lib.npu_nvme_submit_transfer.restype = ctypes.c_int
-            lib.npu_nvme_get_transfer_receipt.argtypes = [ctypes.POINTER(NPUNVMERequest),
-                ctypes.POINTER(NPUNVMETransferReceipt), ctypes.c_uint32]
-            lib.npu_nvme_get_transfer_receipt.restype = ctypes.c_int
-            lib.npu_nvme_get_transfer_digests.argtypes = [ctypes.POINTER(NPUNVMERequest),
-                ctypes.POINTER(NPUNVMETransferDigest), ctypes.c_uint32]
-            lib.npu_nvme_get_transfer_digests.restype = ctypes.c_int
+        # Required ABI3 operations; loading is the capability boundary.
+        lib.npu_nvme_get_capabilities.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.POINTER(NPUNVMECapabilities), ctypes.c_uint32]
+        lib.npu_nvme_get_capabilities.restype = ctypes.c_int
+        lib.npu_nvme_submit_copy.argtypes = [ctypes.POINTER(NPUNVMEContext),ctypes.POINTER(NPUNVMECopySpec),ctypes.POINTER(ctypes.POINTER(NPUNVMERequest))]
+        lib.npu_nvme_submit_copy.restype = ctypes.c_int
+        lib.npu_nvme_submit_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext),
+            ctypes.POINTER(NPUNVMETransferSpec), ctypes.POINTER(ctypes.POINTER(NPUNVMERequest))]
+        lib.npu_nvme_submit_transfer.restype = ctypes.c_int
+        lib.npu_nvme_get_transfer_receipt.argtypes = [ctypes.POINTER(NPUNVMERequest),
+            ctypes.POINTER(NPUNVMETransferReceipt), ctypes.c_uint32]
+        lib.npu_nvme_get_transfer_receipt.restype = ctypes.c_int
+        lib.npu_nvme_get_transfer_digests.argtypes = [ctypes.POINTER(NPUNVMERequest),
+            ctypes.POINTER(NPUNVMETransferDigest), ctypes.c_uint32]
+        lib.npu_nvme_get_transfer_digests.restype = ctypes.c_int
 
         # -- Init / cleanup --
         lib.npu_nvme_init.argtypes = [
@@ -198,51 +172,43 @@ def load_backend(library_path=None, acl_library="libascendcl.so"):
             ctypes.c_bool, ctypes.c_char_p,
         ]
         lib.npu_nvme_init.restype = ctypes.c_int
-        if hasattr(lib,'npu_nvme_init_ex'):
-            lib.npu_nvme_init_ex.argtypes = [ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)),
-                ctypes.c_char_p,ctypes.POINTER(NPUNVMEInitOptions),ctypes.c_char_p]
-            lib.npu_nvme_init_ex.restype = ctypes.c_int
+        lib.npu_nvme_init_ex.argtypes = [ctypes.POINTER(ctypes.POINTER(NPUNVMEContext)),
+            ctypes.c_char_p,ctypes.POINTER(NPUNVMEInitOptions),ctypes.c_char_p]
+        lib.npu_nvme_init_ex.restype = ctypes.c_int
 
         lib.npu_nvme_cleanup.argtypes = [ctypes.POINTER(NPUNVMEContext)]
         lib.npu_nvme_cleanup.restype = None
-        if hasattr(lib, "npu_nvme_get_retained_slots"):
-            lib.npu_nvme_get_retained_slots.argtypes = [ctypes.POINTER(NPUNVMEContext),
-                ctypes.POINTER(NPUNVMERetainedSlot), ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)]
-            lib.npu_nvme_get_retained_slots.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_close"):
-            lib.npu_nvme_close.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.c_uint32]
-            lib.npu_nvme_close.restype = ctypes.c_int
+        lib.npu_nvme_get_retained_slots.argtypes = [ctypes.POINTER(NPUNVMEContext),
+            ctypes.POINTER(NPUNVMERetainedSlot), ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)]
+        lib.npu_nvme_get_retained_slots.restype = ctypes.c_int
+        lib.npu_nvme_close.argtypes = [ctypes.POINTER(NPUNVMEContext), ctypes.c_uint32]
+        lib.npu_nvme_close.restype = ctypes.c_int
 
-        if hasattr(lib, "npu_nvme_submit_write_batch"):
-            lib.npu_nvme_submit_write_batch.argtypes = [
-                ctypes.POINTER(NPUNVMEContext),
-                ctypes.POINTER(ctypes.c_void_p),
-                ctypes.POINTER(ctypes.c_uint64),
-                ctypes.POINTER(ctypes.c_size_t), ctypes.c_int,
-                ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
-            ]
-            lib.npu_nvme_submit_write_batch.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_submit_write_batch_host"):
-            lib.npu_nvme_submit_write_batch_host.argtypes = [
-                ctypes.POINTER(NPUNVMEContext),
-                ctypes.POINTER(ctypes.c_void_p),
-                ctypes.POINTER(ctypes.c_uint64),
-                ctypes.POINTER(ctypes.c_size_t), ctypes.c_int,
-                ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
-            ]
-            lib.npu_nvme_submit_write_batch_host.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_poll_request"):
-            lib.npu_nvme_poll_request.argtypes = [
-                ctypes.POINTER(NPUNVMERequest), ctypes.POINTER(ctypes.c_int)]
-            lib.npu_nvme_poll_request.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_wait_request"):
-            lib.npu_nvme_wait_request.argtypes = [
-                ctypes.POINTER(NPUNVMERequest), ctypes.c_uint32]
-            lib.npu_nvme_wait_request.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_release_request"):
-            lib.npu_nvme_release_request.argtypes = [
-                ctypes.POINTER(NPUNVMERequest)]
-            lib.npu_nvme_release_request.restype = None
+        lib.npu_nvme_submit_write_batch.argtypes = [
+            ctypes.POINTER(NPUNVMEContext),
+            ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64),
+            ctypes.POINTER(ctypes.c_size_t), ctypes.c_int,
+            ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+        ]
+        lib.npu_nvme_submit_write_batch.restype = ctypes.c_int
+        lib.npu_nvme_submit_write_batch_host.argtypes = [
+            ctypes.POINTER(NPUNVMEContext),
+            ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_uint64),
+            ctypes.POINTER(ctypes.c_size_t), ctypes.c_int,
+            ctypes.POINTER(ctypes.POINTER(NPUNVMERequest)),
+        ]
+        lib.npu_nvme_submit_write_batch_host.restype = ctypes.c_int
+        lib.npu_nvme_poll_request.argtypes = [
+            ctypes.POINTER(NPUNVMERequest), ctypes.POINTER(ctypes.c_int)]
+        lib.npu_nvme_poll_request.restype = ctypes.c_int
+        lib.npu_nvme_wait_request.argtypes = [
+            ctypes.POINTER(NPUNVMERequest), ctypes.c_uint32]
+        lib.npu_nvme_wait_request.restype = ctypes.c_int
+        lib.npu_nvme_release_request.argtypes = [
+            ctypes.POINTER(NPUNVMERequest)]
+        lib.npu_nvme_release_request.restype = None
 
         # -- Query --
         lib.npu_nvme_get_max_transfer.argtypes = [ctypes.POINTER(NPUNVMEContext)]
@@ -250,10 +216,9 @@ def load_backend(library_path=None, acl_library="libascendcl.so"):
 
         lib.npu_nvme_get_total_blocks.argtypes = [ctypes.POINTER(NPUNVMEContext)]
         lib.npu_nvme_get_total_blocks.restype = ctypes.c_uint64
-        if hasattr(lib, "npu_nvme_get_stats"):
-            lib.npu_nvme_get_stats.argtypes = [ctypes.POINTER(NPUNVMEContext),
-                                               ctypes.POINTER(NPUNVMEStats)]
-            lib.npu_nvme_get_stats.restype = ctypes.c_int
+        lib.npu_nvme_get_stats.argtypes = [ctypes.POINTER(NPUNVMEContext),
+                                           ctypes.POINTER(NPUNVMEStats)]
+        lib.npu_nvme_get_stats.restype = ctypes.c_int
 
         # -- Synchronous metadata I/O --
         lib.npu_nvme_sync_meta_io.argtypes = [
@@ -261,46 +226,21 @@ def load_backend(library_path=None, acl_library="libascendcl.so"):
             ctypes.c_uint32, ctypes.c_int, ctypes.c_void_p,
         ]
         lib.npu_nvme_sync_meta_io.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_flush"):
-            lib.npu_nvme_flush.argtypes = [ctypes.POINTER(NPUNVMEContext)]
-            lib.npu_nvme_flush.restype = ctypes.c_int
+        lib.npu_nvme_flush.argtypes = [ctypes.POINTER(NPUNVMEContext)]
+        lib.npu_nvme_flush.restype = ctypes.c_int
 
-        # -- Delta frame ring-buffer layout (bookkeeping only, no I/O) --
-        if hasattr(lib, "npu_nvme_delta_init"):
-            lib.npu_nvme_delta_init.argtypes = [
-                ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint64,
-                ctypes.c_uint32]
-            lib.npu_nvme_delta_init.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_delta_get_area_offset"):
-            lib.npu_nvme_delta_get_area_offset.argtypes = [ctypes.c_void_p]
-            lib.npu_nvme_delta_get_area_offset.restype = ctypes.c_uint64
-        if hasattr(lib, "npu_nvme_delta_get_slot_size"):
-            lib.npu_nvme_delta_get_slot_size.argtypes = [ctypes.c_void_p]
-            lib.npu_nvme_delta_get_slot_size.restype = ctypes.c_uint64
-        if hasattr(lib, "npu_nvme_delta_get_slot_count"):
-            lib.npu_nvme_delta_get_slot_count.argtypes = [ctypes.c_void_p]
-            lib.npu_nvme_delta_get_slot_count.restype = ctypes.c_uint32
-        if hasattr(lib, "npu_nvme_set_io_timeout_ms"):
-            lib.npu_nvme_set_io_timeout_ms.argtypes = [
-                ctypes.c_void_p, ctypes.c_uint32]
-            lib.npu_nvme_set_io_timeout_ms.restype = ctypes.c_int
-        if hasattr(lib, "npu_nvme_get_io_timeout_ms"):
-            lib.npu_nvme_get_io_timeout_ms.argtypes = [ctypes.c_void_p]
-            lib.npu_nvme_get_io_timeout_ms.restype = ctypes.c_uint32
-        if hasattr(lib, "npu_nvme_wait_quiescent"):
-            lib.npu_nvme_wait_quiescent.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
-            lib.npu_nvme_wait_quiescent.restype = ctypes.c_int
+        # -- Observation bounds --
+        lib.npu_nvme_set_io_timeout_ms.argtypes = [
+            ctypes.c_void_p, ctypes.c_uint32]
+        lib.npu_nvme_set_io_timeout_ms.restype = ctypes.c_int
+        lib.npu_nvme_get_io_timeout_ms.argtypes = [ctypes.c_void_p]
+        lib.npu_nvme_get_io_timeout_ms.restype = ctypes.c_uint32
+        lib.npu_nvme_wait_quiescent.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+        lib.npu_nvme_wait_quiescent.restype = ctypes.c_int
 
         lib.npu_nvme_get_last_io_us.argtypes = [ctypes.c_void_p, ctypes.c_int]
         lib.npu_nvme_get_last_io_us.restype = ctypes.c_uint64
 
     except (OSError, AttributeError) as e:
         raise BackendUnavailable(f"NVMe backend unavailable: {_LIB_PATH}: {e}") from e
-    for symbol in ('npu_nvme_flush','npu_nvme_close','npu_nvme_wait_quiescent',
-                   'npu_nvme_submit_transfer','npu_nvme_submit_copy','npu_nvme_get_capabilities','npu_nvme_poll_request','npu_nvme_wait_request','npu_nvme_release_request'):
-        if not hasattr(lib,symbol): raise BackendUnavailable('required FULL symbol missing: '+symbol)
-    if not hasattr(acl_lib,'aclrtSetDevice'): raise BackendUnavailable('required ACL symbol missing: aclrtSetDevice')
-    if not hasattr(lib,'npu_nvme_abi_version'): raise BackendUnavailable('ABI2 version symbol missing')
-    lib.npu_nvme_abi_version.argtypes=[];lib.npu_nvme_abi_version.restype=ctypes.c_uint32
-    if lib.npu_nvme_abi_version()!=2: raise BackendUnavailable('ABI major mismatch: expected2')
     return SimpleNamespace(lib=lib, acl_lib=acl_lib, library_path=_LIB_PATH)

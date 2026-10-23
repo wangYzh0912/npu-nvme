@@ -69,7 +69,7 @@ def test_start_failure_releases_exactly_once(coordinator,spec):
     rt,t,released=runtime(coordinator,spec)
     with patch('threading.Thread.start',side_effect=RuntimeError('cannot start')):
         with pytest.raises(RuntimeError): rt.save({}, {}, 4,spec)
-    assert len(released)==1 and not rt._busy and not rt._handles and not coordinator._reservations
+    assert len(released)==1 and not rt._operations and not coordinator._reservations
     rt.save({}, {}, 5,spec).wait(2)
 
 
@@ -110,7 +110,57 @@ def test_release_failure_retains_and_wakes_waiters(coordinator, spec, start_fail
     else:
         h = rt.save({}, {}, 4, spec)
         with pytest.raises(RuntimeError, match='release failed'): h.wait(2)
-    assert not rt._busy and not rt._handles
+    assert not rt._operations
     assert rt.quarantined and coordinator.poisoned
     with pytest.raises(RuntimeError, match='quarantined'): rt.close(0.1)
     assert not t.closed
+
+
+def test_close_waits_for_accepted_capture_after_restore_finishes(coordinator, spec):
+    from conftest import publish
+    _, _, _, disk, _ = publish(coordinator, spec, 1)
+    rt, transport, _ = runtime(coordinator, spec)
+    transport.disk = disk
+    reading, release_read = threading.Event(), threading.Event()
+    freezing, release_freeze = threading.Event(), threading.Event()
+    close_started, close_done = threading.Event(), threading.Event()
+    errors, saves = [], []
+    def read(offset, size):
+        reading.set()
+        assert release_read.wait(5)
+        return transport.read(offset, size)
+    def freeze(params, generation):
+        freezing.set()
+        assert release_freeze.wait(5)
+        return params
+    rt.restore_session.reader = read
+    rt.freeze = freeze
+    restored = rt.begin_restore(lambda unused: Target(), spec, 1)
+    assert reading.wait(2)
+    def save():
+        try: saves.append(rt.save({}, {}, 2, spec))
+        except BaseException as error: errors.append(error)
+    original = rt.drain
+    def drain(timeout):
+        close_started.set()
+        return original(timeout)
+    rt.drain = drain
+    def close():
+        try: rt.close(5)
+        except BaseException as error: errors.append(error)
+        finally: close_done.set()
+    saver, closer = threading.Thread(target=save), threading.Thread(target=close)
+    saver.start()
+    try:
+        assert freezing.wait(2)
+        closer.start()
+        assert close_started.wait(2)
+        release_read.set()
+        assert restored.result(time.monotonic()+2)[0].ready
+        assert not close_done.wait(.05) and not transport.closed
+    finally:
+        release_read.set(); release_freeze.set()
+        saver.join(5)
+        if closer.ident is not None: closer.join(5)
+    for handle in saves: handle.wait(2)
+    assert not errors and close_done.is_set() and transport.closed

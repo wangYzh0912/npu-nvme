@@ -37,7 +37,7 @@ def main():
             report['commands'].append(command);record()
             with (out/f'build-{index}.log').open('w') as log:
                 subprocess.run(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1800)
-        profile['library']=str((out/'build/libnpu_nvme.so.2').resolve());profile['required_abi_major']=2
+        profile['library']=str((out/'build/libnpu_nvme.so.3').resolve());profile['required_abi_major']=3
         (out/'environments.json').write_text(json.dumps(manifest,indent=2)+'\n')
         identity=with_python_identity(read_profile(out/'environments.json','candidate',ROOT))
         env=isolated_environment(identity,ROOT)

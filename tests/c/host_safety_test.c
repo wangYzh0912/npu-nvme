@@ -2,7 +2,9 @@
  * No SPDK/ACL initialization, NVMe access, or device memory is used. */
 #include <assert.h>
 #include <limits.h>
+#include <pwd.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include "../../src/runtime.c"
 #include "../../src/reactor.c"
@@ -12,7 +14,6 @@
 #include "../../src/write_pipeline.c"
 #include "../../src/read_pipeline.c"
 #include "../../src/metadata_io.c"
-#include "../../src/step_listener.c"
 #include "../../src/metrics.c"
 #include "../../src/npu_nvme.c"
 
@@ -137,7 +138,19 @@ int main(int argc, char **argv) {
     NPUNVMEContext ctx = context();
     char bytes[4096] = {0};
     void *ptrs[] = {bytes}; uint64_t offsets[] = {0}; size_t sizes[] = {4};
-    if (!strcmp(argv[1],"role_permissions")) {
+    if (!strcmp(argv[1],"copy_owner_mapping")) {
+        char address[64];
+        unsetenv("ASCEND_RT_VISIBLE_DEVICES");
+        assert(copy_owner_address(2,address,sizeof(address))==0);
+        assert(!strcmp(address,"ffff:02:00.0"));
+        assert(setenv("ASCEND_RT_VISIBLE_DEVICES","4,5,6,7",1)==0);
+        for (int logical=0;logical<4;++logical) {
+            assert(copy_owner_address(logical,address,sizeof(address))==0);
+            assert(!strcmp(address,logical==0 ? "ffff:04:00.0" :
+                logical==1 ? "ffff:05:00.0" : logical==2 ? "ffff:06:00.0" : "ffff:07:00.0"));
+        }
+        assert(copy_owner_address(4,address,sizeof(address))==-EINVAL);
+    } else if (!strcmp(argv[1],"role_permissions")) {
         NPUNVMETransferSpec spec={.struct_size=sizeof(spec),.version=1,.operation=4,.memory_kind=1};
         NPUNVMECopySpec copy={.struct_size=sizeof(copy),.version=1,.operation=5,
                              .source=bytes,.destination=bytes,.length=4};
@@ -145,7 +158,6 @@ int main(int argc, char **argv) {
         NPUNVMECapabilities caps;
         ctx.role=NPU_NVME_ROLE_HOST_OWNER;
         assert(npu_nvme_submit_copy(&ctx,&copy,&req)==-ENOTSUP && !req);
-        assert(npu_nvme_set_step_ptr(&ctx,bytes,1)==-ENOTSUP);
         assert(npu_nvme_submit_write_batch(&ctx,ptrs,offsets,sizes,1,&req)==-ENOTSUP);
         assert(npu_nvme_get_capabilities(&ctx,&caps,sizeof(caps))==0 && caps.operation_mask==31);
         ctx.role=NPU_NVME_ROLE_COPY_RANK;ctx.qpair=NULL;ctx.ns=NULL;
@@ -432,6 +444,21 @@ int main(int argc, char **argv) {
         release_native_owner(&ctx);
         assert(acquire_native_owner(&second, "0000:ff:1f.7") == 0);
         release_native_owner(&second);
+    } else if (!strcmp(argv[1], "native_owner_existing_file")) {
+        char path[] = "/tmp/npu-nvme-owner-regression-XXXXXX";
+        int created = mkstemp(path);
+        assert(created >= 0);
+        close(created);
+        if (geteuid() == 0) {
+            const char *uid_text = getenv("SUDO_UID");
+            struct passwd *nobody = getpwnam("nobody");
+            uid_t uid = uid_text ? (uid_t)strtoul(uid_text, NULL, 10) : nobody->pw_uid;
+            assert(chown(path, uid, (gid_t)-1) == 0);
+        }
+        int owner_fd = open_native_owner_file(path);
+        assert(owner_fd >= 0);
+        close(owner_fd);
+        assert(unlink(path) == 0);
     } else if (!strcmp(argv[1], "concurrent_close")) {
         struct spdk_thread thread = {.state = 2};
         ctx.reactor_thread = &thread;
@@ -455,9 +482,6 @@ int main(int argc, char **argv) {
         assert(npu_nvme_close(&ctx, 1) == 0);
         assert(thread.destroyed == 1 && ctx.reactor_thread == NULL);
         assert(npu_nvme_close(&ctx, 1) == 0 && thread.destroyed == 1);
-    } else if (!strcmp(argv[1], "delta_overflow")) {
-        assert(npu_nvme_delta_init(&ctx, 0, UINT64_C(1) << 63, 2) != 0);
-        assert(ctx.delta.slot_count == 0);
     } else if (!strcmp(argv[1], "batch_bound")) {
         /* None of these arrays may be dereferenced before count validation. */
         void *guard = mmap(NULL, 4096, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -484,7 +508,6 @@ int main(int argc, char **argv) {
     } else if (!strcmp(argv[1], "legal_bounds")) {
         offsets[0] = 1023 * 4096;
         assert(validate_io_batch(&ctx, ptrs, offsets, sizes, 1) == 0);
-        assert(npu_nvme_delta_init(&ctx, 0, 4096, 1024) == 0);
     } else if (!strcmp(argv[1], "queued_close") || !strcmp(argv[1], "early_release") ||
                !strcmp(argv[1], "late_completion")) {
         struct spdk_ring ring = {0}; ctx.write_ring = &ring;

@@ -43,26 +43,6 @@ typedef struct {
     uint32_t chunk_size;
 } dma_pool_t;
 
-/* ---- FaF listener / probe-flag state ---- */
-typedef struct {
-    void *probe_flag_dev_ptr;  /* device (HBM) address of probe flag */
-    bool owns_probe_flag;      /* true only for buffers allocated by C */
-    void *probe_flag_host;     /* host-side mirror for polling */
-    void *dev_step_ptr;        /* device (HBM) address of step_counter */
-    void *step_poll_buf;       /* host buffer for polling step_counter */
-    int ckpt_interval;         /* trigger SPDK write every N steps */
-    io_task_t *registered_tasks;
-    io_task_t *old_tasks;          /* deferred-free: previous gen, safe while FSM runs */
-    int num_registered_tasks;
-} listener_state_t;
-
-/* ---- Delta ring-buffer layout (bookkeeping only, no I/O) ---- */
-typedef struct {
-    uint64_t area_offset;      /* byte offset of delta area on NVMe */
-    uint64_t slot_size;        /* bytes per slot */
-    uint32_t slot_count;       /* total number of slots */
-} delta_state_t;
-
 /* ---- Master context ---- */
 typedef struct NPUNVMEContext {
     uint32_t role;
@@ -86,12 +66,6 @@ typedef struct NPUNVMEContext {
     bool enable_profiling;
     char profiling_dir[256];
 
-    /* Fire-and-Forget listener */
-    listener_state_t listener;
-
-    /* Delta ring layout */
-    delta_state_t delta;
-
     /* ---- Reactor thread ---- */
     struct spdk_thread *reactor_thread;
     pthread_t reactor_pthread;
@@ -113,16 +87,12 @@ typedef struct NPUNVMEContext {
     pid_t native_owner_pid;
     int reactor_init_result;
 
-    /* ---- Step-counter poller ---- */
-    struct spdk_poller *step_poller;
+    /* ---- Reactor pollers ---- */
     struct spdk_poller *write_fsm_poller;  /* V3: async write FSM */
     struct spdk_poller *read_fsm_poller;   /* V4: async read FSM */
     struct spdk_poller *meta_poller;       /* V4: async metadata I/O */
-    int last_step_seen;
 
-    /* Listener-state lock — protects registered_tasks, dev_step_ptr,
-     * probe_flag_* from concurrent access by Python thread and reactor.
-     * I/O paths (write/read/meta) no longer use this lock. */
+    /* Admission and accepted-write dependency ownership. */
     pthread_mutex_t state_lock;
 
     /* ---- Async write FSM (V3) ---- */

@@ -77,8 +77,13 @@ def validate_result_gate(result: Mapping) -> None:
             "pass", "fail", "blocked", "unsupported"):
         raise ValueError("result requires an explicit valid status")
     if result.get("mode") == "none":
-        if result.get("restore_verified") is True:
-            raise ValueError("none baseline cannot claim restore_verified")
+        if result.get("restore_verified") is True or result.get("persisted") is True:
+            raise ValueError("none baseline cannot claim persistence or restore")
+        if result['status'] == 'pass' and not (
+                result.get('training_verified') is True and
+                result.get('restore_status') == 'not_applicable' and
+                result.get('restore_verified') is False and result.get('persisted') is False):
+            raise ValueError('none success requires training proof and explicit not_applicable restore')
         return
     required = ("request_id", "generation", "persisted", "restore_verified")
     missing = [name for name in required if name not in result]

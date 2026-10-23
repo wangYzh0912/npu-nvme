@@ -26,6 +26,11 @@ def verified_runs(previous,config,repo):
         old=Path(next(iter(identity['sources'])))
         key=(str(old),method)
         if key not in verified_sources:
+            if 'execution_sources' in identity:
+                from npu_nvme.cli.contracts import source_identity
+                frozen=identity['execution_sources']
+                if source_identity(old)!=frozen or source_identity(repo)['sources']!=frozen['sources']:
+                    raise ValueError('execution sources changed, including untracked files')
             snapshot=source_snapshot(dict(stages=[dict(cwd=str(old))]))
             if snapshot!=identity['sources']:raise ValueError('previous source checkout changed')
             names=subprocess.check_output(['git','ls-files','-z','python','src','include','tools','scripts',

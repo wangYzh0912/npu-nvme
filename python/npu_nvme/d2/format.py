@@ -355,6 +355,14 @@ class Region:
                 return receipt
             except BaseException:self.poisoned=True;raise
 
+    def publication_inventory(self):
+        """Retained commit metadata for public-index reconciliation; no payload reads."""
+        if self.current is None:return []
+        state=self.current['state']
+        receipts={row['generation']:row for row in state['receipts']}
+        return [dict(receipt=receipts[g['generation']],step=g['step'],topology=g['topology'],
+                     controls_sha256=sha(canonical(self.read_controls(g)))) for g in state['generations']]
+
     @contextmanager
     def selected(self,generation=None):
         with self.lock:

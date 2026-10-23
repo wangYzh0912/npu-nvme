@@ -22,6 +22,23 @@ def test_identity_allows_continuation_stop_change(tmp_path):
     value['stop_step']=24;value['lr_horizon']=24;second=resolve(value,tmp_path)
     first['identity'].pop('lr_horizon');second['identity'].pop('lr_horizon')
     assert first['identity']==second['identity']
+    assert first['npu_ids']==[0,1,2,3]
+
+
+def test_physical_tp4_map_is_recorded_in_run_identity(tmp_path):
+    value=fixture(tmp_path);value['npu_ids']=[4,5,6,7]
+    resolved=resolve(value,tmp_path)
+    assert resolved['identity']['physical_npu_ids']==[4,5,6,7]
+    value['npu_ids']=[4,5,6,8]
+    with pytest.raises(ValueError,match='physical NPU'):
+        resolve(value,tmp_path)
+
+
+@pytest.mark.parametrize('mapping',[[0,1,2,4],[4,5,6],[7,6,5,4],[4,5,6,7,8]])
+def test_only_supported_ordered_tp4_physical_maps_are_allowed(tmp_path,mapping):
+    value=fixture(tmp_path);value['npu_ids']=mapping
+    with pytest.raises(ValueError,match='physical NPU'):
+        resolve(value,tmp_path)
 
 
 def test_ours_requires_actual_three_generation_media(tmp_path):

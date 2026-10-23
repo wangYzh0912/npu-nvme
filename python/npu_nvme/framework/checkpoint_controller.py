@@ -33,6 +33,30 @@ class CheckpointController:
             self.d2=TrainingCheckpoint(config,rank=self.rank,npu_id=self.npu_id,output=self.rank_dir)
         return self.d2
 
+    def admit(self, framework, network, *, step, operation, barrier):
+        if self.method!='ours':return
+        import ctypes as C
+        from npu_nvme.runtime.resources import qwen_capacity
+        from .parameters import tensor_inventory
+        from npu_nvme.d2.tp_schema import validate_rank
+        strategy=json.loads(Path(self.config['strategy']).read_text())
+        partition={row['name']:row['partition'] for row in strategy['tensors']}
+        observed=[dict(rank=self.rank,name=p.name,shape=shape,dtype=dtype.name,bytes=size,
+                       partition=partition[p.name]) for p,dtype,shape,size in tensor_inventory(framework,network)]
+        validate_rank(observed,strategy,self.rank)
+        barrier()
+        executor=self._d2().executor
+        free,total=C.c_size_t(),C.c_size_t()
+        rc=executor.backend.acl_lib.aclrtGetMemInfo(1,C.byref(free),C.byref(total))
+        if rc:raise RuntimeError('ACL HBM capacity query failed: '+str(rc))
+        # All private native pools and rank bridge buffers already exist.
+        resident=5*executor.transport.capabilities.dma_pool_bytes+4*(4<<20)+(1<<20)
+        report=qwen_capacity(self.config,hbm_free=free.value,resident_host=resident)
+        report['observed_state_bytes']=sum(row['bytes'] for row in observed)
+        catalog.write_checked(self.rank_dir/f'resource-{operation}-{step}.json',report)
+        if not report['admitted']:raise MemoryError('FULL resource admission rejected; see resource report')
+        barrier()
+
     def save(self, ms, network, *, step, state, controls, barrier):
         if self.method=='none':return None
         self.sequence+=1
@@ -88,8 +112,14 @@ class CheckpointController:
         elif self.method=='ours':
             from qwen_d2_state import partitions_for
             partitions=partitions_for(state,controls['small_parameters'],self.config['strategy'])
+            def prepared(backend):
+                request=backend.pop('request_id')
+                catalog.write_checked(rank_dir/'prepared.json',dict(preparation_version=1,
+                    raw_request_id=request,rank=self.rank,generation=row['generation'],step=step,
+                    method=self.method,identity=self.config['identity'],state=state,controls=controls,
+                    backend=backend))
             backend=self._d2().transfer(ms,network,operation='save',step=step,
-                partitions=partitions,controls=controls)
+                partitions=partitions,controls=controls,prepare=prepared,barrier=barrier)
         else:raise ValueError('unknown checkpoint method')
         # Metadata and hashing are included in the blocking save boundary.
         files=catalog.payload_files(rank_dir)

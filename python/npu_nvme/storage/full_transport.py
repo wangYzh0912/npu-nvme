@@ -20,8 +20,6 @@ class TransferFailure(RuntimeError):
 class FullTransport:
     def __init__(self, backend, *, pci, npu, depth, chunk_size, profiling_dir, profiling=False, role="combined"):
         self.lib, self.acl = backend.lib, backend.acl_lib
-        for name in ('npu_nvme_submit_transfer','npu_nvme_submit_copy','npu_nvme_get_capabilities'):
-            if not hasattr(self.lib,name): raise RuntimeError('async FULL capability missing: '+name)
         self.npu = npu
         self.ctx = C.POINTER(NPUNVMEContext)()
         self.retained = []
@@ -31,7 +29,6 @@ class FullTransport:
                                        chunk_size, profiling, str(profiling_dir).encode())
         else:
             if role not in ('host_owner','copy_rank'): raise ValueError('unknown native role')
-            if not hasattr(self.lib,'npu_nvme_init_ex'): raise RuntimeError('role ABI missing')
             options=NPUNVMEInitOptions(C.sizeof(NPUNVMEInitOptions),1,
                 1 if role=='host_owner' else 2,depth,chunk_size,npu,0)
             rc=self.lib.npu_nvme_init_ex(C.byref(self.ctx),pci.encode() if pci else None,

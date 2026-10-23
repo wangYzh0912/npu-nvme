@@ -43,7 +43,7 @@ class TrainingCheckpoint:
             chunk_bytes=c['chunk_bytes'],deadline=deadline,operation_timeout=c['operation_timeout_seconds'])
 
     def transfer(self, framework, network, *, operation, step, partitions, controls=None,
-                 generation=None, verify_controls=None, barrier=None):
+                 generation=None, verify_controls=None, barrier=None, prepare=None):
         try:
             self._open()
             self.state=BlockingState(framework,network,rank=self.rank,executor=self.executor,
@@ -57,6 +57,12 @@ class TrainingCheckpoint:
             started=time.monotonic()
             if operation=='save':
                 if controls is None:raise ValueError('FULL save requires controls')
+                if prepare is not None:
+                    prepare(dict(request_id=f'{self.client.epoch}:{sequence}',step=step,operation='save',
+                        sequence=sequence,seconds=None,placement=self.state.placement,
+                        state_bytes=sum(row['bytes'] for row in self.state.schema),
+                        native_dma_pool_bytes=self.executor.transport.capabilities.dma_pool_bytes))
+                    barrier()
                 receipt=self.client.save(self.state.schema,self.state.read_chunk,controls,step=step)
             elif operation=='restore':
                 if verify_controls is None or barrier is None:raise ValueError('restore requires verification and barrier')

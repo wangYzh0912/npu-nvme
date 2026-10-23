@@ -37,12 +37,12 @@ def binary(tmp_path_factory):
     return exe
 
 
-@pytest.mark.parametrize('case', ['role_permissions','metadata_failed_flush','pointer_overflow','copy_d2h','copy_h2d','copy_corrupt','streaming_windows','flush_prior_failure','capabilities','pending_limit','write_rotation','read_rotation','checksum_slices','flush_dependency','flush_failed_dependency','read_valid','read_corrupt','read_late','read_query_quarantine','read_record_quarantine','transfer_digest','transfer_invalid','delta_overflow','batch_bound','batch_bytes',
+@pytest.mark.parametrize('case', ['copy_owner_mapping','role_permissions','metadata_failed_flush','pointer_overflow','copy_d2h','copy_h2d','copy_corrupt','streaming_windows','flush_prior_failure','capabilities','pending_limit','write_rotation','read_rotation','checksum_slices','flush_dependency','flush_failed_dependency','read_valid','read_corrupt','read_late','read_query_quarantine','read_record_quarantine','transfer_digest','transfer_invalid','batch_bound','batch_bytes',
                                   'geometry_overflow','metadata_capacity','legal_bounds',
                                   'queued_close','early_release','late_completion',
                                   'write_completion','query_quarantine','dma_stopped','copy_rejected',
                                   'close_deadline','close_retry','metadata_timeout','lost_completion',
-                                  'spdk_exit','native_owner','concurrent_close','closed_admission'])
+                                  'spdk_exit','native_owner','native_owner_existing_file','concurrent_close','closed_admission'])
 def test_input_bounds(binary, case):
     result = subprocess.run([str(binary),case],capture_output=True,text=True,timeout=10,
                             env=dict(os.environ, ASAN_OPTIONS='detect_leaks=1',

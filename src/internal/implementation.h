@@ -32,7 +32,6 @@
 #include <openssl/sha.h>
 
 /* ---- Hugepage pool auto-expansion for DPDK/SPDK ---- */
-#define STEP_POLLER_PERIOD_US  10000   /* step counter poll interval (10 ms) */
 #define HUGEPAGE_2MB_PATH "/sys/kernel/mm/hugepages/hugepages-2048kB/free_hugepages"
 
 
@@ -112,14 +111,6 @@ int npu_nvme_wait_quiescent(NPUNVMEContext *ctx, uint32_t timeout_ms);
 __attribute__((visibility("hidden"))) int ensure_acl_context(NPUNVMEContext *ctx);
 __attribute__((visibility("hidden"))) void *reactor_loop(void *arg);
 __attribute__((visibility("hidden"))) void reactor_new_thread_fn(struct spdk_thread *thread, void *arg);
-int npu_nvme_set_probe_flag_ptr(NPUNVMEContext *ctx, void *dev_ptr);
-int npu_nvme_set_probe_flag_value(NPUNVMEContext *ctx, uint32_t value);
-void *npu_nvme_get_probe_flag_dev_ptr(NPUNVMEContext *ctx);
-__attribute__((visibility("hidden"))) void signal_probe_flag(NPUNVMEContext *ctx, uint32_t value);
-int npu_nvme_set_step_ptr(NPUNVMEContext *ctx, void *dev_ptr, int ckpt_interval);
-__attribute__((visibility("hidden"))) int step_poller_fn(void *arg);
-int npu_nvme_register_tasks(NPUNVMEContext *ctx, void **npu_ptrs,
-                             uint64_t *nvme_offsets, size_t *sizes, int num_items);
 __attribute__((visibility("hidden"))) void initiate_write_fsm(NPUNVMEContext *ctx, write_request_t *req);
 __attribute__((visibility("hidden"))) void write_fsm_tick(NPUNVMEContext *ctx);
 __attribute__((visibility("hidden"))) int write_fsm_poller_fn(void *arg);
@@ -141,11 +132,6 @@ int npu_nvme_get_retained_slots(NPUNVMEContext *ctx, NPUNVMERetainedSlot *slots,
                                  uint32_t capacity, uint32_t *count);
 int npu_nvme_close(NPUNVMEContext *ctx, uint32_t timeout_ms);
 void npu_nvme_cleanup(NPUNVMEContext *ctx);
-int npu_nvme_delta_init(NPUNVMEContext *ctx, uint64_t area_offset,
-                         uint64_t delta_slot_size, uint32_t delta_slot_count);
-uint64_t npu_nvme_delta_get_area_offset(NPUNVMEContext *ctx);
-uint64_t npu_nvme_delta_get_slot_size(NPUNVMEContext *ctx);
-uint32_t npu_nvme_delta_get_slot_count(NPUNVMEContext *ctx);
 
 __attribute__((visibility("hidden"))) write_request_t *take_ready_request(NPUNVMEContext *ctx, int direction);
 __attribute__((visibility("hidden"))) void rotate_request(NPUNVMEContext *ctx, int direction, write_request_t *req, int prefix);

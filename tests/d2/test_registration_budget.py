@@ -27,6 +27,15 @@ def test_validation_region_requires_its_explicit_purpose():
     with pytest.raises(ValueError):stage_config_from_config(ROOT/'config/d2_qwen_region.json',required_purpose='validation')
 
 
+def test_d2_registration_accepts_alternate_physical_tp4_mapping():
+    config=json.loads((ROOT/'config/d2_qwen_region.json').read_text())
+    config['npu_ids']=[4,5,6,7]
+    assert registration_from_config(config)['offset']==256<<30
+    config['npu_ids']=[4,5,6,0]
+    with pytest.raises(ValueError,match='TP4 mapping'):
+        registration_from_config(config)
+
+
 def test_socket_budget_counts_private_rank_pools_and_one_pin():
     schema=json.loads((ROOT/'config/qwen_runtime_schema.json').read_text())
     args=dict(chunk=4<<20,depth=4,mode='blocking',hbm_free=8<<30,host_free=1<<40,hbm_headroom=1<<30,host_headroom=16<<30)

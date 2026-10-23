@@ -59,8 +59,11 @@ def run(options):
         # including synchronous native MindSpore safetensors serialization.
         write_checked(directory/'resolved-config.json',dict(config))
         build_context(config)
-        if is_legacy_model() or get_group_size()!=4 or get_rank()!=rank or ms.get_context('device_id')!=rank:
-            raise RuntimeError('baseline requires TP4 on physical NPU 0–3')
+        physical_devices=options['identity']['physical_npu_ids']
+        if (is_legacy_model() or get_group_size()!=4 or get_rank()!=rank or
+                ms.get_context('device_id')!=rank or physical_devices not in ([0,1,2,3],[4,5,6,7]) or
+                os.environ['ASCEND_RT_VISIBLE_DEVICES']!=','.join(map(str,physical_devices))):
+            raise RuntimeError('baseline TP4 physical device mapping differs')
         ms.set_seed(42);ms.manual_seed(42);np.random.seed(42);random.seed(42)
         tokenizer=AutoTokenizer.from_pretrained(str(source),local_files_only=True,trust_remote_code=False)
         text=('Checkpoint recovery restores model parameters and optimizer state. '
@@ -82,6 +85,7 @@ def run(options):
             def on_train_begin(self,context):
                 network=context.original_args().train_network
                 if options['method']=='ours':controller._d2()._open()
+                controller.admit(ms,network,step=start,operation='restore' if options.get('restore_checkpoint') else 'initial',barrier=barrier)
                 if options.get('restore_checkpoint'):
                     restored=controller.restore(ms,network,data_sha256=data_hash,lr_horizon=horizon,barrier=barrier)
                     if restored!=start:raise ValueError('restored step differs from execution start')
@@ -106,6 +110,7 @@ def run(options):
                 if step!=start+len(report['losses'])+1:raise ValueError('callback optimizer step is not sequential')
                 report['losses'].append(dict(step=step,loss=loss,overflow=overflow))
                 if step%period==0 or step==stop:
+                    controller.admit(ms,cb.train_network,step=step,operation='save',barrier=barrier)
                     ms.hal.synchronize();state,small=parameter_manifest(cb.train_network)
                     controls=capture_control(ms,step=step,data_sha256=data_hash,lr_horizon=horizon,small=small)
                     write_checked(directory/f'state-step-{step}.json',state)

@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import json
 import pytest
 from npu_nvme.runtime.resources import Allocation,allocation_totals,capture_admission,phase_deadlines,framework_memory_snapshot
 
@@ -47,3 +48,27 @@ def test_actual_qwen_schema_has_no_c1_generation_limit():
         assert result['tensor_count_per_rank']==952
         assert result['partition_counts']==dict(replicated=435,sharded=438,per_rank_control=79)
         assert result['admission_per_rank']['admitted']
+
+
+def test_capacity_rejects_host_disk_and_hbm_shortage_without_fallback(monkeypatch):
+    from npu_nvme.runtime import resources
+    from pathlib import Path
+    root=Path(__file__).resolve().parents[2]
+    config=dict(strategy=str(root/'config/qwen_runtime_schema.json'),
+                region=str(root/'config/d2_qwen_region.json'),host_headroom_bytes=16<<30,hbm_headroom_bytes=1<<30)
+    monkeypatch.setattr(resources,'available_host_bytes',lambda:0)
+    assert not resources.qwen_capacity(config)['admitted']
+    monkeypatch.setattr(resources,'available_host_bytes',lambda:1<<50)
+    # Pools are resident at the runtime boundary; hugepage capacity is not charged twice.
+    resident=5*(4<<20)*4+4*(4<<20)+(1<<20)
+    rejected=resources.qwen_capacity(config,hbm_free=0,resident_host=resident)
+    assert not rejected['admitted'] and rejected['hugepage_required_remaining']==0
+    allowed=resources.qwen_capacity(config,hbm_free=2<<30,resident_host=resident)
+    assert allowed['admitted']
+    assert allowed['host_required_remaining']==allowed['aggregate_host_required']-resident
+    assert allowed['tensor_scratch_budget_bytes']>0
+    assert allowed['admission_per_rank']['mode']=='blocking'
+    schema=json.loads(Path(config['strategy']).read_text())
+    short=resources.qwen_plan(schema,chunk=4<<20,depth=4,mode='blocking',hbm_free=2<<30,
+        host_free=1<<50,hbm_headroom=1<<30,host_headroom=16<<30,region_bytes=1<<20)
+    assert not short['disk']['admitted']

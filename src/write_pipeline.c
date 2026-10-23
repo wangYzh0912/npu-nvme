@@ -91,7 +91,7 @@ void write_fsm_tick(NPUNVMEContext *ctx) {
     unsigned submit_budget = EFFECTIVE(ctx->submit_items_per_tick,4);
     int quantum=EFFECTIVE(ctx->quantum_items,DEFAULT_QUANTUM(ctx));
     int quantum_end=req->num_tasks;
-    if (req != &fsm->faf_req && quantum_end-req->resume_index>quantum)
+    if (quantum_end-req->resume_index>quantum)
         quantum_end=req->resume_index+quantum;
 
     /* Ensure ACL context is bound to the reactor thread before any
@@ -261,30 +261,14 @@ int write_fsm_poller_fn(void *arg) {
 
     /* Phase 2: advance the current FSM. */
     if (fsm->state == WRITE_FSM_RUNNING) {
-        bool was_faf = (fsm->req == &fsm->faf_req);
         write_request_t *finished_req = fsm->req;
-        uint32_t faf_step = fsm->faf_step;
 
         write_fsm_tick(ctx);
 
-        /* If just completed: signal probe flag for FaF, free deferred tasks. */
         if (fsm->state == WRITE_FSM_IDLE && atomic_load(&finished_req->done)) {
-            if (was_faf && fsm->faf_req.result == 0) {
-                ensure_acl_context(ctx);
-                signal_probe_flag(ctx, faf_step);
-            } else if (was_faf) {
-                fprintf(stderr,
-                        "[NPU-NVMe] FaF checkpoint step %u failed; "
-                        "probe flag was not advanced.\n", faf_step);
-            }
-            pthread_mutex_lock(&ctx->state_lock);
-            if (ctx->listener.old_tasks) {
-                free(ctx->listener.old_tasks);
-                ctx->listener.old_tasks = NULL;
-            }
-            pthread_mutex_unlock(&ctx->state_lock);
             atomic_fetch_sub(&ctx->pending_requests, 1);
-            if (!was_faf) { forget_accepted_write(ctx, finished_req); write_request_put(finished_req); }
+            forget_accepted_write(ctx, finished_req);
+            write_request_put(finished_req);
         }
     }
 
