@@ -1,7 +1,8 @@
 # Deferred validation register
 
-Status: deferred by scope decision on 2026-09-16. These items do not block the
-usable Qwen3 TP4 training entry, and none is represented as passed.
+Status: full performance campaign deferred by scope decision on 2026-09-16.
+The targeted ABI3 correctness chain below has since passed independently; it
+does not complete the original performance campaign.
 
 ## Published baseline
 
@@ -38,15 +39,17 @@ large for Git:
 
 Resume with a new output directory. Attempt 004 is immutable partial evidence.
 
-1. Run Ours explicit catalog generation 1 from step4 to step8 and compare all
-   four ranks with the uninterrupted oracle.
-2. Run Ours latest step8-to16, save at step12/16, then use another fresh process
-   for latest step16-to24 and save at step20/24.
-3. Run the same source/explicit/latest/latest chain for ByteCheckpoint Host.
-4. Run three independent source repetitions for each method to step11 with a
+The ABI3 NPU4--7 targeted acceptance completed the Ours explicit generation 1
+step4-to8 and latest step8-to16 / step16-to24 chains, with all-rank oracle
+comparisons, on 2026-10-22. The independent 2026-10-24 rerun is recorded in
+`DEVELOPMENT_STATUS.md`. These are correctness results, not timing samples for
+the old campaign; environment/source identity rules still govern reuse.
+
+1. Run the source/explicit/latest/latest chain for ByteCheckpoint Host.
+2. Run three independent source repetitions for each method to step11 with a
    step8 checkpoint. For each persistent method, run one warmup and three timed
    fresh restores from step8 to step11.
-5. Require 37 run records, 35 comparisons, three timing samples for every
+3. Require 37 run records, 35 comparisons, three timing samples for every
    persistent method, retention of three committed generations, clean owner
    shutdown and no hardware lease after completion.
 

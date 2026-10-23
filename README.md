@@ -12,6 +12,20 @@ are synchronous and periodic; restore runs in a fresh process. Incremental
 checkpointing, Qwen live checkpointing, resharding and GPT-2 compatibility are
 outside this release's acceptance scope.
 
+The FULL checkpoint implementation uses ABI3 and an independent environment.
+On 2026-10-22, targeted NPU 4--7 FULL correctness acceptance passed all seven
+scenarios and five oracle comparisons: source save, explicit and two latest
+fresh-process restores, plus publication interruption and automatic recovery.
+An independent rerun passed the same seven scenarios and five comparisons on
+2026-10-24.
+The native-owner physical-device key and existing-file open errors are fixed;
+software, C sanitizer and ABI/load checks also pass. The full performance
+campaign remains deferred. Historical ABI2 passes below retain their original
+scope. Current flow, cleanup and remaining checks are documented in
+[FULL_CHECKPOINT_FLOW.md](FULL_CHECKPOINT_FLOW.md).
+The latest development and verification record is
+[DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md).
+
 ## Run
 
 ```bash
