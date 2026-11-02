@@ -1,0 +1,92 @@
+{
+  "status": "pass",
+  "checks": {
+    "idle_both_below_1pct": true,
+    "matrix_aic_above_50pct": true,
+    "matrix_aiv_below_1pct": true,
+    "vector_aiv_above_20pct": true,
+    "vector_aic_below_1pct": true,
+    "serial_task_overlap_below_1pct": true,
+    "concurrent_task_overlap_above_20pct": true,
+    "concurrent_each_engine_above_20pct": true,
+    "each_phase_at_least_190_valid_10ms_bins": true
+  },
+  "results": [
+    {
+      "id": "idle",
+      "task": {
+        "aic_only": 0.0,
+        "aiv_only": 0.0,
+        "both": 0.0,
+        "neither": 1.0,
+        "unknown": 0.0
+      },
+      "core_mean": {
+        "aic": 0.0,
+        "aiv": 0.0019009705541795491
+      },
+      "valid_bins": 200
+    },
+    {
+      "id": "matrix",
+      "task": {
+        "aic_only": 0.9044144171977269,
+        "aiv_only": 0.0,
+        "both": 0.0,
+        "neither": 0.09558558280227318,
+        "unknown": 0.0
+      },
+      "core_mean": {
+        "aic": 78.53329568913239,
+        "aiv": 0.0004953007502290948
+      },
+      "valid_bins": 200
+    },
+    {
+      "id": "vector",
+      "task": {
+        "aic_only": 0.0,
+        "aiv_only": 0.3708971505315076,
+        "both": 0.0,
+        "neither": 0.6291028494684924,
+        "unknown": 0.0
+      },
+      "core_mean": {
+        "aic": 0.02178274235342323,
+        "aiv": 35.29648579331971
+      },
+      "valid_bins": 200
+    },
+    {
+      "id": "serial",
+      "task": {
+        "aic_only": 0.37545582189875887,
+        "aiv_only": 0.17141290775605192,
+        "both": 0.0,
+        "neither": 0.4531312703451892,
+        "unknown": 0.0
+      },
+      "core_mean": {
+        "aic": 36.29819550561344,
+        "aiv": 15.582246396598837
+      },
+      "valid_bins": 200
+    },
+    {
+      "id": "concurrent",
+      "task": {
+        "aic_only": 0.3651145308217807,
+        "aiv_only": 0.00022339153701242027,
+        "both": 0.5365480502588325,
+        "neither": 0.09811402738237447,
+        "unknown": 0.0
+      },
+      "core_mean": {
+        "aic": 76.84134806155912,
+        "aiv": 44.16996868916109
+      },
+      "valid_bins": 200
+    }
+  ],
+  "limitation": "Core mean activity alone cannot establish simultaneous busy cycles inside one 10 ms sample; independent device task intervals provide the positive overlap control."
+}

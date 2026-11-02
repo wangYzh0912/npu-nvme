@@ -1,0 +1,124 @@
+{
+  "scope": "Read-only feasibility audit; no training, inference or hardware profiling run started.",
+  "captured_at": "2026-10-29T16:31:16.598459+00:00",
+  "commands": {
+    "npu_info": {
+      "argv": [
+        "npu-smi",
+        "info"
+      ],
+      "returncode": 0,
+      "stdout": "+------------------------------------------------------------------------------------------------+\n| npu-smi 24.1.rc3                 Version: 24.1.rc3                                             |\n+---------------------------+---------------+----------------------------------------------------+\n| NPU   Name                | Health        | Power(W)    Temp(C)           Hugepages-Usage(page)|\n| Chip                      | Bus-Id        | AICore(%)   Memory-Usage(MB)  HBM-Usage(MB)        |\n+===========================+===============+====================================================+\n| 0     910B3               | OK            | 93.6        33                0    / 0             |\n| 0                         | 0000:C1:00.0  | 0           0    / 0          3421 / 65536         |\n+===========================+===============+====================================================+\n| 1     910B3               | OK            | 90.5        32                0    / 0             |\n| 0                         | 0000:C2:00.0  | 0           0    / 0          3419 / 65536         |\n+===========================+===============+====================================================+\n| 2     910B3               | OK            | 90.4        32                0    / 0             |\n| 0                         | 0000:81:00.0  | 0           0    / 0          3406 / 65536         |\n+===========================+===============+====================================================+\n| 3     910B3               | OK            | 90.7        32                0    / 0             |\n| 0                         | 0000:82:00.0  | 0           0    / 0          3405 / 65536         |\n+===========================+===============+====================================================+\n| 4     910B3               | OK            | 88.4        37                0    / 0             |\n| 0                         | 0000:01:00.0  | 0           0    / 0          3417 / 65536         |\n+===========================+===============+====================================================+\n| 5     910B3               | OK            | 98.2        37                0    / 0             |\n| 0                         | 0000:02:00.0  | 0           0    / 0          3417 / 65536         |\n+===========================+===============+====================================================+\n| 6     910B3               | OK            | 92.0        37                0    / 0             |\n| 0                         | 0000:41:00.0  | 0           0    / 0          3408 / 65536         |\n+===========================+===============+====================================================+\n| 7     910B3               | OK            | 92.2        38                0    / 0             |\n| 0                         | 0000:42:00.0  | 0           0    / 0          3407 / 65536         |\n+===========================+===============+====================================================+\n+---------------------------+---------------+----------------------------------------------------+\n| NPU     Chip              | Process id    | Process name             | Process memory(MB)      |\n+===========================+===============+====================================================+\n| No running processes found in NPU 0                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 1                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 2                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 3                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 4                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 5                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 6                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 7                                                            |\n+===========================+===============+====================================================+\n",
+      "stderr": ""
+    },
+    "device0_usages": {
+      "argv": [
+        "npu-smi",
+        "info",
+        "-t",
+        "usages",
+        "-i",
+        "0"
+      ],
+      "returncode": 0,
+      "stdout": "\tNPU ID                         : 0\n\tChip Count                     : 1\n\n\tDDR Capacity(MB)               : 0\n\tDDR Usage Rate(%)              : 0\n\tDDR Hugepages Total(page)      : 0\n\tDDR Hugepages Usage Rate(%)    : 0\n\tHBM Capacity(MB)               : 65536\n\tHBM Usage Rate(%)              : 5\n\tAicore Usage Rate(%)           : 0\n\tAivector Usage Rate(%)         : 0\n\tAicpu Usage Rate(%)            : 0\n\tCtrlcpu Usage Rate(%)          : 1\n\tDDR Bandwidth Usage Rate(%)    : 0\n\tHBM Bandwidth Usage Rate(%)    : 0\n\tChip ID                        : 0\n\n",
+      "stderr": ""
+    },
+    "device0_board": {
+      "argv": [
+        "npu-smi",
+        "info",
+        "-t",
+        "board",
+        "-i",
+        "0"
+      ],
+      "returncode": 0,
+      "stdout": "\tNPU ID                         : 0\n\tProduct Name                   : IT21HMDC_Bin6\n\tModel                          : NA\n\tManufacturer                   : Huawei\n\tSerial Number                  : 102488601641\n\tSoftware Version               : 24.1.rc3\n\tFirmware Version               : NA\n\tCompatibility                  : NOT SUPPORT\n\tBoard ID                       : 0x62\n\tPCB ID                         : A\n\tBOM ID                         : 1\n\tPCIe Bus Info                  : 0000:C1:00.0\n\tSlot ID                        : 0\n\tClass ID                       : NA\n\tPCI Vendor ID                  : 0x19E5\n\tPCI Device ID                  : 0xD802\n\tSubsystem Vendor ID            : 0x19E5\n\tSubsystem Device ID            : 0x3000\n\tChip Count                     : 1\n",
+      "stderr": ""
+    },
+    "shell_python": {
+      "argv": [
+        "/root/miniconda3/bin/python3",
+        "-c",
+        "import sys,importlib.metadata as m,json; names=['mindspore','mindformers','torch','torch-npu','vllm','vllm-ascend','transformers','matplotlib']; installed={d.metadata['Name'].lower().replace('_','-'):d.version for d in m.distributions() if d.metadata['Name']}; print(json.dumps({'python':sys.version,'executable':sys.executable,'packages':{n:installed.get(n) for n in names}}))"
+      ],
+      "returncode": 0,
+      "stdout": "{\"python\": \"3.13.2 | packaged by Anaconda, Inc. | (main, Feb  6 2025, 19:03:27) [GCC 11.2.0]\", \"executable\": \"/root/miniconda3/bin/python3\", \"packages\": {\"mindspore\": null, \"mindformers\": null, \"torch\": null, \"torch-npu\": null, \"vllm\": null, \"vllm-ascend\": null, \"transformers\": null, \"matplotlib\": null}}\n",
+      "stderr": "<string>:1: DeprecationWarning: Implicit None on return values is deprecated and will raise KeyErrors.\n  import sys,importlib.metadata as m,json; names=['mindspore','mindformers','torch','torch-npu','vllm','vllm-ascend','transformers','matplotlib']; installed={d.metadata['Name'].lower().replace('_','-'):d.version for d in m.distributions() if d.metadata['Name']}; print(json.dumps({'python':sys.version,'executable':sys.executable,'packages':{n:installed.get(n) for n in names}}))\n"
+    },
+    "training_python": {
+      "argv": [
+        "/models/npu_nvme_exp/user7-stack/conda/bin/python",
+        "-c",
+        "import sys,importlib.metadata as m,json; names=['mindspore','mindformers','torch','torch-npu','vllm','vllm-ascend','transformers','matplotlib']; installed={d.metadata['Name'].lower().replace('_','-'):d.version for d in m.distributions() if d.metadata['Name']}; print(json.dumps({'python':sys.version,'executable':sys.executable,'packages':{n:installed.get(n) for n in names}}))"
+      ],
+      "returncode": 0,
+      "stdout": "{\"python\": \"3.11.4 (main, Jul  5 2023, 13:36:48) [GCC 11.2.0]\", \"executable\": \"/models/npu_nvme_exp/user7-stack/conda/bin/python\", \"packages\": {\"mindspore\": \"2.7.1\", \"mindformers\": \"1.7.0\", \"torch\": null, \"torch-npu\": null, \"vllm\": null, \"vllm-ascend\": null, \"transformers\": \"4.51.3\", \"matplotlib\": null}}\n",
+      "stderr": ""
+    },
+    "inference_container_python": {
+      "argv": [
+        "docker",
+        "exec",
+        "wn-vllm-ascend-030",
+        "python3",
+        "-c",
+        "import sys,importlib.metadata as m,json; names=['mindspore','mindformers','torch','torch-npu','vllm','vllm-ascend','transformers','matplotlib']; installed={d.metadata['Name'].lower().replace('_','-'):d.version for d in m.distributions() if d.metadata['Name']}; print(json.dumps({'python':sys.version,'executable':sys.executable,'packages':{n:installed.get(n) for n in names}}))"
+      ],
+      "returncode": 0,
+      "stdout": "{\"python\": \"3.12.13 (main, Aug  3 2026, 03:44:26) [GCC 11.4.0]\", \"executable\": \"/usr/local/python3.12.13/bin/python3\", \"packages\": {\"mindspore\": null, \"mindformers\": null, \"torch\": \"2.10.0+cpu\", \"torch-npu\": \"2.10.0.post4\", \"vllm\": \"0.30.0+empty\", \"vllm-ascend\": \"0.30.0rc1+multigraph.732514948\", \"transformers\": \"5.14.1\", \"matplotlib\": null}}\n",
+      "stderr": ""
+    },
+    "docker_images": {
+      "argv": [
+        "docker",
+        "images",
+        "--format",
+        "{{.Repository}}:{{.Tag}} {{.ID}} {{.Size}}"
+      ],
+      "returncode": 0,
+      "stdout": "wn-vllm-ascend:0.30.0rc1-ssh d27d0ecee9fb 21.6GB\nquay.io/ascend/vllm-ascend:v0.30.0rc1 b1f5d0374736 21.6GB\nvllm-ascend-parellel-stream:v0.2.0-openeuler 16ab5833bdd9 27.3GB\nwn-vllm-ascend:saved 54251162ba0c 24.2GB\nquay.nju.edu.cn/ascend/vllm-ascend:nightly-releases-v0.18.0-openeuler ea1af28c5f1b 16.3GB\nquay.io/ascend/vllm-ascend:v0.13.0rc1-openeuler d93dd90ef8d0 18.4GB\n",
+      "stderr": ""
+    }
+  },
+  "versions": {
+    "driver": {
+      "path": "/usr/local/Ascend/driver/version.info",
+      "text": "Version=24.1.rc3\nascendhal_version=7.35.23\naicpu_version=1.0\ntdt_version=1.0\nlog_version=1.0\nprof_version=2.0\ndvppkernels_version=1.1\ntsfw_version=1.0\nInnerversion=V100R001C19SPC001B124\ncompatible_version=[V100R001C13],[V100R001C15],[V100R001C17],[V100R001C18],[V100R001C19]\ncompatible_version_fw=[7.0.0,7.5.99]\npackage_version=24.1.rc3\n"
+    },
+    "shell_cann": {
+      "path": "/usr/local/Ascend/ascend-toolkit/latest/version.cfg",
+      "text": "# version: 1.0\nruntime_running_version=[7.5.0.1.129:8.0.RC3]\ncompiler_running_version=[7.5.0.1.129:8.0.RC3]\nhccl_running_version=[7.5.0.1.129:8.0.RC3]\nopp_running_version=[7.5.0.1.129:8.0.RC3]\ntoolkit_running_version=[7.5.0.1.129:8.0.RC3]\naoe_running_version=[7.5.0.1.129:8.0.RC3]\nncs_running_version=[7.5.0.1.129:8.0.RC3]\nopp_kernel_running_version=[7.5.0.1.129:8.0.RC3]\nruntime_upgrade_version=[7.5.0.1.129:8.0.RC3]\ncompiler_upgrade_version=[7.5.0.1.129:8.0.RC3]\nhccl_upgrade_version=[7.5.0.1.129:8.0.RC3]\nopp_upgrade_version=[7.5.0.1.129:8.0.RC3]\ntoolkit_upgrade_version=[7.5.0.1.129:8.0.RC3]\naoe_upgrade_version=[7.5.0.1.129:8.0.RC3]\nncs_upgrade_version=[7.5.0.1.129:8.0.RC3]\nopp_kernel_upgrade_version=[7.5.0.1.129:8.0.RC3]\nruntime_installed_version=[7.5.0.1.129:8.0.RC3]\ncompiler_installed_version=[7.5.0.1.129:8.0.RC3]\nhccl_installed_version=[7.5.0.1.129:8.0.RC3]\nopp_installed_version=[7.5.0.1.129:8.0.RC3]\ntoolkit_installed_version=[7.5.0.1.129:8.0.RC3]\naoe_installed_version=[7.5.0.1.129:8.0.RC3]\nncs_installed_version=[7.5.0.1.129:8.0.RC3]\nopp_kernel_installed_version=[7.5.0.1.129:8.0.RC3]\n"
+    },
+    "training_cann": {
+      "path": "/models/npu_nvme_exp/user7-stack/cann-install/ascend-toolkit/latest/version.cfg",
+      "text": "# version: 1.0\nruntime_running_version=[8.3.0.1.200:8.3.RC1]\ncompiler_running_version=[8.3.0.1.200:8.3.RC1]\nhccl_running_version=[8.3.0.1.200:8.3.RC1]\nopp_running_version=[8.3.0.1.200:8.3.RC1]\ntoolkit_running_version=[8.3.0.1.200:8.3.RC1]\naoe_running_version=[8.3.0.1.200:8.3.RC1]\nncs_running_version=[8.3.0.1.200:8.3.RC1]\ndevice-sw-plugin_running_version=[8.3.0.1.200:8.3.RC1]\nopp_kernel_running_version=[8.3.0.1.200:8.3.RC1]\nruntime_upgrade_version=[8.3.0.1.200:8.3.RC1]\ncompiler_upgrade_version=[8.3.0.1.200:8.3.RC1]\nhccl_upgrade_version=[8.3.0.1.200:8.3.RC1]\nopp_upgrade_version=[8.3.0.1.200:8.3.RC1]\ntoolkit_upgrade_version=[8.3.0.1.200:8.3.RC1]\naoe_upgrade_version=[8.3.0.1.200:8.3.RC1]\nncs_upgrade_version=[8.3.0.1.200:8.3.RC1]\ndevice-sw-plugin_upgrade_version=[8.3.0.1.200:8.3.RC1]\nopp_kernel_upgrade_version=[8.3.0.1.200:8.3.RC1]\nruntime_installed_version=[8.3.0.1.200:8.3.RC1]\ncompiler_installed_version=[8.3.0.1.200:8.3.RC1]\nhccl_installed_version=[8.3.0.1.200:8.3.RC1]\nopp_installed_version=[8.3.0.1.200:8.3.RC1]\ntoolkit_installed_version=[8.3.0.1.200:8.3.RC1]\naoe_installed_version=[8.3.0.1.200:8.3.RC1]\nncs_installed_version=[8.3.0.1.200:8.3.RC1]\ndevice-sw-plugin_installed_version=[8.3.0.1.200:8.3.RC1]\nopp_kernel_installed_version=[8.3.0.1.200:8.3.RC1]\n"
+    }
+  },
+  "disk": {
+    "/models": {
+      "total_bytes": 3838880616448,
+      "used_bytes": 3813440704512,
+      "free_bytes": 25439911936
+    },
+    "/home/user7/npu-nvme": {
+      "total_bytes": 253085442048,
+      "used_bytes": 218405163008,
+      "free_bytes": 21749661696
+    },
+    "/dev/shm": {
+      "total_bytes": 1079292702720,
+      "used_bytes": 126976,
+      "free_bytes": 1079292575744
+    }
+  },
+  "paths": {
+    "/models/Qwen3-8B": {
+      "exists": true
+    },
+    "/models/npu_nvme_exp/user7-stack/hardware-campaign.lease.json": {
+      "exists": false
+    }
+  }
+}

@@ -1,0 +1,1292 @@
+[
+  {
+    "schema_version": 3,
+    "metric_kind": "task_envelope",
+    "quality": "valid",
+    "begin_ns": 1793603390017619364,
+    "end_ns": 1793603392224698635,
+    "duration_ns": 2207079271,
+    "state_ns": {
+      "aic_only": 264924160,
+      "aiv_only": 1625597120,
+      "both": 0,
+      "neither": 274164731,
+      "unknown": 42393260
+    },
+    "state_fractions": {
+      "aic_only": 0.12003382183910694,
+      "aiv_only": 0.7365377136016787,
+      "both": 0.0,
+      "neither": 0.12422060892981854,
+      "unknown": 0.019207855629395743
+    },
+    "known_coverage": 0.9807921443706042,
+    "task_count": 18828,
+    "engine_counts": {
+      "aiv": 10156,
+      "other": 2516,
+      "aic": 4930,
+      "mixed": 1226
+    },
+    "conditional_known": {
+      "aic_absent_given_aiv": 1.0,
+      "aiv_absent_given_aic": 1.0
+    },
+    "aiv_only_windows": {
+      "count": 10156,
+      "p50_ns": 6420,
+      "p95_ns": 676140,
+      "max_ns": 689280
+    },
+    "category_union_ns": {
+      "communication": 244140260,
+      "compute": 368245240,
+      "data_movement": 1564669300
+    },
+    "phases": {
+      "decode": {
+        "task_union_ns": 1517757960,
+        "state_ns": {
+          "aiv_only": 1472957960,
+          "unknown": 34769060,
+          "aic_only": 10030940
+        },
+        "task_ns_by_engine": {
+          "aic": 10030940,
+          "mixed": 34769060,
+          "aiv": 1472957960
+        }
+      },
+      "mixed_prefill_decode": {
+        "task_union_ns": 177041960,
+        "state_ns": {
+          "aiv_only": 114450480,
+          "aic_only": 56460960,
+          "unknown": 6130520
+        },
+        "task_ns_by_engine": {
+          "aic": 56460960,
+          "mixed": 6130520,
+          "aiv": 114450480
+        }
+      },
+      "prefill": {
+        "task_union_ns": 16831700,
+        "state_ns": {
+          "aiv_only": 4290400,
+          "aic_only": 11047620,
+          "unknown": 1493680
+        },
+        "task_ns_by_engine": {
+          "aic": 11047620,
+          "mixed": 1493680,
+          "aiv": 4290400
+        }
+      },
+      "token_selection": {
+        "task_union_ns": 1684320,
+        "state_ns": {
+          "aiv_only": 1684320
+        },
+        "task_ns_by_engine": {
+          "aiv": 1684320
+        }
+      },
+      "unclassified": {
+        "task_union_ns": 463738860,
+        "state_ns": {
+          "neither": 244140260,
+          "aiv_only": 32213960,
+          "aic_only": 187384640
+        },
+        "task_ns_by_engine": {
+          "other": 244140260,
+          "aic": 187384640,
+          "aiv": 32213960
+        }
+      }
+    },
+    "top_tasks": [
+      {
+        "engine": "aiv",
+        "name": "aclnnContiguous_SliceAiCore_Slice",
+        "task_ns": 1562919200
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+        "task_ns": 220550100
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+        "task_ns": 44374060
+      },
+      {
+        "engine": "mixed",
+        "name": "FusedInferAttentionScore",
+        "task_ns": 42388380
+      },
+      {
+        "engine": "aiv",
+        "name": "AddRmsNormBias",
+        "task_ns": 20529520
+      },
+      {
+        "engine": "aiv",
+        "name": "split_qkv_rmsnorm_rope_kernel",
+        "task_ns": 18463160
+      },
+      {
+        "engine": "aiv",
+        "name": "SwiGlu",
+        "task_ns": 10226980
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnScatterPaKvCache_ScatterPaKvCache_ScatterPaKvCache",
+        "task_ns": 5997320
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+        "task_ns": 1319300
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnArgMax_ArgMaxV2AiCore_ArgMaxV2",
+        "task_ns": 700780
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexAiCore_Index",
+        "task_ns": 594040
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceMaskedFillScalar_MaskedFillAiCore_MaskedFill",
+        "task_ns": 540840
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_CastAiCore_Cast",
+        "task_ns": 431800
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+        "task_ns": 430800
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexSelect_GatherV3AiCore_GatherV3",
+        "task_ns": 353200
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexCheck_IndexCheck",
+        "task_ns": 350300
+      },
+      {
+        "engine": "aiv",
+        "name": "RmsNorm",
+        "task_ns": 327400
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnEmbedding_GatherV2AiCore_GatherV2",
+        "task_ns": 284080
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnRepeat_TileAiCore_Tile",
+        "task_ns": 282940
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexPutImpl_IndexPutV2_IndexPutV2",
+        "task_ns": 282820
+      }
+    ],
+    "physical_device_id": 5,
+    "rank": 1,
+    "run_id": "b8-l512-greedy",
+    "phase_evidence": "cpu_enqueue_device_flow",
+    "window_id": "measured-0"
+  },
+  {
+    "schema_version": 3,
+    "metric_kind": "task_envelope",
+    "quality": "valid",
+    "begin_ns": 1793603392225291177,
+    "end_ns": 1793603394408861233,
+    "duration_ns": 2183570056,
+    "state_ns": {
+      "aic_only": 266179540,
+      "aiv_only": 1623829640,
+      "both": 0,
+      "neither": 251348656,
+      "unknown": 42212220
+    },
+    "state_fractions": {
+      "aic_only": 0.12190107629869422,
+      "aiv_only": 0.7436581370668879,
+      "both": 0.0,
+      "neither": 0.11510904141103499,
+      "unknown": 0.01933174522338293
+    },
+    "known_coverage": 0.9806682547766171,
+    "task_count": 18747,
+    "engine_counts": {
+      "aiv": 10076,
+      "other": 2516,
+      "aic": 4930,
+      "mixed": 1225
+    },
+    "conditional_known": {
+      "aic_absent_given_aiv": 1.0,
+      "aiv_absent_given_aic": 1.0
+    },
+    "aiv_only_windows": {
+      "count": 10076,
+      "p50_ns": 6360,
+      "p95_ns": 676240,
+      "max_ns": 699960
+    },
+    "category_union_ns": {
+      "communication": 215594960,
+      "compute": 368013260,
+      "data_movement": 1564208140
+    },
+    "phases": {
+      "decode": {
+        "task_union_ns": 1566412540,
+        "state_ns": {
+          "aiv_only": 1520437820,
+          "unknown": 35648160,
+          "aic_only": 10326560
+        },
+        "task_ns_by_engine": {
+          "aic": 10326560,
+          "mixed": 35648160,
+          "aiv": 1520437820
+        }
+      },
+      "mixed_prefill_decode": {
+        "task_union_ns": 120716700,
+        "state_ns": {
+          "aiv_only": 64340020,
+          "aic_only": 51333880,
+          "unknown": 5042800
+        },
+        "task_ns_by_engine": {
+          "aic": 51333880,
+          "mixed": 5042800,
+          "aiv": 64340020
+        }
+      },
+      "prefill": {
+        "task_union_ns": 16880620,
+        "state_ns": {
+          "aiv_only": 4314220,
+          "aic_only": 11045140,
+          "unknown": 1521260
+        },
+        "task_ns_by_engine": {
+          "aic": 11045140,
+          "mixed": 1521260,
+          "aiv": 4314220
+        }
+      },
+      "token_selection": {
+        "task_union_ns": 1688800,
+        "state_ns": {
+          "aiv_only": 1688800
+        },
+        "task_ns_by_engine": {
+          "aiv": 1688800
+        }
+      },
+      "unclassified": {
+        "task_union_ns": 442117700,
+        "state_ns": {
+          "neither": 215594960,
+          "aiv_only": 33048780,
+          "aic_only": 193473960
+        },
+        "task_ns_by_engine": {
+          "other": 215594960,
+          "aic": 193473960,
+          "aiv": 33048780
+        }
+      }
+    },
+    "top_tasks": [
+      {
+        "engine": "aiv",
+        "name": "aclnnContiguous_SliceAiCore_Slice",
+        "task_ns": 1562831920
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+        "task_ns": 215228100
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+        "task_ns": 50951440
+      },
+      {
+        "engine": "mixed",
+        "name": "FusedInferAttentionScore",
+        "task_ns": 42209740
+      },
+      {
+        "engine": "aiv",
+        "name": "AddRmsNormBias",
+        "task_ns": 20075640
+      },
+      {
+        "engine": "aiv",
+        "name": "split_qkv_rmsnorm_rope_kernel",
+        "task_ns": 18273980
+      },
+      {
+        "engine": "aiv",
+        "name": "SwiGlu",
+        "task_ns": 9894960
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnScatterPaKvCache_ScatterPaKvCache_ScatterPaKvCache",
+        "task_ns": 5767340
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+        "task_ns": 954060
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnArgMax_ArgMaxV2AiCore_ArgMaxV2",
+        "task_ns": 700360
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexAiCore_Index",
+        "task_ns": 579140
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceMaskedFillScalar_MaskedFillAiCore_MaskedFill",
+        "task_ns": 503320
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_CastAiCore_Cast",
+        "task_ns": 427020
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+        "task_ns": 422160
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexCheck_IndexCheck",
+        "task_ns": 336180
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexSelect_GatherV3AiCore_GatherV3",
+        "task_ns": 332700
+      },
+      {
+        "engine": "aiv",
+        "name": "RmsNorm",
+        "task_ns": 322020
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexPutImpl_IndexPutV2_IndexPutV2",
+        "task_ns": 293380
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnEmbedding_GatherV2AiCore_GatherV2",
+        "task_ns": 283220
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnRepeat_TileAiCore_Tile",
+        "task_ns": 280880
+      }
+    ],
+    "physical_device_id": 5,
+    "rank": 1,
+    "run_id": "b8-l512-greedy",
+    "phase_evidence": "cpu_enqueue_device_flow",
+    "window_id": "measured-1"
+  },
+  {
+    "schema_version": 3,
+    "metric_kind": "task_envelope",
+    "quality": "valid",
+    "begin_ns": 1793603394409463605,
+    "end_ns": 1793603396588671513,
+    "duration_ns": 2179207908,
+    "state_ns": {
+      "aic_only": 265945040,
+      "aiv_only": 1623933400,
+      "both": 0,
+      "neither": 247074648,
+      "unknown": 42254820
+    },
+    "state_fractions": {
+      "aic_only": 0.12203747931700329,
+      "aiv_only": 0.7451943405851481,
+      "both": 0.0,
+      "neither": 0.11337818988861709,
+      "unknown": 0.019389990209231565
+    },
+    "known_coverage": 0.9806100097907684,
+    "task_count": 18748,
+    "engine_counts": {
+      "aiv": 10077,
+      "other": 2516,
+      "aic": 4930,
+      "mixed": 1225
+    },
+    "conditional_known": {
+      "aic_absent_given_aiv": 1.0,
+      "aiv_absent_given_aic": 1.0
+    },
+    "aiv_only_windows": {
+      "count": 10077,
+      "p50_ns": 6360,
+      "p95_ns": 676240,
+      "max_ns": 696540
+    },
+    "category_union_ns": {
+      "communication": 213984200,
+      "compute": 367908700,
+      "data_movement": 1564224560
+    },
+    "phases": {
+      "decode": {
+        "task_union_ns": 1566525940,
+        "state_ns": {
+          "aiv_only": 1520435460,
+          "unknown": 35739360,
+          "aic_only": 10351120
+        },
+        "task_ns_by_engine": {
+          "aic": 10351120,
+          "mixed": 35739360,
+          "aiv": 1520435460
+        }
+      },
+      "mixed_prefill_decode": {
+        "task_union_ns": 120627720,
+        "state_ns": {
+          "aiv_only": 64392740,
+          "aic_only": 51193480,
+          "unknown": 5041500
+        },
+        "task_ns_by_engine": {
+          "aic": 51193480,
+          "mixed": 5041500,
+          "aiv": 64392740
+        }
+      },
+      "prefill": {
+        "task_union_ns": 16807720,
+        "state_ns": {
+          "aiv_only": 4289880,
+          "aic_only": 11043880,
+          "unknown": 1473960
+        },
+        "task_ns_by_engine": {
+          "aic": 11043880,
+          "mixed": 1473960,
+          "aiv": 4289880
+        }
+      },
+      "token_selection": {
+        "task_union_ns": 1698340,
+        "state_ns": {
+          "aiv_only": 1698340
+        },
+        "task_ns_by_engine": {
+          "aiv": 1698340
+        }
+      },
+      "unclassified": {
+        "task_union_ns": 440457740,
+        "state_ns": {
+          "neither": 213984200,
+          "aiv_only": 33116980,
+          "aic_only": 193356560
+        },
+        "task_ns_by_engine": {
+          "other": 213984200,
+          "aic": 193356560,
+          "aiv": 33116980
+        }
+      }
+    },
+    "top_tasks": [
+      {
+        "engine": "aiv",
+        "name": "aclnnContiguous_SliceAiCore_Slice",
+        "task_ns": 1562826400
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+        "task_ns": 215134400
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+        "task_ns": 50810640
+      },
+      {
+        "engine": "mixed",
+        "name": "FusedInferAttentionScore",
+        "task_ns": 42252500
+      },
+      {
+        "engine": "aiv",
+        "name": "AddRmsNormBias",
+        "task_ns": 20079900
+      },
+      {
+        "engine": "aiv",
+        "name": "split_qkv_rmsnorm_rope_kernel",
+        "task_ns": 18338940
+      },
+      {
+        "engine": "aiv",
+        "name": "SwiGlu",
+        "task_ns": 9896940
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnScatterPaKvCache_ScatterPaKvCache_ScatterPaKvCache",
+        "task_ns": 5783740
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+        "task_ns": 973600
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnArgMax_ArgMaxV2AiCore_ArgMaxV2",
+        "task_ns": 700120
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexAiCore_Index",
+        "task_ns": 576940
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceMaskedFillScalar_MaskedFillAiCore_MaskedFill",
+        "task_ns": 491480
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_CastAiCore_Cast",
+        "task_ns": 426900
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+        "task_ns": 424560
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexCheck_IndexCheck",
+        "task_ns": 336920
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexSelect_GatherV3AiCore_GatherV3",
+        "task_ns": 332840
+      },
+      {
+        "engine": "aiv",
+        "name": "RmsNorm",
+        "task_ns": 323260
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexPutImpl_IndexPutV2_IndexPutV2",
+        "task_ns": 299200
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnEmbedding_GatherV2AiCore_GatherV2",
+        "task_ns": 280920
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnRepeat_TileAiCore_Tile",
+        "task_ns": 276280
+      }
+    ],
+    "physical_device_id": 5,
+    "rank": 1,
+    "run_id": "b8-l512-greedy",
+    "phase_evidence": "cpu_enqueue_device_flow",
+    "window_id": "measured-2"
+  },
+  {
+    "schema_version": 3,
+    "metric_kind": "task_envelope",
+    "quality": "valid",
+    "begin_ns": 1793603396589282526,
+    "end_ns": 1793603398796412527,
+    "duration_ns": 2207130001,
+    "state_ns": {
+      "aic_only": 265011680,
+      "aiv_only": 1625553100,
+      "both": 0,
+      "neither": 274315021,
+      "unknown": 42250200
+    },
+    "state_fractions": {
+      "aic_only": 0.12007071621514333,
+      "aiv_only": 0.7365008401242786,
+      "both": 0.0,
+      "neither": 0.12428584672208441,
+      "unknown": 0.01914259693849361
+    },
+    "known_coverage": 0.9808574030615064,
+    "task_count": 18828,
+    "engine_counts": {
+      "aiv": 10156,
+      "other": 2516,
+      "aic": 4930,
+      "mixed": 1226
+    },
+    "conditional_known": {
+      "aic_absent_given_aiv": 1.0,
+      "aiv_absent_given_aic": 1.0
+    },
+    "aiv_only_windows": {
+      "count": 10155,
+      "p50_ns": 6420,
+      "p95_ns": 676200,
+      "max_ns": 689560
+    },
+    "category_union_ns": {
+      "communication": 243412360,
+      "compute": 368161520,
+      "data_movement": 1564653460
+    },
+    "phases": {
+      "decode": {
+        "task_union_ns": 1517667600,
+        "state_ns": {
+          "aiv_only": 1472934760,
+          "unknown": 34708080,
+          "aic_only": 10024760
+        },
+        "task_ns_by_engine": {
+          "aic": 10024760,
+          "mixed": 34708080,
+          "aiv": 1472934760
+        }
+      },
+      "mixed_prefill_decode": {
+        "task_union_ns": 177045780,
+        "state_ns": {
+          "aiv_only": 114452320,
+          "aic_only": 56544400,
+          "unknown": 6049060
+        },
+        "task_ns_by_engine": {
+          "aic": 56544400,
+          "mixed": 6049060,
+          "aiv": 114452320
+        }
+      },
+      "prefill": {
+        "task_union_ns": 16753880,
+        "state_ns": {
+          "aiv_only": 4265720,
+          "aic_only": 10995100,
+          "unknown": 1493060
+        },
+        "task_ns_by_engine": {
+          "aic": 10995100,
+          "mixed": 1493060,
+          "aiv": 4265720
+        }
+      },
+      "token_selection": {
+        "task_union_ns": 1682700,
+        "state_ns": {
+          "aiv_only": 1682700
+        },
+        "task_ns_by_engine": {
+          "aiv": 1682700
+        }
+      },
+      "unclassified": {
+        "task_union_ns": 463077380,
+        "state_ns": {
+          "neither": 243412360,
+          "aiv_only": 32217600,
+          "aic_only": 187447420
+        },
+        "task_ns_by_engine": {
+          "other": 243412360,
+          "aic": 187447420,
+          "aiv": 32217600
+        }
+      }
+    },
+    "top_tasks": [
+      {
+        "engine": "aiv",
+        "name": "aclnnContiguous_SliceAiCore_Slice",
+        "task_ns": 1562898920
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+        "task_ns": 220548960
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+        "task_ns": 44462720
+      },
+      {
+        "engine": "mixed",
+        "name": "FusedInferAttentionScore",
+        "task_ns": 42245440
+      },
+      {
+        "engine": "aiv",
+        "name": "AddRmsNormBias",
+        "task_ns": 20532080
+      },
+      {
+        "engine": "aiv",
+        "name": "split_qkv_rmsnorm_rope_kernel",
+        "task_ns": 18469240
+      },
+      {
+        "engine": "aiv",
+        "name": "SwiGlu",
+        "task_ns": 10210220
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnScatterPaKvCache_ScatterPaKvCache_ScatterPaKvCache",
+        "task_ns": 6010520
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+        "task_ns": 1322900
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnArgMax_ArgMaxV2AiCore_ArgMaxV2",
+        "task_ns": 700600
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexAiCore_Index",
+        "task_ns": 573340
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceMaskedFillScalar_MaskedFillAiCore_MaskedFill",
+        "task_ns": 525040
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+        "task_ns": 431640
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_CastAiCore_Cast",
+        "task_ns": 430260
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexSelect_GatherV3AiCore_GatherV3",
+        "task_ns": 349000
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexCheck_IndexCheck",
+        "task_ns": 348780
+      },
+      {
+        "engine": "aiv",
+        "name": "RmsNorm",
+        "task_ns": 328480
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnRepeat_TileAiCore_Tile",
+        "task_ns": 285760
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnEmbedding_GatherV2AiCore_GatherV2",
+        "task_ns": 285540
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexPutImpl_IndexPutV2_IndexPutV2",
+        "task_ns": 283380
+      }
+    ],
+    "physical_device_id": 5,
+    "rank": 1,
+    "run_id": "b8-l512-greedy",
+    "phase_evidence": "cpu_enqueue_device_flow",
+    "window_id": "measured-3"
+  },
+  {
+    "schema_version": 3,
+    "metric_kind": "task_envelope",
+    "quality": "valid",
+    "begin_ns": 1793603398797042349,
+    "end_ns": 1793603400996893821,
+    "duration_ns": 2199851472,
+    "state_ns": {
+      "aic_only": 264816860,
+      "aiv_only": 1625565000,
+      "both": 0,
+      "neither": 267024552,
+      "unknown": 42445060
+    },
+    "state_fractions": {
+      "aic_only": 0.12037942714343398,
+      "aiv_only": 0.7389430698801287,
+      "both": 0.0,
+      "neither": 0.12138299126042087,
+      "unknown": 0.019294511716016434
+    },
+    "known_coverage": 0.9807054882839835,
+    "task_count": 18828,
+    "engine_counts": {
+      "aiv": 10156,
+      "other": 2516,
+      "aic": 4930,
+      "mixed": 1226
+    },
+    "conditional_known": {
+      "aic_absent_given_aiv": 1.0,
+      "aiv_absent_given_aic": 1.0
+    },
+    "aiv_only_windows": {
+      "count": 10156,
+      "p50_ns": 6400,
+      "p95_ns": 676240,
+      "max_ns": 690080
+    },
+    "category_union_ns": {
+      "communication": 233887060,
+      "compute": 368180240,
+      "data_movement": 1564646680
+    },
+    "phases": {
+      "decode": {
+        "task_union_ns": 1517692960,
+        "state_ns": {
+          "aiv_only": 1472931880,
+          "unknown": 34750500,
+          "aic_only": 10010580
+        },
+        "task_ns_by_engine": {
+          "aic": 10010580,
+          "mixed": 34750500,
+          "aiv": 1472931880
+        }
+      },
+      "mixed_prefill_decode": {
+        "task_union_ns": 176978340,
+        "state_ns": {
+          "aiv_only": 114492080,
+          "aic_only": 56308620,
+          "unknown": 6177640
+        },
+        "task_ns_by_engine": {
+          "aic": 56308620,
+          "mixed": 6177640,
+          "aiv": 114492080
+        }
+      },
+      "prefill": {
+        "task_union_ns": 16817640,
+        "state_ns": {
+          "aiv_only": 4262340,
+          "aic_only": 11038380,
+          "unknown": 1516920
+        },
+        "task_ns_by_engine": {
+          "aic": 11038380,
+          "mixed": 1516920,
+          "aiv": 4262340
+        }
+      },
+      "token_selection": {
+        "task_union_ns": 1672160,
+        "state_ns": {
+          "aiv_only": 1672160
+        },
+        "task_ns_by_engine": {
+          "aiv": 1672160
+        }
+      },
+      "unclassified": {
+        "task_union_ns": 453552880,
+        "state_ns": {
+          "neither": 233887060,
+          "aiv_only": 32206540,
+          "aic_only": 187459280
+        },
+        "task_ns_by_engine": {
+          "other": 233887060,
+          "aic": 187459280,
+          "aiv": 32206540
+        }
+      }
+    },
+    "top_tasks": [
+      {
+        "engine": "aiv",
+        "name": "aclnnContiguous_SliceAiCore_Slice",
+        "task_ns": 1562899060
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+        "task_ns": 220560380
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+        "task_ns": 44256480
+      },
+      {
+        "engine": "mixed",
+        "name": "FusedInferAttentionScore",
+        "task_ns": 42440220
+      },
+      {
+        "engine": "aiv",
+        "name": "AddRmsNormBias",
+        "task_ns": 20566940
+      },
+      {
+        "engine": "aiv",
+        "name": "split_qkv_rmsnorm_rope_kernel",
+        "task_ns": 18463760
+      },
+      {
+        "engine": "aiv",
+        "name": "SwiGlu",
+        "task_ns": 10203420
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnScatterPaKvCache_ScatterPaKvCache_ScatterPaKvCache",
+        "task_ns": 6007140
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+        "task_ns": 1322300
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnArgMax_ArgMaxV2AiCore_ArgMaxV2",
+        "task_ns": 699680
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexAiCore_Index",
+        "task_ns": 595740
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceMaskedFillScalar_MaskedFillAiCore_MaskedFill",
+        "task_ns": 514140
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_CastAiCore_Cast",
+        "task_ns": 426720
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+        "task_ns": 425320
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexSelect_GatherV3AiCore_GatherV3",
+        "task_ns": 350600
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexCheck_IndexCheck",
+        "task_ns": 349720
+      },
+      {
+        "engine": "aiv",
+        "name": "RmsNorm",
+        "task_ns": 327320
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnRepeat_TileAiCore_Tile",
+        "task_ns": 284800
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnEmbedding_GatherV2AiCore_GatherV2",
+        "task_ns": 284800
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexPutImpl_IndexPutV2_IndexPutV2",
+        "task_ns": 274940
+      }
+    ],
+    "physical_device_id": 5,
+    "rank": 1,
+    "run_id": "b8-l512-greedy",
+    "phase_evidence": "cpu_enqueue_device_flow",
+    "window_id": "measured-4"
+  },
+  {
+    "schema_version": 3,
+    "metric_kind": "task_envelope",
+    "quality": "valid",
+    "begin_ns": 1793603400997544714,
+    "end_ns": 1793603403204902595,
+    "duration_ns": 2207357881,
+    "state_ns": {
+      "aic_only": 265044440,
+      "aiv_only": 1625653300,
+      "both": 0,
+      "neither": 274243701,
+      "unknown": 42416440
+    },
+    "state_fractions": {
+      "aic_only": 0.1200731618018945,
+      "aiv_only": 0.7364701999584815,
+      "both": 0.0,
+      "neither": 0.12424070575984683,
+      "unknown": 0.019215932479777167
+    },
+    "known_coverage": 0.9807840675202228,
+    "task_count": 18828,
+    "engine_counts": {
+      "aiv": 10156,
+      "other": 2516,
+      "aic": 4930,
+      "mixed": 1226
+    },
+    "conditional_known": {
+      "aic_absent_given_aiv": 1.0,
+      "aiv_absent_given_aic": 1.0
+    },
+    "aiv_only_windows": {
+      "count": 10156,
+      "p50_ns": 6440,
+      "p95_ns": 676200,
+      "max_ns": 688580
+    },
+    "category_union_ns": {
+      "communication": 244679760,
+      "compute": 368348240,
+      "data_movement": 1564765940
+    },
+    "phases": {
+      "decode": {
+        "task_union_ns": 1517830100,
+        "state_ns": {
+          "aiv_only": 1473045200,
+          "unknown": 34757060,
+          "aic_only": 10027840
+        },
+        "task_ns_by_engine": {
+          "aic": 10027840,
+          "mixed": 34757060,
+          "aiv": 1473045200
+        }
+      },
+      "mixed_prefill_decode": {
+        "task_union_ns": 177169960,
+        "state_ns": {
+          "aiv_only": 114443260,
+          "aic_only": 56592420,
+          "unknown": 6134280
+        },
+        "task_ns_by_engine": {
+          "aic": 56592420,
+          "mixed": 6134280,
+          "aiv": 114443260
+        }
+      },
+      "prefill": {
+        "task_union_ns": 16766460,
+        "state_ns": {
+          "aiv_only": 4245800,
+          "aic_only": 10995560,
+          "unknown": 1525100
+        },
+        "task_ns_by_engine": {
+          "aic": 10995560,
+          "mixed": 1525100,
+          "aiv": 4245800
+        }
+      },
+      "token_selection": {
+        "task_union_ns": 1686460,
+        "state_ns": {
+          "aiv_only": 1686460
+        },
+        "task_ns_by_engine": {
+          "aiv": 1686460
+        }
+      },
+      "unclassified": {
+        "task_union_ns": 464340960,
+        "state_ns": {
+          "neither": 244679760,
+          "aiv_only": 32232580,
+          "aic_only": 187428620
+        },
+        "task_ns_by_engine": {
+          "other": 244679760,
+          "aic": 187428620,
+          "aiv": 32232580
+        }
+      }
+    },
+    "top_tasks": [
+      {
+        "engine": "aiv",
+        "name": "aclnnContiguous_SliceAiCore_Slice",
+        "task_ns": 1563004180
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulCommon_MatMulV2",
+        "task_ns": 220548040
+      },
+      {
+        "engine": "aic",
+        "name": "aclnnMatmul_MatMulV3Common_MatMulV3",
+        "task_ns": 44496400
+      },
+      {
+        "engine": "mixed",
+        "name": "FusedInferAttentionScore",
+        "task_ns": 42411540
+      },
+      {
+        "engine": "aiv",
+        "name": "AddRmsNormBias",
+        "task_ns": 20525260
+      },
+      {
+        "engine": "aiv",
+        "name": "split_qkv_rmsnorm_rope_kernel",
+        "task_ns": 18471900
+      },
+      {
+        "engine": "aiv",
+        "name": "SwiGlu",
+        "task_ns": 10220040
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnScatterPaKvCache_ScatterPaKvCache_ScatterPaKvCache",
+        "task_ns": 6000380
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+        "task_ns": 1332760
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnArgMax_ArgMaxV2AiCore_ArgMaxV2",
+        "task_ns": 700040
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexAiCore_Index",
+        "task_ns": 585340
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceMaskedFillScalar_MaskedFillAiCore_MaskedFill",
+        "task_ns": 500500
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_CastAiCore_Cast",
+        "task_ns": 429240
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnInplaceCopy_TransposeAiCore_Transpose",
+        "task_ns": 429000
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexSelect_GatherV3AiCore_GatherV3",
+        "task_ns": 351580
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndex_IndexCheck_IndexCheck",
+        "task_ns": 349120
+      },
+      {
+        "engine": "aiv",
+        "name": "RmsNorm",
+        "task_ns": 330840
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnIndexPutImpl_IndexPutV2_IndexPutV2",
+        "task_ns": 289240
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnEmbedding_GatherV2AiCore_GatherV2",
+        "task_ns": 284660
+      },
+      {
+        "engine": "aiv",
+        "name": "aclnnRepeat_TileAiCore_Tile",
+        "task_ns": 283860
+      }
+    ],
+    "physical_device_id": 5,
+    "rank": 1,
+    "run_id": "b8-l512-greedy",
+    "phase_evidence": "cpu_enqueue_device_flow",
+    "window_id": "measured-5"
+  }
+]

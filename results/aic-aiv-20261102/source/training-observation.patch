@@ -1,0 +1,109 @@
+diff --git a/python/npu_nvme/runtime/qwen_config.py b/python/npu_nvme/runtime/qwen_config.py
+index 89fcf37..04cddca 100644
+--- a/python/npu_nvme/runtime/qwen_config.py
++++ b/python/npu_nvme/runtime/qwen_config.py
+@@ -13,7 +13,7 @@ def resolve(value, repo):
+     allowed={'schema_version','model','environment_manifest','method','stop_step','lr_horizon',
+              'seq_length','checkpoint_interval','retention','timeout_seconds','operation_timeout_seconds',
+              'copy_timeout_ms','shm_base','strategy','region','hardware_lock','checkpoint_root',
+-             'host_headroom_bytes','hbm_headroom_bytes','npu_ids'}
++             'host_headroom_bytes','hbm_headroom_bytes','npu_ids','activity_profile'}
+     if set(value)-allowed:raise ValueError('unknown training settings: '+repr(sorted(set(value)-allowed)))
+     if value.get('schema_version')!=2:raise ValueError('Qwen training configuration requires schema_version 2')
+     defaults=dict(model='/models/Qwen3-8B',method='ours',stop_step=24,lr_horizon=24,
+@@ -24,6 +24,18 @@ def resolve(value, repo):
+         host_headroom_bytes=16<<30,hbm_headroom_bytes=1<<30)
+     config=dict(defaults,**value)
+     config.setdefault('npu_ids',[0,1,2,3])
++    profile=config.get('activity_profile')
++    if profile is not None:
++        if (not isinstance(profile,dict) or set(profile)-{'start_step','stop_step','aic_metrics','profiler_level','activities'} or
++                not {'start_step','stop_step'}<=set(profile) or
++                any(type(profile[k]) is not int or profile[k]<1 for k in ('start_step','stop_step')) or
++                profile['stop_step']<=profile['start_step'] or
++                profile['stop_step']>=config['stop_step']):
++            raise ValueError('activity_profile requires an interior, nonempty step interval')
++        if profile.get('aic_metrics','pipe') not in ('pipe','none'):raise ValueError('unsupported activity PMU mode')
++        if type(profile.get('profiler_level',1)) is not int or profile.get('profiler_level',1) not in (0,1):raise ValueError('unsupported activity profiler level')
++        if profile.get('activities','cpu_npu') not in ('cpu_npu','npu'):raise ValueError('unsupported activity collection scope')
++        if config['method']!='none':raise ValueError('activity profiling requires method=none')
+     if config['npu_ids'] not in ([0,1,2,3],[4,5,6,7]):
+         raise ValueError('Qwen TP4 mapping must be physical NPU 0-3 or 4-7')
+     if config['method'] not in METHODS:raise ValueError('unknown checkpoint method')
+diff --git a/python/npu_nvme/workloads/qwen.py b/python/npu_nvme/workloads/qwen.py
+index a8a2d74..5f83b09 100644
+--- a/python/npu_nvme/workloads/qwen.py
++++ b/python/npu_nvme/workloads/qwen.py
+@@ -88,6 +88,7 @@ def run(options):
+         class Progress(ms.Callback):
+             def on_train_step_begin(self,context):
+                 self.step_begin_ns=time.monotonic_ns()
++                self.step_begin_wall_ns=time.time_ns()
+ 
+             def on_train_begin(self,context):
+                 network=context.original_args().train_network
+@@ -127,6 +128,7 @@ def run(options):
+                 record()
+ 
+             def on_train_step_end(self,context):
++                nonlocal profiler
+                 cb=context.original_args();outputs=cb.net_outputs
+                 loss=outputs[0] if isinstance(outputs,(tuple,list)) else outputs
+                 loss=float(np.asarray(loss.asnumpy()).mean())
+@@ -135,8 +137,25 @@ def run(options):
+                 step=start+int(cb.cur_step_num)
+                 if step!=start+len(report['losses'])+1:raise ValueError('callback optimizer step is not sequential')
+                 row=dict(step=step,loss=loss,overflow=overflow,
+-                         begin_ns=getattr(self,'step_begin_ns',None),end_ns=time.monotonic_ns())
++                         begin_ns=getattr(self,'step_begin_ns',None),end_ns=time.monotonic_ns(),
++                         wall_begin_ns=self.step_begin_wall_ns,wall_end_ns=time.time_ns())
+                 report['losses'].append(row)
++                activity=options.get('activity_profile')
++                if activity and step==activity['start_step']:
++                    from mindspore.profiler import ProfilerLevel, AicoreMetrics, ProfilerActivity
++                    level=ProfilerLevel.Level1 if activity.get('profiler_level',1) else ProfilerLevel.Level0
++                    metrics=AicoreMetrics.PipeUtilization if activity.get('aic_metrics','pipe')=='pipe' else AicoreMetrics.AiCoreNone
++                    activities=([ProfilerActivity.NPU] if activity.get('activities')=='npu' else
++                                [ProfilerActivity.CPU,ProfilerActivity.NPU])
++                    profiler=ms.Profiler(start_profile=False,output_path=str(directory/'activity-profiler'),
++                        profiler_level=level,aic_metrics=metrics,activities=activities,
++                        hbm_ddr=False,data_simplification=False)
++                    profiler.start()
++                    report['activity_profile']=dict(start_after_step=step,stop_after_step=activity['stop_step'])
++                if activity and step==activity['stop_step']:
++                    if profiler is None:raise RuntimeError('activity profiler did not start')
++                    profiler.stop()
++                    report['activity_profile']['stopped_after_step']=step
+                 experiment=options.get('incremental_experiment')
+                 nonlocal incremental
+                 if experiment and step==experiment['warmup_steps']:
+@@ -161,7 +180,6 @@ def run(options):
+                         incremental.warmup()
+                         report['incremental']['formal_begin_ns']=time.monotonic_ns()
+                     if experiment.get('profile'):
+-                        nonlocal profiler
+                         from mindspore.profiler import ProfilerLevel, AicoreMetrics
+                         profiler=ms.Profiler(start_profile=False,output_path=str(directory/'profiler'),
+                             profiler_level=ProfilerLevel.Level1,aic_metrics=AicoreMetrics.PipeUtilization,
+diff --git a/tests/python/test_qwen_config.py b/tests/python/test_qwen_config.py
+index 03d1947..116398f 100644
+--- a/tests/python/test_qwen_config.py
++++ b/tests/python/test_qwen_config.py
+@@ -51,3 +51,17 @@ def test_ours_requires_actual_three_generation_media(tmp_path):
+ def test_boundaries_are_rejected(tmp_path,key,value):
+     row=fixture(tmp_path);row[key]=value
+     with pytest.raises(ValueError):resolve(row,tmp_path)
++
++
++def test_activity_profile_has_explicit_interior_window_and_scope(tmp_path):
++    row=fixture(tmp_path)
++    row['activity_profile']=dict(start_step=3,stop_step=6,aic_metrics='none',profiler_level=0,activities='npu')
++    assert resolve(row,tmp_path)['activity_profile']==row['activity_profile']
++    row['activity_profile']['stop_step']=8
++    with pytest.raises(ValueError,match='interior'):resolve(row,tmp_path)
++
++
++@pytest.mark.parametrize('change',[{'activities':'gpu'},{'profiler_level':2},{'aic_metrics':'unknown'},{'extra':True}])
++def test_activity_profile_rejects_unsupported_collection_options(tmp_path,change):
++    row=fixture(tmp_path);row['activity_profile']=dict(start_step=3,stop_step=6,**change)
++    with pytest.raises(ValueError):resolve(row,tmp_path)

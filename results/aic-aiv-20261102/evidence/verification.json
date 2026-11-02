@@ -1,0 +1,21 @@
+{
+  "time_ns": 1793608284694298394,
+  "source": "/tmp/user7-aic-aiv-20261031/source",
+  "checks": [
+    {
+      "command": "PYTHONPATH=python:. PYTHONDONTWRITEBYTECODE=1 /models/npu_nvme_exp/user7-stack/conda/bin/pytest -q tests/activity tests/python/test_qwen_config.py",
+      "exit_code": 0,
+      "result": "27 passed in 0.42s",
+      "kind": "CPU regression checks"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "kind": "source whitespace validation"
+    },
+    {
+      "kind": "hardware sample acceptance",
+      "result": "24/24 training device-runs valid, 6 independent training runs; inference 15 task runs and 2 independent PMU cases; calibration positive/negative checks pass"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "kernel_csv_sha256": "1e1d22b8c91a1f1b26ec582a8876284f1f832add673ddba18d0fda4937b27c80",
+  "phase_replay_matches": true,
+  "phase_quality": {
+    "method": "CPU scope -> enqueue/dequeue correlation -> HostToDevice/async_npu flow -> exact device task key",
+    "task_counts": {
+      "prefill": 2802,
+      "unclassified": 70566,
+      "token_selection": 1728,
+      "decode": 29946
+    },
+    "engine_task_ns": {
+      "prefill": 101138240,
+      "token_selection": 8651300,
+      "decode": 9071314620,
+      "unclassified": 1290176540
+    },
+    "conflicting_device_endpoints": 0,
+    "attributed_engine_task_fraction": 0.8767890407139979
+  },
+  "raw_trace_path": "/dev/shm/user7-aic-aiv-20261031/inference/v2/infer-matrix-r1/b1-l512-greedy/trace/rank1_9308_20261102072140372_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json.gz"
+}
