@@ -1,0 +1,16 @@
+{
+  "status": "unknown",
+  "scope": "real model AIC readiness during AIV cache conversion",
+  "available": [
+    "CPU launch scopes",
+    "native host/device flow IDs",
+    "device stream/task envelopes",
+    "sample-based engine busy PMU"
+  ],
+  "missing": [
+    "runtime ready-queue timestamps",
+    "dependency-completion timestamps proving a specific AIC task was runnable"
+  ],
+  "conclusion": "do not infer a missed scheduling opportunity from AIC absence; independent synthetic co-run is only a hardware overlap control",
+  "deferred": "real adjacent-layer co-run requires an explicit legal dependency/data lifetime contract; current attention consumer depends on converted KV"
+}

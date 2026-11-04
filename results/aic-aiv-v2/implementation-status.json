@@ -1,0 +1,39 @@
+{
+  "status": "complete",
+  "scope": "measurement, phase attribution, figures and interpretation; no acceleration changes",
+  "completed_ns": 1793608595167669004,
+  "hardware": "910B3 physical devices 4-7; per-card results retained",
+  "graph_mode": "explicit PIECEWISE; default FULL rejected by installed driver",
+  "accepted": {
+    "calibration": "all positive/negative gates pass",
+    "inference_tasks": "5 cases × 3 independent processes × 6 requests; 15/15 valid; all 4 devices analyzed",
+    "inference_pmu": "2 cases, >30 seconds each; valid coverage and overhead gates pass",
+    "training_pmu": "2 sequence lengths × 3 independent runs; 24/24 device-runs valid",
+    "tests": "27 CPU regression tests passed; hardware acceptance recorded separately"
+  },
+  "diagnostics": {
+    "training_heavy": "~80% overhead",
+    "training_light_seq128": "~70%-73% overhead",
+    "training_level0": "~24%-28% overhead; no framework phase correlation",
+    "training_light_seq512": "~78% overhead plus unstable warmup"
+  },
+  "adaptive_plan_change": "After all tested training task collectors exceeded the 10% overhead gate, retain one phase trace per training length as diagnostic; perform three independent training repeats with accepted sample-only PMU.",
+  "outputs": {
+    "report": "REPORT.md",
+    "core_figure": "aggregate/training-inference-core-device4.png",
+    "phase_figure": "figures/training-inference-task-diagnostic.png",
+    "joint_figure": "aggregate/core-joint-device4.png",
+    "source": "source/tools/aic_activity",
+    "training_patch": "source/training-observation.patch"
+  },
+  "limitations": [
+    "Fixed-text small-batch Qwen3-8B TP4 workload",
+    "Mixed task intervals remain unknown; incomplete phase links remain unclassified",
+    "10ms core sampling does not prove instantaneous overlap",
+    "No proof of ready independent work or end-to-end acceleration"
+  ],
+  "resources": {
+    "inference_container": "user7-aic-aiv-030-priv stopped",
+    "original_repository": "unchanged by this experiment; source overlays and measured snapshots archived"
+  }
+}

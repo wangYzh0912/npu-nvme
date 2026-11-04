@@ -1,0 +1,32 @@
+{
+  "error": "Command '['docker', 'exec', '-e', 'PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/official-full_decode_only-screen:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:', '-e', 'PYTHONUNBUFFERED=1', 'user7-aic-scope-official', 'python', '-u', '-m', 'aic_kv.run', '--output', '/output/official-full_decode_only-screen', '--graph-mode', 'FULL_DECODE_ONLY', '--blocks', '1654', '--cases', '1:128:32,8:128:32', '--trace-requests', '2', '--control-requests', '3']' returned non-zero exit status 1.",
+  "command": [
+    "docker",
+    "exec",
+    "-e",
+    "PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/official-full_decode_only-screen:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:",
+    "-e",
+    "PYTHONUNBUFFERED=1",
+    "user7-aic-scope-official",
+    "python",
+    "-u",
+    "-m",
+    "aic_kv.run",
+    "--output",
+    "/output/official-full_decode_only-screen",
+    "--graph-mode",
+    "FULL_DECODE_ONLY",
+    "--blocks",
+    "1654",
+    "--cases",
+    "1:128:32,8:128:32",
+    "--trace-requests",
+    "2",
+    "--control-requests",
+    "3"
+  ],
+  "log": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/official-full_decode_only-screen.log",
+  "cleanup_exit": 0,
+  "stop_exit": 0,
+  "cause": "driver does not support graph operator update (207019)"
+}

@@ -1,0 +1,602 @@
+[
+  {
+    "run": "corun-r0",
+    "trace_sha256": "adc26069e343f3ad604119504601dc8ff2bb3682d38e770d8c2d6e28b8bf74fe",
+    "unattributed_device_tasks": 0,
+    "modes": {
+      "matrix_only": {
+        "tasks": 3,
+        "aic_tasks": 3,
+        "aiv_tasks": 0,
+        "aic_union_ns": 1538671,
+        "aiv_union_ns": 0,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_CORE"
+        ]
+      },
+      "copy_only": {
+        "tasks": 3,
+        "aic_tasks": 0,
+        "aiv_tasks": 3,
+        "aic_union_ns": 0,
+        "aiv_union_ns": 582312,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_VECTOR_CORE"
+        ]
+      },
+      "serial_pair": {
+        "tasks": 6,
+        "aic_tasks": 3,
+        "aiv_tasks": 3,
+        "aic_union_ns": 1703094,
+        "aiv_union_ns": 613972,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_CORE",
+          "AI_VECTOR_CORE"
+        ]
+      },
+      "parallel_pair": {
+        "tasks": 6,
+        "aic_tasks": 3,
+        "aiv_tasks": 3,
+        "aic_union_ns": 2301526,
+        "aiv_union_ns": 889777,
+        "pure_engine_overlap_ns": 889777,
+        "engines": [
+          "AI_CORE",
+          "AI_VECTOR_CORE"
+        ]
+      }
+    },
+    "tasks": [
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423818880843,
+        "end_ns": 1793799423819410794,
+        "stream": "2"
+      },
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423819410834,
+        "end_ns": 1793799423819915404,
+        "stream": "2"
+      },
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423819915424,
+        "end_ns": 1793799423820419574,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423821037926,
+        "end_ns": 1793799423821213350,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423821213370,
+        "end_ns": 1793799423821422674,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423821422694,
+        "end_ns": 1793799423821620278,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423821803262,
+        "end_ns": 1793799423822372533,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423822372553,
+        "end_ns": 1793799423822580417,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423822580457,
+        "end_ns": 1793799423823147288,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423823147308,
+        "end_ns": 1793799423823347692,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423823347732,
+        "end_ns": 1793799423823914724,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423823914744,
+        "end_ns": 1793799423824120468,
+        "stream": "2"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423824393153,
+        "end_ns": 1793799423825684019,
+        "stream": "4"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423824500296,
+        "end_ns": 1793799423824782441,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423824782461,
+        "end_ns": 1793799423825085427,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799423825085447,
+        "end_ns": 1793799423825390113,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423825684059,
+        "end_ns": 1793799423826189209,
+        "stream": "4"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799423826189229,
+        "end_ns": 1793799423826694739,
+        "stream": "4"
+      }
+    ],
+    "metric": "task envelopes, not core-level PMU activity"
+  },
+  {
+    "run": "corun-r1",
+    "trace_sha256": "28ec9c5aac8cb789e553570abbd102ab3d7f5c795e774b795dc1095cbaca90aa",
+    "unattributed_device_tasks": 0,
+    "modes": {
+      "matrix_only": {
+        "tasks": 3,
+        "aic_tasks": 3,
+        "aiv_tasks": 0,
+        "aic_union_ns": 1538751,
+        "aiv_union_ns": 0,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_CORE"
+        ]
+      },
+      "copy_only": {
+        "tasks": 3,
+        "aic_tasks": 0,
+        "aiv_tasks": 3,
+        "aic_union_ns": 0,
+        "aiv_union_ns": 595432,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_VECTOR_CORE"
+        ]
+      },
+      "serial_pair": {
+        "tasks": 6,
+        "aic_tasks": 3,
+        "aiv_tasks": 3,
+        "aic_union_ns": 1706574,
+        "aiv_union_ns": 604612,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_CORE",
+          "AI_VECTOR_CORE"
+        ]
+      },
+      "parallel_pair": {
+        "tasks": 6,
+        "aic_tasks": 3,
+        "aiv_tasks": 3,
+        "aic_union_ns": 2300266,
+        "aiv_union_ns": 880538,
+        "pure_engine_overlap_ns": 880538,
+        "engines": [
+          "AI_CORE",
+          "AI_VECTOR_CORE"
+        ]
+      }
+    },
+    "tasks": [
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443542823596,
+        "end_ns": 1793799443543354927,
+        "stream": "2"
+      },
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443543354947,
+        "end_ns": 1793799443543858477,
+        "stream": "2"
+      },
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443543858497,
+        "end_ns": 1793799443544362387,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443544949438,
+        "end_ns": 1793799443545128342,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443545128382,
+        "end_ns": 1793799443545334866,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443545334886,
+        "end_ns": 1793799443545544930,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443545735794,
+        "end_ns": 1793799443546304385,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443546304405,
+        "end_ns": 1793799443546506089,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443546506109,
+        "end_ns": 1793799443547076341,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443547076361,
+        "end_ns": 1793799443547278005,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443547278025,
+        "end_ns": 1793799443547845776,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443547845816,
+        "end_ns": 1793799443548047100,
+        "stream": "2"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443548286965,
+        "end_ns": 1793799443549577091,
+        "stream": "4"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443548395707,
+        "end_ns": 1793799443548677213,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443548677233,
+        "end_ns": 1793799443548975239,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799443548975259,
+        "end_ns": 1793799443549276285,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443549577131,
+        "end_ns": 1793799443550082181,
+        "stream": "4"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799443550082201,
+        "end_ns": 1793799443550587291,
+        "stream": "4"
+      }
+    ],
+    "metric": "task envelopes, not core-level PMU activity"
+  },
+  {
+    "run": "corun-r2",
+    "trace_sha256": "0b486ee676e2aeeb4fc7f298832cffab5f9a7a439063c1ad4f9fa98530414dca",
+    "unattributed_device_tasks": 0,
+    "modes": {
+      "matrix_only": {
+        "tasks": 3,
+        "aic_tasks": 3,
+        "aiv_tasks": 0,
+        "aic_union_ns": 1539931,
+        "aiv_union_ns": 0,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_CORE"
+        ]
+      },
+      "copy_only": {
+        "tasks": 3,
+        "aic_tasks": 0,
+        "aiv_tasks": 3,
+        "aic_union_ns": 0,
+        "aiv_union_ns": 579991,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_VECTOR_CORE"
+        ]
+      },
+      "serial_pair": {
+        "tasks": 6,
+        "aic_tasks": 3,
+        "aiv_tasks": 3,
+        "aic_union_ns": 1705454,
+        "aiv_union_ns": 612592,
+        "pure_engine_overlap_ns": 0,
+        "engines": [
+          "AI_CORE",
+          "AI_VECTOR_CORE"
+        ]
+      },
+      "parallel_pair": {
+        "tasks": 6,
+        "aic_tasks": 3,
+        "aiv_tasks": 3,
+        "aic_union_ns": 2306947,
+        "aiv_union_ns": 892998,
+        "pure_engine_overlap_ns": 892998,
+        "engines": [
+          "AI_CORE",
+          "AI_VECTOR_CORE"
+        ]
+      }
+    },
+    "tasks": [
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463365975042,
+        "end_ns": 1793799463366505953,
+        "stream": "2"
+      },
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463366505973,
+        "end_ns": 1793799463367011223,
+        "stream": "2"
+      },
+      {
+        "mode": "matrix_only",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463367011243,
+        "end_ns": 1793799463367515013,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463368454272,
+        "end_ns": 1793799463368628415,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463368642535,
+        "end_ns": 1793799463368850999,
+        "stream": "2"
+      },
+      {
+        "mode": "copy_only",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463368851039,
+        "end_ns": 1793799463369048423,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463369321709,
+        "end_ns": 1793799463369892180,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463369892200,
+        "end_ns": 1793799463370100364,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463370100404,
+        "end_ns": 1793799463370668156,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463370668176,
+        "end_ns": 1793799463370868420,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463370868440,
+        "end_ns": 1793799463371435671,
+        "stream": "2"
+      },
+      {
+        "mode": "serial_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463371435691,
+        "end_ns": 1793799463371639875,
+        "stream": "2"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463371952201,
+        "end_ns": 1793799463373250927,
+        "stream": "4"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463372138545,
+        "end_ns": 1793799463372420111,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463372420131,
+        "end_ns": 1793799463372729457,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnInplaceCopy_SliceAiCore_Slice",
+        "engine": "AI_VECTOR_CORE",
+        "start_ns": 1793799463372729477,
+        "end_ns": 1793799463373031583,
+        "stream": "5"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463373250947,
+        "end_ns": 1793799463373755417,
+        "stream": "4"
+      },
+      {
+        "mode": "parallel_pair",
+        "name": "aclnnMm_MatMulV3Common_MatMulV3",
+        "engine": "AI_CORE",
+        "start_ns": 1793799463373755437,
+        "end_ns": 1793799463374259188,
+        "stream": "4"
+      }
+    ],
+    "metric": "task envelopes, not core-level PMU activity"
+  }
+]

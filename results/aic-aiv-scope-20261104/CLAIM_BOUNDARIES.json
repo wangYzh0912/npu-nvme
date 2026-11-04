@@ -1,0 +1,19 @@
+{
+  "current_hypothesis": "full allocated ordinary-GQA KV views are materialized by FIA for the strided layout on measured v0.30 stack",
+  "established": [
+    "same-code PA or dense cache eliminates full-cache Slice",
+    "v0.18 native ordinary-GQA dense layout has no full-cache Slice",
+    "b1 block IDs match for same-mode dense control",
+    "b8 outputs match but scheduling/block assignments can differ"
+  ],
+  "unestablished": [
+    "deployment prevalence",
+    "all Ascend models/backends",
+    "CUDA or ROCm equivalence",
+    "HBM saturation",
+    "AIC arithmetic capacity reclaimable by scheduling",
+    "real-model AIC task readiness"
+  ],
+  "samples": "controlled offline LLM.generate requests, repeated fixed token prompt; not a production serving trace",
+  "measurement_scope": "inference KV cause and applicability; prior training measurements retained unchanged"
+}

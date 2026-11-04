@@ -1,0 +1,72 @@
+{
+  "image": "sha256:b1f5d0374736026b9c56c6b9edcec3b6016b5c9c368d91b3126185f7df006cba",
+  "container": "/user7-aic-scope-official",
+  "mounts": [
+    {
+      "Type": "bind",
+      "Source": "/tmp/user7-aic-aiv-20261031/source/tools",
+      "Destination": "/experiment",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/models",
+      "Destination": "/models",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rslave"
+    },
+    {
+      "Type": "bind",
+      "Source": "/usr/local/Ascend/driver",
+      "Destination": "/usr/local/Ascend/driver",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/usr/local/dcmi",
+      "Destination": "/usr/local/dcmi",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/usr/local/bin/npu-smi",
+      "Destination": "/usr/local/bin/npu-smi",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/etc/ascend_install.info",
+      "Destination": "/etc/ascend_install.info",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/dev/shm/user7-aic-aiv-20261031/scope-20261104",
+      "Destination": "/output",
+      "Mode": "rw",
+      "RW": true,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104",
+      "Destination": "/scope-evidence",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    }
+  ],
+  "cann": "/usr/local/Ascend/cann-9.1.0",
+  "hardware_driver": "host-mounted /usr/local/Ascend/driver; host npu-smi 24.1.rc3"
+}

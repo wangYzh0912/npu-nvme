@@ -1,0 +1,472 @@
+{
+  "device_cases": 512,
+  "screen_configurations": 4,
+  "screen_is_single_process_not_speedup_acceptance": true,
+  "all_controls_cv_at_most_5pct": false,
+  "unstable_controls": 20,
+  "repetitions": [
+    1,
+    3
+  ],
+  "failures": {
+    "official-default-screen": {
+      "error": "Command '['docker', 'exec', '-e', 'PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/official-default-screen:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:', '-e', 'PYTHONUNBUFFERED=1', 'user7-aic-scope-official', 'python', '-u', '-m', 'aic_kv.run', '--output', '/output/official-default-screen', '--graph-mode', 'DEFAULT', '--blocks', '1654', '--cases', '1:128:32,8:128:32', '--trace-requests', '2', '--control-requests', '3']' returned non-zero exit status 1.",
+      "command": [
+        "docker",
+        "exec",
+        "-e",
+        "PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/official-default-screen:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:",
+        "-e",
+        "PYTHONUNBUFFERED=1",
+        "user7-aic-scope-official",
+        "python",
+        "-u",
+        "-m",
+        "aic_kv.run",
+        "--output",
+        "/output/official-default-screen",
+        "--graph-mode",
+        "DEFAULT",
+        "--blocks",
+        "1654",
+        "--cases",
+        "1:128:32,8:128:32",
+        "--trace-requests",
+        "2",
+        "--control-requests",
+        "3"
+      ],
+      "log": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/official-default-screen.log",
+      "cleanup_exit": 0,
+      "stop_exit": 0,
+      "cause": "driver does not support graph operator update (207019)"
+    },
+    "official-full_decode_only-screen": {
+      "error": "Command '['docker', 'exec', '-e', 'PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/official-full_decode_only-screen:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:', '-e', 'PYTHONUNBUFFERED=1', 'user7-aic-scope-official', 'python', '-u', '-m', 'aic_kv.run', '--output', '/output/official-full_decode_only-screen', '--graph-mode', 'FULL_DECODE_ONLY', '--blocks', '1654', '--cases', '1:128:32,8:128:32', '--trace-requests', '2', '--control-requests', '3']' returned non-zero exit status 1.",
+      "command": [
+        "docker",
+        "exec",
+        "-e",
+        "PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/official-full_decode_only-screen:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:",
+        "-e",
+        "PYTHONUNBUFFERED=1",
+        "user7-aic-scope-official",
+        "python",
+        "-u",
+        "-m",
+        "aic_kv.run",
+        "--output",
+        "/output/official-full_decode_only-screen",
+        "--graph-mode",
+        "FULL_DECODE_ONLY",
+        "--blocks",
+        "1654",
+        "--cases",
+        "1:128:32,8:128:32",
+        "--trace-requests",
+        "2",
+        "--control-requests",
+        "3"
+      ],
+      "log": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/official-full_decode_only-screen.log",
+      "cleanup_exit": 0,
+      "stop_exit": 0,
+      "cause": "driver does not support graph operator update (207019)"
+    },
+    "correctness-qwen8b-piecewise-native-r0": {
+      "error": "Command '['docker', 'exec', '-e', 'PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/correctness-qwen8b-piecewise-native-r0:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:', '-e', 'PYTHONUNBUFFERED=1', 'user7-aic-scope-official', 'python', '-u', '-m', 'aic_kv.run', '--output', '/output/correctness-qwen8b-piecewise-native-r0', '--model', '/models/Qwen3-8B', '--graph-mode', 'PIECEWISE', '--layout', 'native', '--prompt-fixture', 'diverse', '--request-metrics', '--blocks', '1654', '--max-model-len', '2304', '--cases', '8:128:32,8:2048:32', '--trace-requests', '1', '--control-requests', '3']' returned non-zero exit status 1.",
+      "cause": "strict output hash gate failed within the same layout/condition; original outputs retained",
+      "command": [
+        "docker",
+        "exec",
+        "-e",
+        "PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/correctness-qwen8b-piecewise-native-r0:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:",
+        "-e",
+        "PYTHONUNBUFFERED=1",
+        "user7-aic-scope-official",
+        "python",
+        "-u",
+        "-m",
+        "aic_kv.run",
+        "--output",
+        "/output/correctness-qwen8b-piecewise-native-r0",
+        "--model",
+        "/models/Qwen3-8B",
+        "--graph-mode",
+        "PIECEWISE",
+        "--layout",
+        "native",
+        "--prompt-fixture",
+        "diverse",
+        "--request-metrics",
+        "--blocks",
+        "1654",
+        "--max-model-len",
+        "2304",
+        "--cases",
+        "8:128:32,8:2048:32",
+        "--trace-requests",
+        "1",
+        "--control-requests",
+        "3"
+      ],
+      "log": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/correctness-qwen8b-piecewise-native-r0.log",
+      "cleanup_exit": 0,
+      "stop_exit": 0
+    },
+    "correctness-qwen8b-piecewise-dense-r0": {
+      "error": "Command '['docker', 'exec', '-e', 'PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/correctness-qwen8b-piecewise-dense-r0:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:', '-e', 'PYTHONUNBUFFERED=1', 'user7-aic-scope-official', 'python', '-u', '-m', 'aic_kv.run', '--output', '/output/correctness-qwen8b-piecewise-dense-r0', '--model', '/models/Qwen3-8B', '--graph-mode', 'PIECEWISE', '--layout', 'dense', '--prompt-fixture', 'diverse', '--request-metrics', '--blocks', '1654', '--max-model-len', '2304', '--cases', '8:128:32,8:2048:32', '--trace-requests', '1', '--control-requests', '3']' returned non-zero exit status 1.",
+      "cause": "strict output hash gate failed within the same layout/condition; original outputs retained",
+      "command": [
+        "docker",
+        "exec",
+        "-e",
+        "PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/correctness-qwen8b-piecewise-dense-r0:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:",
+        "-e",
+        "PYTHONUNBUFFERED=1",
+        "user7-aic-scope-official",
+        "python",
+        "-u",
+        "-m",
+        "aic_kv.run",
+        "--output",
+        "/output/correctness-qwen8b-piecewise-dense-r0",
+        "--model",
+        "/models/Qwen3-8B",
+        "--graph-mode",
+        "PIECEWISE",
+        "--layout",
+        "dense",
+        "--prompt-fixture",
+        "diverse",
+        "--request-metrics",
+        "--blocks",
+        "1654",
+        "--max-model-len",
+        "2304",
+        "--cases",
+        "8:128:32,8:2048:32",
+        "--trace-requests",
+        "1",
+        "--control-requests",
+        "3"
+      ],
+      "log": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/correctness-qwen8b-piecewise-dense-r0.log",
+      "cleanup_exit": 0,
+      "stop_exit": 0
+    },
+    "hybrid-qwen35-27b-piecewise-screen": {
+      "error": "Command '['docker', 'exec', '-e', 'PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/hybrid-qwen35-27b-piecewise-screen:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:', '-e', 'PYTHONUNBUFFERED=1', 'user7-aic-scope-official', 'python', '-u', '-m', 'aic_kv.run', '--output', '/output/hybrid-qwen35-27b-piecewise-screen', '--model', '/models/Qwen3.5-27B-original', '--graph-mode', 'PIECEWISE', '--blocks', '1654', '--cases', '1:128:32', '--trace-requests', '1', '--control-requests', '3']' returned non-zero exit status 1.",
+      "cause": "PyTorch worker initialization abort: Invalid thread pool! INTERNAL ASSERT in ATen/ParallelOpenMP.cpp; model never initialized",
+      "command": [
+        "docker",
+        "exec",
+        "-e",
+        "PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/hybrid-qwen35-27b-piecewise-screen:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:",
+        "-e",
+        "PYTHONUNBUFFERED=1",
+        "user7-aic-scope-official",
+        "python",
+        "-u",
+        "-m",
+        "aic_kv.run",
+        "--output",
+        "/output/hybrid-qwen35-27b-piecewise-screen",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--graph-mode",
+        "PIECEWISE",
+        "--blocks",
+        "1654",
+        "--cases",
+        "1:128:32",
+        "--trace-requests",
+        "1",
+        "--control-requests",
+        "3"
+      ],
+      "log": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/hybrid-qwen35-27b-piecewise-screen.log",
+      "cleanup_exit": 0,
+      "stop_exit": 0
+    },
+    "correctness-sync-qwen8b-piecewise-native-r0": {
+      "error": "Command '['docker', 'exec', '-e', 'PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/correctness-sync-qwen8b-piecewise-native-r0:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:', '-e', 'PYTHONUNBUFFERED=1', 'user7-aic-scope-official', 'python', '-u', '-m', 'aic_kv.run', '--output', '/output/correctness-sync-qwen8b-piecewise-native-r0', '--model', '/models/Qwen3-8B', '--graph-mode', 'PIECEWISE', '--layout', 'native', '--prompt-fixture', 'diverse', '--request-metrics', '--blocks', '1654', '--max-model-len', '2304', '--cases', '8:128:32,8:2048:32', '--trace-requests', '1', '--control-requests', '3', '--sync-scheduling']' returned non-zero exit status 1.",
+      "cause": "strict output hash gate failed within the same layout/condition; original outputs retained",
+      "command": [
+        "docker",
+        "exec",
+        "-e",
+        "PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/correctness-sync-qwen8b-piecewise-native-r0:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:",
+        "-e",
+        "PYTHONUNBUFFERED=1",
+        "user7-aic-scope-official",
+        "python",
+        "-u",
+        "-m",
+        "aic_kv.run",
+        "--output",
+        "/output/correctness-sync-qwen8b-piecewise-native-r0",
+        "--model",
+        "/models/Qwen3-8B",
+        "--graph-mode",
+        "PIECEWISE",
+        "--layout",
+        "native",
+        "--prompt-fixture",
+        "diverse",
+        "--request-metrics",
+        "--blocks",
+        "1654",
+        "--max-model-len",
+        "2304",
+        "--cases",
+        "8:128:32,8:2048:32",
+        "--trace-requests",
+        "1",
+        "--control-requests",
+        "3",
+        "--sync-scheduling"
+      ],
+      "log": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/correctness-sync-qwen8b-piecewise-native-r0.log",
+      "cleanup_exit": 0,
+      "stop_exit": 0
+    },
+    "correctness-sync-qwen8b-piecewise-dense-r0": {
+      "error": "Command '['docker', 'exec', '-e', 'PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/correctness-sync-qwen8b-piecewise-dense-r0:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:', '-e', 'PYTHONUNBUFFERED=1', 'user7-aic-scope-official', 'python', '-u', '-m', 'aic_kv.run', '--output', '/output/correctness-sync-qwen8b-piecewise-dense-r0', '--model', '/models/Qwen3-8B', '--graph-mode', 'PIECEWISE', '--layout', 'dense', '--prompt-fixture', 'diverse', '--request-metrics', '--blocks', '1654', '--max-model-len', '2304', '--cases', '8:128:32,8:2048:32', '--trace-requests', '1', '--control-requests', '3', '--sync-scheduling']' returned non-zero exit status 1.",
+      "cause": "strict output hash gate failed within the same layout/condition; original outputs retained",
+      "command": [
+        "docker",
+        "exec",
+        "-e",
+        "PYTHONPATH=/models/npu_nvme_exp/user7-stack/aic-aiv-scope-20261104/source/correctness-sync-qwen8b-piecewise-dense-r0:/experiment:/usr/local/Ascend/ascend-toolkit/latest/python/site-packages:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:",
+        "-e",
+        "PYTHONUNBUFFERED=1",
+        "user7-aic-scope-official",
+        "python",
+        "-u",
+        "-m",
+        "aic_kv.run",
+        "--output",
+        "/output/correctness-sync-qwen8b-piecewise-dense-r0",
+        "--model",
+        "/models/Qwen3-8B",
+        "--graph-mode",
+        "PIECEWISE",
+        "--layout",
+        "dense",
+        "--prompt-fixture",
+        "diverse",
+        "--request-metrics",
+        "--blocks",
+        "1654",
+        "--max-model-len",
+        "2304",
+        "--cases",
+        "8:128:32,8:2048:32",
+        "--trace-requests",
+        "1",
+        "--control-requests",
+        "3",
+        "--sync-scheduling"
+      ],
+      "log": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/correctness-sync-qwen8b-piecewise-dense-r0.log",
+      "cleanup_exit": 0,
+      "stop_exit": 0
+    }
+  },
+  "deployments_sampled": false,
+  "no_population_majority_claim": true,
+  "layout_output_pairs": 30,
+  "all_native_dense_outputs_match": true,
+  "stable_layout_comparisons": 30,
+  "block_table_pairs": 14,
+  "all_native_dense_block_tables_match": false,
+  "simultaneous_system_capture_rows": 36,
+  "minimum_system_pmu_valid_fraction": 1.0,
+  "minimum_system_hbm_coverage": 0.9973492101850256,
+  "minimum_system_hbm_valid_interval_fraction": 0.9961496149614961,
+  "system_variants": 3,
+  "system_repeats": {
+    "native": 3,
+    "dense": 3,
+    "pa": 3
+  },
+  "synthetic_corun_repetitions": 3,
+  "synthetic_corun_flow_attribution_complete": true,
+  "required_model_device_cases": 448,
+  "missing_model_device_cases": [
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l128-o32",
+      4
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l128-o32",
+      5
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l128-o32",
+      6
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l128-o32",
+      7
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l2048-o32",
+      4
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l2048-o32",
+      5
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l2048-o32",
+      6
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l2048-o32",
+      7
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l128-o32",
+      4
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l128-o32",
+      5
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l128-o32",
+      6
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l128-o32",
+      7
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l2048-o32",
+      4
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l2048-o32",
+      5
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l2048-o32",
+      6
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l2048-o32",
+      7
+    ]
+  ],
+  "failed_model_device_cases": [
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l128-o32",
+      4
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l128-o32",
+      5
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l128-o32",
+      6
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l128-o32",
+      7
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l2048-o32",
+      4
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l2048-o32",
+      5
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l2048-o32",
+      6
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-dense-r0",
+      "b8-l2048-o32",
+      7
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l128-o32",
+      4
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l128-o32",
+      5
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l128-o32",
+      6
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l128-o32",
+      7
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l2048-o32",
+      4
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l2048-o32",
+      5
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l2048-o32",
+      6
+    ],
+    [
+      "correctness-sync-qwen8b-piecewise-native-r0",
+      "b8-l2048-o32",
+      7
+    ]
+  ],
+  "unaccounted_model_device_cases": [],
+  "collection_complete": true,
+  "b1_block_table_pairs_exact": true,
+  "b8_block_table_pairs_exact": false,
+  "version_018_all_native_cache_contiguous_without_full_cache_slice": true,
+  "diverse_batch_correctness": false,
+  "hybrid_architecture_probe": "failed_with_cause",
+  "required_evidence_passed": false,
+  "investigation_complete": true,
+  "layout_general_correctness_accepted": false,
+  "status": "investigation_complete_correctness_unresolved"
+}

@@ -1,0 +1,58 @@
+{
+  "results": [
+    {
+      "mode": "matrix_only",
+      "mean_batch_ms": [
+        0.5069654333333333,
+        0.5088557666666667,
+        0.5064727666666666
+      ],
+      "median_ms": 0.5069654333333333
+    },
+    {
+      "mode": "copy_only",
+      "mean_batch_ms": [
+        0.2108339,
+        0.2095902,
+        0.2092955
+      ],
+      "median_ms": 0.2095902
+    },
+    {
+      "mode": "serial_pair",
+      "mean_batch_ms": [
+        0.7720445333333333,
+        0.7722268333333334,
+        0.7723185333333333
+      ],
+      "median_ms": 0.7722268333333334
+    },
+    {
+      "mode": "parallel_pair",
+      "mean_batch_ms": [
+        0.7424400666666666,
+        0.7408380666666666,
+        0.7424630666666666
+      ],
+      "median_ms": 0.7424400666666666
+    }
+  ],
+  "output_matches": true,
+  "contract": "two independent synthetic operations; does not establish ready model work or co-scheduling speedup",
+  "matrix_shape": [
+    4096,
+    4096,
+    4096
+  ],
+  "copy_shape": [
+    2048,
+    128,
+    256
+  ],
+  "copy_stride": [
+    65536,
+    256,
+    1
+  ],
+  "dtype": "bfloat16"
+}

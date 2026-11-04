@@ -1,0 +1,105 @@
+{
+  "capacity_card4_runs": 9,
+  "all_devices_run_count": 144,
+  "counting_unit": "process x case x physical device; ranks are not independent repetitions",
+  "same_output_across_capacity": true,
+  "all_capacity_control_cv_at_most_5pct": true,
+  "all_capacity_task_overhead_at_most_10pct": false,
+  "all_capacity_system_overhead_at_most_10pct": true,
+  "minimum_pmu_valid_fraction": 1.0,
+  "minimum_hbm_coverage": 0.9986796951735736,
+  "full_capacity_default_output_matches": true,
+  "per_device": {
+    "4": {
+      "capacity_device_cases": 9,
+      "min_pmu_valid_fraction": 1.0,
+      "min_hbm_coverage": 0.9986796951735736
+    },
+    "5": {
+      "capacity_device_cases": 9,
+      "min_pmu_valid_fraction": 1.0,
+      "min_hbm_coverage": 0.9987150363955746
+    },
+    "6": {
+      "capacity_device_cases": 9,
+      "min_pmu_valid_fraction": 1.0,
+      "min_hbm_coverage": 0.9986717447909222
+    },
+    "7": {
+      "capacity_device_cases": 9,
+      "min_pmu_valid_fraction": 1.0,
+      "min_hbm_coverage": 1.0
+    }
+  },
+  "work_cases": {
+    "b1-l128-o1": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": false
+    },
+    "b1-l128-o2": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": false
+    },
+    "b1-l128-o32": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": true
+    },
+    "b1-l128-o8": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": true
+    },
+    "b1-l512-o1": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": false
+    },
+    "b1-l512-o2": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": false
+    },
+    "b1-l512-o32": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": true
+    },
+    "b1-l512-o8": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": true
+    },
+    "b8-l128-o32": {
+      "independent_processes": 3,
+      "consistent_output": true,
+      "stable_controls": true,
+      "task_trace_timing_valid": true
+    }
+  },
+  "collection_complete": true,
+  "scope": "inference KV layout/capacity cause; not a scheduler optimization or new training experiment",
+  "micro_replay": {
+    "complete_task_attribution": true,
+    "dense_eliminates_internal_slice": true,
+    "layout_numerics_and_update_visibility": true,
+    "independent_processes": 1,
+    "timing_batches_per_mode": 3
+  },
+  "all_devices_capacity_controls_stable": true,
+  "all_work_controls_stable": true,
+  "all_devices_system_overhead_at_most_10pct": true,
+  "b1_slice_count_matches_72_per_decode": true,
+  "required_evidence_passed": true,
+  "status": "complete_with_diagnostic_traces"
+}
