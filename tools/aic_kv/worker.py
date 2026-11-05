@@ -25,6 +25,24 @@ def tensor_metadata(tensor):
 class KVWorker(ActivityWorker):
     def init_device(self):
         super().init_device()
+        if os.environ.get('AIC_KV_OFFICIAL_PA_CACHE') == '1':
+            import vllm_ascend.attention.utils as attention_utils
+            original_pa_eligibility = attention_utils.using_paged_attention
+
+            def allow_pa_allocation(runtime_shape, *args, **kwargs):
+                if runtime_shape is None:
+                    return True
+                return original_pa_eligibility(runtime_shape, *args, **kwargs)
+
+            attention_utils.using_paged_attention = allow_pa_allocation
+        force_fia = os.environ.get('AIC_KV_FORCE_FIA_WITH_PA_CACHE') == '1'
+        if force_fia:
+            import vllm_ascend.attention.attention_v1 as attention_v1
+
+            def use_fia_for_runtime_dispatch(*args, **kwargs):
+                return False
+
+            attention_v1.using_paged_attention = use_fia_for_runtime_dispatch
         if os.environ.get('AIC_KV_LAYOUT','native')=='dense':
             original=self.model_runner._reshape_kv_cache_tensors
             @functools.wraps(original)
@@ -66,6 +84,8 @@ class KVWorker(ActivityWorker):
                     num_blocks=runner.kv_cache_config.num_blocks,
                     experiment_layout=os.environ.get('AIC_KV_LAYOUT','native'),
                     pa_shapes=get_ascend_config().pa_shape_list,
+                    force_fia_with_pa_cache=os.environ.get('AIC_KV_FORCE_FIA_WITH_PA_CACHE') == '1',
+                    official_pa_allocation_override=os.environ.get('AIC_KV_OFFICIAL_PA_CACHE') == '1',
                     pa_eligible={str(n):using_paged_attention(n,runner.vllm_config,layers[0]['head_size']) for n in (1,8)},
                     kernel_block_sizes=runner.kernel_block_sizes, layers=layers)
 

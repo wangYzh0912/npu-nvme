@@ -1,0 +1,67 @@
+{
+  "run": "correctness-full-pa",
+  "control_calls": 12,
+  "distinct_hashes": {
+    "9862fa0e0c9f889691ddfd90ac6cc749d6b8eedde568570ae52ed69c2be1463b": 3,
+    "4330ec596a60d8abb71dcd6f0f613d9dcffee1a769c47573d829d1d54ead9835": 9
+  },
+  "requests": [
+    {
+      "request": 0,
+      "distinct_outputs": 1,
+      "first_divergences": []
+    },
+    {
+      "request": 1,
+      "distinct_outputs": 1,
+      "first_divergences": []
+    },
+    {
+      "request": 2,
+      "distinct_outputs": 1,
+      "first_divergences": []
+    },
+    {
+      "request": 3,
+      "distinct_outputs": 1,
+      "first_divergences": []
+    },
+    {
+      "request": 4,
+      "distinct_outputs": 2,
+      "first_divergences": [
+        {
+          "kind": "control-before",
+          "index": 0,
+          "first_diff": 23
+        },
+        {
+          "kind": "control-before",
+          "index": 5,
+          "first_diff": 23
+        },
+        {
+          "kind": "control-after",
+          "index": 4,
+          "first_diff": 23
+        }
+      ]
+    },
+    {
+      "request": 5,
+      "distinct_outputs": 1,
+      "first_divergences": []
+    },
+    {
+      "request": 6,
+      "distinct_outputs": 1,
+      "first_divergences": []
+    },
+    {
+      "request": 7,
+      "distinct_outputs": 1,
+      "first_divergences": []
+    }
+  ],
+  "interpretation": "strict repeated-output gate failed on native official FULL/PA path; this alone does not establish memory corruption"
+}

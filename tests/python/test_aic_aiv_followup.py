@@ -66,8 +66,8 @@ def test_window_classifier_does_not_infer_readiness_without_dependency_data():
     assert classify_windows(windows, tasks, [])[0]["classification"] == "dependency_unknown"
     ready = [{"task_id": "a", "state": "ready", "source": "runtime_event"}]
     result = classify_windows(windows, tasks, ready)[0]
-    assert result["classification"] == "aic_ready_candidate"
-    assert result["confidence"] == "dependency_evidence"
+    assert result["classification"] == "dependency_unknown"
+    assert result["confidence"] == "incomplete"
 
 
 def test_variant_screen_requires_paired_correct_replicates():
@@ -122,3 +122,33 @@ def test_multiple_baseline_cases_do_not_count_as_candidate_variants():
              output_sha256='x', valid=True)
     with pytest.raises(ValueError, match='at least one candidate'):
         compare_variants([b, dict(b, case='b8')])
+
+
+def test_ready_task_need_not_have_started_inside_window():
+    task = dict(run_id='r', device_id=4, stream_id=2, task_id=7,
+                start_ns=20, end_ns=25, engine='aic')
+    dep = dict(run_id='r', device_id=4, stream_id=2, task_id=7,
+               task_start_ns=20, timestamp_ns=2, state='ready',
+               all_dependencies_observed=True, source='runtime dependency event')
+    window = dict(run_id='r', device_id=4, window_start_ns=0, window_end_ns=10,
+                  aic_activity_pct=2, aiv_activity_pct=80)
+    row = classify_windows([window], [task], [dep])[0]
+    assert row['classification'] == 'aic_ready_candidate'
+    assert row['ready_intervals'][0]['begin_ns'] == 2
+    assert row['ready_intervals'][0]['end_ns'] == 10
+    assert row['overlapping_task_count'] == 0
+    for change in (dict(timestamp_ns=11), dict(all_dependencies_observed=False),
+                   dict(device_id=5), dict(stream_id=3), dict(task_start_ns=21)):
+        assert classify_windows([window], [task], [dict(dep, **change)])[0]['classification'] == 'dependency_unknown'
+
+
+def test_ready_interval_ends_on_later_blocked_state():
+    task = dict(run_id='r', device_id=4, stream_id=2, task_id=7,
+                start_ns=20, end_ns=25, engine='aic')
+    dep = dict(run_id='r', device_id=4, stream_id=2, task_id=7,
+               task_start_ns=20, timestamp_ns=2, state='ready',
+               all_dependencies_observed=True, source='runtime dependency event')
+    window = dict(run_id='r', device_id=4, window_start_ns=5, window_end_ns=10, aic_activity_pct=2, aiv_activity_pct=80)
+    row = classify_windows([window], [task], [dep, dict(dep, timestamp_ns=4, state='blocked')])[0]
+    assert row['classification'] == 'observed_candidates_dependency_blocked'
+    assert row['ready_intervals'] == []

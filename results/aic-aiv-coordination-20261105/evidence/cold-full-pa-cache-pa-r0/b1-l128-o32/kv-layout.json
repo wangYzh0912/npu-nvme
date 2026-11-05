@@ -1,0 +1,7722 @@
+[
+  {
+    "rank": 0,
+    "device": "npu:0",
+    "graph_mode": "FULL_DECODE_ONLY",
+    "resolved_layout": "KVCacheLayout.LBNHC",
+    "num_blocks": 1654,
+    "experiment_layout": "native",
+    "pa_shapes": [
+      1,
+      8
+    ],
+    "force_fia_with_pa_cache": false,
+    "pa_eligible": {
+      "1": true,
+      "8": true
+    },
+    "kernel_block_sizes": [
+      128
+    ],
+    "layers": [
+      {
+        "layer": "model.layers.0.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701612163072,
+          "storage_ptr": 20701612163072,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701720576000,
+          "storage_ptr": 20701720576000,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.1.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701828988928,
+          "storage_ptr": 20701828988928,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701937401856,
+          "storage_ptr": 20701937401856,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.2.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702045814784,
+          "storage_ptr": 20702045814784,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702154227712,
+          "storage_ptr": 20702154227712,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.3.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702262640640,
+          "storage_ptr": 20702262640640,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702371053568,
+          "storage_ptr": 20702371053568,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.4.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702479466496,
+          "storage_ptr": 20702479466496,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702587879424,
+          "storage_ptr": 20702587879424,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.5.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702696292352,
+          "storage_ptr": 20702696292352,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702804705280,
+          "storage_ptr": 20702804705280,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.6.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702913118208,
+          "storage_ptr": 20702913118208,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703021531136,
+          "storage_ptr": 20703021531136,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.7.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703129944064,
+          "storage_ptr": 20703129944064,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703238356992,
+          "storage_ptr": 20703238356992,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.8.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703346769920,
+          "storage_ptr": 20703346769920,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703455182848,
+          "storage_ptr": 20703455182848,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.9.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703563595776,
+          "storage_ptr": 20703563595776,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703672008704,
+          "storage_ptr": 20703672008704,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.10.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703780421632,
+          "storage_ptr": 20703780421632,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703888834560,
+          "storage_ptr": 20703888834560,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.11.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703997247488,
+          "storage_ptr": 20703997247488,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704105660416,
+          "storage_ptr": 20704105660416,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.12.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704214073344,
+          "storage_ptr": 20704214073344,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704322486272,
+          "storage_ptr": 20704322486272,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.13.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704430899200,
+          "storage_ptr": 20704430899200,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704539312128,
+          "storage_ptr": 20704539312128,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.14.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704647725056,
+          "storage_ptr": 20704647725056,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704756137984,
+          "storage_ptr": 20704756137984,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.15.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704864550912,
+          "storage_ptr": 20704864550912,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704972963840,
+          "storage_ptr": 20704972963840,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.16.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705081376768,
+          "storage_ptr": 20705081376768,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705189789696,
+          "storage_ptr": 20705189789696,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.17.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705298202624,
+          "storage_ptr": 20705298202624,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705406615552,
+          "storage_ptr": 20705406615552,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.18.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705515028480,
+          "storage_ptr": 20705515028480,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705623441408,
+          "storage_ptr": 20705623441408,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.19.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705731854336,
+          "storage_ptr": 20705731854336,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705840267264,
+          "storage_ptr": 20705840267264,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.20.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705948680192,
+          "storage_ptr": 20705948680192,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706057093120,
+          "storage_ptr": 20706057093120,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.21.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706165506048,
+          "storage_ptr": 20706165506048,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706273918976,
+          "storage_ptr": 20706273918976,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.22.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706382331904,
+          "storage_ptr": 20706382331904,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706490744832,
+          "storage_ptr": 20706490744832,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.23.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706599157760,
+          "storage_ptr": 20706599157760,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706707570688,
+          "storage_ptr": 20706707570688,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.24.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706815983616,
+          "storage_ptr": 20706815983616,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706924396544,
+          "storage_ptr": 20706924396544,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.25.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707032809472,
+          "storage_ptr": 20707032809472,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707141222400,
+          "storage_ptr": 20707141222400,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.26.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707249635328,
+          "storage_ptr": 20707249635328,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707358048256,
+          "storage_ptr": 20707358048256,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.27.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707466461184,
+          "storage_ptr": 20707466461184,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707574874112,
+          "storage_ptr": 20707574874112,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.28.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707683287040,
+          "storage_ptr": 20707683287040,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707791699968,
+          "storage_ptr": 20707791699968,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.29.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707900112896,
+          "storage_ptr": 20707900112896,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708008525824,
+          "storage_ptr": 20708008525824,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.30.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708116938752,
+          "storage_ptr": 20708116938752,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708225351680,
+          "storage_ptr": 20708225351680,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.31.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708333764608,
+          "storage_ptr": 20708333764608,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708442177536,
+          "storage_ptr": 20708442177536,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.32.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708550590464,
+          "storage_ptr": 20708550590464,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708659003392,
+          "storage_ptr": 20708659003392,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.33.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708767416320,
+          "storage_ptr": 20708767416320,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708875829248,
+          "storage_ptr": 20708875829248,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.34.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708984242176,
+          "storage_ptr": 20708984242176,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709092655104,
+          "storage_ptr": 20709092655104,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.35.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709201068032,
+          "storage_ptr": 20709201068032,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709309480960,
+          "storage_ptr": 20709309480960,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      }
+    ]
+  },
+  {
+    "rank": 1,
+    "device": "npu:1",
+    "graph_mode": "FULL_DECODE_ONLY",
+    "resolved_layout": "KVCacheLayout.LBNHC",
+    "num_blocks": 1654,
+    "experiment_layout": "native",
+    "pa_shapes": [
+      1,
+      8
+    ],
+    "force_fia_with_pa_cache": false,
+    "pa_eligible": {
+      "1": true,
+      "8": true
+    },
+    "kernel_block_sizes": [
+      128
+    ],
+    "layers": [
+      {
+        "layer": "model.layers.0.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701612163072,
+          "storage_ptr": 20701612163072,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701720576000,
+          "storage_ptr": 20701720576000,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.1.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701828988928,
+          "storage_ptr": 20701828988928,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701937401856,
+          "storage_ptr": 20701937401856,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.2.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702045814784,
+          "storage_ptr": 20702045814784,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702154227712,
+          "storage_ptr": 20702154227712,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.3.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702262640640,
+          "storage_ptr": 20702262640640,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702371053568,
+          "storage_ptr": 20702371053568,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.4.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702479466496,
+          "storage_ptr": 20702479466496,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702587879424,
+          "storage_ptr": 20702587879424,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.5.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702696292352,
+          "storage_ptr": 20702696292352,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702804705280,
+          "storage_ptr": 20702804705280,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.6.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702913118208,
+          "storage_ptr": 20702913118208,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703021531136,
+          "storage_ptr": 20703021531136,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.7.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703129944064,
+          "storage_ptr": 20703129944064,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703238356992,
+          "storage_ptr": 20703238356992,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.8.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703346769920,
+          "storage_ptr": 20703346769920,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703455182848,
+          "storage_ptr": 20703455182848,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.9.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703563595776,
+          "storage_ptr": 20703563595776,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703672008704,
+          "storage_ptr": 20703672008704,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.10.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703780421632,
+          "storage_ptr": 20703780421632,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703888834560,
+          "storage_ptr": 20703888834560,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.11.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703997247488,
+          "storage_ptr": 20703997247488,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704105660416,
+          "storage_ptr": 20704105660416,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.12.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704214073344,
+          "storage_ptr": 20704214073344,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704322486272,
+          "storage_ptr": 20704322486272,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.13.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704430899200,
+          "storage_ptr": 20704430899200,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704539312128,
+          "storage_ptr": 20704539312128,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.14.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704647725056,
+          "storage_ptr": 20704647725056,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704756137984,
+          "storage_ptr": 20704756137984,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.15.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704864550912,
+          "storage_ptr": 20704864550912,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704972963840,
+          "storage_ptr": 20704972963840,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.16.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705081376768,
+          "storage_ptr": 20705081376768,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705189789696,
+          "storage_ptr": 20705189789696,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.17.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705298202624,
+          "storage_ptr": 20705298202624,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705406615552,
+          "storage_ptr": 20705406615552,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.18.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705515028480,
+          "storage_ptr": 20705515028480,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705623441408,
+          "storage_ptr": 20705623441408,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.19.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705731854336,
+          "storage_ptr": 20705731854336,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705840267264,
+          "storage_ptr": 20705840267264,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.20.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705948680192,
+          "storage_ptr": 20705948680192,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706057093120,
+          "storage_ptr": 20706057093120,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.21.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706165506048,
+          "storage_ptr": 20706165506048,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706273918976,
+          "storage_ptr": 20706273918976,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.22.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706382331904,
+          "storage_ptr": 20706382331904,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706490744832,
+          "storage_ptr": 20706490744832,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.23.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706599157760,
+          "storage_ptr": 20706599157760,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706707570688,
+          "storage_ptr": 20706707570688,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.24.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706815983616,
+          "storage_ptr": 20706815983616,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706924396544,
+          "storage_ptr": 20706924396544,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.25.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707032809472,
+          "storage_ptr": 20707032809472,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707141222400,
+          "storage_ptr": 20707141222400,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.26.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707249635328,
+          "storage_ptr": 20707249635328,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707358048256,
+          "storage_ptr": 20707358048256,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.27.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707466461184,
+          "storage_ptr": 20707466461184,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707574874112,
+          "storage_ptr": 20707574874112,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.28.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707683287040,
+          "storage_ptr": 20707683287040,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707791699968,
+          "storage_ptr": 20707791699968,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.29.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707900112896,
+          "storage_ptr": 20707900112896,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708008525824,
+          "storage_ptr": 20708008525824,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.30.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708116938752,
+          "storage_ptr": 20708116938752,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708225351680,
+          "storage_ptr": 20708225351680,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.31.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708333764608,
+          "storage_ptr": 20708333764608,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708442177536,
+          "storage_ptr": 20708442177536,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.32.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708550590464,
+          "storage_ptr": 20708550590464,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708659003392,
+          "storage_ptr": 20708659003392,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.33.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708767416320,
+          "storage_ptr": 20708767416320,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708875829248,
+          "storage_ptr": 20708875829248,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.34.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708984242176,
+          "storage_ptr": 20708984242176,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709092655104,
+          "storage_ptr": 20709092655104,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.35.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709201068032,
+          "storage_ptr": 20709201068032,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709309480960,
+          "storage_ptr": 20709309480960,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      }
+    ]
+  },
+  {
+    "rank": 2,
+    "device": "npu:2",
+    "graph_mode": "FULL_DECODE_ONLY",
+    "resolved_layout": "KVCacheLayout.LBNHC",
+    "num_blocks": 1654,
+    "experiment_layout": "native",
+    "pa_shapes": [
+      1,
+      8
+    ],
+    "force_fia_with_pa_cache": false,
+    "pa_eligible": {
+      "1": true,
+      "8": true
+    },
+    "kernel_block_sizes": [
+      128
+    ],
+    "layers": [
+      {
+        "layer": "model.layers.0.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701612163072,
+          "storage_ptr": 20701612163072,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701720576000,
+          "storage_ptr": 20701720576000,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.1.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701828988928,
+          "storage_ptr": 20701828988928,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701937401856,
+          "storage_ptr": 20701937401856,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.2.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702045814784,
+          "storage_ptr": 20702045814784,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702154227712,
+          "storage_ptr": 20702154227712,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.3.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702262640640,
+          "storage_ptr": 20702262640640,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702371053568,
+          "storage_ptr": 20702371053568,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.4.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702479466496,
+          "storage_ptr": 20702479466496,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702587879424,
+          "storage_ptr": 20702587879424,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.5.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702696292352,
+          "storage_ptr": 20702696292352,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702804705280,
+          "storage_ptr": 20702804705280,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.6.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702913118208,
+          "storage_ptr": 20702913118208,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703021531136,
+          "storage_ptr": 20703021531136,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.7.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703129944064,
+          "storage_ptr": 20703129944064,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703238356992,
+          "storage_ptr": 20703238356992,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.8.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703346769920,
+          "storage_ptr": 20703346769920,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703455182848,
+          "storage_ptr": 20703455182848,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.9.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703563595776,
+          "storage_ptr": 20703563595776,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703672008704,
+          "storage_ptr": 20703672008704,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.10.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703780421632,
+          "storage_ptr": 20703780421632,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703888834560,
+          "storage_ptr": 20703888834560,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.11.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703997247488,
+          "storage_ptr": 20703997247488,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704105660416,
+          "storage_ptr": 20704105660416,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.12.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704214073344,
+          "storage_ptr": 20704214073344,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704322486272,
+          "storage_ptr": 20704322486272,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.13.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704430899200,
+          "storage_ptr": 20704430899200,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704539312128,
+          "storage_ptr": 20704539312128,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.14.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704647725056,
+          "storage_ptr": 20704647725056,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704756137984,
+          "storage_ptr": 20704756137984,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.15.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704864550912,
+          "storage_ptr": 20704864550912,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704972963840,
+          "storage_ptr": 20704972963840,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.16.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705081376768,
+          "storage_ptr": 20705081376768,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705189789696,
+          "storage_ptr": 20705189789696,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.17.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705298202624,
+          "storage_ptr": 20705298202624,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705406615552,
+          "storage_ptr": 20705406615552,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.18.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705515028480,
+          "storage_ptr": 20705515028480,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705623441408,
+          "storage_ptr": 20705623441408,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.19.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705731854336,
+          "storage_ptr": 20705731854336,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705840267264,
+          "storage_ptr": 20705840267264,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.20.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705948680192,
+          "storage_ptr": 20705948680192,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706057093120,
+          "storage_ptr": 20706057093120,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.21.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706165506048,
+          "storage_ptr": 20706165506048,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706273918976,
+          "storage_ptr": 20706273918976,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.22.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706382331904,
+          "storage_ptr": 20706382331904,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706490744832,
+          "storage_ptr": 20706490744832,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.23.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706599157760,
+          "storage_ptr": 20706599157760,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706707570688,
+          "storage_ptr": 20706707570688,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.24.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706815983616,
+          "storage_ptr": 20706815983616,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706924396544,
+          "storage_ptr": 20706924396544,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.25.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707032809472,
+          "storage_ptr": 20707032809472,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707141222400,
+          "storage_ptr": 20707141222400,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.26.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707249635328,
+          "storage_ptr": 20707249635328,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707358048256,
+          "storage_ptr": 20707358048256,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.27.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707466461184,
+          "storage_ptr": 20707466461184,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707574874112,
+          "storage_ptr": 20707574874112,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.28.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707683287040,
+          "storage_ptr": 20707683287040,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707791699968,
+          "storage_ptr": 20707791699968,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.29.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707900112896,
+          "storage_ptr": 20707900112896,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708008525824,
+          "storage_ptr": 20708008525824,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.30.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708116938752,
+          "storage_ptr": 20708116938752,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708225351680,
+          "storage_ptr": 20708225351680,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.31.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708333764608,
+          "storage_ptr": 20708333764608,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708442177536,
+          "storage_ptr": 20708442177536,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.32.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708550590464,
+          "storage_ptr": 20708550590464,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708659003392,
+          "storage_ptr": 20708659003392,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.33.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708767416320,
+          "storage_ptr": 20708767416320,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708875829248,
+          "storage_ptr": 20708875829248,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.34.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708984242176,
+          "storage_ptr": 20708984242176,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709092655104,
+          "storage_ptr": 20709092655104,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.35.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709201068032,
+          "storage_ptr": 20709201068032,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709309480960,
+          "storage_ptr": 20709309480960,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      }
+    ]
+  },
+  {
+    "rank": 3,
+    "device": "npu:3",
+    "graph_mode": "FULL_DECODE_ONLY",
+    "resolved_layout": "KVCacheLayout.LBNHC",
+    "num_blocks": 1654,
+    "experiment_layout": "native",
+    "pa_shapes": [
+      1,
+      8
+    ],
+    "force_fia_with_pa_cache": false,
+    "pa_eligible": {
+      "1": true,
+      "8": true
+    },
+    "kernel_block_sizes": [
+      128
+    ],
+    "layers": [
+      {
+        "layer": "model.layers.0.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701612163072,
+          "storage_ptr": 20701612163072,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701720576000,
+          "storage_ptr": 20701720576000,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.1.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701828988928,
+          "storage_ptr": 20701828988928,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20701937401856,
+          "storage_ptr": 20701937401856,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.2.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702045814784,
+          "storage_ptr": 20702045814784,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702154227712,
+          "storage_ptr": 20702154227712,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.3.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702262640640,
+          "storage_ptr": 20702262640640,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702371053568,
+          "storage_ptr": 20702371053568,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.4.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702479466496,
+          "storage_ptr": 20702479466496,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702587879424,
+          "storage_ptr": 20702587879424,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.5.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702696292352,
+          "storage_ptr": 20702696292352,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702804705280,
+          "storage_ptr": 20702804705280,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.6.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20702913118208,
+          "storage_ptr": 20702913118208,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703021531136,
+          "storage_ptr": 20703021531136,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.7.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703129944064,
+          "storage_ptr": 20703129944064,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703238356992,
+          "storage_ptr": 20703238356992,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.8.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703346769920,
+          "storage_ptr": 20703346769920,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703455182848,
+          "storage_ptr": 20703455182848,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.9.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703563595776,
+          "storage_ptr": 20703563595776,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703672008704,
+          "storage_ptr": 20703672008704,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.10.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703780421632,
+          "storage_ptr": 20703780421632,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703888834560,
+          "storage_ptr": 20703888834560,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.11.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20703997247488,
+          "storage_ptr": 20703997247488,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704105660416,
+          "storage_ptr": 20704105660416,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.12.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704214073344,
+          "storage_ptr": 20704214073344,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704322486272,
+          "storage_ptr": 20704322486272,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.13.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704430899200,
+          "storage_ptr": 20704430899200,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704539312128,
+          "storage_ptr": 20704539312128,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.14.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704647725056,
+          "storage_ptr": 20704647725056,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704756137984,
+          "storage_ptr": 20704756137984,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.15.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704864550912,
+          "storage_ptr": 20704864550912,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20704972963840,
+          "storage_ptr": 20704972963840,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.16.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705081376768,
+          "storage_ptr": 20705081376768,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705189789696,
+          "storage_ptr": 20705189789696,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.17.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705298202624,
+          "storage_ptr": 20705298202624,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705406615552,
+          "storage_ptr": 20705406615552,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.18.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705515028480,
+          "storage_ptr": 20705515028480,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705623441408,
+          "storage_ptr": 20705623441408,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.19.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705731854336,
+          "storage_ptr": 20705731854336,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705840267264,
+          "storage_ptr": 20705840267264,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.20.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20705948680192,
+          "storage_ptr": 20705948680192,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706057093120,
+          "storage_ptr": 20706057093120,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.21.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706165506048,
+          "storage_ptr": 20706165506048,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706273918976,
+          "storage_ptr": 20706273918976,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.22.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706382331904,
+          "storage_ptr": 20706382331904,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706490744832,
+          "storage_ptr": 20706490744832,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.23.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706599157760,
+          "storage_ptr": 20706599157760,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706707570688,
+          "storage_ptr": 20706707570688,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.24.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706815983616,
+          "storage_ptr": 20706815983616,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20706924396544,
+          "storage_ptr": 20706924396544,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.25.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707032809472,
+          "storage_ptr": 20707032809472,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707141222400,
+          "storage_ptr": 20707141222400,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.26.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707249635328,
+          "storage_ptr": 20707249635328,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707358048256,
+          "storage_ptr": 20707358048256,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.27.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707466461184,
+          "storage_ptr": 20707466461184,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707574874112,
+          "storage_ptr": 20707574874112,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.28.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707683287040,
+          "storage_ptr": 20707683287040,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707791699968,
+          "storage_ptr": 20707791699968,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.29.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20707900112896,
+          "storage_ptr": 20707900112896,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708008525824,
+          "storage_ptr": 20708008525824,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.30.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708116938752,
+          "storage_ptr": 20708116938752,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708225351680,
+          "storage_ptr": 20708225351680,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.31.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708333764608,
+          "storage_ptr": 20708333764608,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708442177536,
+          "storage_ptr": 20708442177536,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.32.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708550590464,
+          "storage_ptr": 20708550590464,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708659003392,
+          "storage_ptr": 20708659003392,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.33.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708767416320,
+          "storage_ptr": 20708767416320,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708875829248,
+          "storage_ptr": 20708875829248,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.34.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20708984242176,
+          "storage_ptr": 20708984242176,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709092655104,
+          "storage_ptr": 20709092655104,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      },
+      {
+        "layer": "model.layers.35.self_attn.attn",
+        "impl": "AscendAttentionBackendImpl",
+        "key": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709201068032,
+          "storage_ptr": 20709201068032,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "value": {
+          "shape": [
+            1654,
+            128,
+            2,
+            128
+          ],
+          "stride": [
+            32768,
+            256,
+            128,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "element_size": 2,
+          "logical_bytes": 108396544,
+          "storage_offset": 0,
+          "data_ptr": 20709309480960,
+          "storage_ptr": 20709309480960,
+          "storage_bytes": 108396544,
+          "contiguous": true
+        },
+        "use_bnsd_kv_cache": false,
+        "num_heads": 8,
+        "num_kv_heads": 2,
+        "head_size": 128,
+        "scale": 0.08838834764831845
+      }
+    ]
+  }
+]

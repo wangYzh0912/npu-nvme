@@ -118,52 +118,96 @@ def normalize_hbm_csv(path: str | Path) -> list[dict[str, Any]]:
 def classify_windows(windows: Iterable[dict[str, Any]],
                      tasks: Iterable[dict[str, Any]],
                      dependencies: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Summarize AIV-high/AIC-low windows with evidence-backed task readiness."""
+    """Classify pending AIC work using time-scoped, complete dependency evidence.
+
+    Dependency keys include run/device/stream/task and task_start_ns, so reused
+    hardware task IDs cannot borrow a readiness observation from another task.
+    Legacy records without those keys remain unknown rather than proving ready.
+    """
     tasks = list(tasks)
     dependencies = list(dependencies)
-    task_by_id = {str(t["task_id"]): t for t in tasks if "task_id" in t}
-    dep_by_task: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    identity_fields = ('run_id', 'device_id', 'stream_id', 'task_id')
+
+    def identity(row, *, observation=False):
+        start_key = 'task_start_ns' if observation else 'start_ns'
+        if any(key not in row for key in (*identity_fields, start_key)):
+            return None
+        return tuple(str(row[key]) for key in identity_fields) + (int(row[start_key]),)
+
+    observations = defaultdict(list)
     for dep in dependencies:
-        if "task_id" not in dep or "state" not in dep:
-            raise ValueError("dependency rows require task_id and state")
-        dep_by_task[str(dep["task_id"])].append(dep)
+        if 'task_id' not in dep or 'state' not in dep:
+            raise ValueError('dependency rows require task_id and state')
+        key = identity(dep, observation=True)
+        if key is None or 'timestamp_ns' not in dep:
+            continue
+        if dep['state'] not in ('ready', 'blocked', 'waiting_dependency', 'unknown'):
+            raise ValueError('unsupported dependency state')
+        timestamp = int(dep['timestamp_ns'])
+        if timestamp < 0 or timestamp > key[-1]:
+            raise ValueError('dependency timestamp must precede task start')
+        if not dep.get('source'):
+            raise ValueError('timed dependency evidence requires a source')
+        observations[key].append(dep)
+    for values in observations.values():
+        values.sort(key=lambda row: int(row['timestamp_ns']))
+        if len({int(row['timestamp_ns']) for row in values}) != len(values):
+            raise ValueError('ambiguous simultaneous dependency states')
+
     result = []
     for window in windows:
-        start, end = int(window["window_start_ns"]), int(window["window_end_ns"])
+        start, end = int(window['window_start_ns']), int(window['window_end_ns'])
         if end <= start:
-            raise ValueError("window end must be after start")
-        if not window.get("valid", True):
-            reason, candidates = "invalid_measurement", []
+            raise ValueError('window end must be after start')
+        aic, aiv = window.get('aic_activity_pct'), window.get('aiv_activity_pct')
+        overlapping = [t for t in tasks if int(t['start_ns']) < end and int(t['end_ns']) > start]
+        pending, ready = [], []
+        blocked = []
+        for task in tasks:
+            if any(field not in window for field in ('run_id', 'device_id')):
+                continue
+            if task.get('engine') != 'aic' or int(task['start_ns']) <= start:
+                continue
+            if any(field in window and str(window[field]) != str(task.get(field))
+                   for field in ('run_id', 'device_id')):
+                continue
+            key = identity(task)
+            states = observations.get(key, []) if key is not None else []
+            task_evidence = []
+            for index, state in enumerate(states):
+                left = max(start, int(state['timestamp_ns']))
+                right = min(end, int(task['start_ns']),
+                            int(states[index + 1]['timestamp_ns']) if index + 1 < len(states) else end)
+                if left >= right:
+                    continue
+                task_evidence.append(state)
+                if state['state'] == 'ready' and state.get('all_dependencies_observed') is True:
+                    ready.append(dict(task_identity=list(key), begin_ns=left, end_ns=right,
+                                      source=state['source']))
+            if task_evidence:
+                pending.append(task)
+                if all(s['state'] in ('blocked', 'waiting_dependency') for s in task_evidence):
+                    blocked.append(task)
+        if not window.get('valid', True):
+            reason = 'invalid_measurement'
+        elif aic is None or aiv is None:
+            reason = 'missing_pmu'
+        elif aiv < 50 or aic > 10:
+            reason = 'outside_target_condition'
+        elif ready:
+            reason = 'aic_ready_candidate'
+        elif pending and len(blocked) == len(pending):
+            reason = 'observed_candidates_dependency_blocked'
         else:
-            aic, aiv = window.get("aic_activity_pct"), window.get("aiv_activity_pct")
-            candidates = [t for t in tasks if int(t["start_ns"]) < end and int(t["end_ns"]) > start]
-            if aic is None or aiv is None:
-                reason = "missing_pmu"
-            elif aiv >= 50 and aic <= 10:
-                candidate_ids = {str(t["task_id"]) for t in candidates if t.get("engine") == "aic"}
-                states = [d["state"] for tid in candidate_ids for d in dep_by_task.get(tid, [])]
-                if not candidate_ids:
-                    reason = "no_observed_aic_task"
-                elif "ready" in states:
-                    reason = "aic_ready_candidate"
-                elif states and all(s in ("blocked", "waiting_dependency") for s in states):
-                    reason = "dependency_blocked"
-                elif not states:
-                    reason = "dependency_unknown"
-                else:
-                    reason = "dispatch_or_resource_unknown"
-            else:
-                reason = "outside_target_condition"
-        result.append({
-            "window_start_ns": start, "window_end_ns": end,
-            "aic_activity_pct": window.get("aic_activity_pct"),
-            "aiv_activity_pct": window.get("aiv_activity_pct"),
-            "overlapping_task_count": len(candidates),
-            "candidate_aic_task_count": sum(t.get("engine") == "aic" for t in candidates),
-            "classification": reason,
-            "confidence": "measured" if reason in ("invalid_measurement", "missing_pmu", "outside_target_condition") else
-                          "dependency_evidence" if reason in ("aic_ready_candidate", "dependency_blocked") else "incomplete",
-        })
+            reason = 'dependency_unknown'
+        result.append(dict(window_start_ns=start, window_end_ns=end,
+            aic_activity_pct=aic, aiv_activity_pct=aiv,
+            overlapping_task_count=len(overlapping),
+            candidate_aic_task_count=len(pending), classification=reason,
+            ready_intervals=ready if reason == 'aic_ready_candidate' else [],
+            confidence='dependency_evidence' if reason in
+                ('aic_ready_candidate', 'observed_candidates_dependency_blocked') else
+                'measured' if reason in ('invalid_measurement', 'missing_pmu', 'outside_target_condition') else 'incomplete'))
     return result
 
 

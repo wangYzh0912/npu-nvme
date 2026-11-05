@@ -129,3 +129,43 @@ with real engine TTFT/decode timestamps enabled. It is not a performance claim
 because it adds metrics to the main benchmark configuration. The optional
 hybrid architecture probe runs native Qwen3.5-27B only; it never applies the
 ordinary-GQA dense-view experiment to a hybrid cache contract.
+
+## Coordination decomposition (2026-11-05)
+
+`python -m tools.aic_kv.coordination --stage inference-cold` uses independent
+AOT/compiler caches for every run. The experiment-only
+`--force-fia-with-pa-cache` changes attention_v1's runtime dispatch before
+compilation; allocation still uses the official PA eligibility predicate.
+It requires FULL_DECODE_ONLY with explicit PA shapes. Actual decode kernels
+must be checked in a device trace before accepting the backend intervention.
+Reusing a prior AOT cache is not an accepted intervention check.
+
+`--stage piecewise-cold` records three dense PIECEWISE controls;
+`--stage diagnostics` records metadata, task and simultaneous PMU/HBM probes.
+Results use a new coordination directory; earlier archives stay immutable.
+
+The follow-up window classifier now requires run/device/stream/task/start
+identity, a timestamp, an explicit source and all_dependencies_observed=True
+for a ready claim. It examines pending tasks which may start after the
+window, ends states at later observations, and prevents reuse of numeric task
+IDs across devices/streams/executions. Legacy observations without those
+fields are unknown; no compatibility inference invents readiness.
+
+`--stage piecewise-pa-cache` changes only allocation eligibility for ordinary
+unpadded GQA: the official allocator creates separate dense K/V tensors while
+PIECEWISE runtime dispatch remains FIA. It checks the allocation-ownership
+confound of comparing shared-storage dense views with native separate PA
+allocations. The first repeat includes a diagnostic task and block-table probe.
+`--stage correctness-full` retains strict diverse-prompt repeated-output checks
+for native FULL/PA and experimental FULL/FIA separately. Neither a successful
+fixed-prompt request nor an official allocator constitutes general correctness.
+
+Training dependency probes use an isolated copy of the frozen v4 observation
+source with the explicit `AIC_AIV_SAVE_DEPENDENCY_GRAPHS` hook. Invoke
+`python -m tools.aic_kv.training_dependency_campaign --source SOURCE` only
+after the inference campaign has released cards 4–7. The training entry point
+owns its hardware lock; do not wrap it in a second flock.
+`graph_evidence` archives static operands and assigned stream metadata; it
+does not derive runtime readiness from static stream IDs.
+`archive_training_dependency` retains sample counters, identities, quality and
+training outputs, excluding regenerable converted-weight/compiler caches.

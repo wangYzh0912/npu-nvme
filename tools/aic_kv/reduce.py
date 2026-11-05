@@ -7,7 +7,6 @@ import math
 from pathlib import Path
 import shutil
 import statistics
-import sys
 import sqlite3
 
 from .hbm import export as hbm_export
@@ -58,8 +57,7 @@ def add_pmu_work(summary,bins):
 def export_pmu(device,output,windows):
     # Reuse the validated reader and bin integrator. Native CSV columns already
     # retain every per-core counter; duplicating a large JSONL adds no evidence.
-    sys.path.insert(0,'/models/npu_nvme_exp/user7-stack/aic-aiv-v2/source/tools')
-    from aic_activity import pmu
+    from tools.aic_activity import pmu
     samples,quality=pmu.read(device)
     rows=[]
     for window in windows:

@@ -1,0 +1,114 @@
+{
+  "status": "investigation_complete_correctness_and_runtime_readiness_unresolved",
+  "investigation_complete": true,
+  "production_optimization_accepted": false,
+  "inference_backend_comparisons": [
+    {
+      "case": "b1-l128-o32",
+      "pairs": [
+        {
+          "replicate": 0,
+          "pa_ms": 464.819716,
+          "fia_ms": 462.9910615,
+          "output_matches": true,
+          "stability_passed": true,
+          "fia_vs_pa_change_pct": -0.39341156088138485
+        },
+        {
+          "replicate": 1,
+          "pa_ms": 445.068247,
+          "fia_ms": 461.2946595,
+          "output_matches": true,
+          "stability_passed": true,
+          "fia_vs_pa_change_pct": 3.6458256928852517
+        },
+        {
+          "replicate": 2,
+          "pa_ms": 451.9322355,
+          "fia_ms": 466.3994855,
+          "output_matches": true,
+          "stability_passed": true,
+          "fia_vs_pa_change_pct": 3.20119895497033
+        }
+      ],
+      "accepted": true,
+      "note": "same FULL graph mode and native PA cache; backend intervention checked by device probe"
+    },
+    {
+      "case": "b8-l128-o32",
+      "pairs": [
+        {
+          "replicate": 0,
+          "pa_ms": 633.4690165,
+          "fia_ms": 702.993542,
+          "output_matches": true,
+          "stability_passed": false,
+          "fia_vs_pa_change_pct": 10.975205367443586
+        },
+        {
+          "replicate": 1,
+          "pa_ms": 623.2813825,
+          "fia_ms": 683.6891575,
+          "output_matches": true,
+          "stability_passed": false,
+          "fia_vs_pa_change_pct": 9.691894655621303
+        },
+        {
+          "replicate": 2,
+          "pa_ms": 622.9897765,
+          "fia_ms": 651.9769115,
+          "output_matches": true,
+          "stability_passed": false,
+          "fia_vs_pa_change_pct": 4.65290701283283
+        }
+      ],
+      "accepted": false,
+      "note": "same FULL graph mode and native PA cache; backend intervention checked by device probe"
+    }
+  ],
+  "training": [
+    {
+      "sequence_length": 128,
+      "execution_passed": true,
+      "sample_quality": "valid",
+      "exact_loss_trajectory_matches": true,
+      "static_graphs": 4,
+      "runtime_readiness": "unknown"
+    },
+    {
+      "sequence_length": 512,
+      "execution_passed": true,
+      "sample_quality": "valid",
+      "exact_loss_trajectory_matches": true,
+      "static_graphs": 4,
+      "runtime_readiness": "unknown"
+    }
+  ],
+  "correctness_conditions": [
+    {
+      "name": "correctness-full-fia",
+      "returncode": 1,
+      "cause": "strict repeated output correctness gate failed"
+    },
+    {
+      "name": "correctness-full-pa",
+      "returncode": 1,
+      "cause": "strict repeated output correctness gate failed"
+    }
+  ],
+  "model_corun": {
+    "status": "not_entered_by_gate",
+    "reason": "no real-model ready AIC candidate proven"
+  },
+  "multi_request_optimization": {
+    "status": "not_entered_by_gate",
+    "reason": "strict repeated output gate failed on native FULL/PA and experimental FULL/FIA"
+  },
+  "raw_inference": "/dev/shm/user7-aic-aiv-20261031/scope-20261104/coordination-20261105",
+  "raw_training": "/dev/shm/user7-aic-aiv-coordination-training-r1",
+  "unprofiled_process_conditions": 42,
+  "initial_shared_aot_runs": "diagnostic_not_backend_intervention_acceptance",
+  "independent_repetitions": 3,
+  "system_samples_per_backend": 1,
+  "no_reclaimable_flops_or_global_scheduler_omission_claim": true
+}

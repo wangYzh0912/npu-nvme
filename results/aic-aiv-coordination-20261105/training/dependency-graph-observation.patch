@@ -1,0 +1,64 @@
+diff --git a/python/npu_nvme/workloads/qwen.py b/python/npu_nvme/workloads/qwen.py
+index a8a2d74..1cf9f08 100644
+--- a/python/npu_nvme/workloads/qwen.py
++++ b/python/npu_nvme/workloads/qwen.py
+@@ -63,6 +63,8 @@ def run(options):
+         # including synchronous native MindSpore safetensors serialization.
+         write_checked(directory/'resolved-config.json',dict(config))
+         build_context(config)
++        if os.environ.get('AIC_AIV_SAVE_DEPENDENCY_GRAPHS') == '1':
++            ms.set_context(save_graphs=1, save_graphs_path=str(directory/'dependency-graphs'))
+         physical_devices=options['identity']['physical_npu_ids']
+         if (is_legacy_model() or get_group_size()!=4 or get_rank()!=rank or
+                 ms.get_context('device_id')!=rank or physical_devices not in ([0,1,2,3],[4,5,6,7]) or
+@@ -88,6 +90,7 @@ def run(options):
+         class Progress(ms.Callback):
+             def on_train_step_begin(self,context):
+                 self.step_begin_ns=time.monotonic_ns()
++                self.step_begin_wall_ns=time.time_ns()
+ 
+             def on_train_begin(self,context):
+                 network=context.original_args().train_network
+@@ -127,6 +130,7 @@ def run(options):
+                 record()
+ 
+             def on_train_step_end(self,context):
++                nonlocal profiler
+                 cb=context.original_args();outputs=cb.net_outputs
+                 loss=outputs[0] if isinstance(outputs,(tuple,list)) else outputs
+                 loss=float(np.asarray(loss.asnumpy()).mean())
+@@ -135,8 +139,25 @@ def run(options):
+                 step=start+int(cb.cur_step_num)
+                 if step!=start+len(report['losses'])+1:raise ValueError('callback optimizer step is not sequential')
+                 row=dict(step=step,loss=loss,overflow=overflow,
+-                         begin_ns=getattr(self,'step_begin_ns',None),end_ns=time.monotonic_ns())
++                         begin_ns=getattr(self,'step_begin_ns',None),end_ns=time.monotonic_ns(),
++                         wall_begin_ns=self.step_begin_wall_ns,wall_end_ns=time.time_ns())
+                 report['losses'].append(row)
++                activity=options.get('activity_profile')
++                if activity and step==activity['start_step']:
++                    from mindspore.profiler import ProfilerLevel, AicoreMetrics, ProfilerActivity
++                    level=ProfilerLevel.Level1 if activity.get('profiler_level',1) else ProfilerLevel.Level0
++                    metrics=AicoreMetrics.PipeUtilization if activity.get('aic_metrics','pipe')=='pipe' else AicoreMetrics.AiCoreNone
++                    activities=([ProfilerActivity.NPU] if activity.get('activities')=='npu' else
++                                [ProfilerActivity.CPU,ProfilerActivity.NPU])
++                    profiler=ms.Profiler(start_profile=False,output_path=str(directory/'activity-profiler'),
++                        profiler_level=level,aic_metrics=metrics,activities=activities,
++                        hbm_ddr=False,data_simplification=False)
++                    profiler.start()
++                    report['activity_profile']=dict(start_after_step=step,stop_after_step=activity['stop_step'])
++                if activity and step==activity['stop_step']:
++                    if profiler is None:raise RuntimeError('activity profiler did not start')
++                    profiler.stop()
++                    report['activity_profile']['stopped_after_step']=step
+                 experiment=options.get('incremental_experiment')
+                 nonlocal incremental
+                 if experiment and step==experiment['warmup_steps']:
+@@ -161,7 +182,6 @@ def run(options):
+                         incremental.warmup()
+                         report['incremental']['formal_begin_ns']=time.monotonic_ns()
+                     if experiment.get('profile'):
+-                        nonlocal profiler
+                         from mindspore.profiler import ProfilerLevel, AicoreMetrics
+                         profiler=ms.Profiler(start_profile=False,output_path=str(directory/'profiler'),
+                             profiler_level=ProfilerLevel.Level1,aic_metrics=AicoreMetrics.PipeUtilization,

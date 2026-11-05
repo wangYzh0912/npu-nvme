@@ -35,6 +35,8 @@ def main():
     p.add_argument('--prompt-fixture',choices=['repeated','diverse'],default='repeated')
     p.add_argument('--request-metrics',action='store_true')
     p.add_argument('--sync-scheduling',action='store_true')
+    p.add_argument('--force-fia-with-pa-cache',action='store_true')
+    p.add_argument('--official-pa-cache',action='store_true')
     args = p.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     write(args.output/'run-config.json',dict(arguments={k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()},
@@ -44,6 +46,14 @@ def main():
     os.environ['AIC_ACTIVITY_OUTPUT'] = str(args.output)
     os.environ['AIC_ACTIVITY_LEVEL'] = '1'
     os.environ['AIC_KV_LAYOUT'] = args.layout
+    if args.official_pa_cache:
+        if args.graph_mode != 'PIECEWISE' or args.layout != 'native':
+            raise ValueError('--official-pa-cache requires PIECEWISE and native layout')
+        os.environ['AIC_KV_OFFICIAL_PA_CACHE'] = '1'
+    if args.force_fia_with_pa_cache:
+        if args.graph_mode != 'FULL_DECODE_ONLY' or not args.pa_shapes:
+            raise ValueError('--force-fia-with-pa-cache requires FULL_DECODE_ONLY and non-empty PA shapes')
+        os.environ['AIC_KV_FORCE_FIA_WITH_PA_CACHE'] = '1'
     from vllm import LLM, SamplingParams
     kwargs = dict(num_gpu_blocks_override=args.blocks) if args.blocks is not None else {}
     if args.sync_scheduling:kwargs['async_scheduling']=False
@@ -176,6 +186,7 @@ def main():
         overhead = statistics.median(tasks)/baseline-1 if tasks else None
         write(case/'result.json', dict(status='pass', batch=batch, prompt=length, generated=generated,
               requested_blocks=args.blocks, actual_blocks=[r['num_blocks'] for r in snapshot],
+              force_fia_with_pa_cache=args.force_fia_with_pa_cache,
               control_median_ms=baseline/1e6, task_overhead_fraction=overhead,
               control_cv=statistics.pstdev(controls)/statistics.mean(controls),
               output_sha256=next(iter(hashes)), task_quality='not_collected' if overhead is None else 'valid' if overhead<=.1 else 'diagnostic'))

@@ -1,0 +1,1354 @@
+{
+  "128": {
+    "run": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0",
+    "normalized": "/models/npu_nvme_exp/user7-stack/aic-aiv-v2/analysis/train-128-light-r0",
+    "ranks": [
+      {
+        "rank": 0,
+        "device": 4,
+        "events": [
+          {
+            "api": "aclrtRecordEvent",
+            "count": 11592,
+            "distinct_item_ids": 1
+          },
+          {
+            "api": "aclrtStreamWaitEvent",
+            "count": 7742,
+            "distinct_item_ids": 1
+          }
+        ],
+        "item_ids": [
+          "0"
+        ],
+        "api_schema": [
+          {
+            "name": "struct_type",
+            "type": "TEXT"
+          },
+          {
+            "name": "id",
+            "type": "TEXT"
+          },
+          {
+            "name": "level",
+            "type": "TEXT"
+          },
+          {
+            "name": "thread_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "item_id",
+            "type": "TEXT"
+          },
+          {
+            "name": "start",
+            "type": "INTEGER"
+          },
+          {
+            "name": "end",
+            "type": "INTEGER"
+          },
+          {
+            "name": "connection_id",
+            "type": "INTEGER"
+          }
+        ],
+        "api_db": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_0/activity-profiler/train06_121571_20261102070301258_ascend_ms/PROF_000001_20261102150301264_DMAMJKFLNDNRIICC/host/sqlite/api_event.db",
+        "api_db_sha256": "196e75763de810b1687f1a48a24c8b891dcb24295cfb6b447eb55999366eff45",
+        "normalized_events_sha256": "283ee5407c0c2c1c04470262897772c7894bfbd944ea2d8b29835da6dc0066c3",
+        "aiv_task_duration_ns_by_phase": {
+          "unclassified": 370457478,
+          "forward": 630490959,
+          "backward": 99754257,
+          "recompute": 95093749,
+          "optimizer": 902015279
+        },
+        "top_aiv_ops": [
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "task_duration_ns": 566216373,
+            "count": 18382
+          },
+          {
+            "name": "TensorMove11",
+            "task_duration_ns": 357177204,
+            "count": 4088
+          },
+          {
+            "name": "aclnnDiv_RealDivAiCore_RealDiv",
+            "task_duration_ns": 183453878,
+            "count": 4102
+          },
+          {
+            "name": "aclnnAdd_AddAiCore_Add",
+            "task_duration_ns": 174159873,
+            "count": 5873
+          },
+          {
+            "name": "Addcmul13",
+            "task_duration_ns": 164016045,
+            "count": 1022
+          },
+          {
+            "name": "Assign12",
+            "task_duration_ns": 135641154,
+            "count": 3066
+          },
+          {
+            "name": "aclnnCast_CastAiCore_Cast",
+            "task_duration_ns": 129364285,
+            "count": 8701
+          },
+          {
+            "name": "aclnnSub_SubAiCore_Sub",
+            "task_duration_ns": 123777661,
+            "count": 2093
+          },
+          {
+            "name": "aclnnPermute_TransposeAiCore_Transpose",
+            "task_duration_ns": 66261646,
+            "count": 3808
+          },
+          {
+            "name": "AllFinite",
+            "task_duration_ns": 57279084,
+            "count": 2037
+          },
+          {
+            "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+            "task_duration_ns": 37318625,
+            "count": 2044
+          },
+          {
+            "name": "RmsNorm",
+            "task_duration_ns": 24247840,
+            "count": 2023
+          }
+        ],
+        "readiness": "unknown",
+        "reason": "event handles/producer-consumer edges absent; API issue time is not dependency completion"
+      },
+      {
+        "rank": 1,
+        "device": 5,
+        "events": [
+          {
+            "api": "aclrtRecordEvent",
+            "count": 11592,
+            "distinct_item_ids": 1
+          },
+          {
+            "api": "aclrtStreamWaitEvent",
+            "count": 7742,
+            "distinct_item_ids": 1
+          }
+        ],
+        "item_ids": [
+          "0"
+        ],
+        "api_schema": [
+          {
+            "name": "struct_type",
+            "type": "TEXT"
+          },
+          {
+            "name": "id",
+            "type": "TEXT"
+          },
+          {
+            "name": "level",
+            "type": "TEXT"
+          },
+          {
+            "name": "thread_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "item_id",
+            "type": "TEXT"
+          },
+          {
+            "name": "start",
+            "type": "INTEGER"
+          },
+          {
+            "name": "end",
+            "type": "INTEGER"
+          },
+          {
+            "name": "connection_id",
+            "type": "INTEGER"
+          }
+        ],
+        "api_db": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_1/activity-profiler/train06_121574_20261102070301261_ascend_ms/PROF_000001_20261102150301267_DEFJRRDLLCFIPICA/host/sqlite/api_event.db",
+        "api_db_sha256": "e5686df3de3813a0f9dd58f21738f41f66b6378f829ec1316812fe3b53c2169f",
+        "normalized_events_sha256": "1829bd4ea80e102c4b49416282acdf0b8134a535e1a293cc27245b88155021dd",
+        "aiv_task_duration_ns_by_phase": {
+          "unclassified": 370847480,
+          "forward": 630757600,
+          "backward": 101695120,
+          "recompute": 95617560,
+          "optimizer": 903805360
+        },
+        "top_aiv_ops": [
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "task_duration_ns": 566824800,
+            "count": 18382
+          },
+          {
+            "name": "TensorMove11",
+            "task_duration_ns": 357534720,
+            "count": 4088
+          },
+          {
+            "name": "aclnnDiv_RealDivAiCore_RealDiv",
+            "task_duration_ns": 181970020,
+            "count": 4102
+          },
+          {
+            "name": "aclnnAdd_AddAiCore_Add",
+            "task_duration_ns": 174283140,
+            "count": 5873
+          },
+          {
+            "name": "Addcmul13",
+            "task_duration_ns": 162666440,
+            "count": 1022
+          },
+          {
+            "name": "Assign12",
+            "task_duration_ns": 137786840,
+            "count": 3066
+          },
+          {
+            "name": "aclnnCast_CastAiCore_Cast",
+            "task_duration_ns": 134119580,
+            "count": 8701
+          },
+          {
+            "name": "aclnnSub_SubAiCore_Sub",
+            "task_duration_ns": 124006260,
+            "count": 2093
+          },
+          {
+            "name": "aclnnPermute_TransposeAiCore_Transpose",
+            "task_duration_ns": 63565720,
+            "count": 3808
+          },
+          {
+            "name": "AllFinite",
+            "task_duration_ns": 57420340,
+            "count": 2037
+          },
+          {
+            "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+            "task_duration_ns": 39142300,
+            "count": 2044
+          },
+          {
+            "name": "RmsNorm",
+            "task_duration_ns": 24359240,
+            "count": 2023
+          }
+        ],
+        "readiness": "unknown",
+        "reason": "event handles/producer-consumer edges absent; API issue time is not dependency completion"
+      },
+      {
+        "rank": 2,
+        "device": 6,
+        "events": [
+          {
+            "api": "aclrtRecordEvent",
+            "count": 11592,
+            "distinct_item_ids": 1
+          },
+          {
+            "api": "aclrtStreamWaitEvent",
+            "count": 7742,
+            "distinct_item_ids": 1
+          }
+        ],
+        "item_ids": [
+          "0"
+        ],
+        "api_schema": [
+          {
+            "name": "struct_type",
+            "type": "TEXT"
+          },
+          {
+            "name": "id",
+            "type": "TEXT"
+          },
+          {
+            "name": "level",
+            "type": "TEXT"
+          },
+          {
+            "name": "thread_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "item_id",
+            "type": "TEXT"
+          },
+          {
+            "name": "start",
+            "type": "INTEGER"
+          },
+          {
+            "name": "end",
+            "type": "INTEGER"
+          },
+          {
+            "name": "connection_id",
+            "type": "INTEGER"
+          }
+        ],
+        "api_db": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_2/activity-profiler/train06_121577_20261102070301252_ascend_ms/PROF_000001_20261102150301257_GAHIJKMEABPDROCB/host/sqlite/api_event.db",
+        "api_db_sha256": "140741bc9af71baa87d634f6d14c610f06343fc0a67ed5bb785c68c3a4fbfb8a",
+        "normalized_events_sha256": "ad6848e541a4b4ada9ab5d6df2da838424568268ae8cd3441548e68499a5d6a3",
+        "aiv_task_duration_ns_by_phase": {
+          "unclassified": 371872740,
+          "forward": 632119600,
+          "backward": 102537360,
+          "recompute": 96698440,
+          "optimizer": 906904220
+        },
+        "top_aiv_ops": [
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "task_duration_ns": 565512400,
+            "count": 18382
+          },
+          {
+            "name": "TensorMove11",
+            "task_duration_ns": 358594280,
+            "count": 4088
+          },
+          {
+            "name": "aclnnDiv_RealDivAiCore_RealDiv",
+            "task_duration_ns": 183504880,
+            "count": 4102
+          },
+          {
+            "name": "aclnnAdd_AddAiCore_Add",
+            "task_duration_ns": 173877960,
+            "count": 5873
+          },
+          {
+            "name": "Addcmul13",
+            "task_duration_ns": 171815400,
+            "count": 1022
+          },
+          {
+            "name": "aclnnCast_CastAiCore_Cast",
+            "task_duration_ns": 137974840,
+            "count": 8701
+          },
+          {
+            "name": "Assign12",
+            "task_duration_ns": 135208520,
+            "count": 3066
+          },
+          {
+            "name": "aclnnSub_SubAiCore_Sub",
+            "task_duration_ns": 122829500,
+            "count": 2093
+          },
+          {
+            "name": "aclnnPermute_TransposeAiCore_Transpose",
+            "task_duration_ns": 64566020,
+            "count": 3808
+          },
+          {
+            "name": "AllFinite",
+            "task_duration_ns": 57349740,
+            "count": 2037
+          },
+          {
+            "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+            "task_duration_ns": 36403020,
+            "count": 2044
+          },
+          {
+            "name": "RmsNorm",
+            "task_duration_ns": 24320580,
+            "count": 2023
+          }
+        ],
+        "readiness": "unknown",
+        "reason": "event handles/producer-consumer edges absent; API issue time is not dependency completion"
+      },
+      {
+        "rank": 3,
+        "device": 7,
+        "events": [
+          {
+            "api": "aclrtRecordEvent",
+            "count": 11592,
+            "distinct_item_ids": 1
+          },
+          {
+            "api": "aclrtStreamWaitEvent",
+            "count": 7742,
+            "distinct_item_ids": 1
+          }
+        ],
+        "item_ids": [
+          "0"
+        ],
+        "api_schema": [
+          {
+            "name": "struct_type",
+            "type": "TEXT"
+          },
+          {
+            "name": "id",
+            "type": "TEXT"
+          },
+          {
+            "name": "level",
+            "type": "TEXT"
+          },
+          {
+            "name": "thread_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "item_id",
+            "type": "TEXT"
+          },
+          {
+            "name": "start",
+            "type": "INTEGER"
+          },
+          {
+            "name": "end",
+            "type": "INTEGER"
+          },
+          {
+            "name": "connection_id",
+            "type": "INTEGER"
+          }
+        ],
+        "api_db": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_3/activity-profiler/train06_121580_20261102070301255_ascend_ms/PROF_000001_20261102150301260_BJIMPHHRLRMDJOEB/host/sqlite/api_event.db",
+        "api_db_sha256": "22415e752b3d2fef9f3e6f9eddfc42e28a3794944f55af720128d4d417ea654b",
+        "normalized_events_sha256": "0e1a139841bf56b09db508edf9cb698e2743c4908029d5735478efb1e0667351",
+        "aiv_task_duration_ns_by_phase": {
+          "unclassified": 371138817,
+          "forward": 630737989,
+          "backward": 101266147,
+          "recompute": 95685437,
+          "optimizer": 912548348
+        },
+        "top_aiv_ops": [
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "task_duration_ns": 566643034,
+            "count": 18382
+          },
+          {
+            "name": "TensorMove11",
+            "task_duration_ns": 357849682,
+            "count": 4088
+          },
+          {
+            "name": "aclnnDiv_RealDivAiCore_RealDiv",
+            "task_duration_ns": 182057436,
+            "count": 4102
+          },
+          {
+            "name": "aclnnAdd_AddAiCore_Add",
+            "task_duration_ns": 174365550,
+            "count": 5873
+          },
+          {
+            "name": "Addcmul13",
+            "task_duration_ns": 171483345,
+            "count": 1022
+          },
+          {
+            "name": "Assign12",
+            "task_duration_ns": 137812543,
+            "count": 3066
+          },
+          {
+            "name": "aclnnCast_CastAiCore_Cast",
+            "task_duration_ns": 133613075,
+            "count": 8701
+          },
+          {
+            "name": "aclnnSub_SubAiCore_Sub",
+            "task_duration_ns": 123870413,
+            "count": 2093
+          },
+          {
+            "name": "aclnnPermute_TransposeAiCore_Transpose",
+            "task_duration_ns": 62909836,
+            "count": 3808
+          },
+          {
+            "name": "AllFinite",
+            "task_duration_ns": 57286864,
+            "count": 2037
+          },
+          {
+            "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+            "task_duration_ns": 39213950,
+            "count": 2044
+          },
+          {
+            "name": "RmsNorm",
+            "task_duration_ns": 24442193,
+            "count": 2023
+          }
+        ],
+        "readiness": "unknown",
+        "reason": "event handles/producer-consumer edges absent; API issue time is not dependency completion"
+      }
+    ],
+    "trace_quality": {
+      "status": "pass",
+      "measurement_quality": "diagnostic_profiler_overhead",
+      "task_count_anomaly": false,
+      "evidence": {
+        "quality": "diagnostic_profiler_overhead",
+        "reasons": [
+          "profiler_overhead_above_10pct"
+        ],
+        "execution": {
+          "execution_status": "completed",
+          "validation_status": "pass",
+          "method": "none",
+          "final_step": 32
+        },
+        "ranks": [
+          {
+            "rank": 0,
+            "status": "pass",
+            "final_step": 32,
+            "loss_final": 0.05403253808617592,
+            "warmup_cv": 0.04797551556235977,
+            "control_median_ms": 638.90203,
+            "measured_median_ms": 1083.285204,
+            "profile_overhead_fraction": 0.6955419659568152,
+            "warmup_stable": true
+          },
+          {
+            "rank": 1,
+            "status": "pass",
+            "final_step": 32,
+            "loss_final": 0.05403253808617592,
+            "warmup_cv": 0.04249152563452172,
+            "control_median_ms": 642.78149,
+            "measured_median_ms": 1100.904785,
+            "profile_overhead_fraction": 0.7127201111531696,
+            "warmup_stable": true
+          },
+          {
+            "rank": 2,
+            "status": "pass",
+            "final_step": 32,
+            "loss_final": 0.05403253808617592,
+            "warmup_cv": 0.04822323636459756,
+            "control_median_ms": 634.7752375,
+            "measured_median_ms": 1096.820688,
+            "profile_overhead_fraction": 0.7278882716340995,
+            "warmup_stable": true
+          },
+          {
+            "rank": 3,
+            "status": "pass",
+            "final_step": 32,
+            "loss_final": 0.05403253808617592,
+            "warmup_cv": 0.04776314573777506,
+            "control_median_ms": 634.731718,
+            "measured_median_ms": 1091.982959,
+            "profile_overhead_fraction": 0.7203850509326524,
+            "warmup_stable": true
+          }
+        ]
+      },
+      "cross_rank_counts": [
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        }
+      ],
+      "raw_source_sha256": [
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_0/activity-profiler/train06_121571_20261102070301258_ascend_ms/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+          "sha256": "ae1d77eba0f0ea9eb852eae6960d5b1b22d202de99b2cfd7c5cb72500b9e73f5"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_0/activity-profiler/train06_121571_20261102070301258_ascend_ms/ASCEND_PROFILER_OUTPUT/trace_view.json",
+          "sha256": "f03750ccb8423de18f675d91f15ed805c9e43cd915227f8c5af613d2eb305c65"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_1/activity-profiler/train06_121574_20261102070301261_ascend_ms/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+          "sha256": "bccae201c8eb2a206e6bee911094b73e724f75223520a1c1a8dc21b7321442bc"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_1/activity-profiler/train06_121574_20261102070301261_ascend_ms/ASCEND_PROFILER_OUTPUT/trace_view.json",
+          "sha256": "c5292d10d3df191adfae1aa4142c8108b2bb6e619b26de5237b2529974005ccd"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_2/activity-profiler/train06_121577_20261102070301252_ascend_ms/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+          "sha256": "8947a691034a8f1e55d46a867d75c6c3bb61044b5c9969e3ae98de3feb34312b"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_2/activity-profiler/train06_121577_20261102070301252_ascend_ms/ASCEND_PROFILER_OUTPUT/trace_view.json",
+          "sha256": "55b32b69fb5b6441a9aa5d4c5f469333cb640378b4e68b5a9b536675de02c796"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_3/activity-profiler/train06_121580_20261102070301255_ascend_ms/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+          "sha256": "fda05f2e4578eebf2c81dfaa176733c3b33b9621d7f58e906551098af99e6867"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-128-light-r0/rank_3/activity-profiler/train06_121580_20261102070301255_ascend_ms/ASCEND_PROFILER_OUTPUT/trace_view.json",
+          "sha256": "0d1ca4c49aa8b09ba02355ca083c9d868b53f69b8f7f75114fa8baf24011e5f9"
+        }
+      ]
+    },
+    "real_model_ready_candidate_count": null,
+    "interpretation": "high-overhead traces identify tasks; cannot prove normal timing or runnable queue state"
+  },
+  "512": {
+    "run": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0",
+    "normalized": "/models/npu_nvme_exp/user7-stack/aic-aiv-v2/analysis/train-512-light-r0",
+    "ranks": [
+      {
+        "rank": 0,
+        "device": 4,
+        "events": [
+          {
+            "api": "aclrtRecordEvent",
+            "count": 11592,
+            "distinct_item_ids": 1
+          },
+          {
+            "api": "aclrtStreamWaitEvent",
+            "count": 7742,
+            "distinct_item_ids": 1
+          }
+        ],
+        "item_ids": [
+          "0"
+        ],
+        "api_schema": [
+          {
+            "name": "struct_type",
+            "type": "TEXT"
+          },
+          {
+            "name": "id",
+            "type": "TEXT"
+          },
+          {
+            "name": "level",
+            "type": "TEXT"
+          },
+          {
+            "name": "thread_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "item_id",
+            "type": "TEXT"
+          },
+          {
+            "name": "start",
+            "type": "INTEGER"
+          },
+          {
+            "name": "end",
+            "type": "INTEGER"
+          },
+          {
+            "name": "connection_id",
+            "type": "INTEGER"
+          }
+        ],
+        "api_db": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_0/activity-profiler/train06_236399_20261102083048586_ascend_ms/PROF_000001_20261102163048592_MOHQEKINCDEDRBHC/host/sqlite/api_event.db",
+        "api_db_sha256": "c8936305bdb35957fa2cb5d2de1aa224280a3a123c41b3553b412addcacdd6b2",
+        "normalized_events_sha256": "9e3a51acae86ca72affd09ae3ec25dc016569a456a7998c65e5d8a120ebdd4f7",
+        "aiv_task_duration_ns_by_phase": {
+          "unclassified": 368157640,
+          "forward": 653940347,
+          "backward": 111334145,
+          "recompute": 113845444,
+          "optimizer": 914204571
+        },
+        "top_aiv_ops": [
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "task_duration_ns": 580257578,
+            "count": 18382
+          },
+          {
+            "name": "TensorMove11",
+            "task_duration_ns": 354730031,
+            "count": 4088
+          },
+          {
+            "name": "aclnnDiv_RealDivAiCore_RealDiv",
+            "task_duration_ns": 181899170,
+            "count": 4102
+          },
+          {
+            "name": "aclnnAdd_AddAiCore_Add",
+            "task_duration_ns": 178781434,
+            "count": 5873
+          },
+          {
+            "name": "Addcmul13",
+            "task_duration_ns": 171415489,
+            "count": 1022
+          },
+          {
+            "name": "Assign12",
+            "task_duration_ns": 138674238,
+            "count": 3066
+          },
+          {
+            "name": "aclnnCast_CastAiCore_Cast",
+            "task_duration_ns": 136855166,
+            "count": 8701
+          },
+          {
+            "name": "aclnnSub_SubAiCore_Sub",
+            "task_duration_ns": 125678217,
+            "count": 2093
+          },
+          {
+            "name": "aclnnPermute_TransposeAiCore_Transpose",
+            "task_duration_ns": 70823767,
+            "count": 3808
+          },
+          {
+            "name": "AllFinite",
+            "task_duration_ns": 57023500,
+            "count": 2037
+          },
+          {
+            "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+            "task_duration_ns": 38902475,
+            "count": 2044
+          },
+          {
+            "name": "RmsNorm",
+            "task_duration_ns": 28233764,
+            "count": 2023
+          }
+        ],
+        "readiness": "unknown",
+        "reason": "event handles/producer-consumer edges absent; API issue time is not dependency completion"
+      },
+      {
+        "rank": 1,
+        "device": 5,
+        "events": [
+          {
+            "api": "aclrtRecordEvent",
+            "count": 11592,
+            "distinct_item_ids": 1
+          },
+          {
+            "api": "aclrtStreamWaitEvent",
+            "count": 7742,
+            "distinct_item_ids": 1
+          }
+        ],
+        "item_ids": [
+          "0"
+        ],
+        "api_schema": [
+          {
+            "name": "struct_type",
+            "type": "TEXT"
+          },
+          {
+            "name": "id",
+            "type": "TEXT"
+          },
+          {
+            "name": "level",
+            "type": "TEXT"
+          },
+          {
+            "name": "thread_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "item_id",
+            "type": "TEXT"
+          },
+          {
+            "name": "start",
+            "type": "INTEGER"
+          },
+          {
+            "name": "end",
+            "type": "INTEGER"
+          },
+          {
+            "name": "connection_id",
+            "type": "INTEGER"
+          }
+        ],
+        "api_db": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_1/activity-profiler/train06_236402_20261102083048592_ascend_ms/PROF_000001_20261102163048597_NPKDILQEGIMQRGGC/host/sqlite/api_event.db",
+        "api_db_sha256": "c66a7bb1cd80fc949597534d8dc89c67e3134d5d3979e83c0a1eb871609cd2d2",
+        "normalized_events_sha256": "ecf1726c738c0a9e45beb431604c48618167e91dd9db9e65225f94e5d58a86b7",
+        "aiv_task_duration_ns_by_phase": {
+          "unclassified": 368980600,
+          "forward": 656147260,
+          "backward": 113732380,
+          "recompute": 113854940,
+          "optimizer": 921324520
+        },
+        "top_aiv_ops": [
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "task_duration_ns": 579222320,
+            "count": 18382
+          },
+          {
+            "name": "TensorMove11",
+            "task_duration_ns": 355511460,
+            "count": 4088
+          },
+          {
+            "name": "aclnnDiv_RealDivAiCore_RealDiv",
+            "task_duration_ns": 182655760,
+            "count": 4102
+          },
+          {
+            "name": "aclnnAdd_AddAiCore_Add",
+            "task_duration_ns": 178142320,
+            "count": 5873
+          },
+          {
+            "name": "Addcmul13",
+            "task_duration_ns": 176183260,
+            "count": 1022
+          },
+          {
+            "name": "aclnnCast_CastAiCore_Cast",
+            "task_duration_ns": 143471200,
+            "count": 8701
+          },
+          {
+            "name": "Assign12",
+            "task_duration_ns": 139298920,
+            "count": 3066
+          },
+          {
+            "name": "aclnnSub_SubAiCore_Sub",
+            "task_duration_ns": 125991700,
+            "count": 2093
+          },
+          {
+            "name": "aclnnPermute_TransposeAiCore_Transpose",
+            "task_duration_ns": 69757660,
+            "count": 3808
+          },
+          {
+            "name": "AllFinite",
+            "task_duration_ns": 57084900,
+            "count": 2037
+          },
+          {
+            "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+            "task_duration_ns": 39303780,
+            "count": 2044
+          },
+          {
+            "name": "RmsNorm",
+            "task_duration_ns": 27322180,
+            "count": 2023
+          }
+        ],
+        "readiness": "unknown",
+        "reason": "event handles/producer-consumer edges absent; API issue time is not dependency completion"
+      },
+      {
+        "rank": 2,
+        "device": 6,
+        "events": [
+          {
+            "api": "aclrtRecordEvent",
+            "count": 11592,
+            "distinct_item_ids": 1
+          },
+          {
+            "api": "aclrtStreamWaitEvent",
+            "count": 7742,
+            "distinct_item_ids": 1
+          }
+        ],
+        "item_ids": [
+          "0"
+        ],
+        "api_schema": [
+          {
+            "name": "struct_type",
+            "type": "TEXT"
+          },
+          {
+            "name": "id",
+            "type": "TEXT"
+          },
+          {
+            "name": "level",
+            "type": "TEXT"
+          },
+          {
+            "name": "thread_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "item_id",
+            "type": "TEXT"
+          },
+          {
+            "name": "start",
+            "type": "INTEGER"
+          },
+          {
+            "name": "end",
+            "type": "INTEGER"
+          },
+          {
+            "name": "connection_id",
+            "type": "INTEGER"
+          }
+        ],
+        "api_db": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_2/activity-profiler/train06_236405_20261102083048591_ascend_ms/PROF_000001_20261102163048596_DMNDQLCMFKQIQLNB/host/sqlite/api_event.db",
+        "api_db_sha256": "38f1b07fa5a3a3bb067c763832acfe9b086b3e9ef927317ce6d9eab977faf8f8",
+        "normalized_events_sha256": "b19ae67078a7a2f4aeab28c2fccf88ce41bfc76ededd7cb85716cb37ecc62b2b",
+        "aiv_task_duration_ns_by_phase": {
+          "unclassified": 369153080,
+          "forward": 650285120,
+          "backward": 112196300,
+          "recompute": 110603400,
+          "optimizer": 907928280
+        },
+        "top_aiv_ops": [
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "task_duration_ns": 578758860,
+            "count": 18382
+          },
+          {
+            "name": "TensorMove11",
+            "task_duration_ns": 355672660,
+            "count": 4088
+          },
+          {
+            "name": "aclnnDiv_RealDivAiCore_RealDiv",
+            "task_duration_ns": 183581860,
+            "count": 4102
+          },
+          {
+            "name": "aclnnAdd_AddAiCore_Add",
+            "task_duration_ns": 176491960,
+            "count": 5873
+          },
+          {
+            "name": "Addcmul13",
+            "task_duration_ns": 166337940,
+            "count": 1022
+          },
+          {
+            "name": "aclnnCast_CastAiCore_Cast",
+            "task_duration_ns": 137954980,
+            "count": 8701
+          },
+          {
+            "name": "Assign12",
+            "task_duration_ns": 136952560,
+            "count": 3066
+          },
+          {
+            "name": "aclnnSub_SubAiCore_Sub",
+            "task_duration_ns": 125310620,
+            "count": 2093
+          },
+          {
+            "name": "aclnnPermute_TransposeAiCore_Transpose",
+            "task_duration_ns": 69013300,
+            "count": 3808
+          },
+          {
+            "name": "AllFinite",
+            "task_duration_ns": 57087420,
+            "count": 2037
+          },
+          {
+            "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+            "task_duration_ns": 37966480,
+            "count": 2044
+          },
+          {
+            "name": "RmsNorm",
+            "task_duration_ns": 26459280,
+            "count": 2023
+          }
+        ],
+        "readiness": "unknown",
+        "reason": "event handles/producer-consumer edges absent; API issue time is not dependency completion"
+      },
+      {
+        "rank": 3,
+        "device": 7,
+        "events": [
+          {
+            "api": "aclrtRecordEvent",
+            "count": 11592,
+            "distinct_item_ids": 1
+          },
+          {
+            "api": "aclrtStreamWaitEvent",
+            "count": 7742,
+            "distinct_item_ids": 1
+          }
+        ],
+        "item_ids": [
+          "0"
+        ],
+        "api_schema": [
+          {
+            "name": "struct_type",
+            "type": "TEXT"
+          },
+          {
+            "name": "id",
+            "type": "TEXT"
+          },
+          {
+            "name": "level",
+            "type": "TEXT"
+          },
+          {
+            "name": "thread_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "item_id",
+            "type": "TEXT"
+          },
+          {
+            "name": "start",
+            "type": "INTEGER"
+          },
+          {
+            "name": "end",
+            "type": "INTEGER"
+          },
+          {
+            "name": "connection_id",
+            "type": "INTEGER"
+          }
+        ],
+        "api_db": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_3/activity-profiler/train06_236408_20261102083048586_ascend_ms/PROF_000001_20261102163048591_JCEHOLIINFONFLIA/host/sqlite/api_event.db",
+        "api_db_sha256": "86b7adb352f23c2d3265d1450c32d308b4d2fed440e88925ffaae12c01d38dcf",
+        "normalized_events_sha256": "926cb381b85c27f78f693c433ecff79053b91db60ebc8916c4b8c5dcf00eef6d",
+        "aiv_task_duration_ns_by_phase": {
+          "unclassified": 369098771,
+          "forward": 653774856,
+          "backward": 111095861,
+          "recompute": 112488783,
+          "optimizer": 903443111
+        },
+        "top_aiv_ops": [
+          {
+            "name": "aclnnMul_MulAiCore_Mul",
+            "task_duration_ns": 578561310,
+            "count": 18382
+          },
+          {
+            "name": "TensorMove11",
+            "task_duration_ns": 355605880,
+            "count": 4088
+          },
+          {
+            "name": "aclnnDiv_RealDivAiCore_RealDiv",
+            "task_duration_ns": 182650921,
+            "count": 4102
+          },
+          {
+            "name": "aclnnAdd_AddAiCore_Add",
+            "task_duration_ns": 178140937,
+            "count": 5873
+          },
+          {
+            "name": "Addcmul13",
+            "task_duration_ns": 159018265,
+            "count": 1022
+          },
+          {
+            "name": "Assign12",
+            "task_duration_ns": 139084777,
+            "count": 3066
+          },
+          {
+            "name": "aclnnCast_CastAiCore_Cast",
+            "task_duration_ns": 138455061,
+            "count": 8701
+          },
+          {
+            "name": "aclnnSub_SubAiCore_Sub",
+            "task_duration_ns": 126048474,
+            "count": 2093
+          },
+          {
+            "name": "aclnnPermute_TransposeAiCore_Transpose",
+            "task_duration_ns": 67147596,
+            "count": 3808
+          },
+          {
+            "name": "AllFinite",
+            "task_duration_ns": 57093281,
+            "count": 2037
+          },
+          {
+            "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+            "task_duration_ns": 39257184,
+            "count": 2044
+          },
+          {
+            "name": "RmsNorm",
+            "task_duration_ns": 27258541,
+            "count": 2023
+          }
+        ],
+        "readiness": "unknown",
+        "reason": "event handles/producer-consumer edges absent; API issue time is not dependency completion"
+      }
+    ],
+    "trace_quality": {
+      "status": "pass",
+      "measurement_quality": "diagnostic_unstable",
+      "task_count_anomaly": false,
+      "phase_label_quality": "scoped_with_inferred_forward_recompute_boundary",
+      "evidence": {
+        "quality": "diagnostic_unstable",
+        "reasons": [
+          "warmup_cv_above_5pct",
+          "profiler_overhead_above_10pct"
+        ],
+        "execution": {
+          "execution_status": "completed",
+          "validation_status": "pass",
+          "method": "none",
+          "final_step": 32
+        },
+        "ranks": [
+          {
+            "rank": 0,
+            "status": "pass",
+            "final_step": 32,
+            "loss_final": 0.01351688988506794,
+            "warmup_cv": 0.0934493659126213,
+            "control_median_ms": 587.835422,
+            "measured_median_ms": 1049.27536,
+            "profile_overhead_fraction": 0.7849815113727532,
+            "warmup_stable": false
+          },
+          {
+            "rank": 1,
+            "status": "pass",
+            "final_step": 32,
+            "loss_final": 0.01351688988506794,
+            "warmup_cv": 0.09302164028197848,
+            "control_median_ms": 587.8120765000001,
+            "measured_median_ms": 1050.335924,
+            "profile_overhead_fraction": 0.7868566604721667,
+            "warmup_stable": false
+          },
+          {
+            "rank": 2,
+            "status": "pass",
+            "final_step": 32,
+            "loss_final": 0.01351688988506794,
+            "warmup_cv": 0.09340321714057688,
+            "control_median_ms": 586.5532814999999,
+            "measured_median_ms": 1040.339365,
+            "profile_overhead_fraction": 0.7736485291490101,
+            "warmup_stable": false
+          },
+          {
+            "rank": 3,
+            "status": "pass",
+            "final_step": 32,
+            "loss_final": 0.01351688988506794,
+            "warmup_cv": 0.08950055194929744,
+            "control_median_ms": 587.3116195,
+            "measured_median_ms": 1045.630535,
+            "profile_overhead_fraction": 0.7803675259995431,
+            "warmup_stable": false
+          }
+        ]
+      },
+      "cross_rank_counts": [
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        },
+        {
+          "counts": [
+            11803,
+            11803,
+            11803,
+            11803
+          ],
+          "median": 11803.0,
+          "suspect": []
+        }
+      ],
+      "raw_source_sha256": [
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_0/activity-profiler/train06_236399_20261102083048586_ascend_ms/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+          "sha256": "cf7546bf8dfe8be09ea21af4afad224e09b10701b9a7102ca6e3ad1b26267dfa"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_0/activity-profiler/train06_236399_20261102083048586_ascend_ms/ASCEND_PROFILER_OUTPUT/trace_view.json",
+          "sha256": "6dc91d9dcdfee70ad6c4ee2c1fe2d93ded8531acd44e70def8e77f2cfa315873"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_1/activity-profiler/train06_236402_20261102083048592_ascend_ms/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+          "sha256": "e703d5281c4c9e7b2eacce836edaf3ddb30cbfbd21323c1d3bd82b497608e9c6"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_1/activity-profiler/train06_236402_20261102083048592_ascend_ms/ASCEND_PROFILER_OUTPUT/trace_view.json",
+          "sha256": "41eb6d13ebc804259b8b074a8a40abc7002ad7cd597a016058e47a30bcafd3af"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_2/activity-profiler/train06_236405_20261102083048591_ascend_ms/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+          "sha256": "d61e3c9708b47a859ead78117ead7a9e840a97a1b243ec945c1b547c40e1ea05"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_2/activity-profiler/train06_236405_20261102083048591_ascend_ms/ASCEND_PROFILER_OUTPUT/trace_view.json",
+          "sha256": "8d0b79cb81907ce10f9da4cb26bc009eebb41ac0e62e0464d57eeefa5ddf6f03"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_3/activity-profiler/train06_236408_20261102083048586_ascend_ms/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+          "sha256": "cd5f1919be77c70312ff46232bc9a7e04fd447288dfa3a0960c12bddeb6ebe46"
+        },
+        {
+          "path": "/dev/shm/user7-aic-aiv-v2/runs/train-512-light-r0/rank_3/activity-profiler/train06_236408_20261102083048586_ascend_ms/ASCEND_PROFILER_OUTPUT/trace_view.json",
+          "sha256": "56cf12315930ed6c3356be5fa2d7afdd57885e06589c24bc39ec5ffd0bca1c80"
+        }
+      ]
+    },
+    "real_model_ready_candidate_count": null,
+    "interpretation": "high-overhead traces identify tasks; cannot prove normal timing or runnable queue state"
+  }
+}
