@@ -1,0 +1,138 @@
+/* Internal: NPUNVMEContext structure definition.
+ *
+ * This header exposes the full struct layout to internal compilation
+ * units.  External consumers (Python ctypes) see only the opaque
+ * forward declaration in npu_nvme.h.
+ */
+#ifndef NPU_NVME_CONTEXT_H
+#define NPU_NVME_CONTEXT_H
+
+#include "ring_buffer.h"
+#include "io_task.h"
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
+#include <acl/acl.h>
+#include <spdk/thread.h>
+
+/* Dedicated buffer for superblock & JSON metadata I/O. */
+#define META_DMA_BUF_SIZE  (1 * 1024 * 1024)
+
+/* Pipeline depth bounds */
+#define MIN_PIPE_DEPTH  1
+#define MAX_PIPE_DEPTH  64
+
+/* Hugepage pool auto-expansion constants */
+#define NR_HUGEPAGES_PATH  "/proc/sys/vm/nr_hugepages"
+#define HUGEPAGE_PADDING   512
+
+/* ---- ACL runtime sub-structure ---- */
+typedef struct {
+    int npu_id;
+    aclrtStream copy_stream;
+    aclrtEvent *events;        /* one event per ring-buffer slot */
+    aclrtContext acl_ctx;
+} acl_state_t;
+
+/* ---- DMA buffer pool ---- */
+typedef struct {
+    dma_buf_t *pool;           /* SPDK DMA buffers, pool[max_pipe_depth] */
+    ring_t free_ring;          /* SPSC ring of available slot indices */
+    int max_pipe_depth;
+    uint32_t chunk_size;
+} dma_pool_t;
+
+/* ---- Master context ---- */
+typedef struct NPUNVMEContext {
+    uint32_t role;
+    /* SPDK device */
+    char pci_addr[64];
+    struct spdk_nvme_ctrlr *ctrlr;
+    struct spdk_nvme_ns *ns;
+    struct spdk_nvme_qpair *qpair;
+    uint32_t block_size;
+    uint64_t total_blocks;
+
+    /* ACL + DMA */
+    acl_state_t acl;
+    dma_pool_t dma;
+
+    uint32_t copy_bytes_per_tick, checksum_bytes_per_tick;
+    uint32_t submit_items_per_tick, quantum_items, max_pending_requests;
+
+    /* Metadata I/O */
+    void *meta_dma_buf;
+    bool enable_profiling;
+    char profiling_dir[256];
+
+    /* ---- Reactor thread ---- */
+    struct spdk_thread *reactor_thread;
+    pthread_t reactor_pthread;
+    pthread_barrier_t init_barrier;
+    atomic_int app_should_stop;
+    atomic_int quarantined;
+    atomic_int admission_closed;
+    atomic_uint safety_reason; /* 1: event record, 2: event query, 3: observation timeout */
+    atomic_ullong request_serial;
+    atomic_int reactor_exited;
+    atomic_uint refs;          /* owner + allocated request objects */
+    atomic_uint queued_writes;
+    atomic_uint pending_requests; /* queued or reactor-owned requests */
+    bool reactor_pthread_started;
+    bool state_lock_initialized;
+    atomic_bool close_in_progress;
+    bool native_owner_held;
+    int native_owner_fd;
+    pid_t native_owner_pid;
+    int reactor_init_result;
+
+    /* ---- Reactor pollers ---- */
+    struct spdk_poller *write_fsm_poller;  /* V3: async write FSM */
+    struct spdk_poller *read_fsm_poller;   /* V4: async read FSM */
+    struct spdk_poller *meta_poller;       /* V4: async metadata I/O */
+
+    /* Admission and accepted-write dependency ownership. */
+    pthread_mutex_t state_lock;
+
+    /* ---- Async write FSM (V3) ---- */
+    write_fsm_ctx_t write_fsm;
+    write_request_t *ready_head[2], *ready_tail[2]; /* reactor-owned */
+    bool prefer_ready[2];
+    int prior_write_error; /* sticky within this context, under state_lock */
+    write_request_t *accepted_writes; /* under state_lock, queue-owned references */
+    struct spdk_ring *write_ring;    /* Python → reactor write requests */
+
+    /* ---- Async read FSM (V4) ---- */
+    read_fsm_ctx_t read_fsm;
+    struct spdk_ring *read_ring;     /* Python → reactor read requests */
+
+    /* ---- Async metadata I/O (V4) ---- */
+    struct spdk_ring *meta_ring;     /* Python → reactor meta requests */
+    struct spdk_nvme_qpair *meta_qpair; /* dedicated qpair for metadata */
+    meta_request_t *meta_req;        /* one in-flight metadata request */
+
+    /* ---- C-layer profiling (V6) ---- */
+    uint64_t last_write_io_us;   /* C-layer latency of most recent write */
+    uint64_t last_read_io_us;    /* C-layer latency of most recent read */
+    uint32_t io_timeout_ms;      /* bounded public API wait */
+
+    /* Runtime counters. The Reactor is the sole writer; public stats reads
+     * use relaxed atomics because counters are diagnostic, not ownership. */
+    atomic_ullong nvme_submit_count;
+    atomic_ullong nvme_complete_count;
+    atomic_uint nvme_outstanding;
+    atomic_uint nvme_outstanding_peak;
+    atomic_uint dma_inflight;
+    atomic_uint dma_inflight_peak;
+    atomic_uint request_ring_peak;
+    atomic_ullong async_dma_submit_count;
+    atomic_ullong async_event_query_count;
+    atomic_ullong async_event_query_error_count;
+    atomic_ullong stream_sync_fallback_count;
+    atomic_ullong spdk_retry_count;
+    atomic_ullong completion_error_count;
+    atomic_ullong reactor_cpu_us;
+} NPUNVMEContext;
+
+#endif

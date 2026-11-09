@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "max_batch_items": 65536,
+  "max_batch_aligned_bytes": 68719476736,
+  "max_metadata_io_bytes": 1048576,
+  "max_python_checkpoint_slots": 16,
+  "max_python_request_slots": 64,
+  "max_native_dma_slots": 16,
+  "default_python_observation_seconds": 120,
+  "default_native_observation_ms": 60000,
+  "alignment_bytes": 4096,
+  "quarantine_policy": "Retain within admitted budgets; reject new admission; no reuse without stop proof",
+  "legacy_blocking_boundary": "Raw-pointer synchronous APIs still drain for buffer safety; migrate callers before retirement",
+  "max_descriptor_bytes": 16777216
+}

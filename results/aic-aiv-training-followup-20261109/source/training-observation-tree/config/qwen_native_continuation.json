@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "checkpoint_step": 8,
+  "source_stop_step": 11,
+  "restore_start_step": 8,
+  "lr_horizon": 32,
+  "seed": 42,
+  "seq_length": 128,
+  "parallel": {
+    "tp": 4,
+    "dp": 1,
+    "pp": 1
+  },
+  "precision": {
+    "parameters": "float32",
+    "adam": "float32",
+    "compute": "bfloat16"
+  },
+  "pre_continuation_state": "exact names/shape/dtype/bytes",
+  "continuation_loss": {
+    "atol": 1e-06,
+    "rtol": 1e-05
+  },
+  "continuation_state": {
+    "atol": 1e-06,
+    "rtol": 1e-05
+  },
+  "dropout": 0.0,
+  "scope": "fixed token rows; no reshard; no raw NVMe writes",
+  "deterministic": true,
+  "comparison_group": "native-v13-deterministic-002",
+  "supersedes": "source/restore-001 retained as failed nondeterministic experiment; tolerances unchanged"
+}

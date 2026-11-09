@@ -15,11 +15,13 @@ control. The latest coordination status is
 
 The packages include reports, figures, normalized comparison data, runtime
 identities, failure evidence and reproduction code. Each DELIVERY_MANIFEST.json
-lists the compact files and their hashes. SHA256SUMS.json is the original full
-archive manifest; it intentionally also lists raw files not uploaded here.
+lists the compact files and their hashes. For the earlier packages, SHA256SUMS.json is the original full
+archive manifest and also lists raw files not uploaded here. The new training
+follow-up publishes its full compact archive and its matching hash manifest.
 Complete archives remain at `/models/npu_nvme_exp/user7-stack/<package-name>`.
-The latest archive's 4,129 manifest entries were checked with zero mismatches
-before publication. Neither live supervisor log belongs to that manifest.
+The coordination archive's 4,129 manifest entries were checked before its
+publication. The training follow-up's 2,625 manifest entries were separately
+checked with zero mismatches; all80 native-counter rank runs were replayed.
 
 The isolated branch starts at origin/master 64730754. It excludes unrelated
 uncommitted training/checkpoint changes and the two local FULL-closure commits.
@@ -37,3 +39,22 @@ investigation results, not production optimization acceptance.
 
 CPU validation: see the coordination package's test record. This is not a
 replacement for device acceptance.
+
+
+Training follow-up on 2026-11-09:
+
+- [Training investigation and concrete optimizer tail](aic-aiv-training-followup-20261109/REPORT.md)
+- [Metric and quality contract](aic-aiv-training-followup-20261109/MEASUREMENT_CONTRACT.md)
+- [Official installed/current-development solution audit](aic-aiv-training-followup-20261109/official/AUDIT.md)
+- [Acceptance and explicit remaining limits](aic-aiv-training-followup-20261109/acceptance.json)
+- [Subsequent experiments](aic-aiv-training-followup-20261109/NEXT_STEPS.md)
+
+The follow-up fixes Qwen3-8B/TP4/DP1/PP1 and evaluates sequence128/512/2048
+and micro-batch1/2 with three independent O1 model processes per cell. Separate
+O0/HBM controls, retained O2 compilation failure, resident optimizer fragments
+and a diagnostic real-model optimizer tail identify the remaining vector/state
+movement problem. No full-model fused-optimizer substitution or cooperative
+scheduling gain is claimed. Native PMU/HBM archive-only reconstruction and
+per-file hashes are checked before publication. Every file in this new
+package's delivery manifest is included in the Git commit; earlier packages
+retain their original delivery scopes.

@@ -1,0 +1,37 @@
+"""Preview-only ABI3 symbol and source audit; no hardware."""
+from pathlib import Path
+import subprocess
+import re
+import ast
+import pytest
+import os
+ROOT=Path(__file__).resolve().parents[2]
+LIBRARY=Path(os.environ.get('NPU_NVME_LIBRARY_PATH',ROOT/'build/libnpu_nvme.so'))
+
+
+def test_no_blocking_batch_exports_and_versioned_soname():
+    library=LIBRARY
+    symbols=subprocess.check_output(['nm','-D','--defined-only',str(library)],text=True)
+    assert not re.search(r'\bnpu_nvme_(?:write_batch(?:_crc|_host)?|read_batch(?:_host)?)\b',symbols)
+    assert 'npu_nvme_abi_version' in symbols and 'npu_nvme_submit_transfer' in symbols
+    assert not re.search(r'\bnpu_nvme_(?:register_tasks|set_step_ptr|(?:set|get)_probe_flag\w*|delta_\w+)\b',symbols)
+    assert 'libnpu_nvme.so.3' in subprocess.check_output(['readelf','-d',str(library)],text=True)
+
+
+def test_no_runtime_sync_bulk_or_retired_callers():
+    for name in ('dma.c','read_pipeline.c','write_pipeline.c'):
+        assert not re.search(r'\baclrtMemcpy\s*\(', (ROOT/'src'/name).read_text())
+    pattern=re.compile(r'\bnpu_nvme_(?:write_batch(?:_crc|_host)?|read_batch(?:_host)?)\b')
+    for top in ('src','include','python','tests','experiments'):
+        for p in (ROOT/top).rglob('*'):
+            if p.suffix in ('.c','.h','.py') and p.resolve()!=Path(__file__).resolve():
+                assert not pattern.search(p.read_text()),str(p)
+
+
+
+def test_abi_version_is_checked_without_device_initialization():
+    import ctypes
+    library=ctypes.CDLL(str(LIBRARY))
+    library.npu_nvme_abi_version.argtypes=[]
+    library.npu_nvme_abi_version.restype=ctypes.c_uint32
+    assert library.npu_nvme_abi_version()==3

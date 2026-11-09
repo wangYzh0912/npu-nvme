@@ -1,0 +1,270 @@
+{
+  "shared_forward_unique_id": "1254920",
+  "dgrad_node": {
+    "graph": "kernel_graph1",
+    "node": "3436",
+    "op": "PrimFunc_MatMul",
+    "source_line": 61593,
+    "operands": [
+      "3435",
+      "3135"
+    ],
+    "stream_id": 0,
+    "scope": "(Gradients/recompute_Default/Grad_MatMul/MatMul-op4)"
+  },
+  "wgrad_node": {
+    "graph": "kernel_graph1",
+    "node": "9622",
+    "op": "PrimFunc_MatMul",
+    "source_line": 135582,
+    "operands": [
+      "3435",
+      "9621"
+    ],
+    "stream_id": 0,
+    "scope": "(Gradients/recompute_Default/Grad_MatMul/MatMul-op283)"
+  },
+  "wgrad_activation": {
+    "graph": "kernel_graph1",
+    "node": "9621",
+    "op": "PrimFunc_Reshape",
+    "source_line": 135577,
+    "operands": [
+      "9620"
+    ],
+    "stream_id": 0,
+    "scope": "(recompute_Default/Reshape-op252)"
+  },
+  "nodes": [
+    {
+      "graph": "kernel_graph1",
+      "node": "3436",
+      "op": "PrimFunc_MatMul",
+      "source_line": 61593,
+      "operands": [
+        "3435",
+        "3135"
+      ],
+      "stream_id": 0,
+      "scope": "(Gradients/recompute_Default/Grad_MatMul/MatMul-op4)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3135",
+      "op": "PrimFunc_Cast",
+      "source_line": 57462,
+      "operands": [
+        "3134"
+      ],
+      "stream_id": 0,
+      "scope": "(recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/34-TransformerLayer/mlp-MLPInterleaved/linear_fc2-RowParallelLinear/Cast-op0)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3134",
+      "op": "Load",
+      "source_line": 57459,
+      "operands": [],
+      "stream_id": null,
+      "scope": "(recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/34-TransformerLayer/mlp-MLPInterleaved/Load-op1)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3435",
+      "op": "AllGather",
+      "source_line": 61582,
+      "operands": [
+        "3434"
+      ],
+      "stream_id": null,
+      "scope": "(Gradients/recompute_Default/Grad_ReduceScatter/AllGather-op2)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3434",
+      "op": "PrimFunc_Reshape",
+      "source_line": 61573,
+      "operands": [
+        "3433"
+      ],
+      "stream_id": 0,
+      "scope": "(Gradients/recompute_Default/Grad_Reshape/Reshape-op6)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3433",
+      "op": "GraphKernel_Cast_AddN_fusion",
+      "source_line": 61568,
+      "operands": [
+        "3432",
+        "3382"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Cast_AddN_fusion-op1)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3382",
+      "op": "GraphKernel_Cast_AddN_fusion",
+      "source_line": 60334,
+      "operands": [
+        "3381",
+        "3287"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Cast_AddN_fusion-op0)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3287",
+      "op": "PrimFunc_Cast",
+      "source_line": 59734,
+      "operands": [
+        "3286"
+      ],
+      "stream_id": 0,
+      "scope": "(Gradients/Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/Grad_Cast/Cast-op1)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3381",
+      "op": "TupleGetItem",
+      "source_line": 60302,
+      "operands": [
+        "3380"
+      ],
+      "stream_id": null,
+      "scope": "(Gradients/recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/35-TransformerLayer/pre_mlp_layernorm-FusedRMSNorm/Grad_RmsNorm/TupleGetItem-op1)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3432",
+      "op": "TupleGetItem",
+      "source_line": 61538,
+      "operands": [
+        "3431"
+      ],
+      "stream_id": null,
+      "scope": "(Gradients/recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/35-TransformerLayer/input_layernorm-FusedRMSNorm/Grad_RmsNorm/TupleGetItem-op1)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3431",
+      "op": "PrimFunc_RmsNormGrad",
+      "source_line": 61507,
+      "operands": [
+        "3429",
+        "3293",
+        "3430",
+        "3294"
+      ],
+      "stream_id": 0,
+      "scope": "(Gradients/recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/35-TransformerLayer/input_layernorm-FusedRMSNorm/Grad_RmsNorm/RmsNormGrad-op0)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "9622",
+      "op": "PrimFunc_MatMul",
+      "source_line": 135582,
+      "operands": [
+        "3435",
+        "9621"
+      ],
+      "stream_id": 0,
+      "scope": "(Gradients/recompute_Default/Grad_MatMul/MatMul-op283)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "9621",
+      "op": "PrimFunc_Reshape",
+      "source_line": 135577,
+      "operands": [
+        "9620"
+      ],
+      "stream_id": 0,
+      "scope": "(recompute_Default/Reshape-op252)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "9620",
+      "op": "TupleGetItem",
+      "source_line": 135574,
+      "operands": [
+        "3516"
+      ],
+      "stream_id": null,
+      "scope": "(Default/TupleGetItem-op512)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3516",
+      "op": "GraphKernel_SiLU_Mul_Mul_fusion",
+      "source_line": 61962,
+      "operands": [
+        "3513",
+        "3437",
+        "3511"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_SiLU_Mul_Mul_fusion-op1)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3511",
+      "op": "PrimFunc_Reshape",
+      "source_line": 61937,
+      "operands": [
+        "3510"
+      ],
+      "stream_id": 0,
+      "scope": "(recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/34-TransformerLayer/mlp-MLPInterleaved/Reshape-op4)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3510",
+      "op": "TupleGetItem",
+      "source_line": 61933,
+      "operands": [
+        "3509"
+      ],
+      "stream_id": null,
+      "scope": "(recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/34-TransformerLayer/mlp-MLPInterleaved/TupleGetItem-op2)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3437",
+      "op": "PrimFunc_Reshape",
+      "source_line": 61602,
+      "operands": [
+        "3436"
+      ],
+      "stream_id": 0,
+      "scope": "(Gradients/recompute_Default/Grad_Reshape/Reshape-op7)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3513",
+      "op": "PrimFunc_Reshape",
+      "source_line": 61946,
+      "operands": [
+        "3512"
+      ],
+      "stream_id": 0,
+      "scope": "(recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/34-TransformerLayer/mlp-MLPInterleaved/Reshape-op5)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "3512",
+      "op": "TupleGetItem",
+      "source_line": 61942,
+      "operands": [
+        "3509"
+      ],
+      "stream_id": null,
+      "scope": "(recompute_Default/network-MFTrainOneStepCell/network-_VirtualDatasetCell/_backbone-DataOrderWrapperCell/network-TrainingQwen3ForCausalLM/model-GPTModel/decoder-TransformerBlock/layers-CellList/34-TransformerLayer/mlp-MLPInterleaved/TupleGetItem-op3)"
+    }
+  ],
+  "runtime_readiness": "unknown",
+  "finding": "Paired dX and dW MatMul have shared forward operation identity, but dW consumes a late duplicated activation reshape in the recomputation graph.",
+  "constraint": "Do not assume the activation is retained or available at dX time; check recomputation, activation lifetime, collectives and alias effects before co-run."
+}

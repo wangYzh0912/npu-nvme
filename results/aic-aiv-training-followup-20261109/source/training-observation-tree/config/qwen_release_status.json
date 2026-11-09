@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "status": "usable_baseline_ready",
+  "date": "2026-09-16",
+  "workload": {
+    "model": "Qwen3-8B",
+    "topology": "TP4/DP1/PP1",
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "state_scope": "FULL model, Adam, training position and RNG controls"
+  },
+  "accepted": {
+    "training_entry_preflight": "pass",
+    "native_two_restart_chain": "pass",
+    "ours_tp4_save_fresh_restore_continue_save": "pass",
+    "ours_tp4_source_oracle_comparison": "pass",
+    "single_npu_async_acl_spdk_byte_roundtrip": "pass",
+    "tp2_tp4_host_bridge_fresh_process_save_restore": "pass",
+    "abi_major": 2,
+    "software_tests_passed": 394
+  },
+  "full_closure_candidate_20261020": {
+    "status": "abi3_targeted_full_npu4_7_pass_performance_campaign_deferred",
+    "verified_date": "2026-10-22",
+    "abi_major": 3,
+    "manifest": "/models/npu_nvme_exp/user7-stack/full-closure-abi3-20261021-005/environments.json",
+    "runtime_sha256": "070f87d5bc3a2a32723274c9319e5b08356f5f36163e3ad3594b81a12daf4189",
+    "build_and_load": "pass",
+    "c_sanitizer_tests_passed": 45,
+    "root_existing_cross_user_lock_regression": "pass",
+    "abi_tests_passed": 3,
+    "hardware": "npu4_to_7_targeted_full_pass_none24_source8_explicit_restore_latest_restore_interruption_reconcile_fresh_restore_continue_all_state_comparisons_pass",
+    "physical_device_mapping": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "hardware_attempts": [
+      "/models/npu_nvme_exp/user7-stack/full-closure-acceptance-npu4-7-20261020-002",
+      "/models/npu_nvme_exp/user7-stack/full-closure-acceptance-npu4-7-20261021-003",
+      "/models/npu_nvme_exp/user7-stack/full-closure-acceptance-npu4-7-20261021-004",
+      "/models/npu_nvme_exp/user7-stack/full-closure-acceptance-npu4-7-20261021-005"
+    ],
+    "historical_accepted_abi2_unchanged": true,
+    "raw83_driver": "uio_pci_generic",
+    "protected_0000_84_00_0_driver": "nvme",
+    "none24_oracle": "pass_final_step_24",
+    "ours_source8": "pass_final_step_8_and_oracle_comparison",
+    "historical_ours_source8": "fail_rank_local_native_open_errno_13_before_checkpoint_payload_operations",
+    "owner_mounted_region": true,
+    "checkpoint_payload_io_started": true,
+    "native_owner_lock_key": "visible_logical_npu_id_resolved_to_physical_id",
+    "native_owner_lock_mapping_test": "pass",
+    "historical_errno_13_cause": "fs.protected_regular=1 rejects root O_CREAT open of an existing ordinary-user-owned file in sticky /tmp; reproduced independently of lock contention",
+    "native_owner_open_fix": "open existing first; exclusive create only for ENOENT; reopen on EEXIST race; preserve O_NOFOLLOW and flock ownership",
+    "single_rank_copy_context_probe": "pass_no_nvme_io",
+    "retry_status": "targeted_full_pass_on_npu4_to_7",
+    "full_tp4_or_raw_io_started": true,
+    "software_tests_passed_this_continuation": 75,
+    "targeted_python_tests_passed_this_continuation": 30,
+    "targeted_python_junit": "/tmp/npu-nvme-full-closure-final-python.xml",
+    "software_tests_passed": 417,
+    "acceptance_result": "/models/npu_nvme_exp/user7-stack/full-closure-acceptance-npu4-7-20261021-005/result.json",
+    "acceptance_runs_passed": [
+      "trajectory-none final_step=24",
+      "ours-source8 final_step=8",
+      "ours-explicit4 restored_step=4 final_step=8",
+      "ours-latest8-to16 restored_step=8 final_step=16",
+      "ours-latest16-to24 restored_step=16 final_step=24",
+      "ours-publication-recovery restored_step=4 final_step=8"
+    ],
+    "acceptance_scenarios_completed_as_expected": 7,
+    "acceptance_comparisons_passed": 5,
+    "publication_fault_expected_returncode": 1,
+    "publication_fault_raw_generation": 19,
+    "publication_recovery_catalog_generation": 1,
+    "publication_recovery_selected_step": 4,
+    "publication_recovery_saved_raw_generation": 20,
+    "publication_recovery_result": "/models/npu_nvme_exp/user7-stack/full-closure-acceptance-npu4-7-20261021-005/ours-publication-recovery/result.json",
+    "publication_recovery_status": "pass_automatic_fresh_process_step4_to8_owner_closed_generation20_exact_oracle_comparison",
+    "acceptance_driver_status": "pass_returncode_0_no_manual_retry",
+    "historical_attempt_004": "driver fail retained; manual recovery retry3 passed raw11_to12 after disk dedup and explicit NPU4_to7 mapping; superseded by complete attempt005",
+    "model_shard_deduplication": "sha256_verified_hardlinks_of_completed_model_shards_and_name_map; paths_preserved; historical_dedup_released_approximately_81_GiB; final_models_available_approximately_59_GiB",
+    "post_hardware_tool_refinements": "streaming_hashes_and_output_filesystem_admission_for_two_conversion_caches_plus_8_GiB; covered_by_targeted_python_regressions; hardware_source_identity_preserved",
+    "post_run_hardware": "all_8_NPUs_healthy_no_running_processes; raw83_uio_pci_generic; protected84_nvme; models_mount_unchanged",
+    "performance_claim": "none; full performance campaign remains deferred",
+    "details": "FULL_CHECKPOINT_FLOW.md"
+  },
+  "ours_data_path": {
+    "device_copy": "aclrtMemcpyAsync D2H and H2D",
+    "rank_owner_bridge": "bounded Host socket bridge",
+    "storage": "SPDK raw NVMe",
+    "restore_process": "fresh"
+  },
+  "d2_validation_20260918": {
+    "candidate_fault_matrix": "pass",
+    "candidate_tp2_tp4_fresh_process_fixture": "pass",
+    "real_d1_to_d2_migration": "deferred_no_valid_d1_source_on_current_raw_device",
+    "evidence_root": "/models/npu_nvme_exp/user7-stack/d2-final-validation-20260918-001",
+    "scope": "validation region [1280,1408) GiB only; no power-loss or Qwen full-state claim"
+  },
+  "acceptance_scope": {
+    "single_npu": "transport only; no single-NPU Qwen workload claim",
+    "multi_npu": "Qwen TP4 and deterministic TP2/TP4 checkpoint fixtures",
+    "full_campaign": "deferred by scope decision; not a pass"
+  },
+  "deferred_register": "docs/plans/DEFERRED_VALIDATION.md",
+  "primary_campaign": "/models/npu_nvme_exp/user7-stack/qwen-training-acceptance-20260916-004",
+  "primary_campaign_status": "deferred",
+  "primary_campaign_completed_runs": 6,
+  "primary_campaign_passing_comparisons": 5,
+  "runtime_sha256": "ba6dc8156be8d1f9c353d309e881afe6e0391916471be6152df390aa13c4d2b7",
+  "publication": {
+    "branch": "master",
+    "remote": "origin",
+    "mode": "fast-forward",
+    "archive_branches_verified": 27,
+    "local_primary_worktree": "FULL_delivery_with_separate_research_changes"
+  },
+  "full_closure_verification_20261024": {
+    "status": "pass_targeted_full",
+    "runtime_abi": 3,
+    "physical_npu_ids": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "acceptance_result": "/models/npu_nvme_exp/user7-stack/full-closure-acceptance-npu4-7-20261024-001/result.json",
+    "original_workspace_software_passed": 424,
+    "integrated_submission_software_passed": 390,
+    "c_sanitizer_passed": 45,
+    "root_existing_cross_user_lock": "pass",
+    "software_junit": "/tmp/npu-nvme-full-closure-20261024-integrated-software.xml",
+    "c_junit": "/tmp/npu-nvme-full-closure-20261024-c.xml",
+    "hardware_source_identity": "frozen original workspace; preserved in execution-sources.json",
+    "submission_source_difference": "inactive research hooks excluded; upstream 64730754 D2 fixes integrated; C sources unchanged",
+    "performance_claim": false,
+    "details": "DEVELOPMENT_STATUS.md",
+    "acceptance_scenarios_completed_as_expected": 7,
+    "acceptance_comparisons_passed": 5,
+    "publication_fault_expected_returncode": 1,
+    "publication_fault_raw_generation": 27,
+    "publication_recovery_catalog_generation": 1,
+    "publication_recovery_selected_step": 4,
+    "publication_recovery_saved_raw_generation": 28,
+    "publication_recovery_status": "pass_automatic_fresh_process_step4_to8_safe_close_exact_oracle_comparison",
+    "acceptance_driver_status": "pass_returncode_0_no_manual_retry"
+  },
+  "incremental_phase1": {
+    "status": "paused_by_user",
+    "branch": "incremental-phase1-results",
+    "results": "results/incremental-phase1-20260916",
+    "reason": "Superseded by graph-native real-working-set Top-K plan"
+  },
+  "graph_topk": {
+    "status": "completed_conditional_matrix_with_capability_gaps",
+    "branch": "incremental-phase1-results",
+    "results": "results/graph-topk-20260917",
+    "config": "config/graph_topk.json",
+    "campaign": "/models/npu_nvme_exp/user7-stack/graph-topk-20260917-001",
+    "scope": "graph detection; no checkpoint I/O",
+    "formal_steps": 20,
+    "post_restore_warmup_steps": 12,
+    "default_repeats": 1,
+    "maximum_repeats": 2,
+    "parallel_execution_verified": false,
+    "parallel_capability": "two StepParallel layout propagation attempts did not compile; no parallel capacity claim",
+    "main_baseline_seconds": [
+      12.8693009499,
+      12.1430338058
+    ],
+    "main_baseline_spread": 0.05807271901482437,
+    "three_percent_feasibility": "no_measured_serial_q_passes_even_against_slower_G0; parallel_capacity_unresolved",
+    "main_full_scan_G6_seconds": 15.3737048903,
+    "main_full_scan_G6_output_validation": "pass_all_four_ranks",
+    "device_consumer_entry": "not_entered_q0.125_detection_exceeds_5_percent_for_both_baselines",
+    "auxiliary_validation": "completed",
+    "auxiliary_baseline_seconds": [
+      12.6155050243,
+      11.0995273963
+    ],
+    "auxiliary_baseline_spread": 0.12784950922077634,
+    "auxiliary_G6_full_scan_seconds": 13.5925042089,
+    "auxiliary_G6_eighth_scan_seconds": 12.6028520358,
+    "auxiliary_eighth_scan_budget": "undetermined_due_to_baseline_variation",
+    "valid_formal_configurations": 19,
+    "all_rank_loss_equality": "exact",
+    "formal_output_audit": "pass",
+    "serial_G6_profile_dependency_gate": "pass_8_complete_rank_step_intervals_zero_auxiliary_training_overlap",
+    "related_unit_tests_passed": 8,
+    "summary": "results/graph-topk-20260917/SUMMARY.md",
+    "audit": "results/graph-topk-20260917/FINAL_AUDIT.json",
+    "remaining_authorized_runs": [],
+    "unresolved_measurements": [
+      "parallel_capacity",
+      "independent_deadline_wait",
+      "unprofiled_training_compute_segment_delta",
+      "window_HBM_bandwidth",
+      "simultaneous_workspace_peak"
+    ],
+    "not_entered_by_condition": [
+      "G7_hardware_validation",
+      "G8_hardware_validation"
+    ]
+  }
+}

@@ -7,7 +7,7 @@ from pathlib import Path
 import sqlite3
 
 
-def read(device):
+def read(device, *, clock_offset_ns=0):
     device=Path(device)
     # The pinned HbmModel uses counts * (256/8) bytes and does NOT delta counts.
     # decode_hbm_v1 has already mapped timestamp to absolute sampling time.
@@ -17,7 +17,7 @@ def read(device):
     c.close()
     groups=defaultdict(dict)
     for dev,ts,counts,event,channel in rows:
-        key=(int(dev),int(Decimal(str(ts))))
+        key=(int(dev),int(Decimal(str(ts)))+clock_offset_ns)
         entry=(int(channel),event)
         if entry in groups[key]:raise ValueError('duplicate HBM channel/event sample')
         if event not in ('read','write') or not 0<=channel<4 or counts<0:
@@ -53,14 +53,15 @@ def summarize(samples, windows):
     return output
 
 
-def export(device, output, windows):
+def export(device, output, windows, *, clock_offset_ns=0):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    samples=read(device)
+    samples=read(device,clock_offset_ns=clock_offset_ns)
     if not samples:raise ValueError('no native HBM samples')
     with (output/'hbm-timeseries.csv').open('w') as f:
         writer=csv.DictWriter(f,fieldnames=list(samples[0]));writer.writeheader();writer.writerows(samples)
     result=dict(source_db=str(Path(device)/'sqlite/hbm.db'),counts_are='per_interval',
-        bytes_per_count=32,clock='already_absolute_by_CANN_HBM_parser',
+        bytes_per_count=32,clock_offset_ns=clock_offset_ns,
+        clock='explicit_native_to_wall_offset' if clock_offset_ns else 'already_absolute_by_CANN_HBM_parser',
         native_interval_ns=20_000_000,expected_channels=4,discarded_first_sample=True,
         valid_fraction=sum(x['valid'] for x in samples)/len(samples),
         interval_boundary_method='time-weighted overlap of native interval means',

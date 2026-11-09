@@ -1,0 +1,79 @@
+--- a/python/npu_nvme/workloads/qwen.py
++++ b/python/npu_nvme/workloads/qwen.py
+@@ -44,6 +44,10 @@
+             raise ValueError('incremental model role differs')
+         start=options['start_step'];stop=options['stop_step'];horizon=options['lr_horizon']
+         sequence=options['seq_length'];period=options['checkpoint_interval']
++        micro_batch=int(options.get('micro_batch',1))
++        jit_level=options.get('jit_level','O0')
++        if micro_batch not in (1,2) or jit_level not in ('O0','O1','O2'):
++            raise ValueError('unsupported training matrix cell')
+         template=Path(mindformers.__file__).parent.parent/'configs/qwen3/finetune_qwen3.yaml'
+         config=MindFormerConfig(str(template))
+         config.output_dir=str(out/'training');config.pretrained_model_dir=str(source)
+@@ -52,10 +56,12 @@
+             micro_batch_num=1,vocab_emb_dp=False,use_seq_parallel=True)
+         config.context.ascend_config.pop('parallel_speed_up_json_path',None)
+         config.context.deterministic='ON'
++        config.context.jit_config=MindFormerConfig(jit_level=jit_level)
+         config.parallel.strategy_ckpt_config.save_file=str(directory/'strategy.ckpt')
+-        config.model.model_config.update(seq_length=sequence,batch_size=1,params_dtype='float32',
++        config.model.model_config.update(seq_length=sequence,batch_size=micro_batch,params_dtype='float32',
+             compute_dtype='bfloat16',residual_dtype='float32',input_sliced_sig=True)
+-        config.runner_config.update(epochs=1,sink_mode=True,sink_size=1,stop_step=stop-start)
++        config.runner_config.update(batch_size=micro_batch,gradient_accumulation_steps=1,
++                                     epochs=1,sink_mode=True,sink_size=1,stop_step=stop-start)
+         config.lr_schedule.total_steps=horizon
+         config.train_dataset.data_loader=MindFormerConfig(type='GeneratorDataset')
+         config.callbacks=[c for c in config.callbacks if c.get('type')!='CheckpointMonitor']
+@@ -82,9 +88,9 @@
+         np.save(directory/'input_ids.npy',ids,allow_pickle=False)
+         row=(ids[:-1],ids[1:],np.ones(sequence,np.float32),np.arange(sequence,dtype=np.int32),
+              np.triu(np.ones((1,sequence,sequence),np.uint8),k=1))
+-        dataset=ms.dataset.GeneratorDataset([row]*(stop-start),
++        dataset=ms.dataset.GeneratorDataset([row]*((stop-start)*micro_batch),
+             column_names=['input_ids','labels','loss_mask','position_ids','attention_mask'],
+-            shuffle=False,num_parallel_workers=1).batch(1,drop_remainder=True)
++            shuffle=False,num_parallel_workers=1).batch(micro_batch,drop_remainder=True)
+         controller=CheckpointController(options,rank=rank,npu_id=rank,output=out)
+ 
+         class Progress(ms.Callback):
+--- a/python/npu_nvme/runtime/qwen_config.py
++++ b/python/npu_nvme/runtime/qwen_config.py
+@@ -13,7 +13,8 @@
+     allowed={'schema_version','model','environment_manifest','method','stop_step','lr_horizon',
+              'seq_length','checkpoint_interval','retention','timeout_seconds','operation_timeout_seconds',
+              'copy_timeout_ms','shm_base','strategy','region','hardware_lock','checkpoint_root',
+-             'host_headroom_bytes','hbm_headroom_bytes','npu_ids','activity_profile'}
++             'host_headroom_bytes','hbm_headroom_bytes','npu_ids','activity_profile',
++             'micro_batch','jit_level'}
+     if set(value)-allowed:raise ValueError('unknown training settings: '+repr(sorted(set(value)-allowed)))
+     if value.get('schema_version')!=2:raise ValueError('Qwen training configuration requires schema_version 2')
+     defaults=dict(model='/models/Qwen3-8B',method='ours',stop_step=24,lr_horizon=24,
+@@ -21,7 +22,7 @@
+         operation_timeout_seconds=1800,copy_timeout_ms=30000,shm_base=79000,
+         strategy='config/qwen_runtime_schema.json',region='config/d2_qwen_region.json',
+         hardware_lock='/models/npu_nvme_exp/user7-stack/hardware-campaign.lock',
+-        host_headroom_bytes=16<<30,hbm_headroom_bytes=1<<30)
++        host_headroom_bytes=16<<30,hbm_headroom_bytes=1<<30,micro_batch=1,jit_level='O0')
+     config=dict(defaults,**value)
+     config.setdefault('npu_ids',[0,1,2,3])
+     profile=config.get('activity_profile')
+@@ -46,6 +47,8 @@
+         if type(config[name]) is not int or config[name]<1:raise ValueError('positive integer required: '+name)
+     if config['stop_step']>config['lr_horizon']:raise ValueError('stop_step exceeds LR horizon')
+     if config['seq_length']<8 or config['seq_length']%4:raise ValueError('sequence length must be >=8 and divisible by 4')
++    if type(config['micro_batch']) is not int or config['micro_batch'] not in (1,2):raise ValueError('micro_batch must be 1 or 2')
++    if config['jit_level'] not in ('O0','O1','O2'):raise ValueError('jit_level must be O0, O1 or O2')
+     if config['operation_timeout_seconds']>config['timeout_seconds']:raise ValueError('operation timeout exceeds job timeout')
+     if config['method']=='ours' and config['retention']!=3:
+         raise ValueError('registered Qwen raw region has physical retention 3')
+@@ -61,6 +64,7 @@
+         physical_npu_ids=config['npu_ids'],
+         topology=dict(tp=4,dp=1,pp=1),seed=42,default_generator_seed=42,sequence_length=config['seq_length'],
+         state_scope='full_state',params_dtype='float32',compute_dtype='bfloat16',dropout=0,
+-        lr_horizon=config['lr_horizon'],strategy_sha256=digest(strategy),
++        lr_horizon=config['lr_horizon'],micro_batch=config['micro_batch'],jit_level=config['jit_level'],
++        strategy_sha256=digest(strategy),
+         data_fixture='checkpoint-recovery-fixed-text-v1',optimizer='mindformers-1.7-qwen3-template')
+     return config

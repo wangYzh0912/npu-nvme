@@ -1,0 +1,92 @@
+[
+  {
+    "run": "adamw-o0-4096x3072-r0",
+    "source": "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/fragments/runs/adamw-o0-4096x3072-r0/kernel_details-0.csv.gz",
+    "diagnostic_iterations": 8,
+    "tasks": 224,
+    "tasks_per_update": 28.0,
+    "accelerator_core_counts": {
+      "N/A": 224
+    },
+    "tensor_move_tasks_per_update": 4.0,
+    "assign_tasks_per_update": 4.0,
+    "kernel_counts": {
+      "Kernel::KernelLaunch::Default/AssignAdd-op0/AssignAdd1": 8,
+      "Kernel::KernelLaunch::Default/TensorMove-op0/TensorMove2": 8,
+      "Kernel::KernelLaunch::Default/Mul-op2/aclnnMul_MulAiCore_Mul": 8,
+      "Kernel::KernelLaunch::Default/Mul-op3/aclnnMul_MulAiCore_Mul": 8,
+      "Kernel::KernelLaunch::Default/Add-op0/aclnnAdd_AddAiCore_Add": 8,
+      "Kernel::KernelLaunch::Default/Assign-op0/Assign3": 8,
+      "Kernel::KernelLaunch::Default/TensorMove-op1/TensorMove2": 8,
+      "Kernel::KernelLaunch::Default/Mul-op4/aclnnMul_MulAiCore_Mul": 8,
+      "Kernel::KernelLaunch::Default/Addcmul-op0/Addcmul4": 8,
+      "Kernel::KernelLaunch::Default/Assign-op1/Assign3": 8,
+      "Kernel::KernelLaunch::Default/TensorMove-op3/TensorMove2": 8,
+      "Kernel::KernelLaunch::Default/TensorMove-op2/TensorMove2": 8,
+      "Kernel::KernelLaunch::Default/Cast-op0/aclnnCast_CastAiCore_Cast": 8,
+      "Kernel::KernelLaunch::Default/Pow-op1/aclnnPowTensorTensor_PowAiCore_Pow": 8,
+      "Kernel::KernelLaunch::Default/Sub-op2/aclnnSub_SubAiCore_Sub": 8,
+      "Kernel::KernelLaunch::Default/Div-op2/aclnnDiv_RealDivAiCore_RealDiv": 8,
+      "Kernel::KernelLaunch::Default/Pow-op0/aclnnPowTensorTensor_PowAiCore_Pow": 8,
+      "Kernel::KernelLaunch::Default/Sub-op1/aclnnSub_SubAiCore_Sub": 8,
+      "Kernel::KernelLaunch::Default/Div-op0/aclnnDiv_RealDivAiCore_RealDiv": 8,
+      "Kernel::KernelLaunch::Default/Sqrt-op0/aclnnSqrt_SqrtAiCore_Sqrt": 8,
+      "Kernel::KernelLaunch::Default/Add-op1/aclnnAdd_AddAiCore_Add": 8,
+      "Kernel::KernelLaunch::Default/Div-op1/aclnnDiv_RealDivAiCore_RealDiv": 8,
+      "Kernel::KernelLaunch::Default/Mul-op5/aclnnMul_MulAiCore_Mul": 8,
+      "Kernel::KernelLaunch::Default/Mul-op0/aclnnMul_MulAiCore_Mul": 8,
+      "Kernel::KernelLaunch::Default/Sub-op0/aclnnSub_SubAiCore_Sub": 8,
+      "Kernel::KernelLaunch::Default/Mul-op1/aclnnMul_MulAiCore_Mul": 8,
+      "Kernel::KernelLaunch::Default/Sub-op3/aclnnSub_SubAiCore_Sub": 8,
+      "Kernel::KernelLaunch::Default/Assign-op2/Assign3": 8
+    },
+    "duration_sum_us": 7366.366,
+    "interpretation": "diagnostic device tasks only; not normal critical-path or overlap proof"
+  },
+  {
+    "run": "adamw-o1-4096x3072-r0",
+    "source": "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/fragments/runs/adamw-o1-4096x3072-r0/kernel_details-0.csv.gz",
+    "diagnostic_iterations": 8,
+    "tasks": 88,
+    "tasks_per_update": 11.0,
+    "accelerator_core_counts": {
+      "N/A": 88
+    },
+    "tensor_move_tasks_per_update": 4.0,
+    "assign_tasks_per_update": 0.0,
+    "kernel_counts": {
+      "Kernel::KernelLaunch::Default/GraphKernel_AssignAdd-op0/Default/GraphKernel_AssignAdd-op0": 8,
+      "Kernel::KernelLaunch::Default/TensorMove-op0/TensorMove1": 8,
+      "Kernel::KernelLaunch::Default/GraphKernel_Mul_fusion-op0/Default/GraphKernel_Mul_fusion-op0": 8,
+      "Kernel::KernelLaunch::Default/GraphKernel_Mul_Add_Assign_fusion-op0/Default/GraphKernel_Mul_Add_Assign_fusion-op0": 8,
+      "Kernel::KernelLaunch::Default/TensorMove-op1/TensorMove1": 8,
+      "Kernel::KernelLaunch::Default/GraphKernel_Mul_fusion-op1/Default/GraphKernel_Mul_fusion-op1": 8,
+      "Kernel::KernelLaunch::Default/GraphKernel_Addcmul_Assign_fusion-op0/Default/GraphKernel_Addcmul_Assign_fusion-op0": 8,
+      "Kernel::KernelLaunch::Default/TensorMove-op3/TensorMove1": 8,
+      "Kernel::KernelLaunch::Default/TensorMove-op2/TensorMove1": 8,
+      "Kernel::KernelLaunch::Default/GraphKernel_Mul_Sub_Mul_fusion-op0/Default/GraphKernel_Mul_Sub_Mul_fusion-op0": 8,
+      "Kernel::KernelLaunch::Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0/Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0": 8
+    },
+    "duration_sum_us": 5786.477,
+    "interpretation": "diagnostic device tasks only; not normal critical-path or overlap proof"
+  },
+  {
+    "run": "fused-o0-4096x3072-r0",
+    "source": "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/fragments/runs/fused-o0-4096x3072-r0/kernel_details-0.csv.gz",
+    "diagnostic_iterations": 8,
+    "tasks": 24,
+    "tasks_per_update": 3.0,
+    "accelerator_core_counts": {
+      "N/A": 24
+    },
+    "tensor_move_tasks_per_update": 0.0,
+    "assign_tasks_per_update": 1.0,
+    "kernel_counts": {
+      "Kernel::KernelLaunch::Default/AssignAdd-op0/AssignAdd1": 8,
+      "Kernel::KernelLaunch::Default/Cast-op0/aclnnCast_CastAiCore_Cast": 8,
+      "Kernel::KernelLaunch::Default/AdamW-op0/aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2": 8
+    },
+    "duration_sum_us": 878.098,
+    "interpretation": "diagnostic device tasks only; not normal critical-path or overlap proof"
+  }
+]

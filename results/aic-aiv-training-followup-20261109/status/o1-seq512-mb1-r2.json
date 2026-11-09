@@ -1,0 +1,25 @@
+{
+  "name": "o1-seq512-mb1-r2",
+  "stage": "o1-baseline",
+  "jit_level": "O1",
+  "sequence_length": 512,
+  "micro_batch": 1,
+  "replicate": 2,
+  "command": [
+    "/models/npu_nvme_exp/user7-stack/conda/bin/python",
+    "-m",
+    "tools.aic_activity.train_sample",
+    "--source",
+    "/tmp/user7-aic-aiv-training-followup-source",
+    "--config",
+    "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/configs/o1-seq512-mb1-r2.json",
+    "--output",
+    "/dev/shm/user7-aic-aiv-training-followup-20261109/o1-seq512-mb1-r2"
+  ],
+  "source": "/tmp/user7-aic-aiv-training-followup-source",
+  "raw": "/dev/shm/user7-aic-aiv-training-followup-20261109/o1-seq512-mb1-r2",
+  "status": "interrupted_before_preflight",
+  "supervisor_exit_code": 143,
+  "termination_cause": "SIGTERM; sender unknown; no training preflight or rank output",
+  "recovery": "retained distinct supervisor retry"
+}

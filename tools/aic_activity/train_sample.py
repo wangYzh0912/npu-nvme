@@ -34,7 +34,8 @@ def main():
         manifest='/models/npu_nvme_exp/user7-stack/full-closure-abi3-20261021-005/environments.json'
         collector=subprocess.Popen([python,'scripts/run_user_environment.py','--manifest',manifest,'--profile','candidate','--','msprof',
                                     '--output='+str(a.output/'pmu'),'--sys-devices=4,5,6,7','--sys-period=35','--ai-core=on',
-                                    '--aic-mode=sample-based','--aic-freq=100','--aic-metrics=PipeUtilization','--task-time=off','--type=text'],
+                                    '--aic-mode=sample-based','--aic-freq=100','--aic-metrics=PipeUtilization',
+                                    '--sys-hardware-mem=on','--task-time=off','--type=db'],
                                    cwd=a.source,env=env,stdout=collectlog,stderr=subprocess.STDOUT)
         sample_code=collector.wait(timeout=600)
         code=app.wait(timeout=1800)
@@ -58,13 +59,20 @@ def main():
                               collector_device_path=str(devices[0]),pmu_quality=pmu_quality,
                               warmup_cv=statistics.pstdev(before)/statistics.mean(before),profile_overhead_fraction=overhead,
                               windows=[dict(id=f"step-{r['step']}",begin_ns=r['wall_begin_ns'],end_ns=r['wall_end_ns']) for r in selected]))
-        quality='valid' if all(r['profile_overhead_fraction']<=.1 and r['warmup_cv']<=.05 for r in ranks) else 'diagnostic_perturbation_or_stability'
+        quality='valid' if all(abs(r['profile_overhead_fraction'])<=.1 and r['warmup_cv']<=.05 and
+            sum(w['end_ns']-w['begin_ns'] for w in r['windows'])>=30_000_000_000
+            for r in ranks) else 'diagnostic_perturbation_stability_or_short_sampling'
         evidence=dict(status='pass',measurement_quality=quality,training=result,collector_exit=sample_code,ranks=ranks)
         evidence.update(attach_after_step=attach_step,baseline_steps=baseline_steps)
         (a.output/'sample-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n')
         print(json.dumps(evidence),flush=True)
     finally:
-        # Leave ownership with the supervisor; do not release live NPU buffers.
+        # The training entry point owns the device lease and safe teardown.
+        # Observation failure must not orphan a still-running model process.
+        if collector is not None and collector.poll() is None:
+            collector.wait(timeout=600)
+        if app.poll() is None:
+            app.wait(timeout=1800)
         trainlog.close()
 
 if __name__=='__main__':main()

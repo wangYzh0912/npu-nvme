@@ -1,0 +1,24 @@
+{
+  "name": "adamw-o0-4096-r0",
+  "command": [
+    "/models/npu_nvme_exp/user7-stack/conda/bin/python",
+    "/tmp/user7-aic-aiv-training-followup-source/scripts/run_user_environment.py",
+    "--manifest",
+    "/models/npu_nvme_exp/user7-stack/full-closure-abi3-20261021-005/environments.json",
+    "--profile",
+    "candidate",
+    "--",
+    "python",
+    "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/source/training_optimizer_fragment.py",
+    "--output",
+    "/dev/shm/user7-aic-aiv-training-followup-20261109/fragments/adamw-o0-4096-r0",
+    "--mode",
+    "adamw-o0",
+    "--shape",
+    "4096"
+  ],
+  "replicate": 0,
+  "source_sha256": "e4b49c6c4530624f962be901fd48ec3561a9a995a6d763619402becd7c5449f4",
+  "status": "complete",
+  "timing_scope": "ordinary Tensor gradient input; includes transfer overhead, diagnostic for model optimizer"
+}

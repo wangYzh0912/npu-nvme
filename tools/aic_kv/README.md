@@ -169,3 +169,57 @@ owns its hardware lock; do not wrap it in a second flock.
 does not derive runtime readiness from static stream IDs.
 `archive_training_dependency` retains sample counters, identities, quality and
 training outputs, excluding regenerable converted-weight/compiler caches.
+
+## Training JIT and workload investigation (2026-11-09)
+
+Use a fresh isolated copy of the frozen training observation source and apply
+the archived training-matrix.patch. It adds experiment-only jit_level and
+micro_batch inputs; the production checkpoint entry point is unchanged.
+The workload remains Qwen3-8B, TP4/DP1, FP32 parameters/states, BF16 compute,
+sequence parallel and recomputation. Raw outputs use a dedicated tmpfs directory.
+
+training_jit_campaign supports O1/O2 smoke and baseline stages, the O1
+prevalence matrix (seq128/512/2048 x micro-batch1/2 x three independent
+processes), and a single o0-hbm supplemental system control. It refuses
+overwritten outputs. --retry-lock only admits the retained pre-model lock
+rejection and writes a distinct retry directory. Compilation failures are not
+negative performance observations.
+--retry-interrupted separately admits a documented SIGTERM before preflight,
+configuration creation or rank training output; the original attempt remains
+in the failure archive and the retry has a different directory.
+o0-hbm-confirm records an independent same-configuration confirmation if a
+supplemental HBM quality gate fails; the original failed-quality card stays in
+the comparison data. It does not silently replace or relabel the earlier run.
+
+training_fragment_campaign compares installed AdamW O0/O1 and official
+FusedAdamW on three actual parameter-shard shapes. --resident-gradients
+captures the fixed gradient as a device Parameter and records a separate suite.
+The ordinary Tensor-input suite includes repeated input transfers and must not
+be interpreted as resident model optimizer timing. Both check parameter and
+first/second moments against an eight-step Float64 oracle. Diagnostic profiler
+captures follow all unprofiled timing blocks.
+
+Keep model and fragment work in one serial device queue. They share the same
+hardware lock. Do not insert fragments during an offline exporter: the next
+supervised model may already be launching. PMU and HBM share one system
+collector; per-task profiles are separate diagnostic executions. CANN 8.3 HBM
+needs the device-to-host delta from native clock anchors before adding the wall
+clock offset.
+
+training_fragment_audit extracts TensorMove geometry and backward MatMul pairs
+from archived final IR; these do not prove measured traffic or runtime readiness.
+It also preserves the global-clipping AddN/AllReduce path into the optimizer,
+which constrains immediate layerwise optimizer/backward overlap.
+training_jit_report records low-AIC, high-AIV, joint and conditional fractions
+separately and never pools physical cards. training_jit_render emits standalone
+figures and a report. training_jit_finish checks required matrix/fragment
+completeness, refuses active devices or leases, and writes bounded manifests.
+training_counter_replay reconstructs PMU SQLite inputs from retained replay0
+columns and rebuilds PMU/HBM tables without reading the original raw directory.
+Finalization runs this archive-only replay before freezing the package.
+training_model_fragment uses the existing training activity_profile hook for
+a short separate O1 task diagnostic. training_model_fragment_report joins
+scoped kernels to native task types by stream, task ID and exact timestamp,
+checks all native tasks overlapping the optimizer tail (including boundary
+crossers), and draws a phase/task figure. Its high profiling overhead excludes
+it from the normal PMU matrix and normal critical-path claims.

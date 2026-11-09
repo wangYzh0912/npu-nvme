@@ -1,5 +1,6 @@
 """Archive completed graph/PMU observations without weight/compiler caches."""
 import argparse
+import configparser
 import csv
 import gzip
 import hashlib
@@ -12,7 +13,25 @@ from .coordination import ROOT
 from .reduce import export_pmu
 
 
-def archive(run,output):
+def cann83_hbm_clock(device,wall_offset):
+    """Match CANN 8.3 HBM viewer: raw DB + get_delta_time + wall offset."""
+    device=Path(device)
+    host=next(p for p in device.glob('host_start.log.*') if not p.name.endswith('.done'))
+    dev=next(p for p in device.glob('dev_start.log.*') if not p.name.endswith('.done'))
+    info=next(p for p in device.glob('info.json.*') if not p.name.endswith('.done'))
+    parser=configparser.ConfigParser();parser.read(host)
+    row=dict(parser.items(parser.sections()[0]))
+    freq=float(json.loads(info.read_text())['CPU'][0]['Frequency'])*1e6
+    if freq<=0:raise ValueError('invalid host counter frequency')
+    host_mon=int(row['clock_monotonic_raw'])+round(int(row['cntvct_diff'])*1e9/freq)
+    fields=dict(line.split(':',1) for line in dev.read_text().splitlines() if ':' in line)
+    delta=host_mon-int(fields['clock_monotonic_raw'])
+    return dict(offset_ns=wall_offset+delta,device_to_host_delta_ns=delta,
+                wall_offset_ns=wall_offset,source='CANN 8.3 HBM viewer get_delta_time()',
+                anchors=[str(host),str(dev),str(info)])
+
+
+def archive(run,output, *, include_hbm=False):
     output.mkdir(parents=True,exist_ok=True)
     quality=json.loads((run/'sample-evidence.json').read_text())
     if json.loads((run/'result.json').read_text())['validation_status']!='pass':
@@ -22,7 +41,9 @@ def archive(run,output):
         shutil.copy2(run/name,output/name)
     for rank,row in enumerate(quality['ranks']):
         target=output/f'rank{rank}';target.mkdir(exist_ok=True)
-        for name in ('training.json','resolved-config.json','state-initial.json','state-step-96.json','control-initial.json','control-step-96.json'):
+        final_step=json.loads((run/'result.json').read_text())['final_step']
+        for name in ('training.json','resolved-config.json','state-initial.json',f'state-step-{final_step}.json',
+                     'control-initial.json',f'control-step-{final_step}.json'):
             p=run/f'rank_{rank}'/name
             if p.exists():shutil.copy2(p,target/name)
         device=Path(row['collector_device_path'])
@@ -42,6 +63,16 @@ def archive(run,output):
             for p in device.glob(pattern):
                 if not p.name.endswith('.done'):shutil.copy2(p,target/p.name)
         (target/'counter-input-manifest.json').write_text(json.dumps(manifests,indent=2)+'\n')
+        if include_hbm:
+            from .hbm import export as hbm_export
+            source=device/'sqlite/hbm.db'
+            with source.open('rb') as f,gzip.open(target/'hbm.db.gz','wb') as g:
+                shutil.copyfileobj(f,g)
+            clock=cann83_hbm_clock(device,row['pmu_quality']['clock_offset_ns'])
+            hbm_export(device,target/'hbm',row['windows'],clock_offset_ns=clock['offset_ns'])
+            (target/'hbm-clock.json').write_text(json.dumps(clock,indent=2)+chr(10))
+            for anchor in clock['anchors']:
+                shutil.copy2(anchor,target/Path(anchor).name)
     print('ARCHIVED',run.name,flush=True)
 
 

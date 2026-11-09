@@ -1,0 +1,374 @@
+
+
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>整体架构 &#124; MindSpore Transformers master 文档 &#124; 昇思MindSpore社区</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <script src="/check-dark-mode.js"></script>
+      
+      <script src="/doc-lib/jquery.js"></script>
+      
+      
+      
+      
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      
+      
+        <script src="../_static/documentation_options.js?v=c257942d"></script>
+      
+      
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+      
+      
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      
+      
+        <script src="../_static/translations.js?v=beaddf03"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="模型支持库" href="models.html" />
+    <link rel="prev" title="快速开始" href="../quick_start/quick_start.html" /> 
+  <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MindSpore","item":"https://www.mindspore.cn/"},{"@type":"ListItem","position":2,"name":"整体架构","item":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/introduction/overview.html"}]},{"@context":"https://schema.org","@type":"TechArticle","headline":"整体架构","description":"MindSpore Transformers 自 **r2.0.0** 起以 **动态图（PyNative）实现** 作为演进主线。本章介绍动态图训练栈的整体架构、核心模块与训练能力，并给出最小落地入口。","author":{"@type":"Organization","name":"MindSpore"},"publisher":{"@type":"Organization","name":"MindSpore"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/introduction/overview.html"}}]</script>
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            MindSpore Transformers
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">介绍</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quick_start/quick_start.html">快速开始</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">整体架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#概述">概述</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#执行流程">执行流程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#模块分层">模块分层</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#核心模块">核心模块</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#配置模块的-dataclass">配置模块的 dataclass</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#分布式模块的能力">分布式模块的能力</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#模型架构">模型架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#训练能力">训练能力</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#相关文档">相关文档</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">模型支持库</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">安装</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">安装指南</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">训练指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/training.html">训练指南</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">功能特性</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../feature/overview.html">功能特性概述</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/start_task.html">启动任务</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/configuration.html">配置文件说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/logging.html">日志</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/dataset.html">数据集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/training_hyperparameters.html">训练超参数与优化器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/parallel_training.html">分布式并行训练</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/memory_optimization.html">训练显存优化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/save_load_checkpoint.html">权重保存与加载</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/resume_training.html">断点续训</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/finetune.html">全参微调与 LoRA 微调</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/monitor.html">训练指标监控与 Profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/other_training_features.html">其它训练特性</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../feature/static_graph_features.html">静态图实现特性</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">环境变量</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../env_variables.html">环境变量说明</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">贡献指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribution/mindformers_contribution.html">MindSpore Transformers贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution/modelers_contribution.html">魔乐社区贡献指南</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../faq/model_related.html">模型相关 FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq/feature_related.html">功能相关 FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">静态图实现（Deprecated）</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/introduction/overview.html">整体架构</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/guide/index.html">大模型全流程指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/feature/index.html">功能特性</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/advanced_development/index.html">高阶开发</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/example/index.html">优秀实践</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/env_variables.html">环境变量说明</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MindSpore Transformers</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a> &raquo;</li>
+      <li class="breadcrumb-item active">整体架构</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/introduction/overview.md.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="整体架构">
+<h1>整体架构<a class="headerlink" href="#整体架构" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://atomgit.com/mindspore/docs/blob/master/docs/mindformers/docs/source_zh_cn/introduction/overview.md"><img alt="查看源文件" src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.svg" /></a></p>
+<p>MindSpore Transformers 自 <strong>r2.0.0</strong> 起以 <strong>动态图（PyNative）实现</strong> 作为演进主线。本章介绍动态图训练栈的整体架构、核心模块与训练能力，并给出最小落地入口。</p>
+<blockquote>
+<div><p><strong>动态图的能力边界</strong></p>
+<ul class="simple">
+<li><p>动态图实现源码位于 <code class="docutils literal notranslate"><span class="pre">mindformers/pynative/</span></code>。</p></li>
+<li><p>当前动态图聚焦 <strong>预训练/微调</strong> 训练场景；尚未覆盖的能力由静态图承载，详见 <a class="reference internal" href="../static_graph/introduction/overview.html"><span class="std std-doc">静态图实现</span></a>。</p></li>
+</ul>
+</div></blockquote>
+<p>下图为动态图训练栈的整体架构：自顶向下由<strong>入口层</strong>（<code class="docutils literal notranslate"><span class="pre">run_mindformer.py</span> <span class="pre">--mode</span> <span class="pre">1</span></code>）经<strong>总控层</strong>（<code class="docutils literal notranslate"><span class="pre">Trainer</span></code>）路由到 MindSpore Transformers 动态图训练栈，其中「模型架构」（GPTModel → transformers → layers）、「训练组件」（配置/优化器/损失/回调/工具）与「分布式」（多维并行 + 显存优化）三部分构成核心能力，最终落到 MindSpore、CANN 与昇腾 AI 硬件之上。</p>
+<p><img alt="MindSpore Transformers 动态图（PyNative）整体架构" src="../_images/overall_architecture_pynative.svg" /></p>
+<p>图中 Hyper-Parallel 表示超并行层；DP、TP、PP、CP、EP、SP 分别表示数据并行、张量并行、流水线并行、上下文并行、专家并行和序列并行；FSDP、HSDP 分别表示完全分片数据并行和混合分片数据并行。</p>
+<section id="概述">
+<h2>概述<a class="headerlink" href="#概述" title="Link to this heading"></a></h2>
+<p>动态图实现采用 <strong>分层、模块化</strong> 的设计：</p>
+<ul class="simple">
+<li><p><strong>入口层</strong>：统一脚本 <code class="docutils literal notranslate"><span class="pre">run_mindformer.py</span></code>，通过 <code class="docutils literal notranslate"><span class="pre">--mode</span> <span class="pre">1</span></code> 路由到动态图训练器（源码 <code class="docutils literal notranslate"><span class="pre">run_mindformer.py</span></code> 中 <code class="docutils literal notranslate"><span class="pre">config.mode</span> <span class="pre">==</span> <span class="pre">1</span></code> 分支）。</p></li>
+<li><p><strong>总控层</strong>：<code class="docutils literal notranslate"><span class="pre">mindformers.pynative.trainer.Trainer</span></code> 负责构建模型/数据集/优化器，并驱动训练循环。</p></li>
+<li><p><strong>配置层</strong>：以数据类（dataclass）形式集中管理 YAML 配置，加载时完成解析与校验。</p></li>
+<li><p><strong>能力层</strong>：基于 MindSpore 的动态图能力实现多维并行、融合算子与显存优化。</p></li>
+</ul>
+<p>下面先看一张「执行流程图」，再看一张「模块分层图」。</p>
+<section id="执行流程">
+<h3>执行流程<a class="headerlink" href="#执行流程" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>run_mindformer.py --mode 1            # 入口，PYNATIVE_MODE 路由
+        │
+        ▼
+mindformers.pynative.trainer.Trainer  # 构建模型/数据集/优化器，驱动训练循环
+        │
+        ├── config/        YAML → dataclass 配置体系
+        ├── base_models/   GPTModel（Dense/MoE 统一接口）
+        ├── distributed/   多维并行与显存优化
+        ├── optimizer/     AdamW/Muon
+        ├── loss/          融合交叉熵
+        ├── callback/      权重保存、Loss/指标监控
+        └── tools/         监控与 Profiling
+</pre></div>
+</div>
+</section>
+<section id="模块分层">
+<h3>模块分层<a class="headerlink" href="#模块分层" title="Link to this heading"></a></h3>
+<p>模型侧自上而下分为「模型 → Transformer 组件 → 基础层」三层，与下方核心模块表一一对应：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>base_models/gpt/  GPTModel（Dense/MoE 统一接口，ModuleSpec 组装）
+        │
+        ▼
+transformers/     Attention · MLA · MTP · TransformerLayer/Block · MLP · MoE
+        │                                   (router/experts/shared_experts)
+        ▼
+layers/           Linear · RMSNorm · SwiGlu · FlashAttention · 掩码生成
+</pre></div>
+</div>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">base_models/common/embeddings</span></code> 提供 RoPE、YaRN 等位置编码，供上述各层调用。</p>
+</div></blockquote>
+</section>
+</section>
+<section id="核心模块">
+<h2>核心模块<a class="headerlink" href="#核心模块" title="Link to this heading"></a></h2>
+<p>动态图实现各子模块及其职责如下：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>模块</p></th>
+<th class="head"><p>路径</p></th>
+<th class="head"><p>职责</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>训练器</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/trainer/</span></code></p></td>
+<td><p>训练总控 <code class="docutils literal notranslate"><span class="pre">Trainer</span></code>：构建模型/数据/优化器，执行前反向、梯度同步、保存与状态跟踪。</p></td>
+</tr>
+<tr class="row-odd"><td><p>配置</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/config/</span></code></p></td>
+<td><p>以 dataclass 集中管理配置，支持从 YAML 加载与校验。</p></td>
+</tr>
+<tr class="row-even"><td><p>分布式</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/distributed/</span></code></p></td>
+<td><p>多维并行的设备网格构建与切分，以及多种显存优化。</p></td>
+</tr>
+<tr class="row-odd"><td><p>优化器</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/optimizer/</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">AdamW</span></code> 与 <code class="docutils literal notranslate"><span class="pre">Muon</span></code> 优化器实现，支持分布式同步与混合精度。</p></td>
+</tr>
+<tr class="row-even"><td><p>损失</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/loss/</span></code></p></td>
+<td><p>动态图融合交叉熵 <code class="docutils literal notranslate"><span class="pre">CrossEntropyLoss</span></code>，由自定义 <code class="docutils literal notranslate"><span class="pre">_LogSoftmax</span></code> + <code class="docutils literal notranslate"><span class="pre">_NLLLoss</span></code>（含手写反向）实现。</p></td>
+</tr>
+<tr class="row-odd"><td><p>基础模型</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/base_models/gpt/</span></code></p></td>
+<td><p>通用 <code class="docutils literal notranslate"><span class="pre">GPTModel</span></code>，统一支持 Dense 与 MoE，配合 <code class="docutils literal notranslate"><span class="pre">ModuleSpec</span></code> 机制按配置搭建模型；<code class="docutils literal notranslate"><span class="pre">common/embeddings</span></code> 提供 RoPE、YaRN 等位置编码。</p></td>
+</tr>
+<tr class="row-even"><td><p>Transformer 组件</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/transformers/</span></code></p></td>
+<td><p>Attention、MLA、MTP、TransformerLayer/Block、MLP 及 MoE 子模块。</p></td>
+</tr>
+<tr class="row-odd"><td><p>基础层</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/layers/</span></code></p></td>
+<td><p>Linear、LayerNorm/RMSNorm、SwiGlu、Flash Attention、掩码生成等融合算子。</p></td>
+</tr>
+<tr class="row-even"><td><p>回调</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/callback/</span></code></p></td>
+<td><p>Checkpoint 保存、Loss 监控、训练指标监控、MaxLogits 健康监测。</p></td>
+</tr>
+<tr class="row-odd"><td><p>工具</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pynative/tools/</span></code></p></td>
+<td><p>指标监控聚合（<code class="docutils literal notranslate"><span class="pre">MonitorGroup</span></code>）与 Profiling。</p></td>
+</tr>
+</tbody>
+</table>
+<p>下面对单元格信息较多的「配置」与「分布式」两个模块展开说明。</p>
+<section id="配置模块的-dataclass">
+<h3>配置模块的 dataclass<a class="headerlink" href="#配置模块的-dataclass" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">pynative/config/</span></code> 将 YAML 各段映射为独立的数据类，便于校验与默认值管理。常用配置类：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>dataclass</p></th>
+<th class="head"><p>对应职责</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CheckpointConfig</span></code></p></td>
+<td><p>权重保存/加载</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TrainingConfig</span></code></p></td>
+<td><p>训练步数、批大小、梯度累积等训练参数</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ParallelismConfig</span></code></p></td>
+<td><p>多维并行维度</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">OptimizerConfig</span></code></p></td>
+<td><p>优化器类型与超参</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LrSchedulerConfig</span></code></p></td>
+<td><p>学习率策略</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></p></td>
+<td><p>模型结构参数</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MonitorConfig</span></code></p></td>
+<td><p>指标监控与可视化</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="分布式模块的能力">
+<h3>分布式模块的能力<a class="headerlink" href="#分布式模块的能力" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">pynative/distributed/</span></code> 同时承担「并行切分」与「显存优化」两类职责：</p>
+<ul class="simple">
+<li><p><strong>并行维度</strong>：数据并行（Data Parallel，DP，包含完全分片数据并行 FSDP 和混合分片数据并行 HSDP）、张量并行（Tensor Parallel，TP）、流水线并行（Pipeline Parallel，PP）、上下文并行（Context Parallel，CP）、专家并行（Expert Parallel，EP）和序列并行（Sequence Parallel，SP）。设备网格依据各维度乘积构建，满足 <code class="docutils literal notranslate"><span class="pre">dp_replicate</span> <span class="pre">*</span> <span class="pre">dp_shard</span> <span class="pre">*</span> <span class="pre">cp</span> <span class="pre">*</span> <span class="pre">tp</span> <span class="pre">*</span> <span class="pre">pp</span> <span class="pre">==</span> <span class="pre">world_size</span></code>（<code class="docutils literal notranslate"><span class="pre">parallel_dims.py</span></code>）。</p></li>
+<li><p><strong>显存优化</strong>：重计算（activation checkpoint）、细粒度 SWAP。</p></li>
+</ul>
+<blockquote>
+<div><p><strong>关于 LoRA</strong></p>
+<p>动态图 LoRA 实现在 <code class="docutils literal notranslate"><span class="pre">pynative/pet/</span></code>，支持为普通 <code class="docutils literal notranslate"><span class="pre">Linear</span></code> 和 MoE 路由专家 <code class="docutils literal notranslate"><span class="pre">GroupedMLP</span></code> 注入适配器，并支持仅适配器保存、断点续训和权重合并。配置及使用方法见<a class="reference internal" href="../feature/finetune.html"><span class="std std-doc">全参微调与 LoRA 微调</span></a>。</p>
+</div></blockquote>
+</section>
+</section>
+<section id="模型架构">
+<h2>模型架构<a class="headerlink" href="#模型架构" title="Link to this heading"></a></h2>
+<p>动态图采用 <strong>分层抽象 + 模块化</strong> 的设计：以 <code class="docutils literal notranslate"><span class="pre">GPTModel</span></code>（General PreTrained Model）为统一模型接口，向下组合 <code class="docutils literal notranslate"><span class="pre">TransformerBlock</span></code>、<code class="docutils literal notranslate"><span class="pre">MoELayer</span></code>、<code class="docutils literal notranslate"><span class="pre">Attention</span></code>、<code class="docutils literal notranslate"><span class="pre">Linear</span></code>、<code class="docutils literal notranslate"><span class="pre">Embedding</span></code>、<code class="docutils literal notranslate"><span class="pre">Norm</span></code> 等模块化接口，并通过 <code class="docutils literal notranslate"><span class="pre">ModuleSpec</span></code> 机制自由组合搭建模型。所有模块基于 MindSpore 动态图进行了并行与算子融合优化。</p>
+<p>动态图已覆盖 Dense 与 MoE（含 MLA、MTP）两类模型结构，已实现的模型清单见 <a class="reference internal" href="models.html"><span class="std std-doc">模型支持库</span></a>。</p>
+</section>
+<section id="训练能力">
+<h2>训练能力<a class="headerlink" href="#训练能力" title="Link to this heading"></a></h2>
+<p>动态图训练栈提供以下能力（各能力一览见 <a class="reference internal" href="../feature/overview.html"><span class="std std-doc">功能特性概述</span></a>）：</p>
+<ul class="simple">
+<li><p><strong>多维混合并行</strong>：数据并行（含 FSDP/HSDP 参数切分）、张量并行（TP）、流水线并行（PP，支持 1F1B 与 interleave）、上下文并行（CP，Colossal 方法）、专家并行（EP）与序列并行（SP）的灵活组合。</p></li>
+<li><p><strong>优化器与学习率</strong>：AdamW、Muon；多种带 warmup 的学习率策略。</p></li>
+<li><p><strong>数据集</strong>：Megatron 多源混合数据集（<code class="docutils literal notranslate"><span class="pre">BlendedMegatronDatasetDataLoader</span></code>，预处理后的 <code class="docutils literal notranslate"><span class="pre">.bin</span></code>/<code class="docutils literal notranslate"><span class="pre">.idx</span></code>）。</p></li>
+<li><p><strong>显存优化</strong>：重计算（全量/选择性）、细粒度 SWAP。</p></li>
+<li><p><strong>权重</strong>：Safetensors 格式的分片保存与加载，支持异步保存与冗余消除。</p></li>
+<li><p><strong>稳定性与可观测</strong>：断点续训、梯度/参数范数与 Loss 监控、MaxLogits 数值健康监测与 Profiling。</p></li>
+</ul>
+</section>
+<section id="相关文档">
+<h2>相关文档<a class="headerlink" href="#相关文档" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>安装并验证 MindSpore Transformers：<a class="reference internal" href="../installation.html"><span class="std std-doc">安装指南</span></a></p></li>
+<li><p>已支持的模型：<a class="reference internal" href="models.html"><span class="std std-doc">模型支持库</span></a></p></li>
+<li><p>静态图提供的能力（推理/量化等）：<a class="reference internal" href="../static_graph/introduction/overview.html"><span class="std std-doc">静态图实现</span></a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="../quick_start/quick_start.html" class="btn btn-neutral float-left" title="快速开始" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="models.html" class="btn btn-neutral float-right" title="模型支持库" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 MindSpore.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

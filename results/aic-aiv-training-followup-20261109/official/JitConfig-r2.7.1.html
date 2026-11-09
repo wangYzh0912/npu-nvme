@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mindspore.JitConfig &#124; MindSpore 2.7.1 文档 &#124; 昇思MindSpore社区</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script><script src="/doc-lib/jquery.js"></script>
+        <script src="/check-dark-mode.js"></script><script src="../../_static/js/theme.js"></script><script src="/doc-lib/underscore.js"></script><script src="../../_static/doctools.js"></script><script src="../../_static/translations.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="mindspore.jit" href="mindspore.jit.html" />
+    <link rel="prev" title="mindspore.recompute" href="mindspore.recompute.html" /> 
+  <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MindSpore","item":"https://www.mindspore.cn/"},{"@type":"ListItem","position":2,"name":"mindspore.JitConfig","item":"https://www.mindspore.cn/docs/zh-CN/r2.7.1/api_python/mindspore/mindspore.JitConfig.html"}]},{"@context":"https://schema.org","@type":"TechArticle","headline":"mindspore.JitConfig","description":"*class* mindspore.JitConfig(*jit\\_level\\=''*, *exc\\_mode\\='auto'*, *jit\\_syntax\\_level\\=''*, *debug\\_level\\='RELEASE'*, *infer\\_boost\\='off'*, *\\*\\*kwargs*)[\\[源…","author":{"@type":"Organization","name":"MindSpore"},"publisher":{"@type":"Organization","name":"MindSpore"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://www.mindspore.cn/docs/zh-CN/r2.7.1/api_python/mindspore/mindspore.JitConfig.html"}}]</script>
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> MindSpore
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="在文档中搜索" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../mindspore.html">mindspore</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.ops.html">mindspore.ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.nn.html">mindspore.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.mint.html">mindspore.mint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.common.initializer.html">mindspore.common.initializer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.amp.html">mindspore.amp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.train.html">mindspore.train</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.parallel.html">mindspore.parallel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.runtime.html">mindspore.runtime</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.device_context.html">mindspore.device_context</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.communication.html">mindspore.communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.dataset.html">mindspore.dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.numpy.html">mindspore.numpy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.scipy.html">mindspore.scipy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.multiprocessing.html">mindspore.multiprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.tools.html">mindspore.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.utils.html">mindspore.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.experimental.html">mindspore.experimental</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.ops.primitive.html">mindspore.ops.primitive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.boost.html">mindspore.boost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.nn.probability.html">mindspore.nn.probability</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.rewrite.html">mindspore.rewrite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mindspore.hal.html">mindspore.hal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../env_var_list.html">环境变量</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../note/api_mapping/pytorch_api_mapping.html">PyTorch与MindSpore API映射表</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MindSpore</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">API 文档</a> &raquo;</li>
+          <li><a href="../mindspore.html">mindspore</a> &raquo;</li>
+      <li>mindspore.JitConfig</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api_python/mindspore/mindspore.JitConfig.rst.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section id="mindspore-jitconfig">
+<h1>mindspore.JitConfig<a class="headerlink" href="#mindspore-jitconfig" title="永久链接至标题"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="mindspore.JitConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mindspore.</span></span><span class="sig-name descname"><span class="pre">JitConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jit_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exc_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit_syntax_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RELEASE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infer_boost</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'off'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://gitee.com/mindspore/mindspore/blob/v2.7.1/mindspore/python/mindspore/common/jit_config.py#L17"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#mindspore.JitConfig" title="打开链接"></a></dt>
+<dd><p>编译时所使用的JitConfig配置项。</p>
+<dl class="simple">
+<dt>参数：</dt><dd><ul class="simple">
+<li><p><strong>jit_level</strong> (str, 可选) - 用于控制编译优化等级，支持[&quot;O0&quot;, &quot;O1&quot;, &quot;O2&quot;]。默认值： <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> ，框架自动选择执行方式。不推荐使用，建议使用JIT装饰器。</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;O0&quot;</span></code>: 除影响功能的必要优化外，其他优化均关闭，使用逐算子执行的执行方式。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;O1&quot;</span></code>: 使能常用优化和自动算子融合优化，使用逐算子执行的执行方式。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;O2&quot;</span></code>: 使用CANN中名为GraphEngine的图编译执行引擎，进行面向Ascend的模型编译与执行。注意：O2只支持Ascend硬件静态图模式，仅支持整图下沉或者流水线并行下的子图下沉，且不支持动态shape场景。另外，该模式有额外的编译开销以及不易调试调优。</p></li>
+</ul>
+</li>
+<li><p><strong>exc_mode</strong> (str, 可选) - 用于控制模型的执行方式，目前仅支持 <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>。默认值： <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code> 。</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>: 框架自动选择执行方式。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;sink&quot;</span></code>: 支持网络整体一次下发加载到device上，后续由输入驱动执行，无需逐个算子遍历下发，以便取得更好的执行性能。该模式仅在昇腾后端支持。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;no_sink&quot;</span></code>: 网络模型按照单算子逐个异步下发的方式执行。</p></li>
+</ul>
+</li>
+<li><p><strong>jit_syntax_level</strong> (str, 可选) - 设置JIT语法支持级别，其值必须为 <code class="docutils literal notranslate"><span class="pre">&quot;STRICT&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;LAX&quot;</span></code> 或 <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> 。
+默认是空字符串，表示忽略该项JitConfig配置，将使用ms.context的jit_syntax_level，ms.context请参考
+<a class="reference external" href="https://www.mindspore.cn/docs/zh-CN/r2.7.1/api_python/mindspore/mindspore.set_context.html">set_context</a> 。
+默认值： <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> 。</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;STRICT&quot;</span></code>: 仅支持基础语法，且执行性能最佳。可用于MindIR导入导出。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;LAX&quot;</span></code>: 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。由于存在可能无法导出的语法，不能用于MindIR导入导出。</p></li>
+</ul>
+</li>
+<li><p><strong>debug_level</strong> (int) - 设置调试过程的配置。其值必须为 <code class="docutils literal notranslate"><span class="pre">RELEASE</span></code> 或 <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> 。默认值： <code class="docutils literal notranslate"><span class="pre">RELEASE</span></code> 。</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">RELEASE</span></code> : 正常场景下使用，一些调试信息会被丢弃以获取一个较好的编译性能。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> : 当错误发生时，用来调试，在编译过程中，更多的调试信息会被记录下来。</p></li>
+</ul>
+</li>
+<li><p><strong>infer_boost</strong> (str, 可选): 使能推理加速模式。
+只能设置为 <code class="docutils literal notranslate"><span class="pre">&quot;on&quot;</span></code> 或 <code class="docutils literal notranslate"><span class="pre">&quot;off&quot;</span></code>。 默认设置为 &quot;off&quot;，表示关闭推理加速。
+当使能了推理加速模式，MindSpore会优先使用高性能算子库，并优化运行时，提高推理性能。
+注意：当前推理加速模式只能在 <cite>jit_level</cite> 设为 <code class="docutils literal notranslate"><span class="pre">&quot;O0&quot;</span></code> 时使用，且仅支持Atlas A2系列产品。</p></li>
+<li><p><strong>kwargs</strong> (dict) - 关键字参数字典。</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>样例：</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">mindspore</span><span class="w"> </span><span class="kn">import</span> <span class="n">JitConfig</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">jitconfig</span> <span class="o">=</span> <span class="n">JitConfig</span><span class="p">(</span><span class="n">jit_level</span><span class="o">=</span><span class="s2">&quot;O1&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Define the network structure of LeNet5. Refer to</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># https://gitee.com/mindspore/docs/blob/r2.7.1/docs/mindspore/code/lenet.py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">net</span> <span class="o">=</span> <span class="n">LeNet5</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">net</span><span class="o">.</span><span class="n">set_jit_config</span><span class="p">(</span><span class="n">jitconfig</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mindspore.recompute.html" class="btn btn-neutral float-left" title="mindspore.recompute" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="mindspore.jit.html" class="btn btn-neutral float-right" title="mindspore.jit" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 MindSpore.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用了 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a>开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+</body>
+</html>

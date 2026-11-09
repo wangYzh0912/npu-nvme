@@ -1,0 +1,824 @@
+<!doctype html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <meta name="search_title" content="">
+ </head>
+ <body>
+  <a name="ZH-CN_TOPIC_0000002693279709"></a><a name="ZH-CN_TOPIC_0000002693279709"></a>
+  <h1 class="topictitle1">msprof（timeline数据总表）</h1>
+  <div id="body0000001751419248">
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section5889102116569">
+    <h4 class="sectiontitle"><span class="ddd" id="ZH-CN_TOPIC_0000002693279709__ph764162117337">产品支持情况</span></h4>
+    <div class="note" id="ZH-CN_TOPIC_0000002693279709__note194851329182711">
+     <img src="public_sys-resources/note_3.0-zh-cn.png"><span class="notetitle"> </span>
+     <div class="notebody">
+      <p id="ZH-CN_TOPIC_0000002693279709__p19485929192720">AI处理器与昇腾产品的对应关系，请参见《<a href="https://www.hiascend.com/document/detail/zh/AscendFAQ/ProduTech/productform/hardwaredesc_0001.html" target="_blank" rel="noopener noreferrer">昇腾产品形态说明</a>》</p>
+     </div>
+    </div>
+    <div class="tablenoborder">
+     <table cellpadding="4" cellspacing="0" summary="" id="ZH-CN_TOPIC_0000002693279709__table38301303189" frame="border" border="1" rules="all">
+      <thead align="left">
+       <tr id="ZH-CN_TOPIC_0000002693279709__row20831180131817">
+        <th align="left" class="cellrowborder" valign="top" width="57.99999999999999%" id="mcps1.3.1.3.1.3.1.1">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1883113061818">AI处理器类型</p></th>
+        <th align="center" class="cellrowborder" valign="top" width="42%" id="mcps1.3.1.3.1.3.1.2">
+         <p id="ZH-CN_TOPIC_0000002693279709__p783113012187">是否支持</p></th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row6867141031614">
+        <td class="cellrowborder" valign="top" width="57.99999999999999%" headers="mcps1.3.1.3.1.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p88571245496"><span id="ZH-CN_TOPIC_0000002693279709__ph669162205014"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595">
+            Ascend 950PR
+           </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918">
+            Ascend 950DT
+           </term></span></p></td>
+        <td class="cellrowborder" align="center" valign="top" width="42%" headers="mcps1.3.1.3.1.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p8439114411116">√</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row220181016240">
+        <td class="cellrowborder" valign="top" width="57.99999999999999%" headers="mcps1.3.1.3.1.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p48327011813"><span id="ZH-CN_TOPIC_0000002693279709__ph135301222165118"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term1253731311225">
+            Atlas A3 训练系列产品
+           </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term131434243115">
+            Atlas A3 推理系列产品
+           </term></span></p></td>
+        <td class="cellrowborder" align="center" valign="top" width="42%" headers="mcps1.3.1.3.1.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p7948163910184">√</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row173226882415">
+        <td class="cellrowborder" valign="top" width="57.99999999999999%" headers="mcps1.3.1.3.1.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p14832120181815"><span id="ZH-CN_TOPIC_0000002693279709__ph6757111455118"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term11962195213215">
+            Atlas A2 训练系列产品
+           </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term184716139811">
+            Atlas A2 推理系列产品
+           </term></span></p></td>
+        <td class="cellrowborder" align="center" valign="top" width="42%" headers="mcps1.3.1.3.1.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1621631103919">√</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row103361763242">
+        <td class="cellrowborder" valign="top" width="57.99999999999999%" headers="mcps1.3.1.3.1.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1983180181813"><span id="ZH-CN_TOPIC_0000002693279709__ph112210432509"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term354143892110">
+            Atlas 200I/500 A2 推理产品
+           </term></span></p></td>
+        <td class="cellrowborder" align="center" valign="top" width="42%" headers="mcps1.3.1.3.1.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1792121917386">√</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row18403312418">
+        <td class="cellrowborder" valign="top" width="57.99999999999999%" headers="mcps1.3.1.3.1.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p78319051815"><span id="ZH-CN_TOPIC_0000002693279709__ph146812514508"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term4363218112215">
+            Atlas 推理系列产品
+           </term></span></p></td>
+        <td class="cellrowborder" align="center" valign="top" width="42%" headers="mcps1.3.1.3.1.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p15680192411383">√</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row17253142120252">
+        <td class="cellrowborder" valign="top" width="57.99999999999999%" headers="mcps1.3.1.3.1.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p38313021813"><span id="ZH-CN_TOPIC_0000002693279709__ph20790195975011"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term71949488213">
+            Atlas 训练系列产品
+           </term></span></p></td>
+        <td class="cellrowborder" align="center" valign="top" width="42%" headers="mcps1.3.1.3.1.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p91838282385">√</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+   <p id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000001152859011_zh-cn_topic_0302005163_zh-cn_topic_0290106134_p1068292912460">timeline数据总表文件为msprof_*.json。</p>
+   <p id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000001152859011_zh-cn_topic_0302005163_p20700151761510">msprof_*.json在<span class="uicontrol" id="ZH-CN_TOPIC_0000002693279709__uicontrol546944772219">“chrome://tracing”</span>中展示如下。</p>
+   <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig10608132131617">
+    <a name="ZH-CN_TOPIC_0000002693279709__fig10608132131617"></a><a name="fig10608132131617"></a><span class="figcap"><b>图1 </b>timeline汇总展示</span>
+    <br><span><img id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000001152859011_image1747775513548" src="figure/zh-cn_image_0000002663240008.png"></span>
+    <p id="ZH-CN_TOPIC_0000002693279709__p10953172315125">如<a href="#ZH-CN_TOPIC_0000002693279709__fig10608132131617">图1</a>所示，timeline汇总数据主要展示如下区域：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul5518124761510">
+     <li id="ZH-CN_TOPIC_0000002693279709__li3518144721513">区域1：应用层数据，包含上层应用运行的耗时信息，需要使用msproftx采集或其他框架场景采集。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li1851894721515">区域2：CANN层数据，主要包含Runtime等组件以及Node（算子）的耗时数据。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li18518104761519">区域3：底层NPU数据，主要包含Ascend Hardware下各个Stream任务流的耗时数据和迭代轨迹数据、Communication和Overlap Analysis通信数据以及其他<span id="ZH-CN_TOPIC_0000002693279709__ph16601959172111">AI处理器</span>系统数据。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li651815472155">区域4：展示timeline中各算子、接口的详细信息（单击各个timeline时展示）。</li>
+    </ul>
+    <div class="note" id="ZH-CN_TOPIC_0000002693279709__note1250827142117">
+     <img src="public_sys-resources/note_3.0-zh-cn.png"><span class="notetitle"> </span>
+     <div class="notebody">
+      <ul id="ZH-CN_TOPIC_0000002693279709__ul1486356311">
+       <li id="ZH-CN_TOPIC_0000002693279709__li1191144714329">timeline数据总表的数据在<a href="atlasprofiling_16_0056.html">性能数据文件参考</a>均有对应数据的详细介绍。</li>
+       <li id="ZH-CN_TOPIC_0000002693279709__li193931451113218">上图中各区域的数据与采集场景有关，例如区域1仅在msproftx或其他框架场景采集时生成；Communication和Overlap Analysis通信数据仅在多卡、多节点或集群等存在通信的场景可采集到数据等。请以采集数据实际情况为准。</li>
+       <li id="ZH-CN_TOPIC_0000002693279709__li124861151535">msprof_*.json展示的数据是迭代内的数据，迭代外的数据不展示。</li>
+      </ul>
+     </div>
+    </div>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section174114535213">
+    <h4 class="sectiontitle">查看算子下发方向</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p155771931288">在tracing中查看.json文件时，开启<span class="parmname" id="ZH-CN_TOPIC_0000002693279709__parmname1926031123314">“Flow events”</span>下的选项后，应用层算子到NPU算子之间通过连线方式展示下发到执行的对应关系。如<a href="#ZH-CN_TOPIC_0000002693279709__fig490591821019">图2</a>所示。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p149412323711">主要包括的对应关系有：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul1363711419439">
+     <li id="ZH-CN_TOPIC_0000002693279709__li11637914194314">async_npu：应用层算子 &gt; Ascend Hardware的NPU算子的下发执行关系。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li14401325583">MsTx：推理训练进程打点任务 &gt; Ascend Hardware的NPU打点算子的下发执行关系。调用aclprofMarkEx接口打点时生成。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li18637151454314">async_task_queue：应用层Enqueue &gt; Dequeue的入队列到出队列对应关系。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li1463717148439">HostToDevice：CANN层Node（算子） &gt; Ascend Hardware的NPU算子的下发执行关系（Host到Device）。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li17637714174319">HostToDevice：CANN层Node（算子） &gt; Communication通信算子的下发执行关系（Host到Device）。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li137991810195511">fwdbwd：前向API &gt; 反向API。</li>
+    </ul>
+    <div class="note" id="ZH-CN_TOPIC_0000002693279709__note1754451515471">
+     <img src="public_sys-resources/note_3.0-zh-cn.png"><span class="notetitle"> </span>
+     <div class="notebody">
+      <ul id="ZH-CN_TOPIC_0000002693279709__ul7367181075912">
+       <li id="ZH-CN_TOPIC_0000002693279709__li1336791012592">由于软件测量的<span id="ZH-CN_TOPIC_0000002693279709__ph12871616184710">AI处理器</span>频率与真实频率有误差，以及Host与Device的时间同步误差，可能会出现下层算子因错位而无法连线的问题。</li>
+      </ul>
+      <ul id="ZH-CN_TOPIC_0000002693279709__ul1694411911577">
+       <li id="ZH-CN_TOPIC_0000002693279709__li199441819145710">各层的对应关系是否呈现与对应采集场景是否采集该数据有关，请以实际情况为准。</li>
+      </ul>
+     </div>
+    </div>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig490591821019">
+     <a name="ZH-CN_TOPIC_0000002693279709__fig490591821019"></a><a name="fig490591821019"></a><span class="figcap"><b>图2 </b>算子映射关系</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image17905918101012" src="figure/zh-cn_image_0000002693159915.png"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p54599478816">通过单击连线两端的算子或接口，即可查看算子下发的方向。如<a href="#ZH-CN_TOPIC_0000002693279709__fig11692135416129">图3</a>所示。</p>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig11692135416129">
+     <a name="ZH-CN_TOPIC_0000002693279709__fig11692135416129"></a><a name="fig11692135416129"></a><span class="figcap"><b>图3 </b>算子信息</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image4692054111218" src="figure/zh-cn_image_0000002693279807.png"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1541104861318">其中Event(s)列查看该算子或接口的出入方向，Link列查看映射关系两端的信息。</p>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section9194165318231">
+    <a name="ZH-CN_TOPIC_0000002693279709__section9194165318231"></a><a name="section9194165318231"></a>
+    <h4 class="sectiontitle">查看AI Core频率</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p81115715716">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul2011185716576">
+     <li id="ZH-CN_TOPIC_0000002693279709__li85221525174012"><span id="ZH-CN_TOPIC_0000002693279709__ph2045273510144"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term354143892110_1">
+        Atlas 200I/500 A2 推理产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li14111357145719"><span id="ZH-CN_TOPIC_0000002693279709__ph141265719573"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term11962195213215_1">
+        Atlas A2 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term184716139811_1">
+        Atlas A2 推理系列产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li812057195714"><span id="ZH-CN_TOPIC_0000002693279709__ph712195716571"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term1253731311225_1">
+        Atlas A3 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term131434243115_1">
+        Atlas A3 推理系列产品
+       </term></span></li>
+    </ul>
+    <p id="ZH-CN_TOPIC_0000002693279709__p18892195442314">msprof_*.json下的“AI Core Freq”层级展示AI Core芯片在执行AI任务的过程中频率的变化情况，如<a href="#ZH-CN_TOPIC_0000002693279709__fig66071155154219">图4</a>所示。</p>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig66071155154219">
+     <a name="ZH-CN_TOPIC_0000002693279709__fig66071155154219"></a><a name="fig66071155154219"></a><span class="figcap"><b>图4 </b>查看AI Core频率</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image815615333120" src="figure/zh-cn_image_0000002663240012.png" title="点击放大" class="imgResize"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1186116584296">在148089.72045898438时刻下，AI Core处于高频状态，而在170178.44116210938时刻频率降低，那么在该时间段下AI任务的性能必然下降。AI Core芯片可能因温度升高，触发保护机制，降低频率；也可能因当前无AI任务运行，AI Core进入低功耗状态而降频。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p088372152617">在发生变频时，实际变频时间与软件监测到的时间存在0~1ms的延时，该延时可能导致变频前后统计出的算子执行时间与实际不符。</p>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section18441122912161">
+    <h4 class="sectiontitle">SIO数据分析</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p16209187145811">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul162098785816">
+     <li id="ZH-CN_TOPIC_0000002693279709__li1936115322477">对于<span id="ZH-CN_TOPIC_0000002693279709__ph1489915393532"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term11962195213215_2">
+        Atlas A2 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term184716139811_2">
+        Atlas A2 推理系列产品
+       </term></span>，该数据均为0，不具有参考性。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li220912716581"><span id="ZH-CN_TOPIC_0000002693279709__ph1209370580"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term1253731311225_2">
+        Atlas A3 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term131434243115_2">
+        Atlas A3 推理系列产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li2925193915432"><span id="ZH-CN_TOPIC_0000002693279709__ph1057624244316"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_1">
+        Ascend 950PR
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_1">
+        Ascend 950DT
+       </term></span></li>
+    </ul>
+    <p id="ZH-CN_TOPIC_0000002693279709__p5314730164119">msprof_*.json下的“SIO”层级展示通道间传输带宽的信息。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p7123732154111"><span id="ZH-CN_TOPIC_0000002693279709__ph995175412819"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term1253731311225_3">
+       Atlas A3 训练系列产品
+      </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term131434243115_3">
+       Atlas A3 推理系列产品
+      </term></span>中，SIO数据的每条流使用两条虚拟通道，die 0和die 1。</p>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig1090119416103">
+     <span class="figcap"><b>图5 </b>SIO（<span id="ZH-CN_TOPIC_0000002693279709__ph43001239336"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term1253731311225_4">
+        Atlas A3 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term131434243115_4">
+        Atlas A3 推理系列产品
+       </term></span>）</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image189015421010" src="figure/zh-cn_image_0000002663240006.png"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p53308431315"><span id="ZH-CN_TOPIC_0000002693279709__ph1638724161110"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_2">
+       Ascend 950PR
+      </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_2">
+       Ascend 950DT
+      </term></span>中，SIO数据是每条流使用四条物理通道U-DIE0、U-DIE1、D-DIE0、D-DIE1，其中D-DIE表示<span style="color:#333333;">Die-to-Die</span>也就是两个DIE间互连，U-DIE表示<span style="color:#333333;">Die-to-Unit</span>也就是DIE与Unit互连。而D-DIE0、D-DIE1为互连关系，数据相同，所以只采集一个D-DIE信息即可；U-DIE0与U-DIE1则是两个DIE分别连接两个Unit，所以分别采集两个U-DIE信息。</p>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig363110456615">
+     <span class="figcap"><b>图6 </b>SIO（<span id="ZH-CN_TOPIC_0000002693279709__ph11540155314714"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_3">
+        Ascend 950PR
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_3">
+        Ascend 950DT
+       </term></span>）</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image1763114451466" src="figure/zh-cn_image_0000002663399920.png" title="点击放大" class="imgResize"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p3120144571518">图中色块横坐标对应时间Time，单位ms，纵坐标对应带宽Value，单位MB/s。</p>
+    <div class="tablenoborder">
+     <table cellpadding="4" cellspacing="0" summary="" id="ZH-CN_TOPIC_0000002693279709__table1038264933811" frame="border" border="1" rules="all">
+      <caption>
+       <b>表1 </b>字段说明
+      </caption>
+      <thead align="left">
+       <tr id="ZH-CN_TOPIC_0000002693279709__row4382174913387">
+        <th align="left" class="cellrowborder" valign="top" width="28.22%" id="mcps1.3.7.10.2.3.1.1">
+         <p id="ZH-CN_TOPIC_0000002693279709__p03821549173819">字段名</p></th>
+        <th align="left" class="cellrowborder" valign="top" width="71.78%" id="mcps1.3.7.10.2.3.1.2">
+         <p id="ZH-CN_TOPIC_0000002693279709__p133828492386">字段含义</p></th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row17382449173818">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.7.10.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p138284919381">dat_rx</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.7.10.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p750110288418">数据流通道的接收带宽。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row133822491388">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.7.10.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p2382174915387">dat_tx</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.7.10.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p045924112423">数据流通道的发送带宽。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row1138254963815">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.7.10.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1793644783920">req_rx</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.7.10.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p10770114710424">请求流通道的接收带宽。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row538364919386">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.7.10.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p99361647143912">req_tx</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.7.10.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p19770194716425">请求流通道的发送带宽。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row7830692446">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.7.10.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p9172315194416">rsp_rx</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.7.10.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p121721215194415">回应流通道的接收带宽。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row367616716442">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.7.10.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p9172141504420">rsp_tx</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.7.10.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p10173191513442">回应流通道的发送带宽。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row143831749153813">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.7.10.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p12781491396">snp_rx</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.7.10.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p5871348104216">侦听流通道的接收带宽。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row6383114923813">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.7.10.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p478164919395">snp_tx</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.7.10.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p16871154864215">侦听流通道的发送带宽。</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section7237154131716">
+    <h4 class="sectiontitle">QoS数据分析</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p142371054111714">msprof_*.json下的“QoS”层级展示设备QoS带宽信息。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p148261319103620">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul2285105533710">
+     <li id="ZH-CN_TOPIC_0000002693279709__li22857556378"><span id="ZH-CN_TOPIC_0000002693279709__ph5880154818379"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term11962195213215_3">
+        Atlas A2 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term184716139811_3">
+        Atlas A2 推理系列产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li528565543718"><span id="ZH-CN_TOPIC_0000002693279709__ph2060021915376"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term1253731311225_5">
+        Atlas A3 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term131434243115_5">
+        Atlas A3 推理系列产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li1640313414411"><span id="ZH-CN_TOPIC_0000002693279709__ph143381835154410"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_4">
+        Ascend 950PR
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_4">
+        Ascend 950DT
+       </term></span></li>
+    </ul>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig109246157107">
+     <span class="figcap"><b>图7 </b>QoS OTHERS</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image17924815161017" src="figure/zh-cn_image_0000002663399912.png"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1281420109173">图中色块横坐标对应时间Time，单位ms，纵坐标对应带宽Value，单位MB/s。</p>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section10665117313">
+    <h4 class="sectiontitle">计算及通信算子融合MC²</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p10271746197">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul6271746397">
+     <li id="ZH-CN_TOPIC_0000002693279709__li72484290149"><span id="ZH-CN_TOPIC_0000002693279709__ph19951183013136"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term4363218112215_1">
+        Atlas 推理系列产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li227115462917"><span id="ZH-CN_TOPIC_0000002693279709__ph17271194618916"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term11962195213215_4">
+        Atlas A2 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term184716139811_4">
+        Atlas A2 推理系列产品
+       </term></span></li>
+    </ul>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1223772118380">存在计算和通信算子融合的场景。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p19510715124011">MC²：Matrix Computation &amp; Communication，是CANN中一系列计算通信融合算子的统称，把原本串行的两个通信、计算算子融合到一起，内部通过Tiling切分成多轮通信计算，轮次间形成流水并行，从而掩盖通信耗时，提升整体执行性能。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p159674450396">具体算子一般以原计算通信算子名称按照依赖关系排列命名。比如AllgatherMatmul融合算子代表通信算子Allgather和计算算子Matmul融合，Matmul依赖Allgather输出。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1571151103116">通信轮次commTurn：即融合算子Tiling切分的份数。一般值为总数据量/单次通信量。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1859611208463">MC²实现中，内部分别在计算流、通信流上加载两个算子，两个算子内部实现协同完成流水并行执行：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul1422734324614">
+     <li id="ZH-CN_TOPIC_0000002693279709__li222734315461">计算流对应算子名称为融合算子名称，比如AllgatherMatmul。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li132271043144616">通信流对应算子名称为融合算子名称+Aicpu，比如AllgatherMatmulAicpu。</li>
+    </ul>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1928116249447">通信算子根据融合算子Tiling切分执行多个通信轮次，每轮的基本流程是，根据计算算子下发的通信参数，执行集合通信算法，编排好具体任务，下发给硬件执行，并等待执行完成，通知计算侧执行结果。</p>
+    <div class="note" id="ZH-CN_TOPIC_0000002693279709__note0956102610457">
+     <img src="public_sys-resources/note_3.0-zh-cn.png"><span class="notetitle"> </span>
+     <div class="notebody">
+      <ul id="ZH-CN_TOPIC_0000002693279709__ul15565412012">
+       <li id="ZH-CN_TOPIC_0000002693279709__li15514544203">通信API场景暂不支持融合MC²，通信API场景包括：低bit通信MatmulAllReduce算子以及自定义的使用通信API的MC²算子。</li>
+       <li id="ZH-CN_TOPIC_0000002693279709__li251313376234">Timeline的Communication部分仅呈现Level0级别的数据。</li>
+      </ul>
+     </div>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p20661184011400">MC²性能数据结果示例如下：</p>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig16795116316">
+     <a name="ZH-CN_TOPIC_0000002693279709__fig16795116316"></a><a name="fig16795116316"></a><span class="figcap"><b>图8 </b>MC²</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image3795143113" src="figure/zh-cn_image_0000002663399916.png"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1412717119481"><a href="#ZH-CN_TOPIC_0000002693279709__fig16795116316">图8</a>展示了MatmulAllReduceAddRmsNormAicpu融合算子，内部各阶段含义介绍如<a href="#ZH-CN_TOPIC_0000002693279709__table137165193119">表2</a>所示。</p>
+    <div class="tablenoborder">
+     <a name="ZH-CN_TOPIC_0000002693279709__table137165193119"></a><a name="table137165193119"></a>
+     <table cellpadding="4" cellspacing="0" summary="" id="ZH-CN_TOPIC_0000002693279709__table137165193119" frame="border" border="1" rules="all">
+      <caption>
+       <b>表2 </b>字段说明
+      </caption>
+      <thead align="left">
+       <tr id="ZH-CN_TOPIC_0000002693279709__row97185117311">
+        <th align="left" class="cellrowborder" valign="top" width="28.22%" id="mcps1.3.9.15.2.3.1.1">
+         <p id="ZH-CN_TOPIC_0000002693279709__p137135153117">字段名</p></th>
+        <th align="left" class="cellrowborder" valign="top" width="71.78%" id="mcps1.3.9.15.2.3.1.2">
+         <p id="ZH-CN_TOPIC_0000002693279709__p67135111318">字段含义</p></th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row114616542114">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.9.15.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p161461654411">StartServer</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.9.15.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p111463542111">KFC初始化时间。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row158115119312">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.9.15.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p067713112500">TaskWaitRequest</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.9.15.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1439121014508">等待计算算子下发通信参数。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row10818517316">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.9.15.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p5677711165015">TaskOrchestration</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.9.15.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p543715109501">通信算子内部执行集合通信算法，编排执行任务耗时。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row10810516316">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.9.15.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p156772011145019">TaskLaunch</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.9.15.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p17434910185020">任务下发耗时。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row19895111313">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.9.15.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p8754337195013">TaskExecute</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.9.15.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p937154813506">等待硬件任务执行完成耗时。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row993712314320">
+        <td class="cellrowborder" valign="top" width="28.22%" headers="mcps1.3.9.15.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p99371631035">Finalize</p></td>
+        <td class="cellrowborder" valign="top" width="71.78%" headers="mcps1.3.9.15.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p209373311237">KFC结束流程。</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section51959345010">
+    <h4 class="sectiontitle">电压数据分析</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p3196123155014">msprof*.json下的“Voltage Info”层级展示设备电压变压信息。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p10196163125015">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul66377491587">
+     <li id="ZH-CN_TOPIC_0000002693279709__li9637049680"><span id="ZH-CN_TOPIC_0000002693279709__ph363744913814"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term11962195213215_5">
+        Atlas A2 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term184716139811_5">
+        Atlas A2 推理系列产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li06372499812"><span id="ZH-CN_TOPIC_0000002693279709__ph1663720499817"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term1253731311225_6">
+        Atlas A3 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term131434243115_6">
+        Atlas A3 推理系列产品
+       </term></span></li>
+    </ul>
+    <p id="ZH-CN_TOPIC_0000002693279709__p12196133185019">变压特性曲线结果示例如下：</p>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig12628420171">
+     <a name="ZH-CN_TOPIC_0000002693279709__fig12628420171"></a><a name="fig12628420171"></a><span class="figcap"><b>图9 </b>电压数据分析</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image1062812015714" src="figure/zh-cn_image_0000002663240014.png" title="点击放大" class="imgResize"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1919618313502"><a href="#ZH-CN_TOPIC_0000002693279709__fig12628420171">图9</a>展示了变压特性曲线，图中色块横坐标对应时间，单位ms，纵坐标对应电压Value，单位mV。各字段含义介绍如<a href="#ZH-CN_TOPIC_0000002693279709__table21964325014">表3</a>所示。</p>
+    <div class="tablenoborder">
+     <a name="ZH-CN_TOPIC_0000002693279709__table21964325014"></a><a name="table21964325014"></a>
+     <table cellpadding="4" cellspacing="0" summary="" id="ZH-CN_TOPIC_0000002693279709__table21964325014" frame="border" border="1" rules="all">
+      <caption>
+       <b>表3 </b>字段说明
+      </caption>
+      <thead align="left">
+       <tr id="ZH-CN_TOPIC_0000002693279709__row319611355011">
+        <th align="left" class="cellrowborder" valign="top" width="29.310000000000002%" id="mcps1.3.10.8.2.3.1.1">
+         <p id="ZH-CN_TOPIC_0000002693279709__p19196130504">字段名</p></th>
+        <th align="left" class="cellrowborder" valign="top" width="70.69%" id="mcps1.3.10.8.2.3.1.2">
+         <p id="ZH-CN_TOPIC_0000002693279709__p101961339504">字段含义</p></th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row419603155014">
+        <td class="cellrowborder" valign="top" width="29.310000000000002%" headers="mcps1.3.10.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1719653165018">Aicore Voltage(mV)</p></td>
+        <td class="cellrowborder" valign="top" width="70.69%" headers="mcps1.3.10.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p136541120195">AI Core电压，单位mV。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row1519618345019">
+        <td class="cellrowborder" valign="top" width="29.310000000000002%" headers="mcps1.3.10.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p141967375020">Bus Voltage(mV)</p></td>
+        <td class="cellrowborder" valign="top" width="70.69%" headers="mcps1.3.10.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p15196163165020">互联总线电压，单位mV。</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section9857144542718">
+    <h4 class="sectiontitle">DPU数据分析</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p496615593276">msprof_*.json下的“DPU”层级展示在DPU下算子的执行耗时信息。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p109661059142715">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul129662595275">
+     <li id="ZH-CN_TOPIC_0000002693279709__li14966155912273"><span id="ZH-CN_TOPIC_0000002693279709__ph12966135915274"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_5">
+        Ascend 950PR
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_5">
+        Ascend 950DT
+       </term></span></li>
+    </ul>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig1131017020281">
+     <span class="figcap"><b>图10 </b>DPU数据（在DPU下执行task算子）</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image203104012817" src="figure/zh-cn_image_0000002693279799.png"></span>
+    </div>
+    <div class="tablenoborder">
+     <table cellpadding="4" cellspacing="0" summary="" id="ZH-CN_TOPIC_0000002693279709__table948118347291" frame="border" border="1" rules="all">
+      <caption>
+       <b>表4 </b>字段说明（在DPU下执行task算子）
+      </caption>
+      <thead align="left">
+       <tr id="ZH-CN_TOPIC_0000002693279709__row94811834142910">
+        <th align="left" class="cellrowborder" valign="top" width="50%" id="mcps1.3.11.6.2.3.1.1">
+         <p id="ZH-CN_TOPIC_0000002693279709__p19481934122914">字段名</p></th>
+        <th align="left" class="cellrowborder" valign="top" width="50%" id="mcps1.3.11.6.2.3.1.2">
+         <p id="ZH-CN_TOPIC_0000002693279709__p7481934122912">字段含义</p></th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row19481734192912">
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.11.6.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p10481193413296">Thread Id</p></td>
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.11.6.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p948173415297">线程ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row84813344299">
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.11.6.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p8481133472912">Physic Stream Id</p></td>
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.11.6.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p648143416296">物理流ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row5481153402917">
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.11.6.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p10481133415295">Task Id</p></td>
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.11.6.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1448111345293">Task任务的ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row44811234152911">
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.11.6.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p19481634192920">Task Type</p></td>
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.11.6.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p3481183411297">任务类型。</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig1163217389273">
+     <span class="figcap"><b>图11 </b>DPU数据（在DPU下执行HCCL算子）</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image8632238112719" src="figure/zh-cn_image_0000002663399914.png"></span>
+    </div>
+    <div class="tablenoborder">
+     <table cellpadding="4" cellspacing="0" summary="" id="ZH-CN_TOPIC_0000002693279709__table696605911273" frame="border" border="1" rules="all">
+      <caption>
+       <b>表5 </b>字段说明（在DPU下执行HCCL算子）
+      </caption>
+      <thead align="left">
+       <tr id="ZH-CN_TOPIC_0000002693279709__row0966175922710">
+        <th align="left" class="cellrowborder" valign="top" width="33.51%" id="mcps1.3.11.8.2.3.1.1">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1896620595273">字段名</p></th>
+        <th align="left" class="cellrowborder" valign="top" width="66.49000000000001%" id="mcps1.3.11.8.2.3.1.2">
+         <p id="ZH-CN_TOPIC_0000002693279709__p15966859202711">字段含义</p></th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row16966105919272">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1496625912710">Thread Id</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p096635911274">线程ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row996665912717">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p0966155922717">Physic Stream Id</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p179661159172716">物理流ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row8966145942714">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p6966135962714">Task Id</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1596635910278">Task任务的ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row796710599278">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p18967105914273">OP Type</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p6967759162710">算子类型。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row89671259182713">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1696725982710">AI CPU Device Id</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1896717599276">对应关联的AI CPU的设备ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row596715982717">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p16967105952710">AI CPU Task Id</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p5967175922711">对应关联的AI CPU的Task任务ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row19967159112717">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p17967165962718">Plane Id</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p9967135919270">网络平面ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row996719592278">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1396720595279">Notify Id</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p14967125912712">集合通信任务等待的ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row296795962717">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p296785962719">Duration Estimated(us)</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p18967185912277">预估任务持续时间</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row496716598272">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p16967195913275">Src Rank</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p119675596276">源Rank。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row19671359102714">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1496745922718">Dst Rank</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1084195512420">目的Rank。</p>
+         <p id="ZH-CN_TOPIC_0000002693279709__p2214152147">对于<span id="ZH-CN_TOPIC_0000002693279709__ph962420271514"><span id="ZH-CN_TOPIC_0000002693279709__ph1842131915618"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_6">
+             Ascend 950PR
+            </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_6">
+             Ascend 950DT
+            </term></span>，</span>本地片内操作显示为与src rank一致的数值。</p>
+         <p id="ZH-CN_TOPIC_0000002693279709__p2388103114158">对于其他产品若此字段显示为4294967295，则为本地片内操作。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row16967125962710">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p12967759142718">Transport Type</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p7488143283919">传输类型，包含：LOCAL、SDMA、RDMA、UB和ROCE等。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row19675593272">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p109671594274">Size(Byte)</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p119671359162719">数据量，单位Byte。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row209670594273">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p11967125952715">Bandwidth(GB/s)</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1696765972718">带宽大小，单位GB/s。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row69679594275">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p129676598275">Data Type</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p39674593278">数据格式。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row296735915270">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p12967159132712">Link Type</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1148953293914">链路类型，包含：HCCS、PCIE、ROCE、UBoE、SIO、HCCS_SW、STANDARD_ROCE、UB和ON_CHIP等。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row139673591272">
+        <td class="cellrowborder" valign="top" width="33.51%" headers="mcps1.3.11.8.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p796755942711">Rdma Type</p></td>
+        <td class="cellrowborder" valign="top" width="66.49000000000001%" headers="mcps1.3.11.8.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p2967205902718">RDMA类型，包含：RDMASendNotify、RDMASendPayload等。</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section16693151642813">
+    <h4 class="sectiontitle">Fusion Task数据分析</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1479153681913">msprof_*.json下的“Fusion Task”层级展示Fusion任务数据。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p1791736131919">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul6791163671916">
+     <li id="ZH-CN_TOPIC_0000002693279709__li207911336131912"><span id="ZH-CN_TOPIC_0000002693279709__ph6997338272"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_7">
+        Ascend 950PR
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_7">
+        Ascend 950DT
+       </term></span></li>
+    </ul>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig75701459183811">
+     <span class="figcap"><b>图12 </b>Fusion Task</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image25702599380" src="figure/zh-cn_image_0000002693159909.png"></span>
+    </div>
+    <div class="tablenoborder">
+     <table cellpadding="4" cellspacing="0" summary="" id="ZH-CN_TOPIC_0000002693279709__table12765173613191" frame="border" border="1" rules="all">
+      <caption>
+       <b>表6 </b>字段说明
+      </caption>
+      <thead align="left">
+       <tr id="ZH-CN_TOPIC_0000002693279709__row4791236121912">
+        <th align="left" class="cellrowborder" valign="top" width="50%" id="mcps1.3.12.6.2.3.1.1">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1279117361194">字段名</p></th>
+        <th align="left" class="cellrowborder" valign="top" width="50%" id="mcps1.3.12.6.2.3.1.2">
+         <p id="ZH-CN_TOPIC_0000002693279709__p479163611912">字段含义</p></th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row2791153661911">
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.12.6.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p127919361198">task_id</p></td>
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.12.6.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p779183651915">Fusion任务的ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row1479123671918">
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.12.6.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1379133691918">acc_id</p></td>
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.12.6.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p7791536141918">加速器的ID</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row177911236131910">
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.12.6.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p07914364190">task_type</p></td>
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.12.6.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1379143611911">执行该Task的加速器类型，对于Fusion任务，固定为FUSION。task_time为l0时，不采集该字段，显示为N/A。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row1579163618197">
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.12.6.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p879116364198">fusion_task_type</p></td>
+        <td class="cellrowborder" valign="top" width="50%" headers="mcps1.3.12.6.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p779115365190">Fusion小任务的加速器类型，包含AICORE、AIVECTORCORE、AICPU等。task_time为l0时，不采集该字段，显示为N/A。</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section3613114441911">
+    <h4 class="sectiontitle">SIMT数据分析</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p07918369198">msprof_*.json下的“Ascend Hardware”层级中的部分算子为SIMT算子，主要通过Grid Dim和Block Dim字段体现SIMT编程模型的线程层次结构。</p>
+    <p id="ZH-CN_TOPIC_0000002693279709__p879118361199">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul1079133681912">
+     <li id="ZH-CN_TOPIC_0000002693279709__li779173641916"><span id="ZH-CN_TOPIC_0000002693279709__ph12907152232019"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_8">
+        Ascend 950PR
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_8">
+        Ascend 950DT
+       </term></span></li>
+    </ul>
+    <div class="tablenoborder">
+     <table cellpadding="4" cellspacing="0" summary="" id="ZH-CN_TOPIC_0000002693279709__table107664369198" frame="border" border="1" rules="all">
+      <caption>
+       <b>表7 </b>字段说明
+      </caption>
+      <thead align="left">
+       <tr id="ZH-CN_TOPIC_0000002693279709__row579163641911">
+        <th align="left" class="cellrowborder" valign="top" width="23.11%" id="mcps1.3.13.5.2.3.1.1">
+         <p id="ZH-CN_TOPIC_0000002693279709__p479113613194">字段名</p></th>
+        <th align="left" class="cellrowborder" valign="top" width="76.89%" id="mcps1.3.13.5.2.3.1.2">
+         <p id="ZH-CN_TOPIC_0000002693279709__p2079111362198">字段含义</p></th>
+       </tr>
+      </thead>
+      <tbody>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row13791936121913">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p4791123617195">Model ID</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1979103613192">模型ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row167915365194">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p579183618193">Task Type</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1179173651913">执行该Task的加速器类型，对于SIMT算子，当前仅包含AI_VECTOR_CORE。task_time为l0时，不采集该字段，显示为N/A。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row17791143671918">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p77912368198">Physic Stream Id</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p18791103691916">物理流ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row679110369194">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p10791536181918">Task Id</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1779113611917">Task任务的ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row879123616198">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p20791123618198">Batch Id</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1179133616195">对应任务的Batch ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row1879143671914">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1791143651912">Subtask Id</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p157919367195">对应任务的Subtask ID。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row3791193620193">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p5791436161915">connection_id</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p179112366193">CANN层API向NPU算子下发时二者关联的标识。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row87914365195">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p1479116367197">Grid Dim</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p207911136171916">体现SIMT编程模型的线程块网络（Grid）中启用的线程块个数，同一时刻一个AIV核只执行一个线程块任务。</p></td>
+       </tr>
+       <tr id="ZH-CN_TOPIC_0000002693279709__row14791103615199">
+        <td class="cellrowborder" valign="top" width="23.11%" headers="mcps1.3.13.5.2.3.1.1 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p16791123671915">Block Dim</p></td>
+        <td class="cellrowborder" valign="top" width="76.89%" headers="mcps1.3.13.5.2.3.1.2 ">
+         <p id="ZH-CN_TOPIC_0000002693279709__p4791836171910">体现SIMT编程模型的线程块（Thread Block）启用的线程个数，一个线程块最多可以启用2048个线程。</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+   <div class="section" id="ZH-CN_TOPIC_0000002693279709__section15111173102319">
+    <h4 class="sectiontitle">Ascend Hardware采集间隙说明</h4>
+    <p id="ZH-CN_TOPIC_0000002693279709__p26002491124">支持的型号：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul106001549171217">
+     <li id="ZH-CN_TOPIC_0000002693279709__li1671784137"><span id="ZH-CN_TOPIC_0000002693279709__ph668411135134"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term11962195213215_6">
+        Atlas A2 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term184716139811_6">
+        Atlas A2 推理系列产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li66001649191215"><span id="ZH-CN_TOPIC_0000002693279709__ph19600149191210"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term1253731311225_7">
+        Atlas A3 训练系列产品
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term131434243115_7">
+        Atlas A3 推理系列产品
+       </term></span></li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li1960094911126"><span id="ZH-CN_TOPIC_0000002693279709__ph560044971218"><term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term17897183917595_9">
+        Ascend 950PR
+       </term>/<term id="ZH-CN_TOPIC_0000002693279709__zh-cn_topic_0000002663395690_term374584375918_9">
+        Ascend 950DT
+       </term></span></li>
+    </ul>
+    <div class="fignone" id="ZH-CN_TOPIC_0000002693279709__fig453114202717">
+     <span class="figcap"><b>图13 </b>Ascend Hardware采集间隙</span>
+     <br><span><img id="ZH-CN_TOPIC_0000002693279709__image853114201074" src="figure/zh-cn_image_0000002693159913.png" title="点击放大" class="imgResize"></span>
+    </div>
+    <p id="ZH-CN_TOPIC_0000002693279709__p35071237154">如上图所示在Ascend Hardware层级中，当出现MEM_WAIT_VALUE或CAPTURE_WAIT时，后续的timeline会出现一段空白的间隙，这段间隙包含两个事件：</p>
+    <ul id="ZH-CN_TOPIC_0000002693279709__ul11412192951919">
+     <li id="ZH-CN_TOPIC_0000002693279709__li1541242981914">一是为了减少Profiling数据量，而自动关闭了Profiling采集，这段时间的性能数据是重复执行MEM_WAIT_VALUE或CAPTURE_WAIT，故只保留了前面的若干条。</li>
+     <li id="ZH-CN_TOPIC_0000002693279709__li184121729111917">二是在出现MEM_WRITE_VALUE或CAPTURE_RECORD到正常采集算子耗时的时间段，这段间隙为重新启动Profiling的时间。这段间隙无性能参考意义，正常情况下未使用Profiling采集时，这段间隙实际不存在。</li>
+    </ul>
+   </div>
+  </div>
+  <div>
+   <div class="familylinks">
+    <div class="parentlink">
+     <strong>父主题：</strong> <a href="atlasprofiling_16_0056.html">性能数据文件参考</a>
+    </div>
+   </div>
+  </div>
+ </body>
+</html>

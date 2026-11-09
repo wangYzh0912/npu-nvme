@@ -1,0 +1,4070 @@
+{
+  "source": "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/training/graphs/o1-seq128-mb1-r0/rank0/static-dependencies.jsonl.gz",
+  "center": {
+    "graph": "kernel_graph1",
+    "node": "11632",
+    "op": "GraphKernel_Div_Sqrt_Add_Div_Mul_Sub_Assign_fusion",
+    "source_line": 152014,
+    "operands": [
+      "11623",
+      "11597",
+      "11625",
+      "11598",
+      "11631",
+      "11629"
+    ],
+    "stream_id": 0,
+    "scope": "(Default/GraphKernel_Div_Sqrt_Add_Div_Mul_Sub_Assign_fusion-op0)"
+  },
+  "depth": 4,
+  "nodes": [
+    {
+      "graph": "kernel_graph1",
+      "node": "11632",
+      "op": "GraphKernel_Div_Sqrt_Add_Div_Mul_Sub_Assign_fusion",
+      "source_line": 152014,
+      "operands": [
+        "11623",
+        "11597",
+        "11625",
+        "11598",
+        "11631",
+        "11629"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Div_Sqrt_Add_Div_Mul_Sub_Assign_fusion-op0)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11629",
+      "op": "Depend",
+      "source_line": 151991,
+      "operands": [
+        "11594",
+        "11628"
+      ],
+      "stream_id": null,
+      "scope": "(Default/Depend-op262)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11628",
+      "op": "UpdateState",
+      "source_line": 151988,
+      "operands": [
+        "11621",
+        "11627"
+      ],
+      "stream_id": null,
+      "scope": "(Default/UpdateState-op117)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11627",
+      "op": "MakeTuple",
+      "source_line": 151985,
+      "operands": [
+        "11623",
+        "11625",
+        "11626"
+      ],
+      "stream_id": null,
+      "scope": "(Default/MakeTuple-op116)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11626",
+      "op": "Depend",
+      "source_line": 151976,
+      "operands": [
+        "11602",
+        "11611"
+      ],
+      "stream_id": null,
+      "scope": "(Default/network-MFTrainOneStepCell/optimizer-AdamW/Depend-op2)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11625",
+      "op": "TensorMove",
+      "source_line": 151971,
+      "operands": [
+        "11624"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/TensorMove-op7)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11623",
+      "op": "TensorMove",
+      "source_line": 151963,
+      "operands": [
+        "11622"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/TensorMove-op6)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11621",
+      "op": "UpdateState",
+      "source_line": 151957,
+      "operands": [
+        "11618",
+        "11620"
+      ],
+      "stream_id": null,
+      "scope": "(Default/network-MFTrainOneStepCell/optimizer-AdamW/UpdateState-op4)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11620",
+      "op": "GraphKernel_Addcmul_Assign_fusion",
+      "source_line": 151952,
+      "operands": [
+        "11616",
+        "11609",
+        "11619"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Addcmul_Assign_fusion-op1)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11618",
+      "op": "UpdateState",
+      "source_line": 151938,
+      "operands": [
+        "11612",
+        "11617"
+      ],
+      "stream_id": null,
+      "scope": "(Default/UpdateState-op116)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11594",
+      "op": "TupleGetItem",
+      "source_line": 151838,
+      "operands": [
+        "11557"
+      ],
+      "stream_id": null,
+      "scope": "(Default/TupleGetItem-op964)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11557",
+      "op": "ConditionSwitch",
+      "source_line": 151677,
+      "operands": [
+        "10533",
+        "11265",
+        "11266",
+        "11267",
+        "11268",
+        "11269",
+        "11270",
+        "11271",
+        "11272",
+        "11273",
+        "11274",
+        "11275",
+        "11276",
+        "11277",
+        "11278",
+        "11279",
+        "11280",
+        "11281",
+        "11282",
+        "11283",
+        "11284",
+        "11285",
+        "11286",
+        "11287",
+        "11288",
+        "11289",
+        "11290",
+        "11291",
+        "11292",
+        "11293",
+        "11294",
+        "11295",
+        "11296",
+        "11297",
+        "11298",
+        "11299",
+        "11300",
+        "11301",
+        "11302",
+        "11303",
+        "11304",
+        "11305",
+        "11306",
+        "11307",
+        "11308",
+        "11309",
+        "11310",
+        "11311",
+        "11312",
+        "11313",
+        "11314",
+        "11315",
+        "11316",
+        "11317",
+        "11318",
+        "11319",
+        "11320",
+        "11321",
+        "11322",
+        "11323",
+        "11324",
+        "11325",
+        "11326",
+        "11327",
+        "11328",
+        "11329",
+        "11330",
+        "11331",
+        "11332",
+        "11333",
+        "11334",
+        "11335",
+        "11336",
+        "11337",
+        "11338",
+        "11339",
+        "11340",
+        "11341",
+        "11342",
+        "11343",
+        "11344",
+        "11345",
+        "11346",
+        "11347",
+        "11348",
+        "11349",
+        "11350",
+        "11351",
+        "11352",
+        "11353",
+        "11354",
+        "11355",
+        "11356",
+        "11357",
+        "11358",
+        "11359",
+        "11360",
+        "11361",
+        "11362",
+        "11363",
+        "11364",
+        "11365",
+        "11366",
+        "11367",
+        "11368",
+        "11369",
+        "11370",
+        "11371",
+        "11372",
+        "11373",
+        "11374",
+        "11375",
+        "11376",
+        "11377",
+        "11378",
+        "11379",
+        "11380",
+        "11381",
+        "11382",
+        "11383",
+        "11384",
+        "11385",
+        "11386",
+        "11387",
+        "11388",
+        "11389",
+        "11390",
+        "11391",
+        "11392",
+        "11393",
+        "11394",
+        "11395",
+        "11396",
+        "11397",
+        "11398",
+        "11399",
+        "11400",
+        "11401",
+        "11402",
+        "11403",
+        "11404",
+        "11405",
+        "11406",
+        "11407",
+        "11408",
+        "11409",
+        "11410",
+        "11411",
+        "11412",
+        "11413",
+        "11414",
+        "11415",
+        "11416",
+        "11417",
+        "11418",
+        "11419",
+        "11420",
+        "11421",
+        "11422",
+        "11423",
+        "11424",
+        "11425",
+        "11426",
+        "11427",
+        "11428",
+        "11429",
+        "11430",
+        "11431",
+        "11432",
+        "11433",
+        "11434",
+        "11435",
+        "11436",
+        "11437",
+        "11438",
+        "11439",
+        "11440",
+        "11441",
+        "11442",
+        "11443",
+        "11444",
+        "11445",
+        "11446",
+        "11447",
+        "11448",
+        "11449",
+        "11450",
+        "11451",
+        "11452",
+        "11453",
+        "11454",
+        "11455",
+        "11456",
+        "11457",
+        "11458",
+        "11459",
+        "11460",
+        "11461",
+        "11462",
+        "11463",
+        "11464",
+        "11465",
+        "11466",
+        "11467",
+        "11468",
+        "11469",
+        "11470",
+        "11471",
+        "11472",
+        "11473",
+        "11474",
+        "11475",
+        "11476",
+        "11477",
+        "11478",
+        "11479",
+        "11480",
+        "11481",
+        "11482",
+        "11483",
+        "11484",
+        "11485",
+        "11486",
+        "11487",
+        "11488",
+        "11489",
+        "11490",
+        "11491",
+        "11492",
+        "11493",
+        "11494",
+        "11495",
+        "11496",
+        "11497",
+        "11498",
+        "11499",
+        "11500",
+        "11501",
+        "11502",
+        "11503",
+        "11504",
+        "11505",
+        "11506",
+        "11507",
+        "11508",
+        "11509",
+        "11510",
+        "11511",
+        "11512",
+        "11513",
+        "11514",
+        "11515",
+        "11516",
+        "11517",
+        "11518",
+        "11519",
+        "11520",
+        "11521",
+        "11522",
+        "11523",
+        "11524",
+        "11525",
+        "11526",
+        "11527",
+        "11528",
+        "11529",
+        "11530",
+        "11531",
+        "11532",
+        "11533",
+        "11534",
+        "11535",
+        "11536",
+        "11537",
+        "11538",
+        "11539",
+        "11540",
+        "11541",
+        "11542",
+        "11543",
+        "11544",
+        "11545",
+        "11546",
+        "11547",
+        "11548",
+        "11549",
+        "11550",
+        "11551",
+        "11552",
+        "11553",
+        "11554",
+        "11555",
+        "11556",
+        "8712"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/ConditionSwitch-op0)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "8712",
+      "op": "UpdateState",
+      "source_line": 125440,
+      "operands": [
+        "8562",
+        "8711"
+      ],
+      "stream_id": null,
+      "scope": "(Default/UpdateState-op111)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11556",
+      "op": "Depend",
+      "source_line": 151670,
+      "operands": [
+        "8564",
+        "8712"
+      ],
+      "stream_id": null,
+      "scope": "(Default/network-MFTrainOneStepCell/Depend-op585)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11555",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151665,
+      "operands": [
+        "10528",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op291)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11554",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151660,
+      "operands": [
+        "10523",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op290)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11553",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151655,
+      "operands": [
+        "10517",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op289)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11552",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151650,
+      "operands": [
+        "10511",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op288)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11551",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151645,
+      "operands": [
+        "10505",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op287)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11550",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151640,
+      "operands": [
+        "10499",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op286)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11549",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151635,
+      "operands": [
+        "10493",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op285)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11548",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151630,
+      "operands": [
+        "10487",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op284)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11547",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151625,
+      "operands": [
+        "10481",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op283)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11546",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151620,
+      "operands": [
+        "10475",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op282)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11545",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151615,
+      "operands": [
+        "10469",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op281)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11544",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151610,
+      "operands": [
+        "10463",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op280)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11543",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151605,
+      "operands": [
+        "10457",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op279)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11542",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151600,
+      "operands": [
+        "10451",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op278)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11541",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151595,
+      "operands": [
+        "10445",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op277)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11540",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151590,
+      "operands": [
+        "10439",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op276)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11539",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151585,
+      "operands": [
+        "10433",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op275)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11538",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151580,
+      "operands": [
+        "10427",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op274)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11537",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151575,
+      "operands": [
+        "10421",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op273)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11536",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151570,
+      "operands": [
+        "10415",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op272)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11535",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151565,
+      "operands": [
+        "10409",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op271)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11534",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151560,
+      "operands": [
+        "10403",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op270)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11533",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151555,
+      "operands": [
+        "10397",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op269)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11532",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151550,
+      "operands": [
+        "10391",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op268)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11531",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151545,
+      "operands": [
+        "10385",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op267)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11530",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151540,
+      "operands": [
+        "10379",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op266)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11529",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151535,
+      "operands": [
+        "10373",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op265)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11528",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151530,
+      "operands": [
+        "10367",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op264)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11527",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151525,
+      "operands": [
+        "10361",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op263)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11526",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151520,
+      "operands": [
+        "10355",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op262)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11525",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151515,
+      "operands": [
+        "10349",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op261)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11524",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151510,
+      "operands": [
+        "10343",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op260)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11523",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151505,
+      "operands": [
+        "10337",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op259)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11522",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151500,
+      "operands": [
+        "10331",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op258)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11521",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151495,
+      "operands": [
+        "10325",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op257)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11520",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151490,
+      "operands": [
+        "10319",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op256)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11519",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151485,
+      "operands": [
+        "10313",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op255)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11518",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151480,
+      "operands": [
+        "10307",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op254)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11517",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151475,
+      "operands": [
+        "10301",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op253)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11516",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151470,
+      "operands": [
+        "10295",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op252)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11515",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151465,
+      "operands": [
+        "10289",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op251)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11514",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151460,
+      "operands": [
+        "10283",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op250)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11513",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151455,
+      "operands": [
+        "10277",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op249)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11512",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151450,
+      "operands": [
+        "10271",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op248)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11511",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151445,
+      "operands": [
+        "10265",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op247)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11510",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151440,
+      "operands": [
+        "10259",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op246)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11509",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151435,
+      "operands": [
+        "10253",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op245)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11508",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151430,
+      "operands": [
+        "10247",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op244)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11507",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151425,
+      "operands": [
+        "10241",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op243)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11506",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151420,
+      "operands": [
+        "10235",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op242)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11505",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151415,
+      "operands": [
+        "10229",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op241)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11504",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151410,
+      "operands": [
+        "10223",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op240)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11503",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151405,
+      "operands": [
+        "10217",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op239)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11502",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151400,
+      "operands": [
+        "10211",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op238)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11501",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151395,
+      "operands": [
+        "10205",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op237)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11500",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151390,
+      "operands": [
+        "10199",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op236)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11499",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151385,
+      "operands": [
+        "10193",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op235)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11498",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151380,
+      "operands": [
+        "10187",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op234)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11497",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151375,
+      "operands": [
+        "10181",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op233)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11496",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151370,
+      "operands": [
+        "10175",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op232)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11495",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151365,
+      "operands": [
+        "10169",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op231)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11494",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151360,
+      "operands": [
+        "10163",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op230)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11493",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151355,
+      "operands": [
+        "10157",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op229)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11492",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151350,
+      "operands": [
+        "10151",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op228)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11491",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151345,
+      "operands": [
+        "10145",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op227)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11490",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151340,
+      "operands": [
+        "10139",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op226)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11489",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151335,
+      "operands": [
+        "10133",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op225)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11488",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151330,
+      "operands": [
+        "10127",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op224)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11487",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151325,
+      "operands": [
+        "10121",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op223)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11486",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151320,
+      "operands": [
+        "10115",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op222)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11485",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151315,
+      "operands": [
+        "10109",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op221)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11484",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151310,
+      "operands": [
+        "10103",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op220)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11483",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151305,
+      "operands": [
+        "10097",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op219)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11482",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151300,
+      "operands": [
+        "10091",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op218)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11481",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151295,
+      "operands": [
+        "10085",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op217)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11480",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151290,
+      "operands": [
+        "10079",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op216)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11479",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151285,
+      "operands": [
+        "10073",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op215)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11478",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151280,
+      "operands": [
+        "10067",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op214)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11477",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151275,
+      "operands": [
+        "10061",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op213)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11476",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151270,
+      "operands": [
+        "10055",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op212)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11475",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151265,
+      "operands": [
+        "10049",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op211)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11474",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151260,
+      "operands": [
+        "10043",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op210)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11473",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151255,
+      "operands": [
+        "10037",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op209)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11472",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151250,
+      "operands": [
+        "10031",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op208)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11471",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151245,
+      "operands": [
+        "10025",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op207)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11470",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151240,
+      "operands": [
+        "10019",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op206)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11469",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151235,
+      "operands": [
+        "10013",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op205)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11468",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151230,
+      "operands": [
+        "10007",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op204)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11467",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151225,
+      "operands": [
+        "10001",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op203)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11466",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151220,
+      "operands": [
+        "9995",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op202)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11465",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151215,
+      "operands": [
+        "9989",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op201)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11464",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151210,
+      "operands": [
+        "9983",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op200)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11463",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151205,
+      "operands": [
+        "9977",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op199)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11462",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151200,
+      "operands": [
+        "9971",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op198)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11461",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151195,
+      "operands": [
+        "9965",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op197)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11460",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151190,
+      "operands": [
+        "9959",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op196)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11459",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151185,
+      "operands": [
+        "9953",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op195)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11458",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151180,
+      "operands": [
+        "9947",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op194)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11457",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151175,
+      "operands": [
+        "9941",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op193)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11456",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151170,
+      "operands": [
+        "9935",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op192)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11455",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151165,
+      "operands": [
+        "9929",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op191)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11454",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151160,
+      "operands": [
+        "9923",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op190)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11453",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151155,
+      "operands": [
+        "9917",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op189)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11452",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151150,
+      "operands": [
+        "9911",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op188)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11451",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151145,
+      "operands": [
+        "9905",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op187)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11450",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151140,
+      "operands": [
+        "9899",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op186)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11449",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151135,
+      "operands": [
+        "9893",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op185)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11448",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151130,
+      "operands": [
+        "9887",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op184)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11447",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151125,
+      "operands": [
+        "9881",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op183)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11446",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151120,
+      "operands": [
+        "9875",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op182)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11445",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151115,
+      "operands": [
+        "9869",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op181)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11444",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151110,
+      "operands": [
+        "9863",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op180)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11443",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151105,
+      "operands": [
+        "9857",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op179)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11442",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151100,
+      "operands": [
+        "9851",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op178)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11441",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151095,
+      "operands": [
+        "9845",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op177)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11440",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151090,
+      "operands": [
+        "9839",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op176)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11439",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151085,
+      "operands": [
+        "9833",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op175)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11438",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151080,
+      "operands": [
+        "9827",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op174)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11437",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151075,
+      "operands": [
+        "9821",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op173)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11436",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151070,
+      "operands": [
+        "9815",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op172)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11435",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151065,
+      "operands": [
+        "9809",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op171)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11434",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151060,
+      "operands": [
+        "9803",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op170)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11433",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151055,
+      "operands": [
+        "9797",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op169)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11432",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151050,
+      "operands": [
+        "9791",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op168)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11431",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151045,
+      "operands": [
+        "9785",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op167)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11430",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151040,
+      "operands": [
+        "9779",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op166)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11429",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151035,
+      "operands": [
+        "9773",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op165)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11428",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151030,
+      "operands": [
+        "9767",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op164)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11427",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151025,
+      "operands": [
+        "9761",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op163)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11426",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151020,
+      "operands": [
+        "9755",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op162)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11425",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151015,
+      "operands": [
+        "9749",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op161)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11424",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151010,
+      "operands": [
+        "9743",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op160)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11423",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151005,
+      "operands": [
+        "9737",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op159)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11422",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 151000,
+      "operands": [
+        "9731",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op158)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11421",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150995,
+      "operands": [
+        "9725",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op157)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11420",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150990,
+      "operands": [
+        "9719",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op156)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11419",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150985,
+      "operands": [
+        "9713",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op155)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11418",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150980,
+      "operands": [
+        "9707",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op154)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11417",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150975,
+      "operands": [
+        "9701",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op153)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11416",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150970,
+      "operands": [
+        "9695",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op152)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11415",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150965,
+      "operands": [
+        "9689",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op151)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11414",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150960,
+      "operands": [
+        "9683",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op150)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11413",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150955,
+      "operands": [
+        "9677",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op149)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11412",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150950,
+      "operands": [
+        "9671",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op148)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11411",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150945,
+      "operands": [
+        "9665",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op147)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11410",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150940,
+      "operands": [
+        "9659",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op146)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11409",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150935,
+      "operands": [
+        "9653",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op145)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11408",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150930,
+      "operands": [
+        "9645",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op144)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11407",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150925,
+      "operands": [
+        "9639",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op143)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11406",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150920,
+      "operands": [
+        "9633",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op142)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11405",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150915,
+      "operands": [
+        "9627",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op141)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11404",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150910,
+      "operands": [
+        "9619",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op140)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11403",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150905,
+      "operands": [
+        "9613",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op139)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11402",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150900,
+      "operands": [
+        "9607",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op138)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11401",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150895,
+      "operands": [
+        "9601",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op137)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11400",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150890,
+      "operands": [
+        "9593",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op136)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11399",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150885,
+      "operands": [
+        "9587",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op135)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11398",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150880,
+      "operands": [
+        "9581",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op134)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11397",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150875,
+      "operands": [
+        "9575",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op133)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11396",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150870,
+      "operands": [
+        "9567",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op132)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11395",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150865,
+      "operands": [
+        "9561",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op131)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11394",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150860,
+      "operands": [
+        "9555",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op130)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11393",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150855,
+      "operands": [
+        "9549",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op129)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11392",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150850,
+      "operands": [
+        "9541",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op128)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11391",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150845,
+      "operands": [
+        "9535",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op127)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11390",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150840,
+      "operands": [
+        "9529",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op126)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11389",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150835,
+      "operands": [
+        "9523",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op125)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11388",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150830,
+      "operands": [
+        "9515",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op124)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11387",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150825,
+      "operands": [
+        "9509",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op123)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11386",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150820,
+      "operands": [
+        "9503",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op122)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11385",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150815,
+      "operands": [
+        "9497",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op121)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11384",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150810,
+      "operands": [
+        "9489",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op120)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11383",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150805,
+      "operands": [
+        "9483",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op119)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11382",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150800,
+      "operands": [
+        "9477",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op118)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11381",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150795,
+      "operands": [
+        "9471",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op117)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11380",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150790,
+      "operands": [
+        "9463",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op116)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11379",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150785,
+      "operands": [
+        "9457",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op115)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11378",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150780,
+      "operands": [
+        "9451",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op114)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11377",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150775,
+      "operands": [
+        "9445",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op113)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11376",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150770,
+      "operands": [
+        "9437",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op112)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11375",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150765,
+      "operands": [
+        "9431",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op111)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11374",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150760,
+      "operands": [
+        "9425",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op110)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11373",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150755,
+      "operands": [
+        "9419",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op109)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11372",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150750,
+      "operands": [
+        "9411",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op108)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11371",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150745,
+      "operands": [
+        "9405",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op107)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11370",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150740,
+      "operands": [
+        "9399",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op106)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11369",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150735,
+      "operands": [
+        "9393",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op105)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11368",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150730,
+      "operands": [
+        "9385",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op104)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11367",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150725,
+      "operands": [
+        "9379",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op103)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11366",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150720,
+      "operands": [
+        "9373",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op102)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11365",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150715,
+      "operands": [
+        "9367",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op101)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11364",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150710,
+      "operands": [
+        "9359",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op100)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11363",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150705,
+      "operands": [
+        "9353",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op99)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11362",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150700,
+      "operands": [
+        "9347",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op98)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11361",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150695,
+      "operands": [
+        "9341",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op97)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11360",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150690,
+      "operands": [
+        "9333",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op96)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11359",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150685,
+      "operands": [
+        "9327",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op95)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11358",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150680,
+      "operands": [
+        "9321",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op94)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11357",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150675,
+      "operands": [
+        "9315",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op93)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11356",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150670,
+      "operands": [
+        "9307",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op92)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11355",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150665,
+      "operands": [
+        "9301",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op91)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11354",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150660,
+      "operands": [
+        "9295",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op90)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11353",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150655,
+      "operands": [
+        "9289",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op89)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11352",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150650,
+      "operands": [
+        "9281",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op88)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11351",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150645,
+      "operands": [
+        "9275",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op87)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11350",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150640,
+      "operands": [
+        "9269",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op86)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11349",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150635,
+      "operands": [
+        "9263",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op85)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11348",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150630,
+      "operands": [
+        "9255",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op84)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11347",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150625,
+      "operands": [
+        "9249",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op83)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11346",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150620,
+      "operands": [
+        "9243",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op82)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11345",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150615,
+      "operands": [
+        "9237",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op81)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11344",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150610,
+      "operands": [
+        "9229",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op80)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11343",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150605,
+      "operands": [
+        "9223",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op79)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11342",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150600,
+      "operands": [
+        "9217",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op78)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11341",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150595,
+      "operands": [
+        "9211",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op77)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11340",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150590,
+      "operands": [
+        "9203",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op76)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11339",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150585,
+      "operands": [
+        "9197",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op75)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11338",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150580,
+      "operands": [
+        "9191",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op74)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11337",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150575,
+      "operands": [
+        "9185",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op73)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11336",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150570,
+      "operands": [
+        "9177",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op72)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11335",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150565,
+      "operands": [
+        "9171",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op71)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11334",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150560,
+      "operands": [
+        "9165",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op70)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11333",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150555,
+      "operands": [
+        "9159",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op69)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11332",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150550,
+      "operands": [
+        "9151",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op68)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11331",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150545,
+      "operands": [
+        "9145",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op67)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11330",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150540,
+      "operands": [
+        "9139",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op66)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11329",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150535,
+      "operands": [
+        "9133",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op65)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11328",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150530,
+      "operands": [
+        "9125",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op64)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11327",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150525,
+      "operands": [
+        "9119",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op63)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11326",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150520,
+      "operands": [
+        "9113",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op62)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11325",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150515,
+      "operands": [
+        "9107",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op61)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11324",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150510,
+      "operands": [
+        "9099",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op60)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11323",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150505,
+      "operands": [
+        "9093",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op59)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11322",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150500,
+      "operands": [
+        "9087",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op58)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11321",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150495,
+      "operands": [
+        "9081",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op57)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11320",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150490,
+      "operands": [
+        "9073",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op56)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11319",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150485,
+      "operands": [
+        "9067",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op55)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11318",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150480,
+      "operands": [
+        "9061",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op54)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11317",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150475,
+      "operands": [
+        "9055",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op53)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11316",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150470,
+      "operands": [
+        "9047",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op52)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11315",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150465,
+      "operands": [
+        "9041",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op51)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11314",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150460,
+      "operands": [
+        "9035",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op50)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11313",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150455,
+      "operands": [
+        "9029",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op49)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11312",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150450,
+      "operands": [
+        "9021",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op48)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11311",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150445,
+      "operands": [
+        "9015",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op47)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11310",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150440,
+      "operands": [
+        "9009",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op46)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11309",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150435,
+      "operands": [
+        "9003",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op45)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11308",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150430,
+      "operands": [
+        "8995",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op44)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11307",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150425,
+      "operands": [
+        "8989",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op43)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11306",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150420,
+      "operands": [
+        "8983",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op42)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11305",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150415,
+      "operands": [
+        "8977",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op41)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11304",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150410,
+      "operands": [
+        "8969",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op40)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11303",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150405,
+      "operands": [
+        "8963",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op39)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11302",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150400,
+      "operands": [
+        "8957",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op38)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11301",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150395,
+      "operands": [
+        "8951",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op37)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11300",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150390,
+      "operands": [
+        "8943",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op36)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11299",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150385,
+      "operands": [
+        "8937",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op35)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11298",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150380,
+      "operands": [
+        "8931",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op34)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11297",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150375,
+      "operands": [
+        "8925",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op33)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11296",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150370,
+      "operands": [
+        "8917",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op32)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11295",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150365,
+      "operands": [
+        "8911",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op31)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11294",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150360,
+      "operands": [
+        "8905",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op30)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11293",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150355,
+      "operands": [
+        "8899",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op29)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11292",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150350,
+      "operands": [
+        "8891",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op28)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11291",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150345,
+      "operands": [
+        "8885",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op27)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11290",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150340,
+      "operands": [
+        "8879",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op26)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11289",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150335,
+      "operands": [
+        "8873",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op25)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11288",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150330,
+      "operands": [
+        "8865",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op24)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11287",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150325,
+      "operands": [
+        "8859",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op23)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11286",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150320,
+      "operands": [
+        "8853",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op22)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11285",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150315,
+      "operands": [
+        "8847",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op21)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11284",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150310,
+      "operands": [
+        "8839",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op20)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11283",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150305,
+      "operands": [
+        "8833",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op19)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11282",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150300,
+      "operands": [
+        "8827",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op18)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11281",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150295,
+      "operands": [
+        "8821",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op17)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11280",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150290,
+      "operands": [
+        "8813",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op16)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11279",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150285,
+      "operands": [
+        "8807",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op15)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11278",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150280,
+      "operands": [
+        "8801",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op14)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11277",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150275,
+      "operands": [
+        "8795",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op13)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11276",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150270,
+      "operands": [
+        "8787",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op12)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11275",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150265,
+      "operands": [
+        "8781",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op11)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11274",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150260,
+      "operands": [
+        "8775",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op10)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11273",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150255,
+      "operands": [
+        "8769",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op9)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11272",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150250,
+      "operands": [
+        "8761",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op8)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11271",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150245,
+      "operands": [
+        "8755",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op7)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11270",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150240,
+      "operands": [
+        "8749",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op6)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11269",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150235,
+      "operands": [
+        "8743",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op5)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11268",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150230,
+      "operands": [
+        "8735",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op4)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11267",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150225,
+      "operands": [
+        "8729",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op3)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11266",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150220,
+      "operands": [
+        "8723",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op2)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11265",
+      "op": "GraphKernel_Mul_split",
+      "source_line": 150215,
+      "operands": [
+        "8717",
+        "11264"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Mul_split-op1)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "10533",
+      "op": "PrimFunc_LogicalNot",
+      "source_line": 145378,
+      "operands": [
+        "10532"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/network-MFTrainOneStepCell/LogicalNot-op0)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11631",
+      "op": "Depend",
+      "source_line": 152005,
+      "operands": [
+        "11626",
+        "11620"
+      ],
+      "stream_id": null,
+      "scope": "(Default/network-MFTrainOneStepCell/optimizer-AdamW/Depend-op3)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11598",
+      "op": "TupleGetItem",
+      "source_line": 151852,
+      "operands": [
+        "11596"
+      ],
+      "stream_id": null,
+      "scope": "(Default/TupleGetItem-op966)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11596",
+      "op": "GraphKernel_Cast_Pow_Sub_Pow_Sub_Div_split",
+      "source_line": 151844,
+      "operands": [
+        "11595"
+      ],
+      "stream_id": 0,
+      "scope": "(Default/GraphKernel_Cast_Pow_Sub_Pow_Sub_Div_split-op0)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11595",
+      "op": "Depend",
+      "source_line": 151841,
+      "operands": [
+        "11587",
+        "11582"
+      ],
+      "stream_id": null,
+      "scope": "(Default/Depend-op259)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11582",
+      "op": "Depend",
+      "source_line": 151774,
+      "operands": [
+        "11576",
+        "11581"
+      ],
+      "stream_id": null,
+      "scope": "(Default/Depend-op257)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11587",
+      "op": "Load",
+      "source_line": 151801,
+      "operands": [
+        "11561",
+        "11584"
+      ],
+      "stream_id": null,
+      "scope": "(Default/network-MFTrainOneStepCell/optimizer-AdamW/Load-op4)"
+    },
+    {
+      "graph": "kernel_graph1",
+      "node": "11597",
+      "op": "TupleGetItem",
+      "source_line": 151849,
+      "operands": [
+        "11596"
+      ],
+      "stream_id": null,
+      "scope": "(Default/TupleGetItem-op965)"
+    }
+  ],
+  "interpretation": "bounded static operand slice; does not prove runtime ready or full alias independence"
+}

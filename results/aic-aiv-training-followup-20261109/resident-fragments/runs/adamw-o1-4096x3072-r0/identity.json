@@ -1,0 +1,25 @@
+{
+  "name": "adamw-o1-4096x3072-r0",
+  "command": [
+    "/models/npu_nvme_exp/user7-stack/conda/bin/python",
+    "/tmp/user7-aic-aiv-training-followup-source/scripts/run_user_environment.py",
+    "--manifest",
+    "/models/npu_nvme_exp/user7-stack/full-closure-abi3-20261021-005/environments.json",
+    "--profile",
+    "candidate",
+    "--",
+    "python",
+    "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/source/training_optimizer_fragment_resident.py",
+    "--output",
+    "/dev/shm/user7-aic-aiv-training-followup-20261109/resident-fragments/adamw-o1-4096x3072-r0",
+    "--mode",
+    "adamw-o1",
+    "--shape",
+    "4096x3072",
+    "--trace",
+    "--resident-gradients"
+  ],
+  "replicate": 0,
+  "source_sha256": "cb3b448a5f825a48c7b1cffcfcb1f34ea976332ffce8370b3e1a612b06c96599",
+  "status": "complete"
+}

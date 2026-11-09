@@ -1,0 +1,548 @@
+
+
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>其它训练特性 &#124; MindSpore Transformers master 文档 &#124; 昇思MindSpore社区</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <script src="/check-dark-mode.js"></script>
+      
+      <script src="/doc-lib/jquery.js"></script>
+      
+      
+      
+      
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      
+      
+        <script src="../_static/documentation_options.js?v=c257942d"></script>
+      
+      
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+      
+      
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      
+      
+        <script src="../_static/translations.js?v=beaddf03"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="静态图实现特性" href="static_graph_features.html" />
+    <link rel="prev" title="训练指标监控与 Profiling" href="monitor.html" /> 
+  <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MindSpore","item":"https://www.mindspore.cn/"},{"@type":"ListItem","position":2,"name":"其它训练特性","item":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/feature/other_training_features.html"}]},{"@context":"https://schema.org","@type":"TechArticle","headline":"其它训练特性","description":"除了优化器、学习率等训练超参数和并行策略，动态图（PyNative）训练还有几项常用特性：**梯度累积、梯度裁剪、融合算子与混合精度**。本页依次介绍每项特性的用途与配置方式，并给出可直接套用的 YAML 片段。","author":{"@type":"Organization","name":"MindSpore"},"publisher":{"@type":"Organization","name":"MindSpore"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/feature/other_training_features.html"}}]</script>
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            MindSpore Transformers
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quick_start/quick_start.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/overview.html">整体架构</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/models.html">模型支持库</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">安装</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">安装指南</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">训练指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/training.html">训练指南</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">功能特性</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">功能特性概述</a></li>
+<li class="toctree-l1"><a class="reference internal" href="start_task.html">启动任务</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置文件说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">日志</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">数据集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training_hyperparameters.html">训练超参数与优化器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel_training.html">分布式并行训练</a></li>
+<li class="toctree-l1"><a class="reference internal" href="memory_optimization.html">训练显存优化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="save_load_checkpoint.html">权重保存与加载</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resume_training.html">断点续训</a></li>
+<li class="toctree-l1"><a class="reference internal" href="finetune.html">全参微调与 LoRA 微调</a></li>
+<li class="toctree-l1"><a class="reference internal" href="monitor.html">训练指标监控与 Profiling</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">其它训练特性</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#特性速查">特性速查</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#一梯度累积">一、梯度累积</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#适用场景">适用场景</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#推导规则">推导规则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#配置示例">配置示例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#字段说明">字段说明</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#二梯度裁剪">二、梯度裁剪</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#适用场景-1">适用场景</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#工作机制">工作机制</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#配置示例-1">配置示例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#字段说明-1">字段说明</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#三融合算子">三、融合算子</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#适用场景-2">适用场景</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#算子一览">算子一览</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#配置示例-2">配置示例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#四混合精度">四、混合精度</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#适用场景-3">适用场景</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#字段说明-2">字段说明</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#场景化配置">场景化配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#相关文档">相关文档</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="static_graph_features.html">静态图实现特性</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">环境变量</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../env_variables.html">环境变量说明</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">贡献指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribution/mindformers_contribution.html">MindSpore Transformers贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution/modelers_contribution.html">魔乐社区贡献指南</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../faq/model_related.html">模型相关 FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq/feature_related.html">功能相关 FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">静态图实现（Deprecated）</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/introduction/overview.html">整体架构</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/guide/index.html">大模型全流程指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/feature/index.html">功能特性</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/advanced_development/index.html">高阶开发</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/example/index.html">优秀实践</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../static_graph/env_variables.html">环境变量说明</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MindSpore Transformers</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a> &raquo;</li>
+      <li class="breadcrumb-item active">其它训练特性</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/feature/other_training_features.md.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="其它训练特性">
+<h1>其它训练特性<a class="headerlink" href="#其它训练特性" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://atomgit.com/mindspore/docs/blob/master/docs/mindformers/docs/source_zh_cn/feature/other_training_features.md"><img alt="查看源文件" src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.svg" /></a></p>
+<p>除了优化器、学习率等训练超参数和并行策略，动态图（PyNative）训练还有几项常用特性：<strong>梯度累积、梯度裁剪、融合算子与混合精度</strong>。本页依次介绍每项特性的用途与配置方式，并给出可直接套用的 YAML 片段。</p>
+<p>其余两类配置可参考对应文档：训练超参数（优化器、学习率与 fp32 主权重）见<a class="reference internal" href="training_hyperparameters.html"><span class="std std-doc">训练超参数与优化器</span></a>，并行策略见<a class="reference internal" href="parallel_training.html"><span class="std std-doc">分布式并行训练</span></a>；其中梯度累积与并行度、批大小直接相关，建议与并行文档配合阅读。完整字段含义见<a class="reference internal" href="configuration.html"><span class="std std-doc">配置文件说明</span></a>。</p>
+<section id="特性速查">
+<h2>特性速查<a class="headerlink" href="#特性速查" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>特性</p></th>
+<th class="head"><p>配置入口</p></th>
+<th class="head"><p>关键字段</p></th>
+<th class="head"><p>默认行为</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>梯度累积</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">training</span></code> / <code class="docutils literal notranslate"><span class="pre">parallelism</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">global_batch_size</span></code>、<code class="docutils literal notranslate"><span class="pre">local_batch_size</span></code>、<code class="docutils literal notranslate"><span class="pre">data_parallel_shard</span></code></p></td>
+<td><p>由三者推导累积步数，不直接配步数</p></td>
+</tr>
+<tr class="row-odd"><td><p>梯度裁剪</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">training</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">max_norm</span></code>（默认 <code class="docutils literal notranslate"><span class="pre">1.0</span></code>）</p></td>
+<td><p>默认开启，按全局 L2 范数裁剪</p></td>
+</tr>
+<tr class="row-even"><td><p>融合算子</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">model</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">normalization</span></code>、<code class="docutils literal notranslate"><span class="pre">fused_norm</span></code>、<code class="docutils literal notranslate"><span class="pre">hidden_act</span></code></p></td>
+<td><p>默认 <code class="docutils literal notranslate"><span class="pre">RMSNorm</span></code> + <code class="docutils literal notranslate"><span class="pre">fused_norm=True</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>混合精度</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">model</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">params_dtype</span></code>、<code class="docutils literal notranslate"><span class="pre">compute_dtype</span></code> 等</p></td>
+<td><p>fp32 主权重 + bf16 计算</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="一梯度累积">
+<h2>一、梯度累积<a class="headerlink" href="#一梯度累积" title="Link to this heading"></a></h2>
+<p>梯度累积是将一个全局 batch 拆分成若干 micro-batch，依次进行前向计算和反向传播，将梯度累积到一定步数后再统一更新优化器参数的技术，使显存受限时仍能模拟较大等效 batch 的训练效果。</p>
+<section id="适用场景">
+<h3>适用场景<a class="headerlink" href="#适用场景" title="Link to this heading"></a></h3>
+<p>显存不足以一次性容纳目标全局批大小时，但又希望保持较大的等效 batch（提升收敛稳定性）时使用。</p>
+</section>
+<section id="推导规则">
+<h3>推导规则<a class="headerlink" href="#推导规则" title="Link to this heading"></a></h3>
+<p>动态图<strong>不单独配置梯度累积步数</strong>，而是由 <code class="docutils literal notranslate"><span class="pre">training</span></code> 段的 <code class="docutils literal notranslate"><span class="pre">global_batch_size</span></code>、<code class="docutils literal notranslate"><span class="pre">local_batch_size</span></code> 与数据并行维度 <code class="docutils literal notranslate"><span class="pre">data_parallel</span></code> 推导（见 <a class="reference external" href="https://atomgit.com/mindspore/mindformers/blob/master/mindformers/pynative/trainer/trainer.py">mindformers/pynative/trainer/trainer.py</a> 的 <code class="docutils literal notranslate"><span class="pre">_compute_data_parallel_size</span></code>）：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>num_accumulation_steps = global_batch_size // (data_parallel * local_batch_size)
+</pre></div>
+</div>
+<p>其中 <code class="docutils literal notranslate"><span class="pre">data_parallel</span> <span class="pre">=</span> <span class="pre">world_size</span> <span class="pre">//</span> <span class="pre">(tensor_parallel</span> <span class="pre">*</span> <span class="pre">pipeline_parallel</span> <span class="pre">*</span> <span class="pre">context_parallel)</span> <span class="pre">=</span> <span class="pre">dp_replicate</span> <span class="pre">*</span> <span class="pre">dp_shard</span></code>，是完整的数据并行度（<code class="docutils literal notranslate"><span class="pre">dp_replicate</span></code> 为副本度，对应运行时属性 <code class="docutils literal notranslate"><span class="pre">data_parallel_replicate</span></code>；<code class="docutils literal notranslate"><span class="pre">dp_shard</span></code> 为分片度，即解析后的 <code class="docutils literal notranslate"><span class="pre">data_parallel_shard</span></code>）。用户只需配置分片度 <code class="docutils literal notranslate"><span class="pre">data_parallel_shard</span></code>；纯 FSDP（副本度为 1）时 <code class="docutils literal notranslate"><span class="pre">data_parallel</span></code> 即等于 <code class="docutils literal notranslate"><span class="pre">data_parallel_shard</span></code>。</p>
+<p><strong>整除与默认推导</strong>：</p>
+<ul class="simple">
+<li><p><strong>向下取整</strong>：源码用整除 <code class="docutils literal notranslate"><span class="pre">//</span></code>。若 <code class="docutils literal notranslate"><span class="pre">global_batch_size</span></code> 不能被 <code class="docutils literal notranslate"><span class="pre">data_parallel</span> <span class="pre">*</span> <span class="pre">local_batch_size</span></code> 整除，多出的样本会被丢弃。建议让 <code class="docutils literal notranslate"><span class="pre">global_batch_size</span></code> 能被 <code class="docutils literal notranslate"><span class="pre">data_parallel</span> <span class="pre">*</span> <span class="pre">local_batch_size</span></code> 整除。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">data_parallel_shard</span></code> 默认值是 <code class="docutils literal notranslate"><span class="pre">-1</span></code></strong>。当其 <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">0</span></code> 时框架按 <code class="docutils literal notranslate"><span class="pre">dp_replicate</span> <span class="pre">=</span> <span class="pre">1</span></code> 推导，此时 <code class="docutils literal notranslate"><span class="pre">data_parallel_shard</span></code> 被回写为 <code class="docutils literal notranslate"><span class="pre">data_parallel</span></code>（即分片度等于数据并行维度），不必手动填写；只有需要 HSDP（同时复制 + 分片）时才显式设置。</p></li>
+</ul>
+</section>
+<section id="配置示例">
+<h3>配置示例<a class="headerlink" href="#配置示例" title="Link to this heading"></a></h3>
+<p>下例的目标是让累积步数 <code class="docutils literal notranslate"><span class="pre">num_accumulation_steps</span> <span class="pre">=</span> <span class="pre">4</span></code>。以单卡（<code class="docutils literal notranslate"><span class="pre">data_parallel</span> <span class="pre">=</span> <span class="pre">data_parallel_shard</span> <span class="pre">=</span> <span class="pre">1</span></code>）、<code class="docutils literal notranslate"><span class="pre">local_batch_size</span> <span class="pre">=</span> <span class="pre">2</span></code> 为例，需要 <code class="docutils literal notranslate"><span class="pre">global_batch_size</span> <span class="pre">=</span> <span class="pre">8</span></code>：<code class="docutils literal notranslate"><span class="pre">8</span> <span class="pre">//</span> <span class="pre">(1</span> <span class="pre">*</span> <span class="pre">2)</span> <span class="pre">=</span> <span class="pre">4</span></code>。</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">training</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">steps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">  </span><span class="nt">local_batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">        </span><span class="c1"># 单卡每次前向的样本数（一个 micro-batch）</span>
+<span class="w">  </span><span class="nt">global_batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span><span class="w">       </span><span class="c1"># 每步全局样本数；8 // (1 * 2) = 4 个累积步</span>
+<span class="w">  </span><span class="nt">max_norm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">  </span><span class="nt">seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">42</span>
+
+<span class="nt">parallelism</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">data_parallel_shard</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-1</span><span class="w">    </span><span class="c1"># 默认 -1，单卡下推导为 data_parallel = 1</span>
+<span class="w">  </span><span class="nt">tensor_parallel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">context_parallel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">pipeline_parallel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+
+<span class="nt">optimizer</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AdamW</span>
+<span class="w">  </span><span class="nt">betas</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.9</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.95</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">eps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.e-8</span>
+<span class="w">  </span><span class="nt">weight_decay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span>
+</pre></div>
+</div>
+</section>
+<section id="字段说明">
+<h3>字段说明<a class="headerlink" href="#字段说明" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>参数名称</p></th>
+<th class="head"><p>数据类型</p></th>
+<th class="head"><p>是否可选</p></th>
+<th class="head"><p>默认值</p></th>
+<th class="head"><p>取值说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">global_batch_size</span></code></p></td>
+<td><p>int</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>每步处理的全局样本数（配置段：<code class="docutils literal notranslate"><span class="pre">training</span></code>）。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">local_batch_size</span></code></p></td>
+<td><p>int</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>单卡每个 micro-batch 的样本数（配置段：<code class="docutils literal notranslate"><span class="pre">training</span></code>）。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">data_parallel_shard</span></code></p></td>
+<td><p>int</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-1</span></code></p></td>
+<td><p>数据并行分片度（配置段：<code class="docutils literal notranslate"><span class="pre">parallelism</span></code>）；<code class="docutils literal notranslate"><span class="pre">-1</span></code> 时按 <code class="docutils literal notranslate"><span class="pre">data_parallel</span></code> 推导。</p></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>约束</strong>：<code class="docutils literal notranslate"><span class="pre">data_parallel</span> <span class="pre">*</span> <span class="pre">local_batch_size</span></code> 不得超过 <code class="docutils literal notranslate"><span class="pre">global_batch_size</span></code>，否则会抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，提示需增大 <code class="docutils literal notranslate"><span class="pre">global_batch_size</span></code> 或减小 <code class="docutils literal notranslate"><span class="pre">local_batch_size</span></code>。</p></li>
+<li><p><strong>loss 自动缩放</strong>：当 <code class="docutils literal notranslate"><span class="pre">num_accumulation_steps</span> <span class="pre">&gt;</span> <span class="pre">1</span></code> 时，框架对每个 micro-batch 的 loss 乘以 <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">num_accumulation_steps</span></code> 再反向（见 <code class="docutils literal notranslate"><span class="pre">_forward_backward</span></code>），从而使累积后的梯度等价于一次大 batch 的平均梯度。各 micro-batch 的缩放后 loss 会在 <code class="docutils literal notranslate"><span class="pre">training_step</span></code> 中累加，因此上报的 <code class="docutils literal notranslate"><span class="pre">device_loss</span></code> 即为该全局 batch 的平均 loss（分布式下再跨卡 all-reduce 取平均）。</p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+<section id="二梯度裁剪">
+<h2>二、梯度裁剪<a class="headerlink" href="#二梯度裁剪" title="Link to this heading"></a></h2>
+<p>梯度裁剪是在优化器更新前对所有参数梯度的全局 L2 范数设置上限，当范数超过阈值时按比例缩放梯度，以抑制单步更新过大、稳定训练的一种技术。</p>
+<section id="适用场景-1">
+<h3>适用场景<a class="headerlink" href="#适用场景-1" title="Link to this heading"></a></h3>
+<p>训练中出现 loss 抖动、梯度范数尖刺时使用。动态图默认即开启梯度裁剪。</p>
+</section>
+<section id="工作机制">
+<h3>工作机制<a class="headerlink" href="#工作机制" title="Link to this heading"></a></h3>
+<p>框架在优化器更新前，先计算所有参数梯度的全局 L2 范数（分布式下跨进程 all-reduce 同步），当范数超过 <code class="docutils literal notranslate"><span class="pre">max_norm</span></code> 时按比例就地缩放梯度（见 <a class="reference external" href="https://atomgit.com/mindspore/mindformers/blob/master/mindformers/pynative/trainer/utils.py">mindformers/pynative/trainer/utils.py</a> 的 <code class="docutils literal notranslate"><span class="pre">_calculate_global_grad_norm</span></code>）。</p>
+<p><strong>数值与分布式一致性</strong>：范数计算在 <strong>fp32</strong> 精度下进行，以避免 bf16/fp16 下的数值不稳定；并对 DTensor 的 <code class="docutils literal notranslate"><span class="pre">Replicate</span></code> placement 维度做缩放校正，保证多卡结果与单卡一致。</p>
+</section>
+<section id="配置示例-1">
+<h3>配置示例<a class="headerlink" href="#配置示例-1" title="Link to this heading"></a></h3>
+<p>大模型训练初期 loss 不稳，可以收紧裁剪阈值，抑制异常步：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">training</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">steps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">  </span><span class="nt">local_batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">  </span><span class="nt">global_batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">  </span><span class="nt">seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">42</span>
+<span class="w">  </span><span class="nt">max_norm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w">      </span><span class="c1"># 收紧裁剪上限</span>
+</pre></div>
+</div>
+</section>
+<section id="字段说明-1">
+<h3>字段说明<a class="headerlink" href="#字段说明-1" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>参数名称</p></th>
+<th class="head"><p>数据类型</p></th>
+<th class="head"><p>是否可选</p></th>
+<th class="head"><p>默认值</p></th>
+<th class="head"><p>取值说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">max_norm</span></code></p></td>
+<td><p>float</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1.0</span></code></p></td>
+<td><p>梯度全局 L2 范数上限（配置段：<code class="docutils literal notranslate"><span class="pre">training</span></code>）。应保持正数，不要设为 <code class="docutils literal notranslate"><span class="pre">0</span></code> 或负值——设为 <code class="docutils literal notranslate"><span class="pre">0</span></code> 会导致梯度被整体缩放到零（等效于不更新），设为负值则会使梯度反号。需减弱裁剪时请调大该值。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="三融合算子">
+<h2>三、融合算子<a class="headerlink" href="#三融合算子" title="Link to this heading"></a></h2>
+<p>融合算子将归一化、激活等相邻的多个算子合并为单一 kernel 执行，减少动态图模式下的 kernel 启动开销，从而提升训练吞吐量。</p>
+<section id="适用场景-2">
+<h3>适用场景<a class="headerlink" href="#适用场景-2" title="Link to this heading"></a></h3>
+<p>动态图层默认已启用融合算子，一般无需改动；当需要切换归一化类型或激活函数时，在 <code class="docutils literal notranslate"><span class="pre">model</span></code> 段配置即可。</p>
+</section>
+<section id="算子一览">
+<h3>算子一览<a class="headerlink" href="#算子一览" title="Link to this heading"></a></h3>
+<p>源码位于 <a class="reference external" href="https://atomgit.com/mindspore/mindformers/blob/master/mindformers/pynative/layers/layer_norm.py">mindformers/pynative/layers/layer_norm.py</a> 与 <a class="reference external" href="https://atomgit.com/mindspore/mindformers/blob/master/mindformers/pynative/layers/activation.py">mindformers/pynative/layers/activation.py</a>。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>算子</p></th>
+<th class="head"><p>类</p></th>
+<th class="head"><p>关键参数（默认）</p></th>
+<th class="head"><p>行为</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>RMSNorm</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FusedRMSNorm</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">eps=1e-5</span></code>、<code class="docutils literal notranslate"><span class="pre">compute_dtype=float32</span></code></p></td>
+<td><p>基于 MindSpore 融合 <code class="docutils literal notranslate"><span class="pre">rms_norm</span></code>；先 cast 到 <code class="docutils literal notranslate"><span class="pre">compute_dtype</span></code> 计算，再 cast 回输入 dtype</p></td>
+</tr>
+<tr class="row-odd"><td><p>LayerNorm</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FusedLayerNorm</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">eps=1e-5</span></code>、<code class="docutils literal notranslate"><span class="pre">compute_dtype=float32</span></code></p></td>
+<td><p>基于融合 <code class="docutils literal notranslate"><span class="pre">layer_norm</span></code>；同样按 <code class="docutils literal notranslate"><span class="pre">compute_dtype</span></code> 计算后 cast 回原 dtype</p></td>
+</tr>
+<tr class="row-even"><td><p>GELU</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GELU</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">approximate=&quot;none&quot;</span></code></p></td>
+<td><p>支持 <code class="docutils literal notranslate"><span class="pre">approximate</span></code> 取 <code class="docutils literal notranslate"><span class="pre">none</span></code> / <code class="docutils literal notranslate"><span class="pre">tanh</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>SiLU</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SiLU</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">inplace=False</span></code></p></td>
+<td><p>支持 <code class="docutils literal notranslate"><span class="pre">inplace</span></code> 原地更新</p></td>
+</tr>
+<tr class="row-even"><td><p>SwiGLU</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FusedSwiGlu</span></code></p></td>
+<td><p>—</p></td>
+<td><p>基于 <code class="docutils literal notranslate"><span class="pre">swiglu</span></code> 算子的融合 SwiGLU</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>归一化与激活的可选值</strong>：</p>
+<ul class="simple">
+<li><p><strong>归一化</strong>：由 <code class="docutils literal notranslate"><span class="pre">normalization</span></code> 字段选择，默认 <code class="docutils literal notranslate"><span class="pre">&quot;RMSNorm&quot;</span></code>，<strong>仅支持 <code class="docutils literal notranslate"><span class="pre">&quot;LayerNorm&quot;</span></code> 与 <code class="docutils literal notranslate"><span class="pre">&quot;RMSNorm&quot;</span></code> 两个取值</strong>（由 <code class="docutils literal notranslate"><span class="pre">get_norm_cls</span></code> 解析）。</p></li>
+<li><p><strong>融合开关</strong>：由 <code class="docutils literal notranslate"><span class="pre">fused_norm</span></code> 字段控制，默认 <code class="docutils literal notranslate"><span class="pre">True</span></code>。当前 <code class="docutils literal notranslate"><span class="pre">get_norm_cls</span></code> <strong>只支持融合实现</strong>，<code class="docutils literal notranslate"><span class="pre">fused_norm=False</span></code> 会直接报错，因此保持默认即可。</p></li>
+<li><p><strong>激活</strong>：由 <code class="docutils literal notranslate"><span class="pre">hidden_act</span></code> 字段选择，<code class="docutils literal notranslate"><span class="pre">ACTIVATION_MAP</span></code> 仅注册 <code class="docutils literal notranslate"><span class="pre">gelu</span></code>、<code class="docutils literal notranslate"><span class="pre">silu</span></code>、<code class="docutils literal notranslate"><span class="pre">fusedswiglu</span></code> 三类。</p></li>
+</ul>
+</section>
+<section id="配置示例-2">
+<h3>配置示例<a class="headerlink" href="#配置示例-2" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">model_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek_v3</span>
+<span class="w">  </span><span class="nt">architectures</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DeepseekV3ForCausalLM</span>
+<span class="w">  </span><span class="nt">hidden_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1792</span>
+<span class="w">  </span><span class="nt">num_hidden_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<span class="w">  </span><span class="nt">num_attention_heads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">  </span><span class="c1"># 融合算子相关</span>
+<span class="w">  </span><span class="nt">normalization</span><span class="p">:</span><span class="w"> </span><span class="s">"RMSNorm"</span><span class="w">   </span><span class="c1"># 可选 "RMSNorm" / "LayerNorm"，默认 "RMSNorm"</span>
+<span class="w">  </span><span class="nt">fused_norm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">           </span><span class="c1"># 默认 True，保持融合实现</span>
+<span class="w">  </span><span class="nt">rms_norm_eps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.e-6</span><span class="w">        </span><span class="c1"># RMSNorm 的 eps</span>
+<span class="w">  </span><span class="nt">hidden_act</span><span class="p">:</span><span class="w"> </span><span class="s">"silu"</span><span class="w">         </span><span class="c1"># 可选 "gelu" / "silu" / "fusedswiglu"</span>
+</pre></div>
+</div>
+<p><strong>eps 字段</strong>：<code class="docutils literal notranslate"><span class="pre">FusedRMSNorm</span></code> / <code class="docutils literal notranslate"><span class="pre">FusedLayerNorm</span></code> 构造参数 <code class="docutils literal notranslate"><span class="pre">eps</span></code> 默认 <code class="docutils literal notranslate"><span class="pre">1e-5</span></code>。模型侧通常通过 <code class="docutils literal notranslate"><span class="pre">rms_norm_eps</span></code> 等模型字段传入实际值（如 DeepSeek-V3 用 <code class="docutils literal notranslate"><span class="pre">1.e-6</span></code>），以 <code class="docutils literal notranslate"><span class="pre">model</span></code> 段的取值为准。</p>
+</section>
+</section>
+<section id="四混合精度">
+<h2>四、混合精度<a class="headerlink" href="#四混合精度" title="Link to this heading"></a></h2>
+<p>混合精度训练是指在训练过程中对不同计算层次使用不同的数值精度——主体计算（如矩阵乘）使用 bf16/fp16 等低精度以提升吞吐，而对归一化、softmax、RoPE 等数值敏感算子保留 fp32 以保证数值稳定性。</p>
+<section id="适用场景-3">
+<h3>适用场景<a class="headerlink" href="#适用场景-3" title="Link to this heading"></a></h3>
+<p>在 Ascend 上以 bf16 进行主体计算可显著提升吞吐，同时对归一化、softmax、RoPE 等数值敏感算子保留 fp32，兼顾速度与稳定性。混合精度通过 <code class="docutils literal notranslate"><span class="pre">model</span></code> 段的一组 dtype 字段控制。</p>
+<p><strong>model 段是可扩展的</strong>：<code class="docutils literal notranslate"><span class="pre">model</span></code> 段 <code class="docutils literal notranslate"><span class="pre">allow_extra</span> <span class="pre">=</span> <span class="pre">True</span></code>，字段随模型扩展，<strong>不同模型可用的 dtype 字段名可能不同</strong>。例如 <code class="docutils literal notranslate"><span class="pre">router_dense_type</span></code> 仅 MoE 模型有意义。这些 dtype 字段在代码中没有内置默认值，实际取值来自模型 YAML；下表与示例的取值以 DeepSeek-V3 配置 <code class="docutils literal notranslate"><span class="pre">pynative_ds3.yaml</span></code> 为准，落地时请对照所用模型的实际字段。</p>
+</section>
+<section id="字段说明-2">
+<h3>字段说明<a class="headerlink" href="#字段说明-2" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>参数名称</p></th>
+<th class="head"><p>数据类型</p></th>
+<th class="head"><p>是否可选</p></th>
+<th class="head"><p>默认值</p></th>
+<th class="head"><p>取值说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">params_dtype</span></code></p></td>
+<td><p>str</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;float32&quot;</span></code></p></td>
+<td><p>参数（主权重）保存精度。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">compute_dtype</span></code></p></td>
+<td><p>str</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;bfloat16&quot;</span></code></p></td>
+<td><p>矩阵乘等主体计算精度，通常用 bf16 提升吞吐。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">layernorm_compute_dtype</span></code></p></td>
+<td><p>str</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;float32&quot;</span></code></p></td>
+<td><p>归一化计算精度，保留 fp32 保证数值稳定。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">softmax_compute_dtype</span></code></p></td>
+<td><p>str</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;float32&quot;</span></code></p></td>
+<td><p>softmax 计算精度。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rotary_dtype</span></code></p></td>
+<td><p>str</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;float32&quot;</span></code></p></td>
+<td><p>旋转位置编码（RoPE）计算精度。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">router_dense_type</span></code></p></td>
+<td><p>str</p></td>
+<td><p>可选</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;float32&quot;</span></code></p></td>
+<td><p>MoE router 计算精度（<strong>仅 MoE 模型</strong>）。</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>fp32 主权重副本</strong>：当 <code class="docutils literal notranslate"><span class="pre">compute_dtype</span></code> 为 bf16/fp16 时，优化器会为这些参数额外维护一份 <strong>fp32 主权重副本</strong>：优化器更新在 fp32 上完成后再同步回低精度参数，避免低精度直接累加权重的精度损失。详见<a class="reference internal" href="training_hyperparameters.html"><span class="std std-doc">训练超参数与优化器</span></a>。</p>
+</section>
+<section id="场景化配置">
+<h3>场景化配置<a class="headerlink" href="#场景化配置" title="Link to this heading"></a></h3>
+<p><strong>场景 A：DeepSeek-V3（MoE 模型）</strong></p>
+<p>含 MoE，需配置 <code class="docutils literal notranslate"><span class="pre">router_dense_type</span></code>；敏感算子全部保留 fp32：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">model_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek_v3</span>
+<span class="w">  </span><span class="nt">architectures</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DeepseekV3ForCausalLM</span>
+<span class="w">  </span><span class="nt">params_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span><span class="w">            </span><span class="c1"># 主权重 fp32</span>
+<span class="w">  </span><span class="nt">compute_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"bfloat16"</span><span class="w">          </span><span class="c1"># 主体计算 bf16</span>
+<span class="w">  </span><span class="nt">layernorm_compute_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span><span class="w"> </span><span class="c1"># 归一化 fp32</span>
+<span class="w">  </span><span class="nt">softmax_compute_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span><span class="w">   </span><span class="c1"># softmax fp32</span>
+<span class="w">  </span><span class="nt">rotary_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span><span class="w">            </span><span class="c1"># RoPE fp32</span>
+<span class="w">  </span><span class="nt">router_dense_type</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span><span class="w">       </span><span class="c1"># MoE router fp32（仅 MoE）</span>
+</pre></div>
+</div>
+<p><strong>场景 B：通用稠密模型</strong></p>
+<p>非 MoE 模型无需 <code class="docutils literal notranslate"><span class="pre">router_dense_type</span></code>，其余字段保持稳态混合精度配置：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">params_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span><span class="w">            </span><span class="c1"># 主权重 fp32</span>
+<span class="w">  </span><span class="nt">compute_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"bfloat16"</span><span class="w">          </span><span class="c1"># 主体计算 bf16</span>
+<span class="w">  </span><span class="nt">layernorm_compute_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span>
+<span class="w">  </span><span class="nt">softmax_compute_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span>
+<span class="w">  </span><span class="nt">rotary_dtype</span><span class="p">:</span><span class="w"> </span><span class="s">"float32"</span>
+</pre></div>
+</div>
+<p><strong>选型建议</strong>：</p>
+<ul class="simple">
+<li><p><strong>稳态优先（推荐）</strong>：<code class="docutils literal notranslate"><span class="pre">params_dtype=float32</span></code> + <code class="docutils literal notranslate"><span class="pre">compute_dtype=bfloat16</span></code>，配合 fp32 主权重与 fp32 归一化/softmax/RoPE，精度稳定，是默认方案。</p></li>
+<li><p><strong>吞吐优先</strong>：可将更多敏感算子也切到 bf16，但需密切关注 loss 与梯度范数；一旦出现发散，优先把 <code class="docutils literal notranslate"><span class="pre">layernorm_compute_dtype</span></code> / <code class="docutils literal notranslate"><span class="pre">softmax_compute_dtype</span></code> 调回 <code class="docutils literal notranslate"><span class="pre">float32</span></code>。</p></li>
+</ul>
+</section>
+</section>
+<section id="相关文档">
+<h2>相关文档<a class="headerlink" href="#相关文档" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>优化器、学习率与 fp32 主权重：<a class="reference internal" href="training_hyperparameters.html"><span class="std std-doc">训练超参数与优化器</span></a></p></li>
+<li><p>并行维度（DP/TP/CP/PP）与批大小推导：<a class="reference internal" href="parallel_training.html"><span class="std std-doc">分布式并行训练</span></a></p></li>
+<li><p>数据集配置与每卡批大小：<a class="reference internal" href="dataset.html"><span class="std std-doc">数据集</span></a></p></li>
+<li><p>配置文件字段总览：<a class="reference internal" href="configuration.html"><span class="std std-doc">配置文件说明</span></a></p></li>
+<li><p>训练全流程：<a class="reference internal" href="../guide/training.html"><span class="std std-doc">训练指南</span></a></p></li>
+<li><p>快速上手：<a class="reference internal" href="../quick_start/quick_start.html"><span class="std std-doc">快速开始</span></a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="monitor.html" class="btn btn-neutral float-left" title="训练指标监控与 Profiling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="static_graph_features.html" class="btn btn-neutral float-right" title="静态图实现特性" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 MindSpore.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

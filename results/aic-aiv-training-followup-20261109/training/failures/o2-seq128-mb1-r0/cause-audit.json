@@ -1,0 +1,67 @@
+{
+  "status": "compile_failure_before_training",
+  "direct_error": "Get scalar or string value from None with check failed",
+  "cpp_location": "mindspore/core/include/utils/value_utils.h:132 GetValueWithCheck",
+  "ranks": [
+    {
+      "rank": 0,
+      "direct_error_lines": [],
+      "training_steps": [],
+      "retained_validate_graphs": [
+        "rank_0/dependency-graphs/rank_0/19_validate_0143.ir"
+      ]
+    },
+    {
+      "rank": 1,
+      "direct_error_lines": [],
+      "training_steps": [],
+      "retained_validate_graphs": [
+        "rank_1/dependency-graphs/rank_1/19_validate_0143.ir"
+      ]
+    },
+    {
+      "rank": 2,
+      "direct_error_lines": [
+        {
+          "line": 974,
+          "text": "RuntimeError: Get scalar or string value from None with check failed."
+        },
+        {
+          "line": 1001,
+          "text": "    raise RuntimeError(f\"Failed to compile model: {str(e)}\") from e"
+        },
+        {
+          "line": 1002,
+          "text": "RuntimeError: Failed to compile model: Get scalar or string value from None with check failed."
+        }
+      ],
+      "training_steps": [],
+      "retained_validate_graphs": [
+        "rank_2/dependency-graphs/rank_2/19_validate_0143.ir"
+      ]
+    },
+    {
+      "rank": 3,
+      "direct_error_lines": [
+        {
+          "line": 974,
+          "text": "RuntimeError: Get scalar or string value from None with check failed."
+        },
+        {
+          "line": 1001,
+          "text": "    raise RuntimeError(f\"Failed to compile model: {str(e)}\") from e"
+        },
+        {
+          "line": 1002,
+          "text": "RuntimeError: Failed to compile model: Get scalar or string value from None with check failed."
+        }
+      ],
+      "training_steps": [],
+      "retained_validate_graphs": [
+        "rank_3/dependency-graphs/rank_3/19_validate_0143.ir"
+      ]
+    }
+  ],
+  "performance_observation": false,
+  "unsupported_generalization": "does not establish that O2 is universally unsupported; no post-hoc backend fallback"
+}

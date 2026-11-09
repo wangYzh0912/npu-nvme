@@ -1,0 +1,92 @@
+[
+  {
+    "run": "adamw-o0-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "HOSTFUNC_CALLBACK",
+        "device_task_type": "AI_CPU",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 63321.0
+      },
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 224,
+        "tasks_per_update": 28.0,
+        "duration_sum_ns": 7366367.0
+      },
+      {
+        "host_task_type": "MEMCPY_ASYNC",
+        "device_task_type": "PCIE_DMA_SQE",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 17875257.0
+      }
+    ],
+    "diagnostic_updates": 8,
+    "source": "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/fragments/runs/adamw-o0-4096x3072-r0/ascend_task.db.gz",
+    "timing_scope": "includes ordinary Tensor input transfers; not resident model optimizer cost",
+    "interpretation": "host_task_type KERNEL_AIVEC establishes vector dispatch; no simultaneous AIC work in this fragment"
+  },
+  {
+    "run": "adamw-o1-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "HOSTFUNC_CALLBACK",
+        "device_task_type": "AI_CPU",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 58100
+      },
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 88,
+        "tasks_per_update": 11.0,
+        "duration_sum_ns": 5786476.5
+      },
+      {
+        "host_task_type": "MEMCPY_ASYNC",
+        "device_task_type": "PCIE_DMA_SQE",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 17828876.0
+      }
+    ],
+    "diagnostic_updates": 8,
+    "source": "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/fragments/runs/adamw-o1-4096x3072-r0/ascend_task.db.gz",
+    "timing_scope": "includes ordinary Tensor input transfers; not resident model optimizer cost",
+    "interpretation": "host_task_type KERNEL_AIVEC establishes vector dispatch; no simultaneous AIC work in this fragment"
+  },
+  {
+    "run": "fused-o0-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "HOSTFUNC_CALLBACK",
+        "device_task_type": "AI_CPU",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 58100.5
+      },
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 24,
+        "tasks_per_update": 3.0,
+        "duration_sum_ns": 878098.0
+      },
+      {
+        "host_task_type": "MEMCPY_ASYNC",
+        "device_task_type": "PCIE_DMA_SQE",
+        "count": 16,
+        "tasks_per_update": 2.0,
+        "duration_sum_ns": 18316185.0
+      }
+    ],
+    "diagnostic_updates": 8,
+    "source": "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/fragments/runs/fused-o0-4096x3072-r0/ascend_task.db.gz",
+    "timing_scope": "includes ordinary Tensor input transfers; not resident model optimizer cost",
+    "interpretation": "host_task_type KERNEL_AIVEC establishes vector dispatch; no simultaneous AIC work in this fragment"
+  }
+]

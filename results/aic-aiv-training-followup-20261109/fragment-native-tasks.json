@@ -1,0 +1,6120 @@
+[
+  {
+    "suite": "fragments",
+    "run": "adamw-o0-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "HOSTFUNC_CALLBACK",
+        "device_task_type": "AI_CPU",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 63321.0
+      },
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 224,
+        "tasks_per_update": 28.0,
+        "duration_sum_ns": 7366367.0
+      },
+      {
+        "host_task_type": "MEMCPY_ASYNC",
+        "device_task_type": "PCIE_DMA_SQE",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 17875257.0
+      }
+    ],
+    "source_sha256": "685695a05d9945c4ac48ad4de184c54072ff3da0123e29b25f074c5cecb1cbe6",
+    "timeline": {
+      "tasks": [
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 12257,
+          "start_us": 0.0,
+          "duration_us": 2223.124
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12258,
+          "start_us": 2223.284,
+          "duration_us": 1.06
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12259,
+          "start_us": 2224.384,
+          "duration_us": 83.782
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12260,
+          "start_us": 2308.186,
+          "duration_us": 19.84
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12261,
+          "start_us": 2328.046,
+          "duration_us": 81.182
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12262,
+          "start_us": 2409.248,
+          "duration_us": 44.621
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12263,
+          "start_us": 2453.909,
+          "duration_us": 25.42
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12264,
+          "start_us": 2479.349,
+          "duration_us": 82.602
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12265,
+          "start_us": 2561.971,
+          "duration_us": 24.5
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12266,
+          "start_us": 2586.491,
+          "duration_us": 130.202
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12267,
+          "start_us": 2716.714,
+          "duration_us": 21.72
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12268,
+          "start_us": 2738.454,
+          "duration_us": 24.0
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12269,
+          "start_us": 2762.475,
+          "duration_us": 56.441
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12270,
+          "start_us": 2818.956,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12271,
+          "start_us": 2820.056,
+          "duration_us": 4.56
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12272,
+          "start_us": 2824.636,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12273,
+          "start_us": 2825.916,
+          "duration_us": 1.32
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12274,
+          "start_us": 2827.256,
+          "duration_us": 3.08
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12275,
+          "start_us": 2830.356,
+          "duration_us": 1.04
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12276,
+          "start_us": 2831.416,
+          "duration_us": 55.041
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12277,
+          "start_us": 2886.497,
+          "duration_us": 21.46
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12278,
+          "start_us": 2907.998,
+          "duration_us": 22.52
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12279,
+          "start_us": 2930.538,
+          "duration_us": 43.281
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12280,
+          "start_us": 2973.839,
+          "duration_us": 23.2
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12281,
+          "start_us": 2997.059,
+          "duration_us": 1.22
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12282,
+          "start_us": 2998.299,
+          "duration_us": 0.94
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12283,
+          "start_us": 2999.259,
+          "duration_us": 74.801
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12284,
+          "start_us": 3074.101,
+          "duration_us": 49.801
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12285,
+          "start_us": 3123.942,
+          "duration_us": 18.78
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 12286,
+          "start_us": 3311.966,
+          "duration_us": 7.12
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 12287,
+          "start_us": 5784.915,
+          "duration_us": 2228.825
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12288,
+          "start_us": 8013.9,
+          "duration_us": 1.08
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12289,
+          "start_us": 8015.0,
+          "duration_us": 83.141
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12290,
+          "start_us": 8098.161,
+          "duration_us": 20.5
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12291,
+          "start_us": 8118.682,
+          "duration_us": 81.521
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12292,
+          "start_us": 8200.243,
+          "duration_us": 44.521
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12293,
+          "start_us": 8244.784,
+          "duration_us": 24.84
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12294,
+          "start_us": 8269.645,
+          "duration_us": 83.841
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12295,
+          "start_us": 8353.506,
+          "duration_us": 24.64
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12296,
+          "start_us": 8378.167,
+          "duration_us": 131.463
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12297,
+          "start_us": 8509.65,
+          "duration_us": 21.48
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12298,
+          "start_us": 8531.15,
+          "duration_us": 23.24
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12299,
+          "start_us": 8554.41,
+          "duration_us": 58.341
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12300,
+          "start_us": 8612.772,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12301,
+          "start_us": 8613.872,
+          "duration_us": 4.6
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12302,
+          "start_us": 8618.492,
+          "duration_us": 1.24
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12303,
+          "start_us": 8619.772,
+          "duration_us": 1.18
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12304,
+          "start_us": 8620.972,
+          "duration_us": 3.28
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12305,
+          "start_us": 8624.272,
+          "duration_us": 0.96
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12306,
+          "start_us": 8625.252,
+          "duration_us": 54.581
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12307,
+          "start_us": 8679.853,
+          "duration_us": 21.76
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12308,
+          "start_us": 8701.653,
+          "duration_us": 22.7
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12309,
+          "start_us": 8724.374,
+          "duration_us": 44.261
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12310,
+          "start_us": 8768.655,
+          "duration_us": 23.42
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12311,
+          "start_us": 8792.095,
+          "duration_us": 1.16
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12312,
+          "start_us": 8793.275,
+          "duration_us": 1.02
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12313,
+          "start_us": 8794.315,
+          "duration_us": 75.901
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12314,
+          "start_us": 8870.237,
+          "duration_us": 49.161
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12315,
+          "start_us": 8919.418,
+          "duration_us": 19.52
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 12316,
+          "start_us": 9049.66,
+          "duration_us": 8.12
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 12317,
+          "start_us": 11366.527,
+          "duration_us": 2244.324
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12318,
+          "start_us": 13611.011,
+          "duration_us": 1.08
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12319,
+          "start_us": 13612.111,
+          "duration_us": 83.262
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12320,
+          "start_us": 13695.393,
+          "duration_us": 20.18
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12321,
+          "start_us": 13715.594,
+          "duration_us": 80.981
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12322,
+          "start_us": 13796.595,
+          "duration_us": 44.64
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12323,
+          "start_us": 13841.256,
+          "duration_us": 25.201
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12324,
+          "start_us": 13866.477,
+          "duration_us": 82.941
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12325,
+          "start_us": 13949.458,
+          "duration_us": 24.22
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12326,
+          "start_us": 13973.699,
+          "duration_us": 131.742
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12327,
+          "start_us": 14105.461,
+          "duration_us": 21.92
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12328,
+          "start_us": 14127.402,
+          "duration_us": 23.58
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12329,
+          "start_us": 14151.002,
+          "duration_us": 57.141
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12330,
+          "start_us": 14208.183,
+          "duration_us": 1.16
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12331,
+          "start_us": 14209.363,
+          "duration_us": 4.62
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12332,
+          "start_us": 14214.004,
+          "duration_us": 1.16
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12333,
+          "start_us": 14215.184,
+          "duration_us": 1.24
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12334,
+          "start_us": 14216.444,
+          "duration_us": 3.16
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12335,
+          "start_us": 14219.624,
+          "duration_us": 1.0
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12336,
+          "start_us": 14220.644,
+          "duration_us": 54.401
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12337,
+          "start_us": 14275.085,
+          "duration_us": 22.42
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12338,
+          "start_us": 14297.525,
+          "duration_us": 22.96
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12339,
+          "start_us": 14320.526,
+          "duration_us": 43.801
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12340,
+          "start_us": 14364.347,
+          "duration_us": 23.74
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12341,
+          "start_us": 14388.127,
+          "duration_us": 1.3
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12342,
+          "start_us": 14389.467,
+          "duration_us": 1.0
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12343,
+          "start_us": 14390.507,
+          "duration_us": 75.842
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12344,
+          "start_us": 14466.369,
+          "duration_us": 49.361
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12345,
+          "start_us": 14515.75,
+          "duration_us": 19.52
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 12346,
+          "start_us": 14649.372,
+          "duration_us": 7.84
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 12347,
+          "start_us": 16964.558,
+          "duration_us": 2232.424
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12348,
+          "start_us": 19197.143,
+          "duration_us": 1.06
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12349,
+          "start_us": 19198.223,
+          "duration_us": 82.342
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12350,
+          "start_us": 19280.585,
+          "duration_us": 20.24
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12351,
+          "start_us": 19300.845,
+          "duration_us": 80.721
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12352,
+          "start_us": 19381.607,
+          "duration_us": 44.961
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12353,
+          "start_us": 19426.588,
+          "duration_us": 25.16
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12354,
+          "start_us": 19451.768,
+          "duration_us": 83.581
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12355,
+          "start_us": 19535.37,
+          "duration_us": 24.58
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12356,
+          "start_us": 19559.97,
+          "duration_us": 131.422
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12357,
+          "start_us": 19691.413,
+          "duration_us": 21.26
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12358,
+          "start_us": 19712.693,
+          "duration_us": 23.22
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12359,
+          "start_us": 19735.934,
+          "duration_us": 57.181
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12360,
+          "start_us": 19793.135,
+          "duration_us": 1.14
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12361,
+          "start_us": 19794.295,
+          "duration_us": 4.6
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12362,
+          "start_us": 19798.915,
+          "duration_us": 1.22
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12363,
+          "start_us": 19800.175,
+          "duration_us": 1.48
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12364,
+          "start_us": 19801.675,
+          "duration_us": 3.14
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12365,
+          "start_us": 19804.855,
+          "duration_us": 0.98
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12366,
+          "start_us": 19805.855,
+          "duration_us": 55.281
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12367,
+          "start_us": 19861.156,
+          "duration_us": 21.48
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12368,
+          "start_us": 19882.657,
+          "duration_us": 22.58
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12369,
+          "start_us": 19905.257,
+          "duration_us": 43.6
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12370,
+          "start_us": 19948.878,
+          "duration_us": 23.121
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12371,
+          "start_us": 19972.019,
+          "duration_us": 1.12
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12372,
+          "start_us": 19973.159,
+          "duration_us": 0.94
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12373,
+          "start_us": 19974.119,
+          "duration_us": 74.781
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12374,
+          "start_us": 20048.92,
+          "duration_us": 48.141
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12375,
+          "start_us": 20097.081,
+          "duration_us": 19.4
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 12376,
+          "start_us": 20226.384,
+          "duration_us": 7.92
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 12377,
+          "start_us": 22517.569,
+          "duration_us": 2240.565
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12378,
+          "start_us": 24758.294,
+          "duration_us": 1.02
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12379,
+          "start_us": 24759.334,
+          "duration_us": 84.841
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12380,
+          "start_us": 24844.196,
+          "duration_us": 20.66
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12381,
+          "start_us": 24864.876,
+          "duration_us": 81.341
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12382,
+          "start_us": 24946.238,
+          "duration_us": 44.961
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12383,
+          "start_us": 24991.219,
+          "duration_us": 24.96
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12384,
+          "start_us": 25016.199,
+          "duration_us": 81.881
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12385,
+          "start_us": 25098.101,
+          "duration_us": 24.08
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12386,
+          "start_us": 25122.221,
+          "duration_us": 131.202
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12387,
+          "start_us": 25253.464,
+          "duration_us": 21.821
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12388,
+          "start_us": 25275.305,
+          "duration_us": 23.46
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12389,
+          "start_us": 25298.785,
+          "duration_us": 56.781
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12390,
+          "start_us": 25355.586,
+          "duration_us": 1.24
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12391,
+          "start_us": 25356.866,
+          "duration_us": 4.6
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12392,
+          "start_us": 25361.486,
+          "duration_us": 1.22
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12393,
+          "start_us": 25362.746,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12394,
+          "start_us": 25364.026,
+          "duration_us": 3.16
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12395,
+          "start_us": 25367.226,
+          "duration_us": 1.04
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12396,
+          "start_us": 25368.286,
+          "duration_us": 54.541
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12397,
+          "start_us": 25422.867,
+          "duration_us": 21.54
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12398,
+          "start_us": 25444.428,
+          "duration_us": 22.46
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12399,
+          "start_us": 25466.908,
+          "duration_us": 44.601
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12400,
+          "start_us": 25511.529,
+          "duration_us": 23.68
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12401,
+          "start_us": 25535.23,
+          "duration_us": 1.3
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12402,
+          "start_us": 25536.55,
+          "duration_us": 1.04
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12403,
+          "start_us": 25537.61,
+          "duration_us": 75.301
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12404,
+          "start_us": 25612.931,
+          "duration_us": 48.661
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12405,
+          "start_us": 25661.612,
+          "duration_us": 18.98
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 12406,
+          "start_us": 25778.555,
+          "duration_us": 7.88
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 12407,
+          "start_us": 28055.44,
+          "duration_us": 2232.945
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12408,
+          "start_us": 30288.545,
+          "duration_us": 0.98
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12409,
+          "start_us": 30289.545,
+          "duration_us": 81.521
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12410,
+          "start_us": 30371.106,
+          "duration_us": 19.98
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12411,
+          "start_us": 30391.107,
+          "duration_us": 80.461
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12412,
+          "start_us": 30471.608,
+          "duration_us": 45.161
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12413,
+          "start_us": 30516.789,
+          "duration_us": 24.64
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12414,
+          "start_us": 30541.45,
+          "duration_us": 82.901
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12415,
+          "start_us": 30624.371,
+          "duration_us": 24.52
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12416,
+          "start_us": 30648.912,
+          "duration_us": 131.563
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12417,
+          "start_us": 30780.515,
+          "duration_us": 21.66
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12418,
+          "start_us": 30802.195,
+          "duration_us": 22.74
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12419,
+          "start_us": 30824.955,
+          "duration_us": 56.661
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12420,
+          "start_us": 30881.637,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12421,
+          "start_us": 30882.737,
+          "duration_us": 4.44
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12422,
+          "start_us": 30887.197,
+          "duration_us": 1.34
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12423,
+          "start_us": 30888.557,
+          "duration_us": 1.46
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12424,
+          "start_us": 30890.037,
+          "duration_us": 3.16
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12425,
+          "start_us": 30893.217,
+          "duration_us": 1.02
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12426,
+          "start_us": 30894.257,
+          "duration_us": 55.581
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12427,
+          "start_us": 30949.858,
+          "duration_us": 21.58
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12428,
+          "start_us": 30971.458,
+          "duration_us": 22.5
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12429,
+          "start_us": 30993.979,
+          "duration_us": 44.101
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12430,
+          "start_us": 31038.1,
+          "duration_us": 23.22
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12431,
+          "start_us": 31061.34,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12432,
+          "start_us": 31062.62,
+          "duration_us": 0.98
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12433,
+          "start_us": 31063.62,
+          "duration_us": 75.441
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12434,
+          "start_us": 31139.082,
+          "duration_us": 49.061
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12435,
+          "start_us": 31188.163,
+          "duration_us": 19.76
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 12436,
+          "start_us": 31305.145,
+          "duration_us": 7.9
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 12437,
+          "start_us": 33624.991,
+          "duration_us": 2238.764
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12438,
+          "start_us": 35863.916,
+          "duration_us": 1.02
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12439,
+          "start_us": 35864.956,
+          "duration_us": 83.362
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12440,
+          "start_us": 35948.358,
+          "duration_us": 20.22
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12441,
+          "start_us": 35968.598,
+          "duration_us": 81.181
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12442,
+          "start_us": 36049.82,
+          "duration_us": 44.581
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12443,
+          "start_us": 36094.441,
+          "duration_us": 25.08
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12444,
+          "start_us": 36119.541,
+          "duration_us": 83.001
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12445,
+          "start_us": 36202.563,
+          "duration_us": 24.4
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12446,
+          "start_us": 36226.983,
+          "duration_us": 130.302
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12447,
+          "start_us": 36357.326,
+          "duration_us": 22.38
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12448,
+          "start_us": 36379.746,
+          "duration_us": 23.18
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12449,
+          "start_us": 36402.947,
+          "duration_us": 56.341
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12450,
+          "start_us": 36459.308,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12451,
+          "start_us": 36460.408,
+          "duration_us": 4.58
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12452,
+          "start_us": 36465.008,
+          "duration_us": 1.22
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12453,
+          "start_us": 36466.248,
+          "duration_us": 1.42
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12454,
+          "start_us": 36467.688,
+          "duration_us": 3.26
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12455,
+          "start_us": 36470.968,
+          "duration_us": 1.06
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12456,
+          "start_us": 36472.048,
+          "duration_us": 54.701
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12457,
+          "start_us": 36526.769,
+          "duration_us": 21.7
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12458,
+          "start_us": 36548.49,
+          "duration_us": 22.66
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12459,
+          "start_us": 36571.17,
+          "duration_us": 44.2
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12460,
+          "start_us": 36615.411,
+          "duration_us": 22.961
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12461,
+          "start_us": 36638.392,
+          "duration_us": 1.16
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12462,
+          "start_us": 36639.592,
+          "duration_us": 0.98
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12463,
+          "start_us": 36640.592,
+          "duration_us": 75.161
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12464,
+          "start_us": 36715.773,
+          "duration_us": 49.441
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12465,
+          "start_us": 36765.234,
+          "duration_us": 19.44
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 12466,
+          "start_us": 36879.176,
+          "duration_us": 7.86
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 12467,
+          "start_us": 39231.163,
+          "duration_us": 2234.284
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12468,
+          "start_us": 41465.608,
+          "duration_us": 1.02
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12469,
+          "start_us": 41466.648,
+          "duration_us": 82.182
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12470,
+          "start_us": 41548.85,
+          "duration_us": 20.08
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12471,
+          "start_us": 41568.95,
+          "duration_us": 80.822
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12472,
+          "start_us": 41649.792,
+          "duration_us": 45.181
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12473,
+          "start_us": 41695.013,
+          "duration_us": 24.26
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12474,
+          "start_us": 41719.313,
+          "duration_us": 82.722
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12475,
+          "start_us": 41802.055,
+          "duration_us": 24.76
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12476,
+          "start_us": 41826.835,
+          "duration_us": 131.542
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12477,
+          "start_us": 41958.398,
+          "duration_us": 21.56
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12478,
+          "start_us": 41979.998,
+          "duration_us": 22.94
+        },
+        {
+          "name": "TensorMove2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12479,
+          "start_us": 42002.959,
+          "duration_us": 58.341
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12480,
+          "start_us": 42061.32,
+          "duration_us": 1.12
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12481,
+          "start_us": 42062.46,
+          "duration_us": 4.44
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12482,
+          "start_us": 42066.92,
+          "duration_us": 1.18
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12483,
+          "start_us": 42068.12,
+          "duration_us": 1.22
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12484,
+          "start_us": 42069.38,
+          "duration_us": 3.04
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12485,
+          "start_us": 42072.44,
+          "duration_us": 1.04
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12486,
+          "start_us": 42073.5,
+          "duration_us": 55.581
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12487,
+          "start_us": 42129.101,
+          "duration_us": 21.92
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12488,
+          "start_us": 42151.042,
+          "duration_us": 22.96
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12489,
+          "start_us": 42174.042,
+          "duration_us": 43.76
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12490,
+          "start_us": 42217.823,
+          "duration_us": 23.48
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12491,
+          "start_us": 42241.323,
+          "duration_us": 1.3
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12492,
+          "start_us": 42242.644,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12493,
+          "start_us": 42243.764,
+          "duration_us": 74.941
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12494,
+          "start_us": 42318.725,
+          "duration_us": 48.341
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 12495,
+          "start_us": 42367.086,
+          "duration_us": 19.54
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 12496,
+          "start_us": 42493.249,
+          "duration_us": 8.68
+        }
+      ],
+      "task_count_by_kind": {
+        "MEMCPY_ASYNC": 8,
+        "KERNEL_AIVEC": 224,
+        "HOSTFUNC_CALLBACK": 8
+      },
+      "memcpy_count": 8,
+      "memcpy_duration_sum_us": 17875.255,
+      "memcpy_max_duration_us": 2244.324,
+      "transfer_payload_bytes": null,
+      "transfer_payload_scope": "Level0 task timeline does not report payload bytes",
+      "bulk_transfer_absence_proven": false
+    },
+    "diagnostic_iterations": 8,
+    "interpretation": "diagnostic native task identity; no steady-time or bandwidth-saturation claim"
+  },
+  {
+    "suite": "fragments",
+    "run": "adamw-o1-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "HOSTFUNC_CALLBACK",
+        "device_task_type": "AI_CPU",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 58100
+      },
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 88,
+        "tasks_per_update": 11.0,
+        "duration_sum_ns": 5786476.5
+      },
+      {
+        "host_task_type": "MEMCPY_ASYNC",
+        "device_task_type": "PCIE_DMA_SQE",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 17828876.0
+      }
+    ],
+    "source_sha256": "09c300b5aa2893de9d2b98fdb9184d273901b6c5f71019ebc391fb4f1faf6574",
+    "timeline": {
+      "tasks": [
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 5315,
+          "start_us": 0.0,
+          "duration_us": 2232.284
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5316,
+          "start_us": 2232.444,
+          "duration_us": 1.3
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5317,
+          "start_us": 2233.764,
+          "duration_us": 89.201
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5318,
+          "start_us": 2322.986,
+          "duration_us": 27.121
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5319,
+          "start_us": 2350.127,
+          "duration_us": 84.981
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5320,
+          "start_us": 2435.128,
+          "duration_us": 99.542
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5321,
+          "start_us": 2534.69,
+          "duration_us": 21.86
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5322,
+          "start_us": 2556.591,
+          "duration_us": 52.761
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5323,
+          "start_us": 2609.372,
+          "duration_us": 75.601
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5324,
+          "start_us": 2685.013,
+          "duration_us": 46.861
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5325,
+          "start_us": 2731.894,
+          "duration_us": 86.581
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5326,
+          "start_us": 2818.516,
+          "duration_us": 137.023
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 5327,
+          "start_us": 3129.602,
+          "duration_us": 7.26
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5328,
+          "start_us": 4427.288,
+          "duration_us": 1.4
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 5329,
+          "start_us": 6105.422,
+          "duration_us": 2229.544
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5330,
+          "start_us": 8335.126,
+          "duration_us": 88.841
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5331,
+          "start_us": 8423.988,
+          "duration_us": 26.981
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5332,
+          "start_us": 8450.989,
+          "duration_us": 84.981
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5333,
+          "start_us": 8535.99,
+          "duration_us": 99.042
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5334,
+          "start_us": 8635.052,
+          "duration_us": 20.74
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5335,
+          "start_us": 8655.813,
+          "duration_us": 52.521
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5336,
+          "start_us": 8708.354,
+          "duration_us": 76.021
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5337,
+          "start_us": 8784.415,
+          "duration_us": 46.3
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5338,
+          "start_us": 8830.756,
+          "duration_us": 85.942
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5339,
+          "start_us": 8916.738,
+          "duration_us": 139.003
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 5340,
+          "start_us": 9210.604,
+          "duration_us": 7.16
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5341,
+          "start_us": 10003.28,
+          "duration_us": 1.32
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 5342,
+          "start_us": 11645.972,
+          "duration_us": 2226.424
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5343,
+          "start_us": 13872.557,
+          "duration_us": 89.282
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5344,
+          "start_us": 13961.879,
+          "duration_us": 28.02
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5345,
+          "start_us": 13989.919,
+          "duration_us": 85.081
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5346,
+          "start_us": 14075.021,
+          "duration_us": 98.182
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5347,
+          "start_us": 14173.223,
+          "duration_us": 21.24
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5348,
+          "start_us": 14194.483,
+          "duration_us": 53.321
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5349,
+          "start_us": 14247.824,
+          "duration_us": 76.641
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5350,
+          "start_us": 14324.506,
+          "duration_us": 46.681
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5351,
+          "start_us": 14371.207,
+          "duration_us": 85.902
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5352,
+          "start_us": 14457.129,
+          "duration_us": 141.162
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 5353,
+          "start_us": 14718.094,
+          "duration_us": 7.32
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5354,
+          "start_us": 15417.548,
+          "duration_us": 1.4
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 5355,
+          "start_us": 17121.422,
+          "duration_us": 2228.564
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5356,
+          "start_us": 19350.146,
+          "duration_us": 89.581
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5357,
+          "start_us": 19439.748,
+          "duration_us": 27.661
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5358,
+          "start_us": 19467.429,
+          "duration_us": 85.861
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5359,
+          "start_us": 19553.31,
+          "duration_us": 98.922
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5360,
+          "start_us": 19652.252,
+          "duration_us": 21.34
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5361,
+          "start_us": 19673.613,
+          "duration_us": 52.941
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5362,
+          "start_us": 19726.574,
+          "duration_us": 75.181
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5363,
+          "start_us": 19801.775,
+          "duration_us": 45.721
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5364,
+          "start_us": 19847.516,
+          "duration_us": 86.381
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5365,
+          "start_us": 19933.918,
+          "duration_us": 140.363
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 5366,
+          "start_us": 20174.583,
+          "duration_us": 7.1
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5367,
+          "start_us": 20859.016,
+          "duration_us": 1.32
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 5368,
+          "start_us": 22527.05,
+          "duration_us": 2227.724
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5369,
+          "start_us": 24754.934,
+          "duration_us": 88.941
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5370,
+          "start_us": 24843.896,
+          "duration_us": 26.541
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5371,
+          "start_us": 24870.457,
+          "duration_us": 84.641
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5372,
+          "start_us": 24955.118,
+          "duration_us": 100.162
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5373,
+          "start_us": 25055.3,
+          "duration_us": 21.28
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5374,
+          "start_us": 25076.601,
+          "duration_us": 51.901
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5375,
+          "start_us": 25128.542,
+          "duration_us": 74.841
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5376,
+          "start_us": 25203.423,
+          "duration_us": 46.061
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5377,
+          "start_us": 25249.504,
+          "duration_us": 85.801
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5378,
+          "start_us": 25335.326,
+          "duration_us": 138.623
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 5379,
+          "start_us": 25568.051,
+          "duration_us": 7.1
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5380,
+          "start_us": 26250.364,
+          "duration_us": 1.42
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 5381,
+          "start_us": 27908.897,
+          "duration_us": 2226.324
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5382,
+          "start_us": 30135.382,
+          "duration_us": 89.382
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5383,
+          "start_us": 30224.784,
+          "duration_us": 26.96
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5384,
+          "start_us": 30251.784,
+          "duration_us": 85.222
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5385,
+          "start_us": 30337.026,
+          "duration_us": 99.102
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5386,
+          "start_us": 30436.168,
+          "duration_us": 20.66
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5387,
+          "start_us": 30456.848,
+          "duration_us": 52.361
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5388,
+          "start_us": 30509.229,
+          "duration_us": 76.281
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5389,
+          "start_us": 30585.531,
+          "duration_us": 46.001
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5390,
+          "start_us": 30631.552,
+          "duration_us": 85.901
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5391,
+          "start_us": 30717.493,
+          "duration_us": 139.643
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 5392,
+          "start_us": 30954.278,
+          "duration_us": 7.12
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5393,
+          "start_us": 31631.532,
+          "duration_us": 1.38
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 5394,
+          "start_us": 33292.245,
+          "duration_us": 2228.784
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5395,
+          "start_us": 35521.189,
+          "duration_us": 88.982
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5396,
+          "start_us": 35610.191,
+          "duration_us": 27.68
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5397,
+          "start_us": 35637.892,
+          "duration_us": 85.921
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5398,
+          "start_us": 35723.833,
+          "duration_us": 98.322
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5399,
+          "start_us": 35822.175,
+          "duration_us": 21.18
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5400,
+          "start_us": 35843.376,
+          "duration_us": 53.161
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5401,
+          "start_us": 35896.577,
+          "duration_us": 75.261
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5402,
+          "start_us": 35971.858,
+          "duration_us": 45.761
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5403,
+          "start_us": 36017.639,
+          "duration_us": 86.121
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5404,
+          "start_us": 36103.781,
+          "duration_us": 140.383
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 5405,
+          "start_us": 36341.546,
+          "duration_us": 7.14
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5406,
+          "start_us": 37025.319,
+          "duration_us": 1.38
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 5407,
+          "start_us": 38671.172,
+          "duration_us": 2229.224
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5408,
+          "start_us": 40900.557,
+          "duration_us": 89.382
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5409,
+          "start_us": 40989.959,
+          "duration_us": 27.26
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5410,
+          "start_us": 41017.239,
+          "duration_us": 84.621
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5411,
+          "start_us": 41101.881,
+          "duration_us": 98.802
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5412,
+          "start_us": 41200.723,
+          "duration_us": 21.92
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5413,
+          "start_us": 41222.663,
+          "duration_us": 53.061
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5414,
+          "start_us": 41275.744,
+          "duration_us": 75.601
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5415,
+          "start_us": 41351.386,
+          "duration_us": 44.641
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5416,
+          "start_us": 41396.067,
+          "duration_us": 86.441
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 5417,
+          "start_us": 41482.528,
+          "duration_us": 139.363
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 5418,
+          "start_us": 41716.813,
+          "duration_us": 7.9
+        }
+      ],
+      "task_count_by_kind": {
+        "MEMCPY_ASYNC": 8,
+        "KERNEL_AIVEC": 88,
+        "HOSTFUNC_CALLBACK": 8
+      },
+      "memcpy_count": 8,
+      "memcpy_duration_sum_us": 17828.872,
+      "memcpy_max_duration_us": 2232.284,
+      "transfer_payload_bytes": null,
+      "transfer_payload_scope": "Level0 task timeline does not report payload bytes",
+      "bulk_transfer_absence_proven": false
+    },
+    "diagnostic_iterations": 8,
+    "interpretation": "diagnostic native task identity; no steady-time or bandwidth-saturation claim"
+  },
+  {
+    "suite": "fragments",
+    "run": "fused-o0-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "HOSTFUNC_CALLBACK",
+        "device_task_type": "AI_CPU",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 58100.5
+      },
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 24,
+        "tasks_per_update": 3.0,
+        "duration_sum_ns": 878098.0
+      },
+      {
+        "host_task_type": "MEMCPY_ASYNC",
+        "device_task_type": "PCIE_DMA_SQE",
+        "count": 16,
+        "tasks_per_update": 2.0,
+        "duration_sum_ns": 18316185.0
+      }
+    ],
+    "source_sha256": "2ff05a0c5b4b4a7338586c8f20f1c482951a71d796822a3bc25af395aaa28ce4",
+    "timeline": {
+      "tasks": [
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2465,
+          "start_us": 0.0,
+          "duration_us": 0.9
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2466,
+          "start_us": 186.344,
+          "duration_us": 1.98
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2467,
+          "start_us": 462.11,
+          "duration_us": 0.98
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2468,
+          "start_us": 2459.81,
+          "duration_us": 2294.145
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2469,
+          "start_us": 4754.115,
+          "duration_us": 108.922
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 2470,
+          "start_us": 5053.601,
+          "duration_us": 7.48
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2471,
+          "start_us": 5913.018,
+          "duration_us": 1.06
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2472,
+          "start_us": 6031.881,
+          "duration_us": 2.02
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2473,
+          "start_us": 8059.301,
+          "duration_us": 2276.425
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2474,
+          "start_us": 10335.887,
+          "duration_us": 0.96
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2475,
+          "start_us": 10336.887,
+          "duration_us": 107.122
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 2476,
+          "start_us": 10556.711,
+          "duration_us": 7.2
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2477,
+          "start_us": 11322.727,
+          "duration_us": 0.9
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2478,
+          "start_us": 11400.948,
+          "duration_us": 2.02
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2479,
+          "start_us": 13278.726,
+          "duration_us": 2296.526
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2480,
+          "start_us": 15575.412,
+          "duration_us": 1.0
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2481,
+          "start_us": 15576.432,
+          "duration_us": 108.862
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 2482,
+          "start_us": 15788.596,
+          "duration_us": 7.04
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2483,
+          "start_us": 16548.171,
+          "duration_us": 0.94
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2484,
+          "start_us": 16621.832,
+          "duration_us": 2.0
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2485,
+          "start_us": 18510.71,
+          "duration_us": 2293.945
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2486,
+          "start_us": 20804.816,
+          "duration_us": 1.04
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2487,
+          "start_us": 20805.876,
+          "duration_us": 108.402
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 2488,
+          "start_us": 21012.72,
+          "duration_us": 7.42
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2489,
+          "start_us": 21790.876,
+          "duration_us": 0.94
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2490,
+          "start_us": 21866.717,
+          "duration_us": 2.0
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2491,
+          "start_us": 23836.037,
+          "duration_us": 2275.665
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2492,
+          "start_us": 26111.862,
+          "duration_us": 0.92
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2493,
+          "start_us": 26112.822,
+          "duration_us": 107.842
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 2494,
+          "start_us": 26319.286,
+          "duration_us": 7.04
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2495,
+          "start_us": 27069.141,
+          "duration_us": 0.82
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2496,
+          "start_us": 27145.963,
+          "duration_us": 2.0
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2497,
+          "start_us": 29079.941,
+          "duration_us": 2300.126
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2498,
+          "start_us": 31380.227,
+          "duration_us": 0.9
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2499,
+          "start_us": 31381.147,
+          "duration_us": 106.962
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 2500,
+          "start_us": 31586.531,
+          "duration_us": 7.1
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2501,
+          "start_us": 32352.907,
+          "duration_us": 0.82
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2502,
+          "start_us": 32426.148,
+          "duration_us": 2.0
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2503,
+          "start_us": 34316.286,
+          "duration_us": 2287.986
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2504,
+          "start_us": 36604.412,
+          "duration_us": 0.92
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2505,
+          "start_us": 36605.352,
+          "duration_us": 107.762
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 2506,
+          "start_us": 36813.176,
+          "duration_us": 7.54
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2507,
+          "start_us": 37559.831,
+          "duration_us": 1.04
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2508,
+          "start_us": 37658.153,
+          "duration_us": 1.98
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 2509,
+          "start_us": 39529.45,
+          "duration_us": 2275.365
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2510,
+          "start_us": 41804.976,
+          "duration_us": 0.92
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 2511,
+          "start_us": 41805.916,
+          "duration_us": 107.162
+        },
+        {
+          "name": "N/A",
+          "kind": "HOSTFUNC_CALLBACK",
+          "stream": 2,
+          "task_id": 2512,
+          "start_us": 42033.94,
+          "duration_us": 7.28
+        }
+      ],
+      "task_count_by_kind": {
+        "KERNEL_AIVEC": 24,
+        "MEMCPY_ASYNC": 16,
+        "HOSTFUNC_CALLBACK": 8
+      },
+      "memcpy_count": 16,
+      "memcpy_duration_sum_us": 18316.183,
+      "memcpy_max_duration_us": 2300.126,
+      "transfer_payload_bytes": null,
+      "transfer_payload_scope": "Level0 task timeline does not report payload bytes",
+      "bulk_transfer_absence_proven": false
+    },
+    "diagnostic_iterations": 8,
+    "interpretation": "diagnostic native task identity; no steady-time or bandwidth-saturation claim"
+  },
+  {
+    "suite": "resident-fragments",
+    "run": "adamw-o0-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 224,
+        "tasks_per_update": 28.0,
+        "duration_sum_ns": 7311204.0
+      }
+    ],
+    "source_sha256": "0b91d9c4dfc4f0b1b84afd463bff2c6e6b661d5e258435aff094b2272d144c10",
+    "timeline": {
+      "tasks": [
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11443,
+          "start_us": 0.0,
+          "duration_us": 83.822
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11444,
+          "start_us": 117.243,
+          "duration_us": 19.28
+        },
+        {
+          "name": "AssignAdd2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11445,
+          "start_us": 252.506,
+          "duration_us": 1.0
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11446,
+          "start_us": 336.147,
+          "duration_us": 74.901
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11447,
+          "start_us": 411.089,
+          "duration_us": 41.221
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11448,
+          "start_us": 792.956,
+          "duration_us": 25.02
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11449,
+          "start_us": 903.519,
+          "duration_us": 84.001
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11450,
+          "start_us": 987.54,
+          "duration_us": 23.62
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11451,
+          "start_us": 1311.027,
+          "duration_us": 127.902
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11452,
+          "start_us": 1438.969,
+          "duration_us": 20.44
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11453,
+          "start_us": 1502.07,
+          "duration_us": 24.62
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11454,
+          "start_us": 1572.532,
+          "duration_us": 62.621
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11455,
+          "start_us": 1635.173,
+          "duration_us": 1.12
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11456,
+          "start_us": 1664.774,
+          "duration_us": 3.88
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11457,
+          "start_us": 1704.175,
+          "duration_us": 1.22
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11458,
+          "start_us": 1731.675,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11459,
+          "start_us": 1756.476,
+          "duration_us": 2.96
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11460,
+          "start_us": 1782.496,
+          "duration_us": 0.98
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11461,
+          "start_us": 1809.997,
+          "duration_us": 58.901
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11462,
+          "start_us": 1868.918,
+          "duration_us": 22.32
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11463,
+          "start_us": 1891.258,
+          "duration_us": 23.14
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11464,
+          "start_us": 1914.419,
+          "duration_us": 41.301
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11465,
+          "start_us": 1955.74,
+          "duration_us": 23.96
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11466,
+          "start_us": 1979.74,
+          "duration_us": 1.18
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11467,
+          "start_us": 1980.94,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11468,
+          "start_us": 2001.12,
+          "duration_us": 71.521
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11469,
+          "start_us": 2072.662,
+          "duration_us": 49.541
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11470,
+          "start_us": 2122.243,
+          "duration_us": 19.88
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11471,
+          "start_us": 2981.9,
+          "duration_us": 82.742
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11472,
+          "start_us": 3064.682,
+          "duration_us": 19.9
+        },
+        {
+          "name": "AssignAdd2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11473,
+          "start_us": 3096.802,
+          "duration_us": 1.32
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11474,
+          "start_us": 3148.603,
+          "duration_us": 75.101
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11475,
+          "start_us": 3223.725,
+          "duration_us": 41.381
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11476,
+          "start_us": 3265.126,
+          "duration_us": 25.12
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11477,
+          "start_us": 3321.087,
+          "duration_us": 84.702
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11478,
+          "start_us": 3405.809,
+          "duration_us": 23.68
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11479,
+          "start_us": 3431.349,
+          "duration_us": 126.643
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11480,
+          "start_us": 3558.032,
+          "duration_us": 20.46
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11481,
+          "start_us": 3584.092,
+          "duration_us": 23.641
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11482,
+          "start_us": 3648.413,
+          "duration_us": 63.801
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11483,
+          "start_us": 3712.235,
+          "duration_us": 1.1
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11484,
+          "start_us": 3713.355,
+          "duration_us": 3.98
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11485,
+          "start_us": 3729.075,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11486,
+          "start_us": 3742.475,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11487,
+          "start_us": 3768.936,
+          "duration_us": 2.88
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11488,
+          "start_us": 3797.176,
+          "duration_us": 1.0
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11489,
+          "start_us": 3811.557,
+          "duration_us": 58.261
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11490,
+          "start_us": 3869.838,
+          "duration_us": 21.92
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11491,
+          "start_us": 3891.778,
+          "duration_us": 23.1
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11492,
+          "start_us": 3914.899,
+          "duration_us": 42.541
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11493,
+          "start_us": 3957.46,
+          "duration_us": 24.4
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11494,
+          "start_us": 3981.88,
+          "duration_us": 1.4
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11495,
+          "start_us": 3983.3,
+          "duration_us": 1.02
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11496,
+          "start_us": 3984.36,
+          "duration_us": 70.861
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11497,
+          "start_us": 4055.262,
+          "duration_us": 49.92
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11498,
+          "start_us": 4105.202,
+          "duration_us": 19.46
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11499,
+          "start_us": 4798.776,
+          "duration_us": 82.341
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11500,
+          "start_us": 4881.138,
+          "duration_us": 19.7
+        },
+        {
+          "name": "AssignAdd2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11501,
+          "start_us": 4909.939,
+          "duration_us": 1.06
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11502,
+          "start_us": 4962.12,
+          "duration_us": 75.561
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11503,
+          "start_us": 5037.701,
+          "duration_us": 41.281
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11504,
+          "start_us": 5079.022,
+          "duration_us": 25.4
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11505,
+          "start_us": 5131.223,
+          "duration_us": 84.462
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11506,
+          "start_us": 5215.705,
+          "duration_us": 23.76
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11507,
+          "start_us": 5247.325,
+          "duration_us": 127.602
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11508,
+          "start_us": 5374.948,
+          "duration_us": 20.94
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11509,
+          "start_us": 5395.908,
+          "duration_us": 24.34
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11510,
+          "start_us": 5444.469,
+          "duration_us": 62.861
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11511,
+          "start_us": 5507.351,
+          "duration_us": 1.12
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11512,
+          "start_us": 5508.491,
+          "duration_us": 4.02
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11513,
+          "start_us": 5525.051,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11514,
+          "start_us": 5539.131,
+          "duration_us": 1.64
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11515,
+          "start_us": 5564.152,
+          "duration_us": 2.98
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11516,
+          "start_us": 5593.612,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11517,
+          "start_us": 5609.073,
+          "duration_us": 57.881
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11518,
+          "start_us": 5666.974,
+          "duration_us": 21.96
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11519,
+          "start_us": 5688.954,
+          "duration_us": 23.26
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11520,
+          "start_us": 5712.235,
+          "duration_us": 41.36
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11521,
+          "start_us": 5753.615,
+          "duration_us": 24.28
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11522,
+          "start_us": 5777.916,
+          "duration_us": 1.12
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11523,
+          "start_us": 5779.056,
+          "duration_us": 1.04
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11524,
+          "start_us": 5780.116,
+          "duration_us": 71.941
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11525,
+          "start_us": 5852.097,
+          "duration_us": 50.261
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11526,
+          "start_us": 5902.378,
+          "duration_us": 19.36
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11527,
+          "start_us": 6584.192,
+          "duration_us": 82.182
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11528,
+          "start_us": 6666.414,
+          "duration_us": 19.5
+        },
+        {
+          "name": "AssignAdd2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11529,
+          "start_us": 6691.474,
+          "duration_us": 1.14
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11530,
+          "start_us": 6748.775,
+          "duration_us": 74.721
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11531,
+          "start_us": 6823.517,
+          "duration_us": 40.961
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11532,
+          "start_us": 6864.498,
+          "duration_us": 24.78
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11533,
+          "start_us": 6919.639,
+          "duration_us": 84.221
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11534,
+          "start_us": 7003.9,
+          "duration_us": 23.48
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11535,
+          "start_us": 7030.301,
+          "duration_us": 127.682
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11536,
+          "start_us": 7158.003,
+          "duration_us": 20.74
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11537,
+          "start_us": 7178.764,
+          "duration_us": 24.0
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11538,
+          "start_us": 7235.145,
+          "duration_us": 63.901
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11539,
+          "start_us": 7299.086,
+          "duration_us": 1.1
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11540,
+          "start_us": 7300.206,
+          "duration_us": 4.04
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11541,
+          "start_us": 7304.266,
+          "duration_us": 1.44
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11542,
+          "start_us": 7331.687,
+          "duration_us": 1.2
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11543,
+          "start_us": 7345.887,
+          "duration_us": 3.04
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11544,
+          "start_us": 7373.488,
+          "duration_us": 1.02
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11545,
+          "start_us": 7387.628,
+          "duration_us": 58.041
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11546,
+          "start_us": 7445.689,
+          "duration_us": 22.02
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11547,
+          "start_us": 7467.73,
+          "duration_us": 23.32
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11548,
+          "start_us": 7491.07,
+          "duration_us": 46.14
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11549,
+          "start_us": 7537.231,
+          "duration_us": 24.061
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11550,
+          "start_us": 7561.312,
+          "duration_us": 1.36
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11551,
+          "start_us": 7562.692,
+          "duration_us": 1.04
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11552,
+          "start_us": 7563.772,
+          "duration_us": 70.921
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11553,
+          "start_us": 7634.733,
+          "duration_us": 49.921
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11554,
+          "start_us": 7684.674,
+          "duration_us": 19.54
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11555,
+          "start_us": 8374.008,
+          "duration_us": 82.441
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11556,
+          "start_us": 8456.469,
+          "duration_us": 19.34
+        },
+        {
+          "name": "AssignAdd2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11557,
+          "start_us": 8479.07,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11558,
+          "start_us": 8531.151,
+          "duration_us": 75.381
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11559,
+          "start_us": 8606.552,
+          "duration_us": 41.901
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11560,
+          "start_us": 8648.473,
+          "duration_us": 25.5
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11561,
+          "start_us": 8694.434,
+          "duration_us": 84.461
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11562,
+          "start_us": 8778.936,
+          "duration_us": 23.72
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11563,
+          "start_us": 8803.736,
+          "duration_us": 127.182
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11564,
+          "start_us": 8930.939,
+          "duration_us": 20.24
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11565,
+          "start_us": 8957.039,
+          "duration_us": 24.36
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11566,
+          "start_us": 9021.981,
+          "duration_us": 62.761
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11567,
+          "start_us": 9084.762,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11568,
+          "start_us": 9085.862,
+          "duration_us": 3.9
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11569,
+          "start_us": 9090.582,
+          "duration_us": 1.16
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11570,
+          "start_us": 9116.403,
+          "duration_us": 1.2
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11571,
+          "start_us": 9144.043,
+          "duration_us": 2.92
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11572,
+          "start_us": 9157.963,
+          "duration_us": 1.02
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11573,
+          "start_us": 9185.624,
+          "duration_us": 58.561
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11574,
+          "start_us": 9244.225,
+          "duration_us": 21.98
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11575,
+          "start_us": 9266.226,
+          "duration_us": 23.08
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11576,
+          "start_us": 9289.326,
+          "duration_us": 41.481
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11577,
+          "start_us": 9330.827,
+          "duration_us": 24.46
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11578,
+          "start_us": 9355.327,
+          "duration_us": 1.18
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11579,
+          "start_us": 9356.547,
+          "duration_us": 1.12
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11580,
+          "start_us": 9357.687,
+          "duration_us": 71.441
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11581,
+          "start_us": 9429.149,
+          "duration_us": 50.041
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11582,
+          "start_us": 9479.21,
+          "duration_us": 19.94
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11583,
+          "start_us": 10159.503,
+          "duration_us": 82.401
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11584,
+          "start_us": 10241.925,
+          "duration_us": 19.4
+        },
+        {
+          "name": "AssignAdd2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11585,
+          "start_us": 10266.686,
+          "duration_us": 1.02
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11586,
+          "start_us": 10319.087,
+          "duration_us": 74.901
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11587,
+          "start_us": 10394.008,
+          "duration_us": 41.0
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11588,
+          "start_us": 10435.029,
+          "duration_us": 25.7
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11589,
+          "start_us": 10481.75,
+          "duration_us": 83.722
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11590,
+          "start_us": 10565.492,
+          "duration_us": 23.92
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11591,
+          "start_us": 10590.652,
+          "duration_us": 127.203
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11592,
+          "start_us": 10717.875,
+          "duration_us": 20.56
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11593,
+          "start_us": 10744.675,
+          "duration_us": 23.74
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11594,
+          "start_us": 10811.336,
+          "duration_us": 63.201
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11595,
+          "start_us": 10874.558,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11596,
+          "start_us": 10875.658,
+          "duration_us": 3.86
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11597,
+          "start_us": 10891.058,
+          "duration_us": 1.24
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11598,
+          "start_us": 10918.259,
+          "duration_us": 1.24
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11599,
+          "start_us": 10933.339,
+          "duration_us": 3.14
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11600,
+          "start_us": 10960.419,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11601,
+          "start_us": 10987.86,
+          "duration_us": 59.161
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11602,
+          "start_us": 11047.041,
+          "duration_us": 23.9
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11603,
+          "start_us": 11070.982,
+          "duration_us": 23.12
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11604,
+          "start_us": 11094.142,
+          "duration_us": 43.7
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11605,
+          "start_us": 11137.863,
+          "duration_us": 24.24
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11606,
+          "start_us": 11162.123,
+          "duration_us": 1.28
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11607,
+          "start_us": 11163.424,
+          "duration_us": 0.96
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11608,
+          "start_us": 11164.404,
+          "duration_us": 71.761
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11609,
+          "start_us": 11236.185,
+          "duration_us": 50.261
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11610,
+          "start_us": 11286.466,
+          "duration_us": 19.88
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11611,
+          "start_us": 11952.039,
+          "duration_us": 83.081
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11612,
+          "start_us": 12035.161,
+          "duration_us": 19.66
+        },
+        {
+          "name": "AssignAdd2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11613,
+          "start_us": 12058.441,
+          "duration_us": 1.02
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11614,
+          "start_us": 12111.922,
+          "duration_us": 74.881
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11615,
+          "start_us": 12186.824,
+          "duration_us": 41.921
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11616,
+          "start_us": 12228.765,
+          "duration_us": 25.8
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11617,
+          "start_us": 12270.526,
+          "duration_us": 83.341
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11618,
+          "start_us": 12353.887,
+          "duration_us": 23.44
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11619,
+          "start_us": 12379.148,
+          "duration_us": 128.022
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11620,
+          "start_us": 12507.21,
+          "duration_us": 20.0
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11621,
+          "start_us": 12527.251,
+          "duration_us": 23.54
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11622,
+          "start_us": 12580.192,
+          "duration_us": 61.881
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11623,
+          "start_us": 12642.093,
+          "duration_us": 1.14
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11624,
+          "start_us": 12643.253,
+          "duration_us": 3.76
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11625,
+          "start_us": 12649.193,
+          "duration_us": 1.44
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11626,
+          "start_us": 12673.774,
+          "duration_us": 1.26
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11627,
+          "start_us": 12701.594,
+          "duration_us": 2.96
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11628,
+          "start_us": 12715.555,
+          "duration_us": 1.02
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11629,
+          "start_us": 12729.915,
+          "duration_us": 58.481
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11630,
+          "start_us": 12788.436,
+          "duration_us": 22.26
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11631,
+          "start_us": 12810.716,
+          "duration_us": 23.12
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11632,
+          "start_us": 12833.857,
+          "duration_us": 42.321
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11633,
+          "start_us": 12876.198,
+          "duration_us": 24.4
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11634,
+          "start_us": 12900.618,
+          "duration_us": 1.38
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11635,
+          "start_us": 12902.038,
+          "duration_us": 1.18
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11636,
+          "start_us": 12903.238,
+          "duration_us": 70.801
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11637,
+          "start_us": 12974.06,
+          "duration_us": 50.241
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11638,
+          "start_us": 13024.321,
+          "duration_us": 19.38
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11639,
+          "start_us": 13688.554,
+          "duration_us": 82.562
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11640,
+          "start_us": 13771.156,
+          "duration_us": 19.68
+        },
+        {
+          "name": "AssignAdd2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11641,
+          "start_us": 13794.356,
+          "duration_us": 1.14
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11642,
+          "start_us": 13846.537,
+          "duration_us": 75.242
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11643,
+          "start_us": 13921.799,
+          "duration_us": 40.62
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11644,
+          "start_us": 13962.439,
+          "duration_us": 25.08
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11645,
+          "start_us": 14005.3,
+          "duration_us": 84.181
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11646,
+          "start_us": 14089.502,
+          "duration_us": 23.92
+        },
+        {
+          "name": "Addcmul4",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11647,
+          "start_us": 14114.382,
+          "duration_us": 128.402
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11648,
+          "start_us": 14242.805,
+          "duration_us": 21.48
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11649,
+          "start_us": 14264.305,
+          "duration_us": 23.54
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11650,
+          "start_us": 14318.587,
+          "duration_us": 63.481
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11651,
+          "start_us": 14382.088,
+          "duration_us": 1.14
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11652,
+          "start_us": 14383.248,
+          "duration_us": 3.8
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11653,
+          "start_us": 14387.228,
+          "duration_us": 1.34
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11654,
+          "start_us": 14413.548,
+          "duration_us": 1.2
+        },
+        {
+          "name": "aclnnPowTensorTensor_PowAiCore_Pow",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11655,
+          "start_us": 14441.449,
+          "duration_us": 3.12
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11656,
+          "start_us": 14455.589,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11657,
+          "start_us": 14483.45,
+          "duration_us": 58.581
+        },
+        {
+          "name": "aclnnSqrt_SqrtAiCore_Sqrt",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11658,
+          "start_us": 14542.051,
+          "duration_us": 22.08
+        },
+        {
+          "name": "aclnnAdd_AddAiCore_Add",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11659,
+          "start_us": 14564.171,
+          "duration_us": 23.18
+        },
+        {
+          "name": "aclnnDiv_RealDivAiCore_RealDiv",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11660,
+          "start_us": 14587.372,
+          "duration_us": 43.181
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11661,
+          "start_us": 14630.573,
+          "duration_us": 24.1
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11662,
+          "start_us": 14654.693,
+          "duration_us": 1.14
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11663,
+          "start_us": 14655.853,
+          "duration_us": 1.08
+        },
+        {
+          "name": "aclnnMul_MulAiCore_Mul",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11664,
+          "start_us": 14656.953,
+          "duration_us": 70.821
+        },
+        {
+          "name": "aclnnSub_SubAiCore_Sub",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11665,
+          "start_us": 14727.795,
+          "duration_us": 50.161
+        },
+        {
+          "name": "Assign3",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 11666,
+          "start_us": 14777.976,
+          "duration_us": 19.38
+        }
+      ],
+      "task_count_by_kind": {
+        "KERNEL_AIVEC": 224
+      },
+      "memcpy_count": 0,
+      "memcpy_duration_sum_us": 0,
+      "memcpy_max_duration_us": 0,
+      "transfer_payload_bytes": null,
+      "transfer_payload_scope": "Level0 task timeline does not report payload bytes",
+      "bulk_transfer_absence_proven": true
+    },
+    "diagnostic_iterations": 8,
+    "interpretation": "diagnostic native task identity; no steady-time or bandwidth-saturation claim"
+  },
+  {
+    "suite": "resident-fragments",
+    "run": "adamw-o1-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 88,
+        "tasks_per_update": 11.0,
+        "duration_sum_ns": 5972179.5
+      }
+    ],
+    "source_sha256": "374c05568e9fb8d087693ce32c41c3235cb7052c5e3ec5e84bc7d2a8cf579383",
+    "timeline": {
+      "tasks": [
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4501,
+          "start_us": 0.0,
+          "duration_us": 90.962
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4502,
+          "start_us": 172.844,
+          "duration_us": 26.72
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4503,
+          "start_us": 219.805,
+          "duration_us": 1.42
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4504,
+          "start_us": 256.385,
+          "duration_us": 86.422
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4505,
+          "start_us": 342.827,
+          "duration_us": 103.582
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4506,
+          "start_us": 446.429,
+          "duration_us": 20.96
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4507,
+          "start_us": 467.41,
+          "duration_us": 60.441
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4508,
+          "start_us": 527.871,
+          "duration_us": 90.742
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4509,
+          "start_us": 618.633,
+          "duration_us": 40.761
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4510,
+          "start_us": 659.414,
+          "duration_us": 86.061
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4511,
+          "start_us": 745.495,
+          "duration_us": 137.002
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4512,
+          "start_us": 1732.115,
+          "duration_us": 91.002
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4513,
+          "start_us": 1823.137,
+          "duration_us": 26.84
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4514,
+          "start_us": 1849.997,
+          "duration_us": 1.3
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4515,
+          "start_us": 1851.317,
+          "duration_us": 87.401
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4516,
+          "start_us": 1938.759,
+          "duration_us": 103.822
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4517,
+          "start_us": 2042.601,
+          "duration_us": 21.14
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4518,
+          "start_us": 2063.782,
+          "duration_us": 61.501
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4519,
+          "start_us": 2125.303,
+          "duration_us": 91.002
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4520,
+          "start_us": 2216.325,
+          "duration_us": 41.04
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4521,
+          "start_us": 2257.385,
+          "duration_us": 85.582
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4522,
+          "start_us": 2342.987,
+          "duration_us": 137.022
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4523,
+          "start_us": 3185.524,
+          "duration_us": 91.222
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4524,
+          "start_us": 3276.766,
+          "duration_us": 27.08
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4525,
+          "start_us": 3303.866,
+          "duration_us": 1.46
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4526,
+          "start_us": 3305.346,
+          "duration_us": 87.062
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4527,
+          "start_us": 3392.428,
+          "duration_us": 103.622
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4528,
+          "start_us": 3496.07,
+          "duration_us": 20.94
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4529,
+          "start_us": 3517.051,
+          "duration_us": 60.161
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4530,
+          "start_us": 3577.232,
+          "duration_us": 89.822
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4531,
+          "start_us": 3667.074,
+          "duration_us": 41.58
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4532,
+          "start_us": 3708.674,
+          "duration_us": 85.602
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4533,
+          "start_us": 3794.296,
+          "duration_us": 135.222
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4534,
+          "start_us": 4598.252,
+          "duration_us": 91.901
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4535,
+          "start_us": 4690.194,
+          "duration_us": 26.781
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4536,
+          "start_us": 4716.995,
+          "duration_us": 1.44
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4537,
+          "start_us": 4718.475,
+          "duration_us": 86.001
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4538,
+          "start_us": 4804.496,
+          "duration_us": 104.622
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4539,
+          "start_us": 4909.138,
+          "duration_us": 21.1
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4540,
+          "start_us": 4930.259,
+          "duration_us": 60.081
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4541,
+          "start_us": 4990.36,
+          "duration_us": 91.142
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4542,
+          "start_us": 5081.522,
+          "duration_us": 41.501
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4543,
+          "start_us": 5123.043,
+          "duration_us": 87.321
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4544,
+          "start_us": 5210.404,
+          "duration_us": 137.263
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4545,
+          "start_us": 5999.22,
+          "duration_us": 91.261
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4546,
+          "start_us": 6090.502,
+          "duration_us": 26.681
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4547,
+          "start_us": 6117.203,
+          "duration_us": 1.42
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4548,
+          "start_us": 6118.663,
+          "duration_us": 86.861
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4549,
+          "start_us": 6205.564,
+          "duration_us": 104.522
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4550,
+          "start_us": 6310.106,
+          "duration_us": 21.12
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4551,
+          "start_us": 6331.247,
+          "duration_us": 61.001
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4552,
+          "start_us": 6392.268,
+          "duration_us": 89.722
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4553,
+          "start_us": 6482.01,
+          "duration_us": 42.281
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4554,
+          "start_us": 6524.331,
+          "duration_us": 87.101
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4555,
+          "start_us": 6611.452,
+          "duration_us": 139.183
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4556,
+          "start_us": 7400.208,
+          "duration_us": 90.641
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4557,
+          "start_us": 7490.89,
+          "duration_us": 26.101
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4558,
+          "start_us": 7517.031,
+          "duration_us": 1.34
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4559,
+          "start_us": 7518.391,
+          "duration_us": 87.261
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4560,
+          "start_us": 7605.692,
+          "duration_us": 103.002
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4561,
+          "start_us": 7708.734,
+          "duration_us": 20.76
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4562,
+          "start_us": 7729.515,
+          "duration_us": 60.501
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4563,
+          "start_us": 7790.036,
+          "duration_us": 90.702
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4564,
+          "start_us": 7880.758,
+          "duration_us": 40.821
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4565,
+          "start_us": 7921.599,
+          "duration_us": 85.781
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4566,
+          "start_us": 8007.42,
+          "duration_us": 137.582
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4567,
+          "start_us": 8806.736,
+          "duration_us": 91.602
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4568,
+          "start_us": 8898.358,
+          "duration_us": 25.96
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4569,
+          "start_us": 8924.339,
+          "duration_us": 1.4
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4570,
+          "start_us": 8925.759,
+          "duration_us": 86.661
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4571,
+          "start_us": 9012.44,
+          "duration_us": 104.182
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4572,
+          "start_us": 9116.663,
+          "duration_us": 20.56
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4573,
+          "start_us": 9137.243,
+          "duration_us": 60.561
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4574,
+          "start_us": 9197.824,
+          "duration_us": 89.981
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4575,
+          "start_us": 9287.826,
+          "duration_us": 41.201
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4576,
+          "start_us": 9329.047,
+          "duration_us": 86.461
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4577,
+          "start_us": 9415.528,
+          "duration_us": 134.483
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4578,
+          "start_us": 10197.964,
+          "duration_us": 91.902
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4579,
+          "start_us": 10289.886,
+          "duration_us": 26.56
+        },
+        {
+          "name": "Default/GraphKernel_AssignAdd-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4580,
+          "start_us": 10316.466,
+          "duration_us": 1.38
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Add_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4581,
+          "start_us": 10317.887,
+          "duration_us": 86.361
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4582,
+          "start_us": 10404.268,
+          "duration_us": 104.302
+        },
+        {
+          "name": "Default/GraphKernel_Mul_fusion-op1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4583,
+          "start_us": 10508.61,
+          "duration_us": 21.24
+        },
+        {
+          "name": "Default/GraphKernel_Addcmul_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4584,
+          "start_us": 10529.871,
+          "duration_us": 60.621
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4585,
+          "start_us": 10590.532,
+          "duration_us": 90.482
+        },
+        {
+          "name": "TensorMove1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4586,
+          "start_us": 10681.034,
+          "duration_us": 41.521
+        },
+        {
+          "name": "Default/GraphKernel_Mul_Sub_Mul_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4587,
+          "start_us": 10722.575,
+          "duration_us": 86.841
+        },
+        {
+          "name": "Default/GraphKernel_Cast_Pow_Sub_Div_Sqrt_Add_Div_Pow_Sub_Div_Mul_Sub_Assign_fusion-op0",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 4588,
+          "start_us": 10809.436,
+          "duration_us": 136.602
+        }
+      ],
+      "task_count_by_kind": {
+        "KERNEL_AIVEC": 88
+      },
+      "memcpy_count": 0,
+      "memcpy_duration_sum_us": 0,
+      "memcpy_max_duration_us": 0,
+      "transfer_payload_bytes": null,
+      "transfer_payload_scope": "Level0 task timeline does not report payload bytes",
+      "bulk_transfer_absence_proven": true
+    },
+    "diagnostic_iterations": 8,
+    "interpretation": "diagnostic native task identity; no steady-time or bandwidth-saturation claim"
+  },
+  {
+    "suite": "resident-fragments",
+    "run": "fused-o0-4096x3072-r0",
+    "native_task_types": [
+      {
+        "host_task_type": "KERNEL_AIVEC",
+        "device_task_type": "AI_CORE",
+        "count": 24,
+        "tasks_per_update": 3.0,
+        "duration_sum_ns": 1390268.0
+      },
+      {
+        "host_task_type": "MEMCPY_ASYNC",
+        "device_task_type": "PCIE_DMA_SQE",
+        "count": 8,
+        "tasks_per_update": 1.0,
+        "duration_sum_ns": 15040
+      }
+    ],
+    "source_sha256": "15929ee7cf7a39f6c658cb1db3155ba13cb71348bec570968bee78d8a696cbce",
+    "timeline": {
+      "tasks": [
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1651,
+          "start_us": 0.0,
+          "duration_us": 0.94
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 1652,
+          "start_us": 176.704,
+          "duration_us": 1.88
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1653,
+          "start_us": 378.228,
+          "duration_us": 0.92
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1654,
+          "start_us": 742.235,
+          "duration_us": 169.683
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1655,
+          "start_us": 1750.235,
+          "duration_us": 0.84
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 1656,
+          "start_us": 1823.337,
+          "duration_us": 1.88
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1657,
+          "start_us": 1938.159,
+          "duration_us": 0.92
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1658,
+          "start_us": 2167.283,
+          "duration_us": 172.603
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1659,
+          "start_us": 3029.521,
+          "duration_us": 0.82
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 1660,
+          "start_us": 3099.782,
+          "duration_us": 1.88
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1661,
+          "start_us": 3191.224,
+          "duration_us": 0.94
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1662,
+          "start_us": 3456.669,
+          "duration_us": 173.523
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1663,
+          "start_us": 4311.886,
+          "duration_us": 0.84
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 1664,
+          "start_us": 4381.948,
+          "duration_us": 1.86
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1665,
+          "start_us": 4487.55,
+          "duration_us": 0.94
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1666,
+          "start_us": 4720.654,
+          "duration_us": 173.083
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1667,
+          "start_us": 5570.491,
+          "duration_us": 0.84
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 1668,
+          "start_us": 5658.653,
+          "duration_us": 1.88
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1669,
+          "start_us": 5750.815,
+          "duration_us": 1.04
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1670,
+          "start_us": 5988.72,
+          "duration_us": 172.283
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1671,
+          "start_us": 6822.976,
+          "duration_us": 0.86
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 1672,
+          "start_us": 6890.478,
+          "duration_us": 1.9
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1673,
+          "start_us": 6981.36,
+          "duration_us": 0.94
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1674,
+          "start_us": 7254.365,
+          "duration_us": 171.103
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1675,
+          "start_us": 8156.383,
+          "duration_us": 0.88
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 1676,
+          "start_us": 8230.365,
+          "duration_us": 1.88
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1677,
+          "start_us": 8343.147,
+          "duration_us": 0.92
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1678,
+          "start_us": 8575.771,
+          "duration_us": 170.723
+        },
+        {
+          "name": "AssignAdd1",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1679,
+          "start_us": 9417.368,
+          "duration_us": 0.86
+        },
+        {
+          "name": "N/A",
+          "kind": "MEMCPY_ASYNC",
+          "stream": 2,
+          "task_id": 1680,
+          "start_us": 9513.23,
+          "duration_us": 1.88
+        },
+        {
+          "name": "aclnnCast_CastAiCore_Cast",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1681,
+          "start_us": 9601.932,
+          "duration_us": 0.9
+        },
+        {
+          "name": "aclnnApplyAdamWV2_ApplyAdamWV2_ApplyAdamWV2",
+          "kind": "KERNEL_AIVEC",
+          "stream": 2,
+          "task_id": 1682,
+          "start_us": 9827.736,
+          "duration_us": 172.863
+        }
+      ],
+      "task_count_by_kind": {
+        "KERNEL_AIVEC": 24,
+        "MEMCPY_ASYNC": 8
+      },
+      "memcpy_count": 8,
+      "memcpy_duration_sum_us": 15.04,
+      "memcpy_max_duration_us": 1.9,
+      "transfer_payload_bytes": null,
+      "transfer_payload_scope": "Level0 task timeline does not report payload bytes",
+      "bulk_transfer_absence_proven": false
+    },
+    "diagnostic_iterations": 8,
+    "interpretation": "diagnostic native task identity; no steady-time or bandwidth-saturation claim"
+  }
+]

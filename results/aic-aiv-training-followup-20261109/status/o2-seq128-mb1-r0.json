@@ -1,0 +1,23 @@
+{
+  "name": "o2-seq128-mb1-r0",
+  "stage": "o2-smoke",
+  "jit_level": "O2",
+  "sequence_length": 128,
+  "micro_batch": 1,
+  "replicate": 0,
+  "command": [
+    "/models/npu_nvme_exp/user7-stack/conda/bin/python",
+    "-m",
+    "tools.aic_activity.train_sample",
+    "--source",
+    "/tmp/user7-aic-aiv-training-followup-source",
+    "--config",
+    "/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/configs/o2-seq128-mb1-r0.json",
+    "--output",
+    "/dev/shm/user7-aic-aiv-training-followup-20261109/o2-seq128-mb1-r0"
+  ],
+  "source": "/tmp/user7-aic-aiv-training-followup-source",
+  "raw": "/dev/shm/user7-aic-aiv-training-followup-20261109/o2-seq128-mb1-r0",
+  "status": "failed",
+  "error": "CalledProcessError(1, ['/models/npu_nvme_exp/user7-stack/conda/bin/python', '-m', 'tools.aic_activity.train_sample', '--source', '/tmp/user7-aic-aiv-training-followup-source', '--config', '/models/npu_nvme_exp/user7-stack/aic-aiv-training-followup-20261109/configs/o2-seq128-mb1-r0.json', '--output', '/dev/shm/user7-aic-aiv-training-followup-20261109/o2-seq128-mb1-r0'])"
+}

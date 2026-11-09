@@ -1,0 +1,599 @@
+
+
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>安装指南 &#124; MindSpore Transformers master 文档 &#124; 昇思MindSpore社区</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <script src="/check-dark-mode.js"></script>
+      
+      <script src="/doc-lib/jquery.js"></script>
+      
+      
+      
+      
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      
+      
+        <script src="_static/documentation_options.js?v=c257942d"></script>
+      
+      
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+      
+      
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      
+      
+        <script src="_static/translations.js?v=beaddf03"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="next" title="训练指南" href="guide/training.html" />
+    <link rel="prev" title="模型支持库" href="introduction/models.html" /> 
+  <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"MindSpore","item":"https://www.mindspore.cn/"},{"@type":"ListItem","position":2,"name":"安装指南","item":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/installation.html"}]},{"@context":"https://schema.org","@type":"TechArticle","headline":"安装指南","description":"本指南面向 **动态图（PyNative）** 场景，介绍 MindSpore Transformers 的环境依赖、安装方式与安装校验。动态图任务通过 `msrun ... run_mindformer.py --config xxx.yaml --mode 1` 启动（`--mode 1` 即 PyNative 模…","author":{"@type":"Organization","name":"MindSpore"},"publisher":{"@type":"Organization","name":"MindSpore"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/installation.html"}},{"@context":"https://schema.org","@type":"HowTo","name":"安装 MindSpore Transformers","description":"完成 CANN 与 MindSpore 安装后，再安装 MindSpore Transformers 本体。以下三种方式按场景选择其一即可。","inLanguage":"zh-CN","isPartOf":{"@type":"CreativeWork","url":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/installation.html"},"step":[{"@type":"HowToStep","position":1,"name":"执行 python setup.py bdist_wheel","text":"执行 python setup.py bdist_wheel，将源码打包为 output/ 目录下的 mindformers-*.whl；","url":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/installation.html#安装-mindspore-transformers"},{"@type":"HowToStep","position":2,"name":"为产出的 wheel 生成 .sha256 校验文件","text":"为产出的 wheel 生成 .sha256 校验文件；","url":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/installation.html#安装-mindspore-transformers"},{"@type":"HowToStep","position":3,"name":"默认从清华镜像 https","text":"默认从清华镜像 https://pypi.tuna.tsinghua.edu.cn/simple 执行 pip install mindformers*whl 完成安装。","url":"https://www.mindspore.cn/mindformers/docs/zh-CN/master/installation.html#安装-mindspore-transformers"}]}]</script>
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MindSpore Transformers
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quick_start/quick_start.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction/overview.html">整体架构</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction/models.html">模型支持库</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">安装</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">安装指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#环境依赖">环境依赖</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#昇腾硬件">昇腾硬件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-版本">Python 版本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#版本配套关系">版本配套关系</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#安装-mindspore-transformers">安装 MindSpore Transformers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#安装方式选型">安装方式选型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#源码安装">源码安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pip-安装已发布版本">pip 安装（已发布版本）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#安装-hyperparallel动态图训练必需">安装 HyperParallel（动态图训练必需）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#docker-安装">Docker 安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#环境与工具准备">环境与工具准备</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#方式一-使用官方预构建镜像推荐">方式一：使用官方预构建镜像（推荐）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#方式二-自行构建镜像">方式二：自行构建镜像</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#启动容器">启动容器</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#验证是否成功安装">验证是否成功安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#结果一-完全通过">结果一：完全通过</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#结果二-版本不配套但检查通过警告">结果二：版本不配套但检查通过（警告）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#结果三-检查失败">结果三：检查失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#运行一步动态图自检">运行一步动态图自检</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#相关文档">相关文档</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">训练指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guide/training.html">训练指南</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">功能特性</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="feature/overview.html">功能特性概述</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/start_task.html">启动任务</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/configuration.html">配置文件说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/logging.html">日志</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/dataset.html">数据集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/training_hyperparameters.html">训练超参数与优化器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/parallel_training.html">分布式并行训练</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/memory_optimization.html">训练显存优化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/save_load_checkpoint.html">权重保存与加载</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/resume_training.html">断点续训</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/finetune.html">全参微调与 LoRA 微调</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/monitor.html">训练指标监控与 Profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/other_training_features.html">其它训练特性</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature/static_graph_features.html">静态图实现特性</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">环境变量</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="env_variables.html">环境变量说明</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">贡献指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribution/mindformers_contribution.html">MindSpore Transformers贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribution/modelers_contribution.html">魔乐社区贡献指南</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="faq/model_related.html">模型相关 FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq/feature_related.html">功能相关 FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">静态图实现（Deprecated）</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="static_graph/introduction/overview.html">整体架构</a></li>
+<li class="toctree-l1"><a class="reference internal" href="static_graph/guide/index.html">大模型全流程指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="static_graph/feature/index.html">功能特性</a></li>
+<li class="toctree-l1"><a class="reference internal" href="static_graph/advanced_development/index.html">高阶开发</a></li>
+<li class="toctree-l1"><a class="reference internal" href="static_graph/example/index.html">优秀实践</a></li>
+<li class="toctree-l1"><a class="reference internal" href="static_graph/env_variables.html">环境变量说明</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MindSpore Transformers</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a> &raquo;</li>
+      <li class="breadcrumb-item active">安装指南</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.md.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="安装指南">
+<h1>安装指南<a class="headerlink" href="#安装指南" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://atomgit.com/mindspore/docs/blob/master/docs/mindformers/docs/source_zh_cn/installation.md"><img alt="查看源文件" src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.svg" /></a></p>
+<p>本指南面向 <strong>动态图（PyNative）</strong> 场景，介绍 MindSpore Transformers 的环境依赖、安装方式与安装校验。动态图任务通过 <code class="docutils literal notranslate"><span class="pre">msrun</span> <span class="pre">...</span> <span class="pre">run_mindformer.py</span> <span class="pre">--config</span> <span class="pre">xxx.yaml</span> <span class="pre">--mode</span> <span class="pre">1</span></code> 启动（<code class="docutils literal notranslate"><span class="pre">--mode</span> <span class="pre">1</span></code> 即 PyNative 模式），当前已支持 DeepSeek-V3等模型（完整模型清单见 <a class="reference internal" href="introduction/models.html"><span class="std std-doc">模型库</span></a>）。</p>
+<p>安装总体分四步：<strong>① 准备昇腾硬件并装好驱动/固件 → ② 按版本配套表安装 CANN 与 MindSpore → ③ 安装 MindSpore Transformers 本体 → ④ 安装 HyperParallel（动态图训练必需）</strong>。其中第三步可在源码、pip、Docker 三种方式中任选其一。</p>
+<blockquote>
+<div><p><strong>动态图对 MindSpore 版本的额外要求</strong></p>
+<p>动态图训练栈依赖 <a class="reference external" href="https://atomgit.com/mindspore/hyper-parallel/">HyperParallel</a>，其要求 <strong>MindSpore &gt;= 2.10</strong>（建议最新版本）。因此请选择 MindSpore &gt;= 2.10，详见以下<a class="reference internal" href="#版本配套关系">版本配套关系</a>。</p>
+</div></blockquote>
+<section id="环境依赖">
+<h2>环境依赖<a class="headerlink" href="#环境依赖" title="Link to this heading"></a></h2>
+<section id="昇腾硬件">
+<h3>昇腾硬件<a class="headerlink" href="#昇腾硬件" title="Link to this heading"></a></h3>
+<p>支持的硬件包括 Atlas 800T A2、Atlas 800I A2、Atlas 900 A3 SuperPoD。</p>
+<p>宿主机需提前安装 NPU 驱动与固件，参考<a class="reference external" href="https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1/softwareinst/instg/instg_0005.html">昇腾社区-安装 NPU 驱动和固件</a>。</p>
+</section>
+<section id="python-版本">
+<h3>Python 版本<a class="headerlink" href="#python-版本" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>项</p></th>
+<th class="head"><p>说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>支持范围</strong></p></td>
+<td><p>Python <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">3.12</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>推荐版本</strong></p></td>
+<td><p>Python <code class="docutils literal notranslate"><span class="pre">3.12.4</span></code>，与官方 Docker 镜像内置的 <code class="docutils literal notranslate"><span class="pre">py3.12</span></code> 一致，经过完整验证</p></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><p>&quot;支持范围&quot;表示可正常安装并运行，&quot;推荐版本&quot;表示官方在该版本上做过完整测试。新环境建议直接使用 3.12.4，避免低版本依赖兼容问题。</p>
+</div></blockquote>
+</section>
+<section id="版本配套关系">
+<h3>版本配套关系<a class="headerlink" href="#版本配套关系" title="Link to this heading"></a></h3>
+<p>动态图（r2.0.0 / 在研版本）需安装以下组件。由于依赖 HyperParallel，<strong>MindSpore 必须 &gt;= 2.10</strong>（建议使用最新版本），CANN 与固件/驱动需与所选 MindSpore 版本对应。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>组件</p></th>
+<th class="head"><p>版本要求</p></th>
+<th class="head"><p>获取方式</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>MindSpore Transformers</p></td>
+<td><p>在研版本（master 分支）</p></td>
+<td><p><a class="reference internal" href="#源码安装">源码安装</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>HyperParallel</p></td>
+<td><p>在研版本（与 MindSpore 配套）</p></td>
+<td><p><a class="reference internal" href="#安装-hyperparallel动态图训练必需">源码安装</a></p></td>
+</tr>
+<tr class="row-even"><td><p>MindSpore</p></td>
+<td><p><strong>&gt;= 2.10</strong>（建议最新版本）</p></td>
+<td><p><a class="reference external" href="https://www.mindspore.cn/install/">MindSpore 安装</a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="安装-mindspore-transformers">
+<h2>安装 MindSpore Transformers<a class="headerlink" href="#安装-mindspore-transformers" title="Link to this heading"></a></h2>
+<p>完成 CANN 与 MindSpore 安装后，再安装 MindSpore Transformers 本体。以下三种方式按场景选择其一即可。</p>
+<section id="安装方式选型">
+<h3>安装方式选型<a class="headerlink" href="#安装方式选型" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>方式</p></th>
+<th class="head"><p>适用场景</p></th>
+<th class="head"><p>取得的版本</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>源码安装</strong></p></td>
+<td><p>需要在研（master）最新特性、要改源码或调试</p></td>
+<td><p>master 分支当前代码</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>pip 安装</strong></p></td>
+<td><p>只想用已发布的稳定版本，环境已就绪</p></td>
+<td><p>PyPI 上的发布版本</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Docker 安装</strong></p></td>
+<td><p>不想在宿主机上动 Python/CANN/MindSpore 环境，希望开箱即用</p></td>
+<td><p>镜像内预置的发布版本</p></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><p>在研版本（master）目前<strong>仅支持源码安装</strong>；pip 安装对应的是已发布版本，请按<a class="reference internal" href="#版本配套关系">版本配套关系</a>选定版本号。</p>
+</div></blockquote>
+</section>
+<section id="源码安装">
+<h3>源码安装<a class="headerlink" href="#源码安装" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 在研版本（master 分支，最新特性）</span>
+git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>master<span class="w"> </span>https://atomgit.com/mindspore/mindformers.git
+<span class="nb">cd</span><span class="w"> </span>mindformers
+bash<span class="w"> </span>build.sh
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># r2.0.0 版本（r2.0.0 分支，对应 2.0.0 发布版本）</span>
+git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>r2.0.0<span class="w"> </span>https://atomgit.com/mindspore/mindformers.git
+<span class="nb">cd</span><span class="w"> </span>mindformers
+bash<span class="w"> </span>build.sh
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">build.sh</span></code> 的实际行为（见仓库根目录 <code class="docutils literal notranslate"><span class="pre">build.sh</span></code>）：</p>
+<ol class="arabic simple">
+<li><p>执行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">bdist_wheel</span></code>，将源码打包为 <code class="docutils literal notranslate"><span class="pre">output/</span></code> 目录下的 <code class="docutils literal notranslate"><span class="pre">mindformers-*.whl</span></code>；</p></li>
+<li><p>为产出的 wheel 生成 <code class="docutils literal notranslate"><span class="pre">.sha256</span></code> 校验文件；</p></li>
+<li><p><strong>默认从清华镜像</strong> <code class="docutils literal notranslate"><span class="pre">https://pypi.tuna.tsinghua.edu.cn/simple</span></code> 执行 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">mindformers*whl</span></code> 完成安装。</p></li>
+</ol>
+<blockquote>
+<div><p><strong>自定义安装源</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">build.sh</span></code> 内置清华 pip 镜像。如需改用其它源，可先 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">bdist_wheel</span> <span class="pre">-d</span> <span class="pre">output</span></code> 产出 wheel，再用自定义源安装：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>setup.py<span class="w"> </span>bdist_wheel<span class="w"> </span>-d<span class="w"> </span>output
+pip<span class="w"> </span>install<span class="w"> </span>output/mindformers-*.whl<span class="w"> </span>-i<span class="w"> </span>&lt;你的<span class="w"> </span>pip<span class="w"> </span>源&gt;
+</pre></div>
+</div>
+</div></blockquote>
+<p>编译前置依赖：源码安装会触发本地打包，请确保已安装 <code class="docutils literal notranslate"><span class="pre">wheel</span></code>、<code class="docutils literal notranslate"><span class="pre">setuptools</span></code>，且 <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> 中依赖可正常拉取。若 <code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">build.sh</span></code> 失败，优先检查：网络能否访问 pip 源、Python 版本是否在受支持范围、是否已成功安装匹配版本的 MindSpore。</p>
+</section>
+<section id="pip-安装已发布版本">
+<h3>pip 安装（已发布版本）<a class="headerlink" href="#pip-安装已发布版本" title="Link to this heading"></a></h3>
+<p>已发布版本可通过 pip 直接安装。版本号请参考上述<a class="reference internal" href="#版本配套关系">版本配套关系</a>表，与已安装的 MindSpore 整行对应：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 安装与配套表对应的指定版本（推荐，避免错配）</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">mindformers</span><span class="o">==</span><span class="m">2</span>.0.0
+
+<span class="c1"># 或安装 PyPI 上的最新发布版本</span>
+pip<span class="w"> </span>install<span class="w"> </span>mindformers
+</pre></div>
+</div>
+<blockquote>
+<div><p>指定版本号能确保与已装的 CANN/MindSpore 配套；不带版本号时会安装最新发布版，需自行确认是否与本机 MindSpore 匹配。</p>
+<p><code class="docutils literal notranslate"><span class="pre">2.0.0</span></code> 当前暂未发布到 PyPI，pip 安装尚不可用。现阶段请使用上述<a class="reference internal" href="#源码安装">「源码安装」</a>方式获取 master 分支代码。</p>
+</div></blockquote>
+</section>
+</section>
+<section id="安装-hyperparallel动态图训练必需">
+<h2>安装 HyperParallel（动态图训练必需）<a class="headerlink" href="#安装-hyperparallel动态图训练必需" title="Link to this heading"></a></h2>
+<p>动态图（PyNative）训练栈依赖 <a class="reference external" href="https://atomgit.com/mindspore/hyper-parallel/">HyperParallel</a> —— 昇腾超节点亲和的分布式并行加速库。它为动态图提供 <code class="docutils literal notranslate"><span class="pre">DTensor</span></code> / <code class="docutils literal notranslate"><span class="pre">DeviceMesh</span></code>、FSDP/HSDP、流水线并行（PP，1F1B/VPP）调度，以及 MindSpore 动态图反向兼容层等核心能力。</p>
+<p><code class="docutils literal notranslate"><span class="pre">mindformers/pynative/</span></code> 下的训练器、优化器、并行切分与融合算子均直接 <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">hyper_parallel</span></code>，因此<strong>未安装 HyperParallel 将无法运行任何动态图任务</strong>（包括单卡训练）</p>
+<blockquote>
+<div><p><strong>版本要求</strong></p>
+<p>HyperParallel 要求 <strong>MindSpore &gt;= 2.10</strong>（建议使用最新版本）。请确保本机 MindSpore 满足该要求，详见仓库 README 的安装说明。</p>
+</div></blockquote>
+<p>以下演示通过源码安装 HyperParallel：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://atomgit.com/mindspore/hyper-parallel.git
+<span class="nb">cd</span><span class="w"> </span>hyper-parallel
+python<span class="w"> </span>setup.py<span class="w"> </span>bdist_wheel
+pip<span class="w"> </span>install<span class="w"> </span>dist/hyper_parallel-*-py3-none-any.whl
+</pre></div>
+</div>
+<p>安装后校验是否可正常导入：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from hyper_parallel import DTensor, DeviceMesh, PipelineStage; print('hyper_parallel OK')"</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Docker 用户</strong>：使用官方预构建镜像或自行构建镜像时，请确认镜像内是否已预置 HyperParallel；若未预置，进入容器后按上述源码方式安装。</p>
+</div></blockquote>
+</section>
+<section id="docker-安装">
+<h2>Docker 安装<a class="headerlink" href="#docker-安装" title="Link to this heading"></a></h2>
+<p>若不希望在宿主机直接配置 Python/CANN/MindSpore 环境，可使用 Docker 镜像运行 MindSpore Transformers。<strong>推荐优先使用官方预构建镜像</strong>；若需自定义版本组合，再走自行构建路径。</p>
+<section id="环境与工具准备">
+<h3>环境与工具准备<a class="headerlink" href="#环境与工具准备" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>硬件</strong>：宿主机需安装 NPU 驱动与固件，参考<a class="reference external" href="https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1/softwareinst/instg/instg_0005.html">昇腾社区-安装 NPU 驱动和固件</a>。</p></li>
+<li><p><strong>软件</strong>：Docker 版本 <code class="docutils literal notranslate"><span class="pre">26.1.4</span></code> 或更高。可通过 <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">--version</span></code> 校验；若未安装，参考 <a class="reference external" href="https://docs.docker.com/engine/install/">Docker 官方安装教程</a>。</p></li>
+<li><p><strong>网络</strong>：拉取/构建镜像需稳定的互联网连接，并能访问华为云。请确保主机时间和时区正确。</p></li>
+</ul>
+</section>
+<section id="方式一-使用官方预构建镜像推荐">
+<h3>方式一：使用官方预构建镜像（推荐）<a class="headerlink" href="#方式一-使用官方预构建镜像推荐" title="Link to this heading"></a></h3>
+<p>MindSpore Transformers Ascend 镜像托管在华为云 SWR 镜像仓库，开箱即用、无需本地构建。</p>
+<blockquote>
+<div><p>镜像仓库中可能尚未推出2.0及后续版本的官方预构建镜像，请以 <a class="reference external" href="https://atomgit.com/mindspore/mindformers/blob/master/docker/OVERVIEW_CN.md">docker/OVERVIEW_CN.md</a> 中的实际可用 tag 为准。若暂无所需版本，可使用下文的「方式二：自行构建镜像」。</p>
+</div></blockquote>
+<p><strong>镜像仓库地址：</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>swr.cn-south-1.myhuaweicloud.com/ascendhub/mindformers
+</pre></div>
+</div>
+<p><strong>Tag 规范</strong>（系统架构由 Docker Manifest 自动识别，无需在 tag 中指定）：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;MindSpore Transformers 版本号&gt;-&lt;硬件信息（芯片）&gt;-&lt;操作系统&gt;-&lt;Python 版本&gt;
+</pre></div>
+</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>字段</p></th>
+<th class="head"><p>示例值</p></th>
+<th class="head"><p>说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>版本号</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2.0.0</span></code></p></td>
+<td><p>MindSpore Transformers 发布版本</p></td>
+</tr>
+<tr class="row-odd"><td><p>硬件信息（芯片）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;芯片架构&gt;</span></code></p></td>
+<td><p>昇腾芯片型号标识，具体取值见 <a class="reference external" href="https://atomgit.com/mindspore/mindformers/blob/master/docker/OVERVIEW_CN.md">docker/OVERVIEW_CN.md</a></p></td>
+</tr>
+<tr class="row-even"><td><p>操作系统</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ubuntu22.04</span></code> / <code class="docutils literal notranslate"><span class="pre">openeuler24.03</span></code></p></td>
+<td><p>基础镜像操作系统发行版</p></td>
+</tr>
+<tr class="row-odd"><td><p>Python 版本</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">py3.12</span></code></p></td>
+<td><p>镜像内置 Python 大版本</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>拉取镜像</strong>（以 <code class="docutils literal notranslate"><span class="pre">2.0.0-&lt;芯片架构&gt;-ubuntu22.04-py3.12</span></code> 为例）：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>pull<span class="w"> </span>swr.cn-south-1.myhuaweicloud.com/ascendhub/mindformers:2.0.0-&lt;芯片架构&gt;-ubuntu22.04-py3.12
+</pre></div>
+</div>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">&lt;芯片架构&gt;</span></code> 替换为实际芯片型号，完整取值列表见 <a class="reference external" href="https://atomgit.com/mindspore/mindformers/blob/master/docker/OVERVIEW_CN.md">docker/OVERVIEW_CN.md</a>。可用 <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">manifest</span> <span class="pre">inspect</span> <span class="pre">&lt;镜像&gt;</span></code> 查看镜像支持的系统架构（ARM64 / x86_64）。</p>
+</div></blockquote>
+</section>
+<section id="方式二-自行构建镜像">
+<h3>方式二：自行构建镜像<a class="headerlink" href="#方式二-自行构建镜像" title="Link to this heading"></a></h3>
+<p>需要自定义 CANN/MindSpore/MindSpore Transformers 版本组合时，使用仓库内官方 Dockerfile（<code class="docutils literal notranslate"><span class="pre">docker/Dockerfile</span></code>）构建。该 Dockerfile 基于 CANN 官方基础镜像 <code class="docutils literal notranslate"><span class="pre">quay.io/ascend/cann</span></code>，依次安装依赖、MindSpore 与 MindSpore Transformers。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">CANN_VERSION</span><span class="o">=</span><span class="m">9</span>.1.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">CHIP_ARCH</span><span class="o">=</span>&lt;芯片架构&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">OS_SYSTEM</span><span class="o">=</span>ubuntu22.04<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">PY_VERSION</span><span class="o">=</span>py3.12<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">MINDSPORE_VERSION</span><span class="o">=</span><span class="m">2</span>.10.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">MINDFORMERS_VERSION</span><span class="o">=</span><span class="m">2</span>.0.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">PIP_INDEX_URL</span><span class="o">=</span>https://mirrors.huaweicloud.com/repository/pypi/simple<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-t<span class="w"> </span>mindformers:2.0.0-&lt;芯片架构&gt;-ubuntu22.04-py3.12<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-f<span class="w"> </span>docker/Dockerfile<span class="w"> </span>.
+</pre></div>
+</div>
+<p>各 <code class="docutils literal notranslate"><span class="pre">build-arg</span></code> 的含义（与仓库 <code class="docutils literal notranslate"><span class="pre">docker/Dockerfile</span></code> 一致）：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>参数</p></th>
+<th class="head"><p>必填</p></th>
+<th class="head"><p>说明</p></th>
+<th class="head"><p>示例值</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CANN_VERSION</span></code></p></td>
+<td><p>是</p></td>
+<td><p>昇腾 CANN 工具包版本（决定基础镜像 tag）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">9.1.0</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CHIP_ARCH</span></code></p></td>
+<td><p>是</p></td>
+<td><p>昇腾芯片架构标识，具体取值见 <a class="reference external" href="https://atomgit.com/mindspore/mindformers/blob/master/docker/OVERVIEW_CN.md">docker/OVERVIEW_CN.md</a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;芯片架构&gt;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">OS_SYSTEM</span></code></p></td>
+<td><p>是</p></td>
+<td><p>基础镜像操作系统及版本</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ubuntu22.04</span></code> / <code class="docutils literal notranslate"><span class="pre">openeuler24.03</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PY_VERSION</span></code></p></td>
+<td><p>是</p></td>
+<td><p>基础镜像内置 Python 版本</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">py3.12</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MINDSPORE_VERSION</span></code></p></td>
+<td><p>是</p></td>
+<td><p>MindSpore 版本号（按配套表选取）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2.10.0</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MINDFORMERS_VERSION</span></code></p></td>
+<td><p>是</p></td>
+<td><p>MindSpore Transformers 版本号</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2.0.0</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PIP_INDEX_URL</span></code></p></td>
+<td><p>否</p></td>
+<td><p>pip 安装源地址，默认华为云源</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">https://mirrors.huaweicloud.com/repository/pypi/simple</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><p>上述各版本号必须满足<a class="reference internal" href="#版本配套关系">版本配套关系</a>。更多细节见仓库 <code class="docutils literal notranslate"><span class="pre">docker/OVERVIEW_CN.md</span></code>。</p>
+</div></blockquote>
+</section>
+<section id="启动容器">
+<h3>启动容器<a class="headerlink" href="#启动容器" title="Link to this heading"></a></h3>
+<p>拉取或构建完成后，挂载 NPU 设备启动容器：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>-itd<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ipc<span class="o">=</span>host<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--network<span class="o">=</span>host<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--device<span class="o">=</span>/dev/davinci0:rwm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--device<span class="o">=</span>/dev/davinci_manager:rwm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--device<span class="o">=</span>/dev/devmm_svm:rwm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--device<span class="o">=</span>/dev/hisi_hdc:rwm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/usr/local/dcmi:/usr/local/dcmi<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/usr/local/bin/npu-smi:/usr/local/bin/npu-smi<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/usr/local/Ascend/driver:/usr/local/Ascend/driver<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/etc/ascend_install.info:/etc/ascend_install.info<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>容器名称<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>&lt;镜像名称:标签&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/bin/bash
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>安全提示</strong></p>
+<ul class="simple">
+<li><p>上例仅挂载了 <code class="docutils literal notranslate"><span class="pre">davinci0</span></code> 一张卡，按需增加 <code class="docutils literal notranslate"><span class="pre">--device=/dev/davinciN:rwm</span></code> 挂载更多 NPU。</p></li>
+<li><p>容器默认以 root 运行，生产环境建议创建非特权用户运行。</p></li>
+<li><p>为保证 NPU 功能可能需要 <code class="docutils literal notranslate"><span class="pre">--privileged</span></code>，会扩大容器权限，建议仅在可信环境使用，并结合 <code class="docutils literal notranslate"><span class="pre">--cpus</span></code>、<code class="docutils literal notranslate"><span class="pre">--memory</span></code> 限制资源。</p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+<section id="验证是否成功安装">
+<h2>验证是否成功安装<a class="headerlink" href="#验证是否成功安装" title="Link to this heading"></a></h2>
+<p>安装完成后，执行以下命令进行环境自检：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import mindformers as mf;mf.run_check()"</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">run_check</span></code> 会搜集环境信息（MindFormers / MindSpore / CANN / 驱动版本），并据此给出三类结果。</p>
+<section id="结果一-完全通过">
+<h3>结果一：完全通过<a class="headerlink" href="#结果一-完全通过" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>- INFO - All checks passed, used **** seconds, the environment is correctly set up!
+</pre></div>
+</div>
+<p>各组件版本配套、检查全部通过，可以开始训练。</p>
+</section>
+<section id="结果二-版本不配套但检查通过警告">
+<h3>结果二：版本不配套但检查通过（警告）<a class="headerlink" href="#结果二-版本不配套但检查通过警告" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>- WARNING - The installed software are unmatched but all checks passed in **** seconds
+- INFO - It's recommended to install mindformers==x.y.z mindspore==x.y.z cann-toolkit==x.y.z driver==x.y.z
+</pre></div>
+</div>
+<p>功能可用，但当前 MindFormers/MindSpore/CANN/驱动组合不在推荐配套内。建议按提示中的推荐版本与<a class="reference internal" href="#版本配套关系">版本配套关系</a>整行重装，以规避潜在精度/性能/兼容问题。</p>
+</section>
+<section id="结果三-检查失败">
+<h3>结果三：检查失败<a class="headerlink" href="#结果三-检查失败" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>- ERROR - The run check failed in **** seconds, It's recommended to install mindformers==x.y.z mindspore==x.y.z cann-toolkit==x.y.z driver==x.y.z
+</pre></div>
+</div>
+<p>或</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>- ERROR - The run check failed in **** seconds, please check the above info for more details
+</pre></div>
+</div>
+<p>常见排查方向：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>现象</p></th>
+<th class="head"><p>排查方向</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>MindSpore 自身报错（<code class="docutils literal notranslate"><span class="pre">MindSpore</span> <span class="pre">failed!</span></code>）</p></td>
+<td><p>参考 <a class="reference external" href="https://www.mindspore.cn/install/">MindSpore 安装</a> 重装匹配版本的 MindSpore</p></td>
+</tr>
+<tr class="row-odd"><td><p>提示 <code class="docutils literal notranslate"><span class="pre">ASCEND_HOME_PATH</span></code> 未设置 / 找不到 CANN 信息</p></td>
+<td><p>检查 CANN 是否安装、是否 <code class="docutils literal notranslate"><span class="pre">source</span></code> 了环境变量 <code class="docutils literal notranslate"><span class="pre">set_env.sh</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>找不到驱动 version.info</p></td>
+<td><p>检查 NPU 驱动/固件是否安装、<code class="docutils literal notranslate"><span class="pre">npu-smi</span> <span class="pre">info</span></code> 是否正常</p></td>
+</tr>
+<tr class="row-odd"><td><p>版本不匹配</p></td>
+<td><p>按推荐版本与<a class="reference internal" href="#版本配套关系">版本配套关系</a>整行重装</p></td>
+</tr>
+<tr class="row-even"><td><p>运行动态图任务报 <code class="docutils literal notranslate"><span class="pre">ModuleNotFoundError:</span> <span class="pre">hyper_parallel</span></code></p></td>
+<td><p>未安装 HyperParallel，见<a class="reference internal" href="#安装-hyperparallel动态图训练必需">安装 HyperParallel</a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="运行一步动态图自检">
+<h3>运行一步动态图自检<a class="headerlink" href="#运行一步动态图自检" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">run_check</span></code> 通过后，建议再用一个最小动态图任务确认端到端可拉起。动态图任务以 <code class="docutils literal notranslate"><span class="pre">--mode</span> <span class="pre">1</span></code>（PyNative）启动，单机多卡通过 <code class="docutils literal notranslate"><span class="pre">msrun</span></code> 拉起，例如：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>msrun<span class="w"> </span>--worker_num<span class="o">=</span><span class="m">8</span><span class="w"> </span>--local_worker_num<span class="o">=</span><span class="m">8</span><span class="w"> </span>--master_port<span class="o">=</span><span class="m">8118</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>run_mindformer.py<span class="w"> </span>--config<span class="w"> </span>&lt;你的配置&gt;.yaml<span class="w"> </span>--mode<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+<p>完整的任务拉起步骤与最小可运行示例，见 <a class="reference internal" href="quick_start/quick_start.html"><span class="std std-doc">快速开始</span></a>。</p>
+</section>
+</section>
+<section id="相关文档">
+<h2>相关文档<a class="headerlink" href="#相关文档" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>安装完成后第一站：<a class="reference internal" href="quick_start/quick_start.html"><span class="std std-doc">快速开始</span></a> —— 拉起第一个动态图任务。</p></li>
+<li><p>训练总流程：<a class="reference internal" href="guide/training.html"><span class="std std-doc">训练指南</span></a>。</p></li>
+<li><p>支持的模型清单：<a class="reference internal" href="introduction/models.html"><span class="std std-doc">模型库</span></a>。</p></li>
+<li><p>数据与配置：<a class="reference internal" href="feature/dataset.html"><span class="std std-doc">数据集</span></a>、<a class="reference internal" href="feature/configuration.html"><span class="std std-doc">配置文件说明</span></a>。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="introduction/models.html" class="btn btn-neutral float-left" title="模型支持库" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="guide/training.html" class="btn btn-neutral float-right" title="训练指南" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 MindSpore.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
