@@ -1,0 +1,1457 @@
+{
+  "status": "correlated",
+  "checkpoints": [
+    {
+      "step": 4,
+      "raw_generations": [
+        39
+      ],
+      "raw_request_ids": [
+        "44cc0d7d6a4f47208ee854853841efb5:0"
+      ],
+      "capture_to_resume_seconds": 544.902566917,
+      "stages": {
+        "source_prepare_and_copy": {
+          "intervals": 25504,
+          "union_seconds": 515.421714467,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 585.636185948,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0246039545,
+            "p95": 0.025684969,
+            "p95_status": "reported",
+            "minimum": 0.00021956,
+            "maximum": 0.038197677
+          }
+        },
+        "rank_hash_before_send": {
+          "intervals": 25504,
+          "union_seconds": 65.605190882,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 65.862798307,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0026957505,
+            "p95": 0.003368333,
+            "p95_status": "reported",
+            "minimum": 9.934e-05,
+            "maximum": 0.007921111
+          }
+        },
+        "bridge_ack_wait": {
+          "intervals": 25504,
+          "union_seconds": 533.256548465,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 1488.166261461,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0616383125,
+            "p95": 0.063570946,
+            "p95_status": "reported",
+            "minimum": 0.00259105,
+            "maximum": 0.148564893
+          }
+        },
+        "owner_validation": {
+          "intervals": 25504,
+          "union_seconds": 69.389268068,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 69.682549687,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.002875141,
+            "p95": 0.003224813,
+            "p95_status": "reported",
+            "minimum": 0.00011795,
+            "maximum": 0.044958334
+          }
+        },
+        "owner_lock_wait": {
+          "intervals": 25504,
+          "union_seconds": 528.43735296,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 671.972978698,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.027201365,
+            "p95": 0.029427194,
+            "p95_status": "reported",
+            "minimum": 0.000111491,
+            "maximum": 0.113757119
+          }
+        },
+        "owner_payload": {
+          "intervals": 25504,
+          "union_seconds": 522.793061482,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 522.793061482,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.02203314,
+            "p95": 0.022748268,
+            "p95_status": "reported",
+            "minimum": 0.001592976,
+            "maximum": 0.108500888
+          }
+        },
+        "native_api": {
+          "intervals": 25783,
+          "union_seconds": 300.126269088,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 300.126269088,
+          "elapsed_seconds": {
+            "n": 25783,
+            "median": 0.012698829,
+            "p95": 0.01287638,
+            "p95_status": "reported",
+            "minimum": 0.000397022,
+            "maximum": 0.022454337
+          }
+        },
+        "payload_flush": {
+          "intervals": 1,
+          "union_seconds": 0.001597137,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.001597137,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.001597137,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.001597137,
+            "maximum": 0.001597137
+          }
+        },
+        "metadata_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 3.257186576,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 3.257186576,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 3.257186576,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 3.257186576,
+            "maximum": 3.257186576
+          }
+        },
+        "anchor_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 0.003025222,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.003025222,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.003025222,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.003025222,
+            "maximum": 0.003025222
+          }
+        },
+        "catalog_publication": {
+          "intervals": 1,
+          "union_seconds": 0.156800175,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.156800175,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.156800175,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.156800175,
+            "maximum": 0.156800175
+          }
+        },
+        "rank_capture": {
+          "intervals": 4,
+          "union_seconds": 544.672907081,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 2172.982469707,
+          "elapsed_seconds": {
+            "n": 4,
+            "median": 542.964853321,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 542.379855984,
+            "maximum": 544.672907081
+          }
+        }
+      },
+      "missing_pairs": []
+    },
+    {
+      "step": 8,
+      "raw_generations": [
+        40
+      ],
+      "raw_request_ids": [
+        "44cc0d7d6a4f47208ee854853841efb5:1"
+      ],
+      "capture_to_resume_seconds": 545.837631304,
+      "stages": {
+        "source_prepare_and_copy": {
+          "intervals": 25504,
+          "union_seconds": 515.786746995,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 586.857178679,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.024614615,
+            "p95": 0.025696289,
+            "p95_status": "reported",
+            "minimum": 0.000220261,
+            "maximum": 0.031362951
+          }
+        },
+        "rank_hash_before_send": {
+          "intervals": 25504,
+          "union_seconds": 64.037825355,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 64.275705714,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.00268666,
+            "p95": 0.00278472,
+            "p95_status": "reported",
+            "minimum": 9.7601e-05,
+            "maximum": 0.008421172
+          }
+        },
+        "bridge_ack_wait": {
+          "intervals": 25504,
+          "union_seconds": 533.903294811,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 1491.108438571,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.061590387999999996,
+            "p95": 0.063962956,
+            "p95_status": "reported",
+            "minimum": 0.002397309,
+            "maximum": 0.151517625
+          }
+        },
+        "owner_validation": {
+          "intervals": 25504,
+          "union_seconds": 69.122479755,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 69.443898129,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.002852386,
+            "p95": 0.003257253,
+            "p95_status": "reported",
+            "minimum": 0.000124471,
+            "maximum": 0.090947181
+          }
+        },
+        "owner_lock_wait": {
+          "intervals": 25504,
+          "union_seconds": 529.069739031,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 665.381242607,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.026880458500000003,
+            "p95": 0.029487733,
+            "p95_status": "reported",
+            "minimum": 0.000109461,
+            "maximum": 0.113787789
+          }
+        },
+        "owner_payload": {
+          "intervals": 25504,
+          "union_seconds": 522.234612108,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 522.234612108,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.02200667,
+            "p95": 0.022907498,
+            "p95_status": "reported",
+            "minimum": 0.001588406,
+            "maximum": 0.110398406
+          }
+        },
+        "native_api": {
+          "intervals": 25783,
+          "union_seconds": 300.194311342,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 300.194311342,
+          "elapsed_seconds": {
+            "n": 25783,
+            "median": 0.012703859,
+            "p95": 0.013110691,
+            "p95_status": "reported",
+            "minimum": 0.000428622,
+            "maximum": 0.017504467
+          }
+        },
+        "payload_flush": {
+          "intervals": 1,
+          "union_seconds": 0.001642596,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.001642596,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.001642596,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.001642596,
+            "maximum": 0.001642596
+          }
+        },
+        "metadata_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 3.265444179,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 3.265444179,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 3.265444179,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 3.265444179,
+            "maximum": 3.265444179
+          }
+        },
+        "anchor_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 0.002852151,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.002852151,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.002852151,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.002852151,
+            "maximum": 0.002852151
+          }
+        },
+        "catalog_publication": {
+          "intervals": 1,
+          "union_seconds": 0.207649641,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.207649641,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.207649641,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.207649641,
+            "maximum": 0.207649641
+          }
+        },
+        "rank_capture": {
+          "intervals": 4,
+          "union_seconds": 545.55647245,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 2176.338444764,
+          "elapsed_seconds": {
+            "n": 4,
+            "median": 543.8120317089999,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 543.157908896,
+            "maximum": 545.55647245
+          }
+        }
+      },
+      "missing_pairs": []
+    },
+    {
+      "step": 12,
+      "raw_generations": [
+        41
+      ],
+      "raw_request_ids": [
+        "44cc0d7d6a4f47208ee854853841efb5:2"
+      ],
+      "capture_to_resume_seconds": 550.432890713,
+      "stages": {
+        "source_prepare_and_copy": {
+          "intervals": 25504,
+          "union_seconds": 520.402987836,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 584.945631742,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.024600565,
+            "p95": 0.025669259,
+            "p95_status": "reported",
+            "minimum": 0.000222371,
+            "maximum": 0.047767734
+          }
+        },
+        "rank_hash_before_send": {
+          "intervals": 25504,
+          "union_seconds": 63.684397014,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 63.932638041,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0026791605,
+            "p95": 0.00275129,
+            "p95_status": "reported",
+            "minimum": 9.873e-05,
+            "maximum": 0.005795903
+          }
+        },
+        "bridge_ack_wait": {
+          "intervals": 25504,
+          "union_seconds": 538.665131737,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 1512.353424289,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.062341655499999996,
+            "p95": 0.064997211,
+            "p95_status": "reported",
+            "minimum": 0.00258001,
+            "maximum": 0.128962107
+          }
+        },
+        "owner_validation": {
+          "intervals": 25504,
+          "union_seconds": 70.621514073,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 71.013906995,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.002906201,
+            "p95": 0.003328143,
+            "p95_status": "reported",
+            "minimum": 0.00011916,
+            "maximum": 0.017327737
+          }
+        },
+        "owner_lock_wait": {
+          "intervals": 25504,
+          "union_seconds": 533.662035637,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 679.495636363,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.027477586,
+            "p95": 0.030507847,
+            "p95_status": "reported",
+            "minimum": 0.00011792,
+            "maximum": 0.097124325
+          }
+        },
+        "owner_payload": {
+          "intervals": 25504,
+          "union_seconds": 527.790606065,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 527.790606065,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0221227805,
+            "p95": 0.02328282,
+            "p95_status": "reported",
+            "minimum": 0.001580266,
+            "maximum": 0.097333875
+          }
+        },
+        "native_api": {
+          "intervals": 25783,
+          "union_seconds": 303.477147262,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 303.477147262,
+          "elapsed_seconds": {
+            "n": 25783,
+            "median": 0.012702259,
+            "p95": 0.013761343,
+            "p95_status": "reported",
+            "minimum": 0.000589703,
+            "maximum": 0.093821022
+          }
+        },
+        "payload_flush": {
+          "intervals": 1,
+          "union_seconds": 0.001627426,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.001627426,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.001627426,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.001627426,
+            "maximum": 0.001627426
+          }
+        },
+        "metadata_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 3.314933089,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 3.314933089,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 3.314933089,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 3.314933089,
+            "maximum": 3.314933089
+          }
+        },
+        "anchor_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 0.002885711,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.002885711,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.002885711,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.002885711,
+            "maximum": 0.002885711
+          }
+        },
+        "catalog_publication": {
+          "intervals": 1,
+          "union_seconds": 0.260560215,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.260560215,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.260560215,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.260560215,
+            "maximum": 0.260560215
+          }
+        },
+        "rank_capture": {
+          "intervals": 4,
+          "union_seconds": 550.098260972,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 2195.031288582,
+          "elapsed_seconds": {
+            "n": 4,
+            "median": 548.447400333,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 548.038226944,
+            "maximum": 550.098260972
+          }
+        }
+      },
+      "missing_pairs": []
+    },
+    {
+      "step": 16,
+      "raw_generations": [
+        42
+      ],
+      "raw_request_ids": [
+        "44cc0d7d6a4f47208ee854853841efb5:3"
+      ],
+      "capture_to_resume_seconds": 550.350921978,
+      "stages": {
+        "source_prepare_and_copy": {
+          "intervals": 25504,
+          "union_seconds": 520.035121652,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 591.625033781,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.024662895,
+            "p95": 0.02576165,
+            "p95_status": "reported",
+            "minimum": 0.000209791,
+            "maximum": 0.034322852
+          }
+        },
+        "rank_hash_before_send": {
+          "intervals": 25504,
+          "union_seconds": 65.064385988,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 65.284779963,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.00269443,
+            "p95": 0.002829571,
+            "p95_status": "reported",
+            "minimum": 9.721e-05,
+            "maximum": 0.006143764
+          }
+        },
+        "bridge_ack_wait": {
+          "intervals": 25504,
+          "union_seconds": 538.159391896,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 1502.200414107,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.061969179,
+            "p95": 0.064966341,
+            "p95_status": "reported",
+            "minimum": 0.00239863,
+            "maximum": 0.155052628
+          }
+        },
+        "owner_validation": {
+          "intervals": 25504,
+          "union_seconds": 70.073823677,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 70.422834699,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0028862560000000002,
+            "p95": 0.003319523,
+            "p95_status": "reported",
+            "minimum": 0.000122081,
+            "maximum": 0.010697201
+          }
+        },
+        "owner_lock_wait": {
+          "intervals": 25504,
+          "union_seconds": 533.060337794,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 672.81829918,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0271399845,
+            "p95": 0.030595178,
+            "p95_status": "reported",
+            "minimum": 0.000111921,
+            "maximum": 0.118915029
+          }
+        },
+        "owner_payload": {
+          "intervals": 25504,
+          "union_seconds": 526.873673729,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 526.873673729,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0221182055,
+            "p95": 0.02325884,
+            "p95_status": "reported",
+            "minimum": 0.001589886,
+            "maximum": 0.114898463
+          }
+        },
+        "native_api": {
+          "intervals": 25783,
+          "union_seconds": 301.859999224,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 301.859999224,
+          "elapsed_seconds": {
+            "n": 25783,
+            "median": 0.012705249,
+            "p95": 0.01316941,
+            "p95_status": "reported",
+            "minimum": 0.001038094,
+            "maximum": 0.017640018
+          }
+        },
+        "payload_flush": {
+          "intervals": 1,
+          "union_seconds": 0.001658096,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.001658096,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.001658096,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.001658096,
+            "maximum": 0.001658096
+          }
+        },
+        "metadata_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 3.341002969,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 3.341002969,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 3.341002969,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 3.341002969,
+            "maximum": 3.341002969
+          }
+        },
+        "anchor_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 0.002872851,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.002872851,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.002872851,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.002872851,
+            "maximum": 0.002872851
+          }
+        },
+        "catalog_publication": {
+          "intervals": 1,
+          "union_seconds": 0.323291057,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.323291057,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.323291057,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.323291057,
+            "maximum": 0.323291057
+          }
+        },
+        "rank_capture": {
+          "intervals": 4,
+          "union_seconds": 549.745370391,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 2193.638258809,
+          "elapsed_seconds": {
+            "n": 4,
+            "median": 548.1533227135001,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 547.586336121,
+            "maximum": 549.745277261
+          }
+        }
+      },
+      "missing_pairs": []
+    },
+    {
+      "step": 20,
+      "raw_generations": [
+        43
+      ],
+      "raw_request_ids": [
+        "44cc0d7d6a4f47208ee854853841efb5:4"
+      ],
+      "capture_to_resume_seconds": 550.579952221,
+      "stages": {
+        "source_prepare_and_copy": {
+          "intervals": 25504,
+          "union_seconds": 519.605771474,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 588.468018744,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.02462653,
+            "p95": 0.025727509,
+            "p95_status": "reported",
+            "minimum": 0.000215051,
+            "maximum": 0.041885271
+          }
+        },
+        "rank_hash_before_send": {
+          "intervals": 25504,
+          "union_seconds": 63.487414458,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 63.715549566,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0026740304999999997,
+            "p95": 0.002761001,
+            "p95_status": "reported",
+            "minimum": 9.8231e-05,
+            "maximum": 0.007367398
+          }
+        },
+        "bridge_ack_wait": {
+          "intervals": 25504,
+          "union_seconds": 537.864232598,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 1505.703162375,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.062194445,
+            "p95": 0.06470592,
+            "p95_status": "reported",
+            "minimum": 0.00259304,
+            "maximum": 0.160476749
+          }
+        },
+        "owner_validation": {
+          "intervals": 25504,
+          "union_seconds": 70.327444267,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 70.708122745,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0028909310000000002,
+            "p95": 0.003326463,
+            "p95_status": "reported",
+            "minimum": 0.000120131,
+            "maximum": 0.012735669
+          }
+        },
+        "owner_lock_wait": {
+          "intervals": 25504,
+          "union_seconds": 532.905032075,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 674.241266519,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0272383155,
+            "p95": 0.029977216,
+            "p95_status": "reported",
+            "minimum": 0.000112111,
+            "maximum": 0.126052746
+          }
+        },
+        "owner_payload": {
+          "intervals": 25504,
+          "union_seconds": 526.421335377,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 526.421335377,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.02219807,
+            "p95": 0.023087919,
+            "p95_status": "reported",
+            "minimum": 0.001631516,
+            "maximum": 0.120999007
+          }
+        },
+        "native_api": {
+          "intervals": 25783,
+          "union_seconds": 300.712679542,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 300.712679542,
+          "elapsed_seconds": {
+            "n": 25783,
+            "median": 0.012703589,
+            "p95": 0.013154901,
+            "p95_status": "reported",
+            "minimum": 0.000407731,
+            "maximum": 0.017524178
+          }
+        },
+        "payload_flush": {
+          "intervals": 1,
+          "union_seconds": 0.001646187,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.001646187,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.001646187,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.001646187,
+            "maximum": 0.001646187
+          }
+        },
+        "metadata_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 3.320075019,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 3.320075019,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 3.320075019,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 3.320075019,
+            "maximum": 3.320075019
+          }
+        },
+        "anchor_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 0.002880551,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.002880551,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.002880551,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.002880551,
+            "maximum": 0.002880551
+          }
+        },
+        "catalog_publication": {
+          "intervals": 1,
+          "union_seconds": 0.317933236,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.317933236,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.317933236,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.317933236,
+            "maximum": 0.317933236
+          }
+        },
+        "rank_capture": {
+          "intervals": 4,
+          "union_seconds": 550.186433832,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 2193.976276533,
+          "elapsed_seconds": {
+            "n": 4,
+            "median": 548.248506416,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 547.292829869,
+            "maximum": 550.186433832
+          }
+        }
+      },
+      "missing_pairs": []
+    },
+    {
+      "step": 24,
+      "raw_generations": [
+        44
+      ],
+      "raw_request_ids": [
+        "44cc0d7d6a4f47208ee854853841efb5:5"
+      ],
+      "capture_to_resume_seconds": 558.622169944,
+      "stages": {
+        "source_prepare_and_copy": {
+          "intervals": 25504,
+          "union_seconds": 527.384163073,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 587.990681499,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.024620819500000002,
+            "p95": 0.025750519,
+            "p95_status": "reported",
+            "minimum": 0.000226711,
+            "maximum": 0.035217736
+          }
+        },
+        "rank_hash_before_send": {
+          "intervals": 25504,
+          "union_seconds": 65.002307199,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 65.219062619,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.00267588,
+            "p95": 0.003190893,
+            "p95_status": "reported",
+            "minimum": 9.915e-05,
+            "maximum": 0.007247447
+          }
+        },
+        "bridge_ack_wait": {
+          "intervals": 25504,
+          "union_seconds": 546.252157757,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 1538.113924323,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.06354448900000001,
+            "p95": 0.066298896,
+            "p95_status": "reported",
+            "minimum": 0.002518969,
+            "maximum": 0.169877738
+          }
+        },
+        "owner_validation": {
+          "intervals": 25504,
+          "union_seconds": 72.341160279,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 72.681703754,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.002924076,
+            "p95": 0.003506513,
+            "p95_status": "reported",
+            "minimum": 0.000120921,
+            "maximum": 0.104496419
+          }
+        },
+        "owner_lock_wait": {
+          "intervals": 25504,
+          "union_seconds": 540.990886562,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 682.47368115,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.027603666,
+            "p95": 0.031709811,
+            "p95_status": "reported",
+            "minimum": 0.0001117,
+            "maximum": 0.13616031
+          }
+        },
+        "owner_payload": {
+          "intervals": 25504,
+          "union_seconds": 535.005335605,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 535.005335605,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.022406356000000002,
+            "p95": 0.023984962,
+            "p95_status": "reported",
+            "minimum": 0.001587546,
+            "maximum": 0.127544748
+          }
+        },
+        "native_api": {
+          "intervals": 25783,
+          "union_seconds": 304.69325879,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 304.69325879,
+          "elapsed_seconds": {
+            "n": 25783,
+            "median": 0.012707669,
+            "p95": 0.013966984,
+            "p95_status": "reported",
+            "minimum": 0.000474652,
+            "maximum": 0.019055284
+          }
+        },
+        "payload_flush": {
+          "intervals": 1,
+          "union_seconds": 0.001714397,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.001714397,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.001714397,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.001714397,
+            "maximum": 0.001714397
+          }
+        },
+        "metadata_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 3.331743224,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 3.331743224,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 3.331743224,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 3.331743224,
+            "maximum": 3.331743224
+          }
+        },
+        "anchor_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 0.002895111,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.002895111,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.002895111,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.002895111,
+            "maximum": 0.002895111
+          }
+        },
+        "catalog_publication": {
+          "intervals": 1,
+          "union_seconds": 0.660877804,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.660877804,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.660877804,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.660877804,
+            "maximum": 0.660877804
+          }
+        },
+        "rank_capture": {
+          "intervals": 4,
+          "union_seconds": 557.88268415,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 2226.202123631,
+          "elapsed_seconds": {
+            "n": 4,
+            "median": 556.3116751735,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 555.696508746,
+            "maximum": 557.882264538
+          }
+        }
+      },
+      "missing_pairs": []
+    },
+    {
+      "step": 28,
+      "raw_generations": [
+        45
+      ],
+      "raw_request_ids": [
+        "44cc0d7d6a4f47208ee854853841efb5:6"
+      ],
+      "capture_to_resume_seconds": 560.599513859,
+      "stages": {
+        "source_prepare_and_copy": {
+          "intervals": 25504,
+          "union_seconds": 529.252148871,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 587.572422163,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.024620724,
+            "p95": 0.025739409,
+            "p95_status": "reported",
+            "minimum": 0.000221621,
+            "maximum": 0.038234776
+          }
+        },
+        "rank_hash_before_send": {
+          "intervals": 25504,
+          "union_seconds": 63.694881656,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 63.933239807,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.002664861,
+            "p95": 0.00274992,
+            "p95_status": "reported",
+            "minimum": 9.6791e-05,
+            "maximum": 0.008960604
+          }
+        },
+        "bridge_ack_wait": {
+          "intervals": 25504,
+          "union_seconds": 548.464812812,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 1548.629957313,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.063910549,
+            "p95": 0.067159557,
+            "p95_status": "reported",
+            "minimum": 0.00250692,
+            "maximum": 0.17804509
+          }
+        },
+        "owner_validation": {
+          "intervals": 25504,
+          "union_seconds": 70.941044235,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 71.443298229,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.002901011,
+            "p95": 0.003363203,
+            "p95_status": "reported",
+            "minimum": 0.000122461,
+            "maximum": 0.10979022
+          }
+        },
+        "owner_lock_wait": {
+          "intervals": 25504,
+          "union_seconds": 543.399663727,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 693.67834307,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.028056187500000003,
+            "p95": 0.032595425,
+            "p95_status": "reported",
+            "minimum": 0.000109891,
+            "maximum": 0.13620869
+          }
+        },
+        "owner_payload": {
+          "intervals": 25504,
+          "union_seconds": 537.297505376,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 537.297505376,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0224204805,
+            "p95": 0.024387513,
+            "p95_status": "reported",
+            "minimum": 0.001566086,
+            "maximum": 0.133303939
+          }
+        },
+        "native_api": {
+          "intervals": 25783,
+          "union_seconds": 308.416066771,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 308.416066771,
+          "elapsed_seconds": {
+            "n": 25783,
+            "median": 0.012705898,
+            "p95": 0.014761516,
+            "p95_status": "reported",
+            "minimum": 0.000403112,
+            "maximum": 0.022604457
+          }
+        },
+        "payload_flush": {
+          "intervals": 1,
+          "union_seconds": 0.001705616,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.001705616,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.001705616,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.001705616,
+            "maximum": 0.001705616
+          }
+        },
+        "metadata_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 3.546946626,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 3.546946626,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 3.546946626,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 3.546946626,
+            "maximum": 3.546946626
+          }
+        },
+        "anchor_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 0.002908171,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.002908171,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.002908171,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.002908171,
+            "maximum": 0.002908171
+          }
+        },
+        "catalog_publication": {
+          "intervals": 1,
+          "union_seconds": 0.314543681,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.314543681,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.314543681,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.314543681,
+            "maximum": 0.314543681
+          }
+        },
+        "rank_capture": {
+          "intervals": 4,
+          "union_seconds": 560.208180845,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 2235.776506358,
+          "elapsed_seconds": {
+            "n": 4,
+            "median": 558.701955217,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 558.164415079,
+            "maximum": 560.208180845
+          }
+        }
+      },
+      "missing_pairs": []
+    },
+    {
+      "step": 32,
+      "raw_generations": [
+        46
+      ],
+      "raw_request_ids": [
+        "44cc0d7d6a4f47208ee854853841efb5:7"
+      ],
+      "capture_to_resume_seconds": 553.119643747,
+      "stages": {
+        "source_prepare_and_copy": {
+          "intervals": 25504,
+          "union_seconds": 521.893662534,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 587.387497282,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.024618399,
+            "p95": 0.025725279,
+            "p95_status": "reported",
+            "minimum": 0.000223351,
+            "maximum": 0.042473213
+          }
+        },
+        "rank_hash_before_send": {
+          "intervals": 25504,
+          "union_seconds": 64.065807347,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 64.304041185,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.0026708549999999998,
+            "p95": 0.002777431,
+            "p95_status": "reported",
+            "minimum": 9.943e-05,
+            "maximum": 0.006218643
+          }
+        },
+        "bridge_ack_wait": {
+          "intervals": 25504,
+          "union_seconds": 540.402906722,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 1516.30418054,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.06260423949999999,
+            "p95": 0.065547791,
+            "p95_status": "reported",
+            "minimum": 0.002298179,
+            "maximum": 0.152407304
+          }
+        },
+        "owner_validation": {
+          "intervals": 25504,
+          "union_seconds": 70.907073817,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 71.236573277,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.002908156,
+            "p95": 0.003361083,
+            "p95_status": "reported",
+            "minimum": 0.000119671,
+            "maximum": 0.013307571
+          }
+        },
+        "owner_lock_wait": {
+          "intervals": 25504,
+          "union_seconds": 535.346544621,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 678.106806897,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.02736651,
+            "p95": 0.030507836,
+            "p95_status": "reported",
+            "minimum": 0.00011031,
+            "maximum": 0.11739412
+          }
+        },
+        "owner_payload": {
+          "intervals": 25504,
+          "union_seconds": 529.420897942,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 529.420897942,
+          "elapsed_seconds": {
+            "n": 25504,
+            "median": 0.022252275,
+            "p95": 0.02342307,
+            "p95_status": "reported",
+            "minimum": 0.001570506,
+            "maximum": 0.111991139
+          }
+        },
+        "native_api": {
+          "intervals": 25783,
+          "union_seconds": 300.647063378,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 300.647063378,
+          "elapsed_seconds": {
+            "n": 25783,
+            "median": 0.012702209,
+            "p95": 0.01299255,
+            "p95_status": "reported",
+            "minimum": 0.001044044,
+            "maximum": 0.016973945
+          }
+        },
+        "payload_flush": {
+          "intervals": 1,
+          "union_seconds": 0.001686256,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.001686256,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.001686256,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.001686256,
+            "maximum": 0.001686256
+          }
+        },
+        "metadata_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 3.533942265,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 3.533942265,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 3.533942265,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 3.533942265,
+            "maximum": 3.533942265
+          }
+        },
+        "anchor_write_and_flush": {
+          "intervals": 1,
+          "union_seconds": 0.002954351,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.002954351,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.002954351,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.002954351,
+            "maximum": 0.002954351
+          }
+        },
+        "catalog_publication": {
+          "intervals": 1,
+          "union_seconds": 0.640322024,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 0.640322024,
+          "elapsed_seconds": {
+            "n": 1,
+            "median": 0.640322024,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 0.640322024,
+            "maximum": 0.640322024
+          }
+        },
+        "rank_capture": {
+          "intervals": 4,
+          "union_seconds": 552.403428432,
+          "sample_unit": "correlated intervals within one checkpoint; not independent process repetitions",
+          "cumulative_seconds": 2203.297546206,
+          "elapsed_seconds": {
+            "n": 4,
+            "median": 550.4264195915,
+            "p95": null,
+            "p95_status": "insufficient_samples",
+            "minimum": 550.041278621,
+            "maximum": 552.403428402
+          }
+        }
+      },
+      "missing_pairs": []
+    }
+  ],
+  "physical_mapping_error_count": 0,
+  "physical_mapping_error_examples": [],
+  "clock": "host CLOCK_MONOTONIC only",
+  "interpretation": "Stage unions overlap and must not be summed into an end-to-end time. Native API intervals include queueing and host overhead; device-only service is unknown."
+}

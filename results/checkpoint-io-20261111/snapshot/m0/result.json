@@ -1,0 +1,245 @@
+{
+  "status": "pass",
+  "runs": [
+    {
+      "name": "trajectory-none",
+      "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/trajectory-none",
+      "returncode": 0,
+      "result": {
+        "execution_status": "completed",
+        "validation_status": "pass",
+        "method": "none",
+        "final_step": 24
+      }
+    },
+    {
+      "name": "ours-source8",
+      "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-source8",
+      "returncode": 0,
+      "result": {
+        "execution_status": "completed",
+        "validation_status": "pass",
+        "method": "ours",
+        "final_step": 8
+      }
+    },
+    {
+      "name": "ours-explicit4",
+      "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-explicit4",
+      "returncode": 0,
+      "result": {
+        "execution_status": "completed",
+        "validation_status": "pass",
+        "method": "ours",
+        "final_step": 8
+      }
+    },
+    {
+      "name": "ours-latest8-to16",
+      "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-latest8-to16",
+      "returncode": 0,
+      "result": {
+        "execution_status": "completed",
+        "validation_status": "pass",
+        "method": "ours",
+        "final_step": 16
+      }
+    },
+    {
+      "name": "ours-latest16-to24",
+      "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-latest16-to24",
+      "returncode": 0,
+      "result": {
+        "execution_status": "completed",
+        "validation_status": "pass",
+        "method": "ours",
+        "final_step": 24
+      }
+    },
+    {
+      "name": "ours-publication-interruption",
+      "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-publication-interruption",
+      "returncode": 1,
+      "result": {
+        "execution_status": "completed",
+        "validation_status": "fail",
+        "method": "ours",
+        "error": "RuntimeError('training or owner failed / descendants retained')"
+      }
+    },
+    {
+      "name": "ours-publication-recovery",
+      "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-publication-recovery",
+      "returncode": 0,
+      "result": {
+        "execution_status": "completed",
+        "validation_status": "pass",
+        "method": "ours",
+        "final_step": 8
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-source8",
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 8
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 8
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact"
+    },
+    {
+      "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-explicit4",
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 1,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 2,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 3,
+          "steps": 4,
+          "final_step": 8
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact"
+    },
+    {
+      "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-latest8-to16",
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 16
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 16
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact"
+    },
+    {
+      "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-latest16-to24",
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 8,
+          "final_step": 24
+        },
+        {
+          "rank": 1,
+          "steps": 8,
+          "final_step": 24
+        },
+        {
+          "rank": 2,
+          "steps": 8,
+          "final_step": 24
+        },
+        {
+          "rank": 3,
+          "steps": 8,
+          "final_step": 24
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact"
+    },
+    {
+      "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-publication-recovery",
+      "status": "pass",
+      "ranks": [
+        {
+          "rank": 0,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 1,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 2,
+          "steps": 4,
+          "final_step": 8
+        },
+        {
+          "rank": 3,
+          "steps": 4,
+          "final_step": 8
+        }
+      ],
+      "loss_tolerance": {
+        "rtol": 1e-05,
+        "atol": 1e-06
+      },
+      "state_comparison": "exact SHA256 and geometry",
+      "controls_comparison": "exact"
+    }
+  ],
+  "scope": "targeted FULL correctness; no performance claim"
+}
