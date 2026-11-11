@@ -89,11 +89,23 @@ def archive_run(output,archive):
 def archive_m0(output,durable):
     output=Path(output);durable=Path(durable)
     acceptance=output/'full-acceptance'
+    result_path=acceptance/'result.json'
+    if not result_path.is_file():
+        raise FileNotFoundError(f'M0 acceptance result is missing: {result_path}')
+    current=json.loads(result_path.read_text())
+    if current.get('status')=='running':
+        raise RuntimeError('cannot archive M0 while hardware acceptance is running')
+    result_file=output/'m0-result.json'
+    if not result_file.is_file():
+        admission_file=output/'admission.json'
+        if not admission_file.is_file():
+            raise FileNotFoundError(f'M0 admission record is missing: {admission_file}')
+        save(result_file,dict(status='pass' if current.get('status')=='pass' else 'failed',
+            acceptance=current,admission=json.loads(admission_file.read_text())))
     if durable.exists():
         existing=durable/'m0-result.json'
         if not existing.is_file():raise FileExistsError('unrecognized existing M0 archive')
         previous=json.loads(existing.read_text())
-        current=json.loads((acceptance/'result.json').read_text())
         if ([row['path'] for row in previous['acceptance']['runs']] !=
                 [row['path'] for row in current['runs']]):
             raise ValueError('existing M0 archive belongs to another hardware run')
