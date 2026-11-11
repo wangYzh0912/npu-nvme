@@ -88,11 +88,19 @@ def archive_run(output,archive):
 
 def archive_m0(output,durable):
     output=Path(output);durable=Path(durable)
-    durable.mkdir(parents=True,exist_ok=False)
+    acceptance=output/'full-acceptance'
+    if durable.exists():
+        existing=durable/'m0-result.json'
+        if not existing.is_file():raise FileExistsError('unrecognized existing M0 archive')
+        previous=json.loads(existing.read_text())
+        current=json.loads((acceptance/'result.json').read_text())
+        if ([row['path'] for row in previous['acceptance']['runs']] !=
+                [row['path'] for row in current['runs']]):
+            raise ValueError('existing M0 archive belongs to another hardware run')
+    else:durable.mkdir(parents=True)
     for name in ('admission.json','config.json','m0-result.json'):
         source=output/name
         if source.is_file():shutil.copy2(source,durable/name)
-    acceptance=output/'full-acceptance'
     paths=[source for source in acceptance.rglob('*.json') if source.is_file()]
     for source in paths:
         target=durable/source.relative_to(acceptance);target.parent.mkdir(parents=True,exist_ok=True)
