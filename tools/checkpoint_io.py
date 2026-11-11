@@ -75,15 +75,32 @@ def command(config_path,output,*,resume=False,generation='latest',stop=64):
 
 def archive_run(output,archive):
     output=Path(output);archive=Path(archive);archive.mkdir(parents=True,exist_ok=False)
-    paths=list(output.glob('rank_*/*.json'))
-    paths.extend(source for source in output.glob('*.json') if source.is_file())
-    paths.extend(output.glob('owner/*.json'))
+    paths=[source for source in output.rglob('*.json') if source.is_file()]
     for source in paths:
         target=archive/source.relative_to(output);target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(source,target)
-    for source in list(output.glob('io-events/*.jsonl'))+[output/'training.log',output/'owner.log']:
-        if not source.is_file():continue
+    for source in list(output.rglob('*.jsonl'))+list(output.rglob('*.log')):
         target=archive/source.relative_to(output).with_suffix(source.suffix+'.gz')
+        target.parent.mkdir(parents=True,exist_ok=True)
+        with source.open('rb') as stream,gzip.open(target,'wb') as zipped:
+            shutil.copyfileobj(stream,zipped)
+
+
+def archive_m0(output,durable):
+    output=Path(output);durable=Path(durable)
+    durable.mkdir(parents=True,exist_ok=False)
+    for name in ('admission.json','config.json','m0-result.json'):
+        source=output/name
+        if source.is_file():shutil.copy2(source,durable/name)
+    acceptance=output/'full-acceptance'
+    paths=[source for source in acceptance.rglob('*.json') if source.is_file()]
+    for source in paths:
+        target=durable/source.relative_to(acceptance);target.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(source,target)
+    logs=list(output.glob('m0.log'))+list(acceptance.rglob('*.log'))+list(acceptance.rglob('*.jsonl'))
+    for source in logs:
+        relative=Path('supervisor')/source.name if source.parent==output else source.relative_to(acceptance)
+        target=durable/relative.with_suffix(relative.suffix+'.gz')
         target.parent.mkdir(parents=True,exist_ok=True)
         with source.open('rb') as stream,gzip.open(target,'wb') as zipped:
             shutil.copyfileobj(stream,zipped)
@@ -186,25 +203,7 @@ def run_m0(config_path,output):
                 acceptance=json.loads((output/'full-acceptance/result.json').read_text()),
                 admission=admit)
     save(output/'m0-result.json',record)
-    durable.mkdir(parents=True,exist_ok=False)
-    acceptance_dir=output/'full-acceptance'
-    for name in ('result.json','device-admission.json','execution-sources.json'):
-        source=acceptance_dir/name
-        if source.is_file():shutil.copy2(source,durable/name)
-    for source in acceptance_dir.glob('*/rank_*/training.json'):
-        target=durable/source.relative_to(acceptance_dir);target.parent.mkdir(parents=True,exist_ok=True)
-        shutil.copy2(source,target)
-    for source in acceptance_dir.glob('*/io-events/*.jsonl'):
-        target=durable/source.relative_to(acceptance_dir).with_suffix('.jsonl.gz')
-        target.parent.mkdir(parents=True,exist_ok=True)
-        with source.open('rb') as stream,gzip.open(target,'wb') as archived:
-            shutil.copyfileobj(stream,archived)
-    for source in acceptance_dir.glob('*/owner/result.json'):
-        target=durable/source.relative_to(acceptance_dir);target.parent.mkdir(parents=True,exist_ok=True)
-        shutil.copy2(source,target)
-    with (output/'m0.log').open('rb') as stream, gzip.open(durable/'m0.log.gz','wb') as archived:
-        shutil.copyfileobj(stream,archived)
-    save(durable/'m0-result.json',record)
+    archive_m0(output,durable)
     if result.returncode:raise RuntimeError(f'M0 FULL acceptance failed; inspect {output}/m0.log')
     return record
 
@@ -280,7 +279,7 @@ def run_m1(config_path,raw_root=DEFAULT_RAW,results_root=DEFAULT_RESULTS/'m1'):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('stage',choices=('preflight','m0','diagnostic','m1','analyse','queue'))
+    parser.add_argument('stage',choices=('preflight','m0','diagnostic','m1','analyse','archive-m0','queue'))
     parser.add_argument('--config',type=Path,default=ROOT/'config/qwen_training.json')
     parser.add_argument('--output',type=Path)
     parser.add_argument('--raw-root',type=Path,default=DEFAULT_RAW)
@@ -288,6 +287,9 @@ def main():
     args=parser.parse_args()
     if args.stage=='analyse':
         save(args.results_root/'analysis.json',analyse(json.loads((args.results_root/'result.json').read_text())))
+        return 0
+    if args.stage=='archive-m0':
+        archive_m0(args.output,args.results_root/'m0')
         return 0
     config=base_config(args.config)
     if args.stage=='preflight':
