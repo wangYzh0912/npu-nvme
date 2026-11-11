@@ -27,7 +27,8 @@ def operation_message(*, epoch, sequence, rank, operation, step=0, generation=No
 
 class TrainingOwner:
     def __init__(self, region, connections, *, epoch, identity, chunk_bytes,
-                 deadline, operation_timeout, authoritative_schema=None):
+                 deadline, operation_timeout, authoritative_schema=None, observer=None):
+        self.observer=observer
         self.region=region; self.connections=connections; self.epoch=epoch
         self.identity=identity; self.chunk=chunk_bytes; self.deadline=deadline
         self.timeout=operation_timeout; self.strategy=authoritative_schema
@@ -57,7 +58,7 @@ class TrainingOwner:
                 session=OwnerSession(self.region,self.connections,epoch=epoch,request_id=epoch,
                     topology=dict(world_size=len(self.connections)),chunk_bytes=self.chunk,
                     deadline=min(self.deadline,time.monotonic()+self.timeout),identity=self.identity,
-                    authoritative_schema=self.strategy)
+                    authoritative_schema=self.strategy,observer=self.observer)
                 receipt=(session.save(step=common['step']) if common['operation']=='save'
                          else session.restore(generation=common['generation']))
                 if on_result is not None: on_result(dict(common,receipt=receipt))
@@ -77,30 +78,31 @@ class TrainingRank:
         self.chunk=chunk_bytes; self.deadline=deadline; self.timeout=operation_timeout
         self.sequence=0; self.failed=False; self.closed=False
 
-    def _session(self, operation, schema, step, generation=None):
+    def _session(self, operation, schema, step, generation=None, observer=None):
         if self.closed or self.failed: raise RuntimeError('training connection is unavailable')
         row=operation_message(epoch=self.epoch,sequence=self.sequence,rank=self.rank,
             operation=operation,step=step,generation=generation)
         deadline=min(self.deadline,time.monotonic()+self.timeout)
         wire.send(self.connection,row,b'',deadline=deadline,max_payload=0)
         return RankSession(self.connection,rank=self.rank,epoch=f'{self.epoch}:{self.sequence}',
-            identity=self.identity,schema=schema,chunk_bytes=self.chunk,deadline=deadline)
+            identity=self.identity,schema=schema,chunk_bytes=self.chunk,deadline=deadline,
+            observer=observer)
 
-    def save(self, schema, read_chunk, controls, *, step):
+    def save(self, schema, read_chunk, controls, *, step, observer=None):
         try:
-            result=self._session('save',schema,step).save(read_chunk,controls,step=step)
+            result=self._session('save',schema,step,observer=observer).save(read_chunk,controls,step=step)
             self.sequence+=1
             return result
         except BaseException:
             self.failed=True
             raise
 
-    def restore(self, schema, apply_chunk, verify_controls, *, step, generation):
+    def restore(self, schema, apply_chunk, verify_controls, *, step, generation, observer=None):
         try:
             def verified(controls, stored_step):
                 if stored_step!=step: raise ValueError('selected generation step differs')
                 verify_controls(controls,stored_step)
-            result=self._session('restore',schema,step,generation).restore(apply_chunk,verified)
+            result=self._session('restore',schema,step,generation,observer=observer).restore(apply_chunk,verified)
             self.sequence+=1
             return result
         except BaseException:

@@ -5,6 +5,7 @@ from pathlib import Path
 import socket
 import threading
 import time
+from contextlib import contextmanager
 
 from .d2_state import BlockingState
 from npu_nvme.d2 import wire
@@ -20,6 +21,16 @@ class TrainingCheckpoint:
         self.out.mkdir(parents=True,exist_ok=True)
         self.executor=None;self.client=None;self.state=None;self.connection=None
         self.status=dict(status='running',pid=os.getpid(),rank=rank)
+        self.sink_only=bool(config.get('sink_only'))
+        self.sink_sequence=0
+        event_root=config.get('io_event_root')
+        self.event_path=(str(Path(event_root)/f'rank-{rank}.jsonl') if event_root else None)
+
+    def event(self,name,*,step=None,**fields):
+        if not self.event_path:return
+        from npu_nvme.experiments.checkpoint_io import emit
+        emit(self.event_path,event=name,run_id=self.config.get('run_id',''),rank=self.rank,
+             physical_npu=self.config['identity']['physical_npu_ids'][self.rank],step=step,**fields)
 
     def record(self, **values):
         self.status.update(values)
@@ -28,12 +39,13 @@ class TrainingCheckpoint:
         temporary.write_text(json.dumps(self.status,indent=2)+'\n');temporary.replace(path)
 
     def _open(self):
-        if self.client is not None:return
+        if self.executor is not None:return
         c=self.config
         self.record(phase='opening')
         self.executor=RankCopyExecutor(load_backend(c['library']),
             dict(chunk_bytes=c['chunk_bytes'],shm_id=c['rank_shm_base']+self.rank,profiling_dir=str(self.out)),
             npu_id=self.npu,depth=c['depth'],timeout_ms=c['copy_timeout_ms'])
+        if self.sink_only:return
         self.connection=socket.socket(socket.AF_UNIX)
         deadline=time.monotonic()+c['timeout_seconds']
         self.connection.settimeout(c['operation_timeout_seconds'])
@@ -52,37 +64,91 @@ class TrainingCheckpoint:
             if digest(strategy)!=self.config['identity']['strategy_sha256']:
                 raise ValueError('training strategy identity differs')
             validate_rank(self.state.schema,strategy,self.rank)
-            sequence=self.client.sequence
+            sequence=self.client.sequence if self.client else self.sink_sequence
+            request=f"{self.client.epoch if self.client else self.config['epoch']}:{sequence}"
+            capture_chunk=0
+            @contextmanager
+            def read_chunk(name,offset,length):
+                nonlocal capture_chunk
+                started_ns=time.monotonic_ns()
+                with self.state.read_chunk(name,offset,length) as data:
+                    device=self.state.placement[name]=='device'
+                    native=self.executor.last_receipt.get('request_id') if device else None
+                    fields=dict(step=step,raw_request_id=request,tensor=name,chunk=capture_chunk,
+                                byte_count=length,native_request_id=native,
+                                slot_generation=self.executor.buffer_generation if device else None,
+                                buffer_id=f'rank:{self.rank}:host:{self.executor.base}' if device else None)
+                    self.event('source_read_begin',timestamp_ns=started_ns,**fields)
+                    self.event('data_ready',**fields)
+                    yield data
+                self.event('source_released',**fields)
+                capture_chunk+=1
             self.record(phase='transfer',operation=operation,step=step,sequence=sequence)
+            self.event('capture_begin',step=step,raw_request_id=request)
             started=time.monotonic()
             if operation=='save':
                 if controls is None:raise ValueError('FULL save requires controls')
                 if prepare is not None:
-                    prepare(dict(request_id=f'{self.client.epoch}:{sequence}',step=step,operation='save',
+                    epoch=self.client.epoch if self.client else self.config['epoch']
+                    prepare(dict(request_id=f'{epoch}:{sequence}',step=step,operation='save',
                         sequence=sequence,seconds=None,placement=self.state.placement,
                         state_bytes=sum(row['bytes'] for row in self.state.schema),
                         native_dma_pool_bytes=self.executor.transport.capabilities.dma_pool_bytes))
                     barrier()
-                receipt=self.client.save(self.state.schema,self.state.read_chunk,controls,step=step)
+                if self.sink_only:
+                    from npu_nvme.experiments.checkpoint_io import consume_to_host_sink
+                    chunk_index=0
+                    def consume(name,offset,length,digest,data):
+                        nonlocal chunk_index
+                        self.event('sink_consumed_source_safe',step=step,tensor=name,chunk=chunk_index,
+                                   byte_count=length,offset=offset,sha256=digest,
+                                   raw_request_id=f"{self.config['epoch']}:{sequence}")
+                        chunk_index+=1
+                    consumed=consume_to_host_sink(self.state.schema,self.config['chunk_bytes'],
+                        read_chunk,consume)
+                    receipt=dict(sink='bounded_host_sha256',**consumed,
+                                 source_safe=True,durable=False,published=False)
+                    self.sink_sequence+=1
+                else:
+                    receipt=self.client.save(self.state.schema,read_chunk,controls,step=step,
+                                             observer=self.event)
             elif operation=='restore':
                 if verify_controls is None or barrier is None:raise ValueError('restore requires verification and barrier')
+                restored_chunks=0
+                def apply_chunk(name,offset,data,digest):
+                    nonlocal restored_chunks
+                    begin_ns=time.monotonic_ns()
+                    self.state.apply_chunk(name,offset,data,digest)
+                    device=self.state.placement[name]=='device'
+                    fields=dict(step=step,generation=generation,raw_request_id=request,tensor=name,
+                        chunk=restored_chunks,offset=offset,byte_count=len(data),sha256=digest,
+                        native_request_id=self.executor.last_receipt['request_id'] if device else None,
+                        buffer_id=f'rank:{self.rank}:host:{self.executor.base}' if device else None,
+                        slot_generation=self.executor.buffer_generation if device else None)
+                    self.event('restore_apply_begin',timestamp_ns=begin_ns,**fields)
+                    self.event('restore_copy_safe',**fields)
+                    restored_chunks+=1
                 def verify(value,stored_step):
                     self.state.verify_finished();verify_controls(value,stored_step)
-                receipt=self.client.restore(self.state.schema,self.state.apply_chunk,verify,
-                    step=step,generation=generation)
+                receipt=self.client.restore(self.state.schema,apply_chunk,verify,
+                    step=step,generation=generation,observer=self.event)
                 barrier()
+                self.event('restore_collective_ready',step=step,generation=generation,raw_request_id=request)
             else:raise ValueError('unsupported FULL operation')
             result=dict(receipt=receipt,step=step,operation=operation,sequence=sequence,
                 seconds=time.monotonic()-started,placement=self.state.placement,
                 state_bytes=sum(row['bytes'] for row in self.state.schema),
                 native_dma_pool_bytes=self.executor.transport.capabilities.dma_pool_bytes)
             (self.out/f'd2-operation-{sequence:04d}.json').write_text(json.dumps(result,indent=2)+'\n')
+            self.event('capture_end',step=step,raw_request_id=request,
+                       byte_count=result['state_bytes'],generation=receipt.get('generation'))
             self.record(phase='idle',status='running')
             self.state=None
             return result
         except BaseException as error:
             if self.client:self.client.failed=True
             self.record(status='fail',error=repr(error))
+            self.event('capture_failed',step=step,status=repr(error))
             raise
 
     def close(self):

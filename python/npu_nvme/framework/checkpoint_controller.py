@@ -34,7 +34,7 @@ class CheckpointController:
         return self.d2
 
     def admit(self, framework, network, *, step, operation, barrier):
-        if self.method!='ours':return
+        if self.method not in ('ours','checkpoint_io_sink'):return
         import ctypes as C
         from npu_nvme.runtime.resources import qwen_capacity
         from .parameters import tensor_inventory
@@ -59,6 +59,26 @@ class CheckpointController:
 
     def save(self, ms, network, *, step, state, controls, barrier):
         if self.method=='none':return None
+        event_path=None
+        if self.config.get('io_experiment',{}).get('event_root'):
+            event_path=str(self.output/'io-events'/f'rank-{self.rank}.jsonl')
+        def event(name,*,raw_request_id=None,generation=None,status='ok'):
+            if not event_path:return
+            from npu_nvme.experiments.checkpoint_io import emit
+            emit(event_path,event=name,run_id=self.config['run_id'],rank=self.rank,
+                 physical_npu=self.config['identity']['physical_npu_ids'][self.rank],step=step,generation=generation,
+                 raw_request_id=raw_request_id,status=status)
+        if self.method=='checkpoint_io_sink':
+            from qwen_d2_state import partitions_for
+            partitions=partitions_for(state,controls['small_parameters'],self.config['strategy'])
+            before=time.monotonic_ns()
+            self.sequence+=1
+            event('sink_capture_begin',raw_request_id=f"{self.config['run_id']}:{self.rank}:{step}")
+            backend=self._d2().transfer(ms,network,operation='save',step=step,
+                partitions=partitions,controls=controls,barrier=barrier)
+            event('sink_capture_end',raw_request_id=f"{self.config['run_id']}:{self.rank}:{step}")
+            return dict(generation=None,step=step,seconds=(time.monotonic_ns()-before)/1e9,
+                        backend=backend,committed=False)
         self.sequence+=1
         reservation_file=self.output/f'checkpoint-operation-{self.sequence:06d}.json'
         if self.rank==0:
@@ -75,6 +95,7 @@ class CheckpointController:
         rank_dir=path/f'rank_{self.rank}';rank_dir.mkdir(parents=True,exist_ok=False)
         controls=json.loads(json.dumps(controls))
         started=time.monotonic()
+        event('checkpoint_prepare_begin',generation=row['generation'])
         ms.hal.synchronize()
         if self.method=='mindspore_native_save':
             payload=rank_dir/'native';payload.mkdir()
@@ -127,10 +148,16 @@ class CheckpointController:
             method=self.method,identity=self.config['identity'],state=state,controls=controls,
             backend=backend,files=files,save_seconds=time.monotonic()-started)
         catalog.write_checked(rank_dir/'complete.json',complete)
+        event('rank_complete_written',raw_request_id=backend.get('receipt',{}).get('request_id'),
+              generation=row['generation'])
         barrier()
         if self.rank==0:
+            event('catalog_publish_begin',raw_request_id=backend.get('receipt',{}).get('request_id'),
+                  generation=row['generation'])
             catalog.publish(path,world=4)
             catalog.prune(self.root,self.config['retention'])
+            event('catalog_published',raw_request_id=backend.get('receipt',{}).get('request_id'),
+                  generation=row['generation'])
         committed=self.wait(path/'checkpoint.json')
         barrier()
         return dict(generation=row['generation'],step=step,path=str(path),

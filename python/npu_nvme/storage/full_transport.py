@@ -1,6 +1,7 @@
 """Strict FULL uses one native asynchronous transfer/copy executor."""
 import ctypes as C
 import threading
+import time
 from .bindings import (NPUNVMEContext, NPUNVMERequest, NPUNVMETransferItem,
     NPUNVMETransferSpec, NPUNVMETransferReceipt, NPUNVMETransferDigest,
     NPUNVMECopySpec, NPUNVMECapabilities, NPUNVMEInitOptions)
@@ -18,7 +19,8 @@ class TransferFailure(RuntimeError):
 
 
 class FullTransport:
-    def __init__(self, backend, *, pci, npu, depth, chunk_size, profiling_dir, profiling=False, role="combined"):
+    def __init__(self, backend, *, pci, npu, depth, chunk_size, profiling_dir, profiling=False, role="combined", observer=None):
+        self.observer=observer
         self.lib, self.acl = backend.lib, backend.acl_lib
         self.npu = npu
         self.ctx = C.POINTER(NPUNVMEContext)()
@@ -52,6 +54,7 @@ class FullTransport:
     def _request(self, spec, owners, *, copy=False):
         request=C.POINTER(NPUNVMERequest)()
         submit=self.lib.npu_nvme_submit_copy if copy else self.lib.npu_nvme_submit_transfer
+        submitted_ns=time.monotonic_ns() if self.observer else None
         rc=submit(self.ctx,C.byref(spec),C.byref(request))
         if rc: raise TransferFailure(f'async admission failed: {rc}',transport_safe=True)
         try:
@@ -68,6 +71,13 @@ class FullTransport:
             if rc or not receipt.transport_safe:
                 with self._buffers_lock: self.retained.append(tuple(owners))
                 raise TransferFailure(f'invalid transfer receipt: {rc}',transport_safe=False)
+            if self.observer:
+                completed_ns=time.monotonic_ns()
+                self.observer('native_submitted',native_request_id=int(receipt.request_id),
+                              timestamp_ns=submitted_ns,status=f'operation:{spec.operation}')
+                self.observer('native_completed',native_request_id=int(receipt.request_id),
+                              timestamp_ns=completed_ns,
+                              status='durable' if receipt.data_durable else 'source_safe')
             digest=None
             if spec.checksum_flags:
                 digest=NPUNVMETransferDigest()

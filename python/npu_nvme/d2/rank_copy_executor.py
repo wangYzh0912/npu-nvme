@@ -20,10 +20,12 @@ class RankCopyExecutor:
         self.ctx=self.transport.ctx
         self.buffer=C.create_string_buffer(descriptor['chunk_bytes'])
         self.base=C.addressof(self.buffer)
+        self.buffer_generation=0
     def _copy(self,operation,device,length,*,expected_sha256=None,owners=()):
         from npu_nvme.storage.bindings import NPUNVMECopySpec,NPUNVMERequest,NPUNVMETransferReceipt,NPUNVMETransferDigest
         if self.unsafe or self.closed:raise RuntimeError('rank executor unavailable')
         if type(length) is not int or not 0<length<=self.descriptor['chunk_bytes']:raise ValueError('copy length')
+        self.buffer_generation+=1
         spec=NPUNVMECopySpec(struct_size=C.sizeof(NPUNVMECopySpec),version=1,operation=operation,
             source=device if operation==5 else self.base,destination=self.base if operation==5 else device,length=length,checksum_flags=2)
         if operation==6:
@@ -36,7 +38,8 @@ class RankCopyExecutor:
         receipt=NPUNVMETransferReceipt()
         observed=self.lib.npu_nvme_get_transfer_receipt(request,C.byref(receipt),C.sizeof(receipt))
         self.last_receipt=dict(operation=operation,length=length,wait_rc=wait_rc,
-            receipt_rc=observed,done=bool(receipt.done),transport_safe=bool(receipt.transport_safe),result=receipt.result)
+            request_id=int(receipt.request_id),receipt_rc=observed,done=bool(receipt.done),
+            transport_safe=bool(receipt.transport_safe),result=receipt.result)
         if observed or not receipt.done or not receipt.transport_safe:
             self.unsafe=True;_RETAINED.append(self)
             self.lib.npu_nvme_release_request(request)

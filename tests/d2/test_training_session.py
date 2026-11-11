@@ -17,7 +17,9 @@ def test_multiple_saves_restore_and_save_on_same_connections(world):
     links=[socket.socketpair() for _ in range(world)]
     common=dict(epoch='job',identity={'model':'fixture'},chunk_bytes=4096,
                 deadline=time.monotonic()+10,operation_timeout=5)
-    owner=TrainingOwner(region,{r:p[0] for r,p in enumerate(links)},**common)
+    owner_events=[];rank_events=[[] for _ in range(world)]
+    owner=TrainingOwner(region,{r:p[0] for r,p in enumerate(links)},**common,
+                        observer=lambda name,**fields:owner_events.append((name,fields)))
     def worker(rank):
         client=TrainingRank(links[rank][1],rank=rank,**common)
         schema=[dict(rank=rank,name='x',shape=[8197],dtype='uint8',partition='sharded',bytes=8197)]
@@ -31,7 +33,8 @@ def test_multiple_saves_restore_and_save_on_same_connections(world):
         first=client.save(schema,read,{'step':4},step=4)
         state[:]=bytes([rank+8])*len(state)
         second=client.save(schema,read,{'step':8},step=8)
-        client.restore(schema,apply,verify,step=4,generation=first['generation'])
+        client.restore(schema,apply,verify,step=4,generation=first['generation'],
+                       observer=lambda name,**fields:rank_events[rank].append((name,fields)))
         state[:]=bytes([rank+12])*len(state)
         third=client.save(schema,read,{'step':12},step=12)
         client.close()
@@ -44,6 +47,13 @@ def test_multiple_saves_restore_and_save_on_same_connections(world):
             assert owner_future.result(timeout=12)==4
         assert all(row==results[0] for row in results)
         assert [row['generation'] for row in results[0]]==[1,2,3]
+        restored=[fields for name,fields in owner_events if name=='owner_restore_chunk_end']
+        assert len(restored)==world*3
+        assert all(row['raw_request_id']=='job:2' and row['generation']==1 and row['step']==4 for row in restored)
+        for events in rank_events:
+            assert len([name for name,_ in events if name=='restore_chunk_applied'])==3
+            assert events[-1][0]=='restore_local_ready'
+            assert all(fields['raw_request_id']=='job:2' for _,fields in events)
         fresh=Region(disk,offset=0,length=len(disk.data),retention=3)
         assert fresh.mount()==[]
         with fresh.selected(3) as value: assert value['step']==12

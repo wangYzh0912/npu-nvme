@@ -12,6 +12,11 @@ import traceback
 from npu_nvme.runtime.training_catalog import write_checked
 
 
+def records_state(*,step,stop,period,method,experiment):
+    return step==stop or (step%period==0 and not (
+        method=='none' and (experiment or {}).get('skip_periodic_state')))
+
+
 def run(options):
     rank=int(os.environ.get('RANK_ID','0'));out=Path(options['output'])
     directory=out/f'rank_{rank}';directory.mkdir(parents=True,exist_ok=True)
@@ -82,9 +87,12 @@ def run(options):
         controller=CheckpointController(options,rank=rank,npu_id=rank,output=out)
 
         class Progress(ms.Callback):
+            def on_train_step_begin(self,context):
+                self.step_begin_ns=time.monotonic_ns()
+
             def on_train_begin(self,context):
                 network=context.original_args().train_network
-                if options['method']=='ours':controller._d2()._open()
+                if options['method'] in ('ours','checkpoint_io_sink'):controller._d2()._open()
                 controller.admit(ms,network,step=start,operation='restore' if options.get('restore_checkpoint') else 'initial',barrier=barrier)
                 if options.get('restore_checkpoint'):
                     restored=controller.restore(ms,network,data_sha256=data_hash,lr_horizon=horizon,barrier=barrier)
@@ -108,17 +116,38 @@ def run(options):
                 if not np.isfinite(loss) or overflow:raise RuntimeError('nonfinite loss or skipped optimizer update')
                 step=start+int(cb.cur_step_num)
                 if step!=start+len(report['losses'])+1:raise ValueError('callback optimizer step is not sequential')
-                report['losses'].append(dict(step=step,loss=loss,overflow=overflow))
-                if step%period==0 or step==stop:
+                begin_ns=getattr(self,'step_begin_ns',None)
+                end_ns=time.monotonic_ns()
+                report['losses'].append(dict(step=step,loss=loss,overflow=overflow,
+                                            begin_ns=begin_ns,end_ns=end_ns))
+                experiment=options.get('io_experiment')
+                if experiment and experiment.get('event_root'):
+                    from npu_nvme.experiments.checkpoint_io import emit
+                    emit(str(Path(experiment['event_root'])/f'rank-{rank}.jsonl'),event='training_step',run_id=options['run_id'],
+                         rank=rank,physical_npu=options['identity']['physical_npu_ids'][rank],step=step,
+                         byte_count=None,status='ok')
+                should_record_state=records_state(step=step,stop=stop,period=period,
+                    method=options['method'],experiment=experiment)
+                # Final oracle validation is outside T0's measured training window.
+                report['losses'][-1]['resume_ns']=end_ns
+                if should_record_state:
+                    capture_begin=time.monotonic_ns()
                     controller.admit(ms,cb.train_network,step=step,operation='save',barrier=barrier)
                     ms.hal.synchronize();state,small=parameter_manifest(cb.train_network)
                     controls=capture_control(ms,step=step,data_sha256=data_hash,lr_horizon=horizon,small=small)
                     write_checked(directory/f'state-step-{step}.json',state)
                     write_checked(directory/f'control-step-{step}.json',controls)
                     # The final step is observed even when it is not a save boundary.
-                    if step%period==0:
+                    if step%period==0 and options['method']!='none':
                         saved=controller.save(ms,cb.train_network,step=step,state=state,controls=controls,barrier=barrier)
-                        if saved:report['checkpoints'].append(saved)
+                        if saved:
+                            saved['blocking_seconds']=(time.monotonic_ns()-capture_begin)/1e9
+                            report['checkpoints'].append(saved)
+                            report['losses'][-1]['resume_ns']=time.monotonic_ns()
+                if experiment and experiment.get('event_root'):
+                    emit(str(Path(experiment['event_root'])/f'rank-{rank}.jsonl'),event='training_resume',
+                         run_id=options['run_id'],rank=rank,
+                         physical_npu=options['identity']['physical_npu_ids'][rank],step=step)
                 record()
                 print(f'QWEN_TRAIN_STEP rank={rank} step={step} loss={loss:.8f}',flush=True)
 

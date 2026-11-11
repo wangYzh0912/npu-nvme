@@ -5,7 +5,7 @@ from pathlib import Path
 
 from npu_nvme.d2.tp_schema import digest,validate
 
-METHODS=('none','mindspore_native_save','ours','bytecheckpoint_host')
+METHODS=('none','mindspore_native_save','ours','bytecheckpoint_host','checkpoint_io_sink')
 
 
 def resolve(value, repo):
@@ -13,7 +13,7 @@ def resolve(value, repo):
     allowed={'schema_version','model','environment_manifest','method','stop_step','lr_horizon',
              'seq_length','checkpoint_interval','retention','timeout_seconds','operation_timeout_seconds',
              'copy_timeout_ms','shm_base','strategy','region','hardware_lock','checkpoint_root',
-             'host_headroom_bytes','hbm_headroom_bytes','npu_ids'}
+             'host_headroom_bytes','hbm_headroom_bytes','npu_ids','io_experiment'}
     if set(value)-allowed:raise ValueError('unknown training settings: '+repr(sorted(set(value)-allowed)))
     if value.get('schema_version')!=2:raise ValueError('Qwen training configuration requires schema_version 2')
     defaults=dict(model='/models/Qwen3-8B',method='ours',stop_step=24,lr_horizon=24,
@@ -27,6 +27,10 @@ def resolve(value, repo):
     if config['npu_ids'] not in ([0,1,2,3],[4,5,6,7]):
         raise ValueError('Qwen TP4 mapping must be physical NPU 0-3 or 4-7')
     if config['method'] not in METHODS:raise ValueError('unknown checkpoint method')
+    experiment=config.get('io_experiment',{})
+    if (type(experiment) is not dict or set(experiment)-{'events','skip_periodic_state'} or
+            any(type(v) is not bool for v in experiment.values())):
+        raise ValueError('io_experiment requires boolean events/skip_periodic_state')
     for name in ('host_headroom_bytes','hbm_headroom_bytes'):
         if type(config[name]) is not int or config[name]<0:raise ValueError('nonnegative bytes required: '+name)
     for name in ('stop_step','lr_horizon','seq_length','checkpoint_interval','retention',

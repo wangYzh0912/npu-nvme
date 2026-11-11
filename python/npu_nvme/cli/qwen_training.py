@@ -27,7 +27,7 @@ def write(path,value):
 
 def preflight(config):
     from npu_nvme.runtime.resources import qwen_capacity
-    capacity=qwen_capacity(config) if config['method']=='ours' else None
+    capacity=qwen_capacity(config) if config['method'] in ('ours','checkpoint_io_sink') else None
     if capacity and not capacity['admitted']:raise MemoryError('FULL preflight resource admission rejected: '+json.dumps(capacity))
     from user_environment import read_profile,with_python_identity,isolated_environment,verify_library_paths,verify_runtime_abi
     profile=with_python_identity(read_profile(config['environment_manifest'],'candidate',ROOT))
@@ -58,6 +58,9 @@ def run_fit(config, output, *, restore='latest', resume=False):
     from npu_nvme.cli.contracts import source_identity
     output=Path(output).resolve();output.mkdir(parents=True,exist_ok=False)
     config=dict(config,output=str(output),run_id=uuid.uuid4().hex,start_step=0)
+    experiment=config.get('io_experiment',{})
+    if experiment.get('events'):
+        config['io_experiment']=dict(experiment,event_root=str(output/'io-events'))
     config.setdefault('checkpoint_root',str(output/'checkpoints'))
     result=dict(execution_status='running',validation_status='not_run',method=config['method'])
     write(output/'result.json',result)
@@ -110,7 +113,7 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 write(lease,owned_lease);write(output/f'{name}-command.json',argv)
                 return child
             owner=None
-            if config['method']=='ours':
+            if config['method'] in ('ours','checkpoint_io_sink'):
                 if os.geteuid()!=0:raise PermissionError('raw SPDK owner requires root execution')
                 epoch=uuid.uuid4().hex
                 connection=dict(socket='/tmp/qwen-training-'+epoch+'.sock',epoch=epoch,
@@ -121,11 +124,16 @@ def run_fit(config, output, *, restore='latest', resume=False):
                     timeout_seconds=config['timeout_seconds'],operation_timeout_seconds=config['operation_timeout_seconds'],
                     copy_timeout_ms=config['copy_timeout_ms'],depth=4,chunk_bytes=4<<20,host_tensor_budget_bytes=2<<30)
                 config['d2_connection']=str(output/'connection.json');write(config['d2_connection'],connection)
-                owner=launch(prefix+[str(ROOT/'tools/training_owner.py'),'--connection',config['d2_connection'],'--out',str(output/'owner')],'owner')
-                while not (output/'owner/ready.json').exists():
-                    if owner.poll() is not None:raise RuntimeError('owner initialization failed')
-                    if time.monotonic()>deadline:raise TimeoutError('owner readiness timeout')
-                    time.sleep(.1)
+                connection['sink_only']=config['method']=='checkpoint_io_sink'
+                connection['run_id']=config['run_id']
+                connection['io_event_root']=str(output/'io-events') if experiment.get('events') else None
+                write(config['d2_connection'],connection)
+                if config['method']=='ours':
+                    owner=launch(prefix+[str(ROOT/'tools/training_owner.py'),'--connection',config['d2_connection'],'--out',str(output/'owner')],'owner')
+                    while not (output/'owner/ready.json').exists():
+                        if owner.poll() is not None:raise RuntimeError('owner initialization failed')
+                        if time.monotonic()>deadline:raise TimeoutError('owner readiness timeout')
+                        time.sleep(.1)
             try:
                 ready=json.loads((output/'owner/ready.json').read_text()) if owner else None
                 receipts=ready['receipts'] if ready else None

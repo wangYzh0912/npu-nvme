@@ -49,7 +49,7 @@ class Native:
 
 def transport():
     t=FullTransport.__new__(FullTransport);t.lib=Native();t.ctx=C.pointer(NPUNVMEContext())
-    t.retained=[];t._buffers_lock=threading.Lock()
+    t.retained=[];t._buffers_lock=threading.Lock();t.observer=None
     t.acl=SimpleNamespace(aclrtMemcpy=lambda *args:pytest.fail('synchronous ACL path invoked'))
     return t
 
@@ -73,6 +73,27 @@ def test_timeout_retains_both_borrowers_after_handle_release():
     assert not caught.value.transport_safe and t.lib.releases==1
     del source,destination;gc.collect()
     assert source_ref() is not None and dest_ref() is not None and not t.quiescent()
+
+
+def test_observer_failure_occurs_only_after_native_stop_proof():
+    t=transport()
+    def observe(name,**fields):
+        raise OSError('event sink failed')
+    t.observer=observe
+    source=C.create_string_buffer(b'payload',7);destination=C.create_string_buffer(7)
+    spec=NPUNVMECopySpec(C.sizeof(NPUNVMECopySpec),1,5,0,C.addressof(source),C.addressof(destination),7)
+    with pytest.raises(OSError,match='event sink failed'):
+        t._request(spec,(source,destination),copy=True)
+    assert destination.raw==b'payload' and t.lib.releases==1 and not t.retained
+
+
+def test_inflight_timeout_does_not_invoke_observer_before_stop_proof():
+    t=transport();t.lib.pending=True
+    t.observer=lambda *args,**kwargs:pytest.fail('observer ran before stop proof')
+    source=C.create_string_buffer(b'payload',7);destination=C.create_string_buffer(7)
+    spec=NPUNVMECopySpec(C.sizeof(NPUNVMECopySpec),1,5,0,C.addressof(source),C.addressof(destination),7)
+    with pytest.raises(TransferFailure):t._request(spec,(source,destination),copy=True)
+    assert t.lib.releases==1 and t.retained==[(source,destination)]
 
 
 def test_unproven_copy_prevents_target_discard():

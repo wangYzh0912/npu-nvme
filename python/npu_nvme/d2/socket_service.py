@@ -11,7 +11,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class RankService:
-    def __init__(self,collective,region,wire,*,max_payload,deadline,tensor_schema):
+    def __init__(self,collective,region,wire,*,max_payload,deadline,tensor_schema,observer=None):
+        self.observer=observer
         self.collective=collective;self.region=region;self.wire=wire
         self.max_payload=max_payload;self.deadline=deadline;self.lock=threading.RLock()
         self.tensor_schema=json.loads(json.dumps(tensor_schema))
@@ -27,13 +28,19 @@ class RankService:
                 if control.get('rank')!=rank:raise ValueError('connection rank differs')
                 if control.get('kind')=='chunk':
                     fields={k:control[k] for k in ('epoch','request_id','rank','name','offset','length','sha256','lease')}
+                    def event(name):
+                        if self.observer:self.observer(name,rank=rank,raw_request_id=fields['request_id'],
+                            tensor=fields['name'],chunk=fields['lease'],byte_count=fields['length'])
+                    event('owner_received')
                     if len(payload)!=fields['length'] or hashlib.sha256(payload).hexdigest()!=fields['sha256']:
                         raise ValueError('declared payload digest/length differs')
+                    event('owner_validated')
                     # Serialize admission with the single storage owner's
                     # source-safe completion. Other rank threads block here
                     # instead of interpreting temporary credit pressure as a
                     # failed collective. Socket receive buffers remain bounded.
                     with self.lock:
+                        event('owner_payload_begin')
                         key=self.collective.admit(**fields)
                         if isinstance(key,tuple):
                             ref=self.region.payload(payload)
@@ -41,7 +48,9 @@ class RankService:
                             tensor=self.schema[(rank,control['name'])]
                             self.payload_rows[key]=dict(rank=rank,name=control['name'],shape=tensor['shape'],dtype=tensor['dtype'],partition=tensor['partition'],logical_offset=control['offset'],
                                 logical_bytes=len(payload),payload=ref)
+                        event('owner_payload_end')
                     self.wire.send(sock,dict(kind='source_safe',lease=control['lease']),b'',deadline=self.deadline,max_payload=0)
+                    event('owner_source_safe_sent')
                 elif control.get('kind')=='complete':
                     if payload:raise ValueError('unexpected control payload')
                     fields={k:control[k] for k in ('epoch','request_id','rank','step','controls')}

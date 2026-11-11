@@ -31,6 +31,18 @@ def main():
     from npu_nvme.d2.format import Region
     from npu_nvme.d2.training_session import TrainingOwner
     from npu_nvme.d2 import wire
+    event_context=threading.local()
+    def event(name,*,rank=None,**fields):
+        if c.get('io_event_root'):
+            from npu_nvme.experiments.checkpoint_io import emit
+            if name in ('owner_payload_begin','payload_flush_begin','owner_restore_begin','owner_restore_chunk_begin'):
+                event_context.fields=dict(fields,rank=rank)
+            if name.startswith('native_'):
+                fields=dict(getattr(event_context,'fields',{}),**fields)
+                rank=fields.pop('rank',None)
+            emit(Path(c['io_event_root'])/'owner.jsonl',event=name,
+                 run_id=c.get('run_id',''),rank=rank,
+                 physical_npu=c['identity']['physical_npu_ids'][rank] if rank is not None else None,**fields)
     try:
         registration=registration_from_config(c['region'])
         if c['library']!=os.environ.get('NPU_NVME_LIBRARY_PATH'):
@@ -40,10 +52,12 @@ def main():
                 raise ValueError('unexpected NVMe binding')
         affinity=sorted(os.sched_getaffinity(0));os.environ['SPDK_SHM_ID']=str(c['owner_shm_id'])
         transport=FullTransport(load_backend(c['library']),pci=registration['pci_addr'],npu=-1,
-            depth=c['depth'],chunk_size=c['chunk_bytes'],profiling_dir=args.out,role='host_owner')
+            depth=c['depth'],chunk_size=c['chunk_bytes'],profiling_dir=args.out,role='host_owner',
+            observer=event if c.get('io_event_root') else None)
         if sorted(os.sched_getaffinity(0))!=affinity:raise RuntimeError('EAL changed owner caller affinity')
         backend=RegisteredBackend(transport,registration,region_id=registration['region_id'])
-        region=Region(backend,offset=backend.base,length=backend.end-backend.base,retention=c['retention'])
+        region=Region(backend,offset=backend.base,length=backend.end-backend.base,retention=c['retention'],
+                      observer=event if c.get('io_event_root') else None)
         report['mount_errors']=region.mount()
         if region.header['region_id']!=registration['region_id'] or region.retention!=c['retention']:
             raise ValueError('mounted region differs from selected identity/retention')
@@ -69,8 +83,14 @@ def main():
             except BaseException:connection.close();raise
         owner=TrainingOwner(region,connections,epoch=c['epoch'],identity=c['identity'],
             chunk_bytes=c['chunk_bytes'],deadline=deadline,operation_timeout=c['operation_timeout_seconds'],
-            authoritative_schema=c['strategy'])
-        def completed(row):report['operations'].append(row);record()
+            authoritative_schema=c['strategy'],observer=event if c.get('io_event_root') else None)
+        def completed(row):
+            report['operations'].append(row);record()
+            receipt=row.get('receipt',{})
+            event('raw_commit_receipt' if row['operation']=='save' else 'restore_receipt',
+                  step=row.get('step'),generation=receipt.get('generation'),
+                  raw_request_id=receipt.get('request_id'),
+                  status='durable' if row['operation']=='save' else 'ready')
         report['operation_count']=owner.run(completed)
         report['status']='pass'
     except BaseException as error:
