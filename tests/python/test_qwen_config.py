@@ -51,3 +51,9 @@ def test_ours_requires_actual_three_generation_media(tmp_path):
 def test_boundaries_are_rejected(tmp_path,key,value):
     row=fixture(tmp_path);row[key]=value
     with pytest.raises(ValueError):resolve(row,tmp_path)
+
+
+@pytest.mark.parametrize('experiment',[{'closure':'yes'},{'device_profile':True},{'event_root':'/tmp/events'}])
+def test_closure_flags_are_validated_at_configuration_boundary(tmp_path,experiment):
+    row=fixture(tmp_path);row['io_experiment']=experiment
+    with pytest.raises(ValueError):resolve(row,tmp_path)

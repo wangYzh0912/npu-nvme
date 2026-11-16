@@ -7,6 +7,19 @@ import pytest
 from qwen_native_state import validate_restart_contract, ready_barrier, compare_manifests
 
 
+def test_manifest_aggregate_keeps_identical_state_and_hashes():
+    import numpy as np
+    from types import SimpleNamespace
+    from qwen_native_state import parameter_manifest
+    values=[np.arange(6,dtype=np.float32).reshape(2,3),np.arange(12,dtype=np.int32)[::2]]
+    params=[SimpleNamespace(name=str(index),asnumpy=lambda value=value:value) for index,value in enumerate(values)]
+    network=SimpleNamespace(parameters_and_names=lambda:list(enumerate(params+[params[0]])))
+    expected=parameter_manifest(network);measurement={}
+    assert parameter_manifest(network,measurement=measurement)==expected
+    assert measurement['logical_bytes']==48 and measurement['tensors']==2
+    assert measurement['read_ns']>0 and measurement['hash_ns']>0
+
+
 def fixture(root):
     ranks=[]
     for rank in range(4):

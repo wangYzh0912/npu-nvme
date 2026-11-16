@@ -73,13 +73,15 @@ def command(config_path,output,*,resume=False,generation='latest',stop=64):
     if row.get('validation_status')!='pass':raise RuntimeError(f'run did not pass: {row}')
 
 
-def archive_run(output,archive):
+def archive_run(output,archive,*,exclude=()):
     output=Path(output);archive=Path(archive);archive.mkdir(parents=True,exist_ok=False)
-    paths=[source for source in output.rglob('*.json') if source.is_file()]
+    included=lambda path:not any(path.is_relative_to(output/prefix) for prefix in exclude)
+    paths=[source for source in output.rglob('*.json') if source.is_file() and included(source)]
     for source in paths:
         target=archive/source.relative_to(output);target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(source,target)
     for source in list(output.rglob('*.jsonl'))+list(output.rglob('*.log')):
+        if not included(source):continue
         target=archive/source.relative_to(output).with_suffix(source.suffix+'.gz')
         target.parent.mkdir(parents=True,exist_ok=True)
         with source.open('rb') as stream,gzip.open(target,'wb') as zipped:

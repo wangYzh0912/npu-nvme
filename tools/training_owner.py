@@ -81,6 +81,9 @@ def main():
                     raise ValueError('invalid training connection')
                 connections[rank]=connection
             except BaseException:connection.close();raise
+        if c.get('io_event_root'):
+            report['socket_buffers']={str(rank):dict(send=sock.getsockopt(socket.SOL_SOCKET,socket.SO_SNDBUF),
+                receive=sock.getsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF)) for rank,sock in connections.items()}
         owner=TrainingOwner(region,connections,epoch=c['epoch'],identity=c['identity'],
             chunk_bytes=c['chunk_bytes'],deadline=deadline,operation_timeout=c['operation_timeout_seconds'],
             authoritative_schema=c['strategy'],observer=event if c.get('io_event_root') else None)
@@ -96,12 +99,27 @@ def main():
     except BaseException as error:
         report.update(status='fail',error=repr(error));raise
     finally:
+        report['close_begin_ns']=time.monotonic_ns()
         for connection in connections.values():connection.close()
         if listener:listener.close();Path(c['socket']).unlink(missing_ok=True)
         if transport:
-            try:transport.close(c['copy_timeout_ms']/1000);report['closed']=True
+            measurement_error=None
+            if c.get('io_event_root'):
+                try:
+                    from npu_nvme.experiments.checkpoint_io_closure import native_snapshot,verify_drained
+                    report['native']=native_snapshot(transport);verify_drained(report['native'])
+                    report['transfer_api']=transport.measurement
+                except Exception as error:
+                    measurement_error=error
+                    report.update(status='fail',measurement_error=repr(error))
+            try:
+                transport.close(c['copy_timeout_ms']/1000);report['closed']=True
             except BaseException as error:
                 report.update(status='retained',error=repr(error));record();threading.Event().wait()
+            if measurement_error:
+                report['close_end_ns']=time.monotonic_ns();record()
+                raise RuntimeError('owner measurement failed after safe close') from measurement_error
+        report['close_end_ns']=time.monotonic_ns()
         record()
 
 

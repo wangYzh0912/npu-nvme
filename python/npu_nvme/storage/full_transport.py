@@ -21,6 +21,9 @@ class TransferFailure(RuntimeError):
 class FullTransport:
     def __init__(self, backend, *, pci, npu, depth, chunk_size, profiling_dir, profiling=False, role="combined", observer=None):
         self.observer=observer
+        self.measurement=(dict(submitted=0,completed=0,rejected=0,busy_rejected=0,
+            submit_ns=0,wait_ns=0,scope='Python transfer/copy API calls; native SPDK commands counted separately')
+            if observer else None)
         self.lib, self.acl = backend.lib, backend.acl_lib
         self.npu = npu
         self.ctx = C.POINTER(NPUNVMEContext)()
@@ -56,9 +59,16 @@ class FullTransport:
         submit=self.lib.npu_nvme_submit_copy if copy else self.lib.npu_nvme_submit_transfer
         submitted_ns=time.monotonic_ns() if self.observer else None
         rc=submit(self.ctx,C.byref(spec),C.byref(request))
+        if self.measurement is not None:
+            self.measurement['submit_ns']+=time.monotonic_ns()-submitted_ns
+            self.measurement['submitted']+=int(rc==0)
+            self.measurement['rejected']+=int(rc!=0)
+            self.measurement['busy_rejected']+=int(rc==-16)
         if rc: raise TransferFailure(f'async admission failed: {rc}',transport_safe=True)
         try:
+            wait_begin=time.monotonic_ns() if self.observer else None
             rc=self.lib.npu_nvme_wait_request(request,0)
+            if self.measurement is not None:self.measurement['wait_ns']+=time.monotonic_ns()-wait_begin
             done=C.c_int()
             self.lib.npu_nvme_poll_request(request,C.byref(done))
             if not done.value:
@@ -72,6 +82,7 @@ class FullTransport:
                 with self._buffers_lock: self.retained.append(tuple(owners))
                 raise TransferFailure(f'invalid transfer receipt: {rc}',transport_safe=False)
             if self.observer:
+                if self.measurement is not None:self.measurement['completed']+=1
                 completed_ns=time.monotonic_ns()
                 self.observer('native_submitted',native_request_id=int(receipt.request_id),
                               timestamp_ns=submitted_ns,status=f'operation:{spec.operation}')

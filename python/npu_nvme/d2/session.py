@@ -138,9 +138,11 @@ class RankSession:
     def receive(self):return wire.receive(self.sock,deadline=self.deadline,max_payload=self.chunk)
     def hello(self,operation):self.send(dict(kind='hello',rank=self.rank,epoch=self.epoch,identity=self.identity,schema=self.schema,operation=operation))
     def save(self,read_chunk,controls,*,step):
+        self.event('protocol_admit_begin',step=step,raw_request_id=self.epoch)
         self.hello('save');admission,payload=self.receive()
         if payload or admission.get('kind')!='admitted' or admission.get('step')!=step:raise ValueError('save admission differs')
         request=admission['request_id'];lease=0
+        self.event('protocol_admit_end',step=step,raw_request_id=request)
         for tensor in sorted(self.schema,key=lambda v:v['name']):
             for offset in range(0,tensor['bytes'],self.chunk):
                 length=min(self.chunk,tensor['bytes']-offset)
@@ -158,9 +160,11 @@ class RankSession:
                     self.event('source_safe_ack',step=step,raw_request_id=request,
                                tensor=tensor['name'],chunk=lease,byte_count=length)
                 lease+=1
+        self.event('protocol_commit_begin',step=step,raw_request_id=request)
         self.send(dict(kind='complete',rank=self.rank,epoch=self.epoch,request_id=request,step=step,controls=controls))
         result,payload=self.receive()
         if payload or result.get('kind')!='committed':raise ValueError('global commit missing')
+        self.event('protocol_commit_end',step=step,raw_request_id=request)
         return result['receipt']
     def restore(self,apply_chunk,verify_controls):
         self.hello('restore');begin,payload=self.receive()

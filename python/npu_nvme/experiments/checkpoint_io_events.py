@@ -7,6 +7,11 @@ from .checkpoint_io_analysis import distribution
 from .checkpoint_io import FIELDS
 
 PAIRS={
+    'capture_setup':('capture_setup_begin','capture_setup_end',('rank',)),
+    'prepared_journal':('prepared_journal_begin','prepared_journal_end',('rank',)),
+    'prepared_collective':('prepared_barrier_begin','prepared_barrier_end',('rank',)),
+    'protocol_admit':('protocol_admit_begin','protocol_admit_end',('rank',)),
+    'protocol_commit_wait':('protocol_commit_begin','protocol_commit_end',('rank',)),
     'source_prepare_and_copy':('source_read_begin','data_ready',('rank','chunk')),
     'rank_hash_before_send':('data_ready','chunk_send_begin',('rank','chunk')),
     'sink_hash_and_consume':('data_ready','sink_consumed_source_safe',('rank','chunk')),

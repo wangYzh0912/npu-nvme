@@ -8,6 +8,7 @@ import random
 import sys
 import time
 import traceback
+from contextlib import nullcontext
 
 from npu_nvme.runtime.training_catalog import write_checked
 
@@ -23,6 +24,9 @@ def run(options):
     report=dict(status='running',rank=rank,pid=os.getpid(),losses=[],checkpoints=[],
                 method=options['method'],begin_ns=time.monotonic_ns())
     controller=None
+    experiment=options.get('io_experiment',{})
+    closure=experiment.get('closure',False)
+    if closure:report['lifecycle']={}
     def record():write_checked(directory/'training.json',report)
     record()
     try:
@@ -88,9 +92,22 @@ def run(options):
 
         class Progress(ms.Callback):
             def on_train_step_begin(self,context):
+                if experiment.get('device_profile') and start+len(report['losses'])+1==28:
+                    from mindspore.profiler import Profiler,ProfilerLevel,AicoreMetrics
+                    self.profiler=Profiler(start_profile=False,output_path=str(directory/'device-profile'),
+                        profiler_level=ProfilerLevel.Level1,aic_metrics=AicoreMetrics.PipeUtilization)
+                    report['device_profile']=dict(status='running',steps=[28,32],
+                        collection_range='full callbacks for steps 28..32, including saves',
+                        requested=['AscendCL','NPU task timing','PipeUtilization MAC/vector/MTE'],
+                        limitations=['one PMU group; HBM bandwidth group not collected',
+                                      'no late-start GE allocation trace; resource samples are separate'],
+                        start_anchor=dict(monotonic_ns=time.monotonic_ns(),realtime_ns=time.time_ns()))
+                    self.profiler.start()
                 self.step_begin_ns=time.monotonic_ns()
+                if closure:report['lifecycle'].setdefault('first_step_begin_ns',self.step_begin_ns)
 
             def on_train_begin(self,context):
+                if closure:report['lifecycle']['initial_validation_begin_ns']=time.monotonic_ns()
                 network=context.original_args().train_network
                 if options['method'] in ('ours','checkpoint_io_sink'):controller._d2()._open()
                 controller.admit(ms,network,step=start,operation='restore' if options.get('restore_checkpoint') else 'initial',barrier=barrier)
@@ -106,6 +123,7 @@ def run(options):
                     write_checked(directory/'state-initial.json',state)
                     write_checked(directory/'control-initial.json',capture_control(ms,step=0,
                         data_sha256=data_hash,lr_horizon=horizon,small=small))
+                if closure:report['lifecycle']['initial_validation_end_ns']=time.monotonic_ns()
                 record()
 
             def on_train_step_end(self,context):
@@ -132,27 +150,65 @@ def run(options):
                 report['losses'][-1]['resume_ns']=end_ns
                 if should_record_state:
                     capture_begin=time.monotonic_ns()
-                    controller.admit(ms,cb.train_network,step=step,operation='save',barrier=barrier)
-                    ms.hal.synchronize();state,small=parameter_manifest(cb.train_network)
-                    controls=capture_control(ms,step=step,data_sha256=data_hash,lr_horizon=horizon,small=small)
-                    write_checked(directory/f'state-step-{step}.json',state)
-                    write_checked(directory/f'control-step-{step}.json',controls)
+                    boundary=None
+                    if closure:
+                        from npu_nvme.experiments.checkpoint_io_closure import Boundary
+                        boundary=Boundary(step);capture_begin=boundary.row['begin_ns']
+                    stage=boundary.stage if boundary else lambda name:nullcontext()
+                    with stage('admission_collectives'):
+                        controller.admit(ms,cb.train_network,step=step,operation='save',barrier=barrier)
+                    with stage('framework_synchronize'):ms.hal.synchronize()
+                    with stage('manifest_read_hash') as measured:
+                        measurement={} if closure and experiment.get('events') else None
+                        state,small=parameter_manifest(cb.train_network,measurement=measurement)
+                        if measurement is not None:measured['aggregate']=measurement
+                    with stage('control_capture'):
+                        controls=capture_control(ms,step=step,data_sha256=data_hash,lr_horizon=horizon,small=small)
+                    with stage('sidecar_write'):
+                        write_checked(directory/f'state-step-{step}.json',state)
+                        write_checked(directory/f'control-step-{step}.json',controls)
+                    if closure and step==stop:
+                        report['lifecycle'].update(final_validation_begin_ns=capture_begin,
+                            final_validation_end_ns=time.monotonic_ns(),
+                            final_validation_scope='manifest/control validation; included in final save when applicable')
                     # The final step is observed even when it is not a save boundary.
                     if step%period==0 and options['method']!='none':
-                        saved=controller.save(ms,cb.train_network,step=step,state=state,controls=controls,barrier=barrier)
+                        saved=controller.save(ms,cb.train_network,step=step,state=state,controls=controls,
+                                              barrier=barrier,boundary=boundary)
                         if saved:
                             saved['blocking_seconds']=(time.monotonic_ns()-capture_begin)/1e9
                             report['checkpoints'].append(saved)
                             report['losses'][-1]['resume_ns']=time.monotonic_ns()
+                    if boundary:
+                        full=boundary.finish()
+                        full['operation']='save' if step%period==0 and options['method']!='none' else 'final_validation'
+                        report.setdefault('boundaries',[]).append(full)
+                        if full['operation']=='final_validation':
+                            report['lifecycle'].update(final_validation_begin_ns=full['begin_ns'],
+                                                       final_validation_end_ns=full['end_ns'])
+                        else:
+                            saved['blocking_seconds']=(full['end_ns']-full['begin_ns'])/1e9
+                            report['losses'][-1]['resume_ns']=full['end_ns']
+                if closure:report['lifecycle']['last_step_resume_ns']=report['losses'][-1]['resume_ns']
                 if experiment and experiment.get('event_root'):
                     emit(str(Path(experiment['event_root'])/f'rank-{rank}.jsonl'),event='training_resume',
                          run_id=options['run_id'],rank=rank,
                          physical_npu=options['identity']['physical_npu_ids'][rank],step=step)
+                if experiment.get('device_profile') and step==32:
+                    self.profiler.stop()
+                    report['device_profile'].update(status='captured',
+                        stop_anchor=dict(monotonic_ns=time.monotonic_ns(),realtime_ns=time.time_ns()))
+                    self.profiler.analyse()
                 record()
                 print(f'QWEN_TRAIN_STEP rank={rank} step={step} loss={loss:.8f}',flush=True)
 
+        if closure:report['lifecycle']['trainer_init_begin_ns']=time.monotonic_ns()
         trainer=Trainer(args=config,train_dataset=dataset,callbacks=[Progress()])
+        if closure:
+            report['lifecycle']['trainer_init_end_ns']=time.monotonic_ns()
+            report['lifecycle']['finetune_begin_ns']=time.monotonic_ns()
         trainer.finetune(resume_from_checkpoint=str(source),auto_trans_ckpt=True)
+        if closure:report['lifecycle']['finetune_end_ns']=time.monotonic_ns()
         if len(report['losses'])!=stop-start:raise RuntimeError('training stopped before requested optimizer step')
         report.update(status='pass',end_ns=time.monotonic_ns(),final_step=stop)
         record()
@@ -163,7 +219,14 @@ def run(options):
         record();traceback.print_exc()
         return 1
     finally:
-        if controller:controller.close()
+        if closure:report['lifecycle']['close_begin_ns']=time.monotonic_ns()
+        try:
+            if controller:controller.close()
+        except BaseException as error:
+            report.update(status='failed',close_error=repr(error));record();raise
+        if closure:
+            report['lifecycle']['safe_close_end_ns']=time.monotonic_ns()
+            report['closed']=True;record()
 
 
 def main():

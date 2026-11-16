@@ -12,16 +12,25 @@ def write_json(path, value):
     temporary.write_text(json.dumps(value,indent=2)+'\n');temporary.replace(path)
 
 
-def parameter_manifest(network):
+def parameter_manifest(network, *, measurement=None):
     import numpy as np
     result={};small={};seen=set()
+    if measurement is not None:
+        measurement.update(read_ns=0,hash_ns=0,logical_bytes=0,tensors=0)
     for _,param in network.parameters_and_names():
         if id(param) in seen: continue
         seen.add(id(param));name=param.name
         if name in result:raise ValueError('duplicate parameter name '+name)
+        begin=time.monotonic_ns() if measurement is not None else None
         array=np.asarray(param.asnumpy())
         if not array.flags.c_contiguous: array=np.ascontiguousarray(array)
+        ready=time.monotonic_ns() if measurement is not None else None
         digest=hashlib.sha256(memoryview(array).cast('B')).hexdigest()
+        if measurement is not None:
+            measurement['read_ns']+=ready-begin
+            measurement['hash_ns']+=time.monotonic_ns()-ready
+            measurement['logical_bytes']+=array.nbytes
+            measurement['tensors']+=1
         result[name]=dict(shape=list(array.shape),dtype=array.dtype.str,bytes=array.nbytes,sha256=digest)
         if array.nbytes<=1024:
             small[name]=dict(result[name],data=base64.b64encode(array.tobytes()).decode())

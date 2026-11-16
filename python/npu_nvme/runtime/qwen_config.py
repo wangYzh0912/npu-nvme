@@ -28,9 +28,11 @@ def resolve(value, repo):
         raise ValueError('Qwen TP4 mapping must be physical NPU 0-3 or 4-7')
     if config['method'] not in METHODS:raise ValueError('unknown checkpoint method')
     experiment=config.get('io_experiment',{})
-    if (type(experiment) is not dict or set(experiment)-{'events','skip_periodic_state'} or
+    if (type(experiment) is not dict or set(experiment)-{'events','skip_periodic_state','closure','device_profile'} or
             any(type(v) is not bool for v in experiment.values())):
-        raise ValueError('io_experiment requires boolean events/skip_periodic_state')
+        raise ValueError('io_experiment requires boolean events/skip_periodic_state/closure/device_profile')
+    if experiment.get('device_profile') and not experiment.get('closure'):
+        raise ValueError('device profiling requires the closure experiment')
     for name in ('host_headroom_bytes','hbm_headroom_bytes'):
         if type(config[name]) is not int or config[name]<0:raise ValueError('nonnegative bytes required: '+name)
     for name in ('stop_step','lr_horizon','seq_length','checkpoint_interval','retention',

@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import struct
 import time
+from contextlib import nullcontext
 
 from npu_nvme.runtime import training_catalog as catalog
 
@@ -57,8 +58,9 @@ class CheckpointController:
         if not report['admitted']:raise MemoryError('FULL resource admission rejected; see resource report')
         barrier()
 
-    def save(self, ms, network, *, step, state, controls, barrier):
+    def save(self, ms, network, *, step, state, controls, barrier, boundary=None):
         if self.method=='none':return None
+        stage=boundary.stage if boundary else lambda name:nullcontext()
         event_path=None
         if self.config.get('io_experiment',{}).get('event_root'):
             event_path=str(self.output/'io-events'/f'rank-{self.rank}.jsonl')
@@ -70,16 +72,19 @@ class CheckpointController:
                  raw_request_id=raw_request_id,status=status)
         if self.method=='checkpoint_io_sink':
             from qwen_d2_state import partitions_for
-            partitions=partitions_for(state,controls['small_parameters'],self.config['strategy'])
+            with stage('save_setup'):
+                partitions=partitions_for(state,controls['small_parameters'],self.config['strategy'])
             before=time.monotonic_ns()
             self.sequence+=1
             event('sink_capture_begin',raw_request_id=f"{self.config['run_id']}:{self.rank}:{step}")
-            backend=self._d2().transfer(ms,network,operation='save',step=step,
-                partitions=partitions,controls=controls,barrier=barrier)
+            with stage('capture_transport'):
+                backend=self._d2().transfer(ms,network,operation='save',step=step,
+                    partitions=partitions,controls=controls,barrier=barrier)
             event('sink_capture_end',raw_request_id=f"{self.config['run_id']}:{self.rank}:{step}")
             return dict(generation=None,step=step,seconds=(time.monotonic_ns()-before)/1e9,
                         backend=backend,committed=False)
         self.sequence+=1
+        reservation_started=time.monotonic_ns()
         reservation_file=self.output/f'checkpoint-operation-{self.sequence:06d}.json'
         if self.rank==0:
             catalog.initialize(self.root,identity=self.config['identity'],method=self.method)
@@ -94,7 +99,11 @@ class CheckpointController:
             raise ValueError('checkpoint reservation differs')
         rank_dir=path/f'rank_{self.rank}';rank_dir.mkdir(parents=True,exist_ok=False)
         controls=json.loads(json.dumps(controls))
+        if boundary:
+            boundary.row['stages'].append(dict(name='reservation',begin_ns=reservation_started,
+                                               end_ns=time.monotonic_ns()))
         started=time.monotonic()
+        setup_started=time.monotonic_ns()
         event('checkpoint_prepare_begin',generation=row['generation'])
         ms.hal.synchronize()
         if self.method=='mindspore_native_save':
@@ -139,9 +148,14 @@ class CheckpointController:
                     raw_request_id=request,rank=self.rank,generation=row['generation'],step=step,
                     method=self.method,identity=self.config['identity'],state=state,controls=controls,
                     backend=backend))
-            backend=self._d2().transfer(ms,network,operation='save',step=step,
-                partitions=partitions,controls=controls,prepare=prepared,barrier=barrier)
+            if boundary:
+                boundary.row['stages'].append(dict(name='save_setup',begin_ns=setup_started,
+                                                   end_ns=time.monotonic_ns()))
+            with stage('capture_transport'):
+                backend=self._d2().transfer(ms,network,operation='save',step=step,
+                    partitions=partitions,controls=controls,prepare=prepared,barrier=barrier)
         else:raise ValueError('unknown checkpoint method')
+        finalize_started=time.monotonic_ns()
         # Metadata and hashing are included in the blocking save boundary.
         files=catalog.payload_files(rank_dir)
         complete=dict(rank=self.rank,generation=row['generation'],step=step,
@@ -160,6 +174,9 @@ class CheckpointController:
                   generation=row['generation'])
         committed=self.wait(path/'checkpoint.json')
         barrier()
+        if boundary:
+            boundary.row['stages'].append(dict(name='complete_publish_collective',
+                begin_ns=finalize_started,end_ns=time.monotonic_ns()))
         return dict(generation=row['generation'],step=step,path=str(path),
                     seconds=time.monotonic()-started,backend=backend,
                     committed=committed['status']=='committed')

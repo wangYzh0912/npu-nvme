@@ -59,10 +59,12 @@ def run_fit(config, output, *, restore='latest', resume=False):
     output=Path(output).resolve();output.mkdir(parents=True,exist_ok=False)
     config=dict(config,output=str(output),run_id=uuid.uuid4().hex,start_step=0)
     experiment=config.get('io_experiment',{})
+    closure=experiment.get('closure',False)
     if experiment.get('events'):
         config['io_experiment']=dict(experiment,event_root=str(output/'io-events'))
     config.setdefault('checkpoint_root',str(output/'checkpoints'))
     result=dict(execution_status='running',validation_status='not_run',method=config['method'])
+    if closure:result['lifecycle']=dict(supervisor_begin_ns=time.monotonic_ns())
     write(output/'result.json',result)
     children=[];lease=None;lease_owned=False
     with ExitStack() as stack:
@@ -111,6 +113,7 @@ def run_fit(config, output, *, restore='latest', resume=False):
                     start_new_session=True,pass_fds=(lock.fileno(),))
                 children.append(child);owned_lease['children'].append(dict(pid=child.pid,process_group=child.pid))
                 write(lease,owned_lease);write(output/f'{name}-command.json',argv)
+                if closure:result['lifecycle'][name+'_launch_ns']=time.monotonic_ns()
                 return child
             owner=None
             if config['method'] in ('ours','checkpoint_io_sink'):
@@ -152,7 +155,18 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 '--master_addr=127.0.0.1','--master_port='+str(port),'--join=True','--cluster_time_out=300',
                 '--log_dir='+str(output/'msrun-log'),'python','-m','npu_nvme.workloads.qwen','--config',str(output/'run-config.json')],'training')
             released=not resume
+            sampler=None
+            sample_error=None
+            if closure and experiment.get('events'):
+                from npu_nvme.experiments.checkpoint_io_closure import ResourceSampler
+                sampler=ResourceSampler(output/'resource-samples.jsonl')
             while training.poll() is None:
+                if sampler and sampler.due():
+                    try:sampler.sample([os.getpid()]+[member['pid'] for child in children for member in members(child.pid)])
+                    except Exception as error:
+                        # Observation failure fails acceptance, after existing DMA owners close normally.
+                        sample_error=error;sampler=None
+                        write(output/'resource-sampling-failure.json',dict(error=repr(error)))
                 if resume and not released and all((output/f'restore-ready-{r}.json').exists() for r in range(4)):
                     for rank in range(4):
                         ready=catalog.read_checked(output/f'restore-ready-{rank}.json')
@@ -164,13 +178,17 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 time.sleep(.1)
             if training.returncode and owner and owner.poll() is None:owner.send_signal(signal.SIGINT)
             if owner:owner.wait(timeout=max(.001,deadline-time.monotonic()))
+            if closure:result['lifecycle']['children_exited_ns']=time.monotonic_ns()
             if any(child.returncode or members(child.pid) for child in children):raise RuntimeError('training or owner failed / descendants retained')
             reports=[catalog.read_checked(output/f'rank_{r}/training.json') for r in range(4)]
             if any(row['status']!='pass' or row['final_step']!=config['stop_step'] for row in reports):
                 raise RuntimeError('rank training completion differs')
+            if closure and any(not row.get('closed') for row in reports):
+                raise RuntimeError('rank safe close not verified')
             if owner:
                 owner_report=json.loads((output/'owner/result.json').read_text())
                 if owner_report['status']!='pass' or not owner_report['closed']:raise RuntimeError('owner close not verified')
+            if sample_error:raise RuntimeError('resource sampling failed') from sample_error
             if source_identity(ROOT)!=execution_sources or any(catalog.digest_file(ROOT/name)!=digest for name,digest in extensions.items()):
                 raise RuntimeError('training source or allocation extension changed during execution')
             result.update(execution_status='completed',validation_status='pass',final_step=config['stop_step'])
@@ -190,6 +208,14 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 # Retain the lock and mappings until deliberate device recovery.
                 threading.Event().wait()
             if lease_owned:lease.unlink(missing_ok=True)
+            if closure:
+                result['lifecycle']['safe_close_end_ns']=time.monotonic_ns()
+                elapsed=(result['lifecycle']['safe_close_end_ns']-result['lifecycle']['supervisor_begin_ns'])/1e9
+                result['end_to_end']=dict(launch_to_safe_close_seconds=elapsed,
+                    tokens=(config['stop_step']-config['start_step'])*config['seq_length'],
+                    tokens_per_second=(config['stop_step']-config['start_step'])*config['seq_length']/elapsed if elapsed else None,
+                    includes='supervisor preflight, owner startup/mount, worker startup, compilation, initial/final validation, training and close/drain',
+                    children_remaining=alive,retained=retained,lease_released=lease_owned)
             write(output/'result.json',result)
     return int(result['validation_status']!='pass')
 

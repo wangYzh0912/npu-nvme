@@ -43,13 +43,17 @@ class TrainingCheckpoint:
         c=self.config
         self.record(phase='opening')
         self.executor=RankCopyExecutor(load_backend(c['library']),
-            dict(chunk_bytes=c['chunk_bytes'],shm_id=c['rank_shm_base']+self.rank,profiling_dir=str(self.out)),
+            dict(chunk_bytes=c['chunk_bytes'],shm_id=c['rank_shm_base']+self.rank,
+                 profiling_dir=str(self.out),measure=bool(self.event_path)),
             npu_id=self.npu,depth=c['depth'],timeout_ms=c['copy_timeout_ms'])
         if self.sink_only:return
         self.connection=socket.socket(socket.AF_UNIX)
         deadline=time.monotonic()+c['timeout_seconds']
         self.connection.settimeout(c['operation_timeout_seconds'])
         self.connection.connect(c['socket'])
+        if self.event_path:
+            self.status['socket_buffers']=dict(send=self.connection.getsockopt(socket.SOL_SOCKET,socket.SO_SNDBUF),
+                receive=self.connection.getsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF))
         wire.send(self.connection,dict(kind='connect',rank=self.rank,epoch=c['epoch']),b'',deadline=deadline,max_payload=0)
         self.client=TrainingRank(self.connection,rank=self.rank,epoch=c['epoch'],identity=c['identity'],
             chunk_bytes=c['chunk_bytes'],deadline=deadline,operation_timeout=c['operation_timeout_seconds'])
@@ -57,6 +61,7 @@ class TrainingCheckpoint:
     def transfer(self, framework, network, *, operation, step, partitions, controls=None,
                  generation=None, verify_controls=None, barrier=None, prepare=None):
         try:
+            self.event('capture_setup_begin',step=step)
             self._open()
             self.state=BlockingState(framework,network,rank=self.rank,executor=self.executor,
                 host_tensor_budget=self.config['host_tensor_budget_bytes'],partitions=partitions)
@@ -85,16 +90,21 @@ class TrainingCheckpoint:
                 capture_chunk+=1
             self.record(phase='transfer',operation=operation,step=step,sequence=sequence)
             self.event('capture_begin',step=step,raw_request_id=request)
+            self.event('capture_setup_end',step=step)
             started=time.monotonic()
             if operation=='save':
                 if controls is None:raise ValueError('FULL save requires controls')
                 if prepare is not None:
                     epoch=self.client.epoch if self.client else self.config['epoch']
+                    self.event('prepared_journal_begin',step=step,raw_request_id=request)
                     prepare(dict(request_id=f'{epoch}:{sequence}',step=step,operation='save',
                         sequence=sequence,seconds=None,placement=self.state.placement,
                         state_bytes=sum(row['bytes'] for row in self.state.schema),
                         native_dma_pool_bytes=self.executor.transport.capabilities.dma_pool_bytes))
+                    self.event('prepared_journal_end',step=step,raw_request_id=request)
+                    self.event('prepared_barrier_begin',step=step,raw_request_id=request)
                     barrier()
+                    self.event('prepared_barrier_end',step=step,raw_request_id=request)
                 if self.sink_only:
                     from npu_nvme.experiments.checkpoint_io import consume_to_host_sink
                     chunk_index=0
@@ -144,6 +154,9 @@ class TrainingCheckpoint:
                        byte_count=result['state_bytes'],generation=receipt.get('generation'))
             self.record(phase='idle',status='running')
             self.state=None
+            if self.event_path:
+                from npu_nvme.experiments.checkpoint_io_closure import native_snapshot
+                self.record(native=native_snapshot(self.executor.transport),copy_api=self.executor.measurement)
             return result
         except BaseException as error:
             if self.client:self.client.failed=True
@@ -153,8 +166,16 @@ class TrainingCheckpoint:
 
     def close(self):
         try:
+            self.record(close_begin_ns=time.monotonic_ns())
             if self.client:self.client.close()
             elif self.connection:self.connection.close()
+            if self.event_path and self.executor:
+                from npu_nvme.experiments.checkpoint_io_closure import native_snapshot,verify_drained
+                snapshot=native_snapshot(self.executor.transport);verify_drained(snapshot)
+                self.record(native=snapshot,copy_api=self.executor.measurement)
+        except BaseException as error:
+            self.record(status='fail',error=repr(error))
+            raise
         finally:
             if self.executor and not self.executor.close():
                 self.record(status='retained',phase='close',closed=False)
@@ -162,4 +183,5 @@ class TrainingCheckpoint:
                 # establish a device stop proof. The supervisor sees retained.
                 threading.Event().wait()
             self.state=None
-            self.record(status='pass' if self.status['status']=='running' else self.status['status'],closed=True)
+            self.record(status='pass' if self.status['status']=='running' else self.status['status'],
+                        closed=True,close_end_ns=time.monotonic_ns())

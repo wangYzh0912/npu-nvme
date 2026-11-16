@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 import ctypes as C
 import threading
+import time
 _RETAINED=[]
 
 class CopyFailure(RuntimeError):
@@ -21,6 +22,9 @@ class RankCopyExecutor:
         self.buffer=C.create_string_buffer(descriptor['chunk_bytes'])
         self.base=C.addressof(self.buffer)
         self.buffer_generation=0
+        self.measurement=(dict(submitted=0,completed=0,rejected=0,busy_rejected=0,
+            logical_bytes=0,submit_ns=0,wait_ns=0,scope='rank copy API calls; no retries or wake notifications')
+            if descriptor.get('measure') else None)
     def _copy(self,operation,device,length,*,expected_sha256=None,owners=()):
         from npu_nvme.storage.bindings import NPUNVMECopySpec,NPUNVMERequest,NPUNVMETransferReceipt,NPUNVMETransferDigest
         if self.unsafe or self.closed:raise RuntimeError('rank executor unavailable')
@@ -32,9 +36,17 @@ class RankCopyExecutor:
             if type(expected_sha256) is not str or len(expected_sha256)!=64:raise ValueError('restore requires digest')
             spec.expected_sha256[:]=bytes.fromhex(expected_sha256)
         request=C.POINTER(NPUNVMERequest)();self.owners=list(owners)
+        before=time.monotonic_ns() if self.measurement is not None else None
         rc=self.lib.npu_nvme_submit_copy(self.ctx,C.byref(spec),C.byref(request))
+        if self.measurement is not None:
+            self.measurement['submit_ns']+=time.monotonic_ns()-before
+            self.measurement['rejected']+=int(rc!=0)
+            self.measurement['busy_rejected']+=int(rc==-16)
+            self.measurement['submitted']+=int(rc==0)
         if rc:self.owners=[];raise CopyFailure('copy rejected: '+str(rc),transport_safe=True)
+        before=time.monotonic_ns() if self.measurement is not None else None
         wait_rc=self.lib.npu_nvme_wait_request(request,self.timeout_ms)
+        if self.measurement is not None:self.measurement['wait_ns']+=time.monotonic_ns()-before
         receipt=NPUNVMETransferReceipt()
         observed=self.lib.npu_nvme_get_transfer_receipt(request,C.byref(receipt),C.sizeof(receipt))
         self.last_receipt=dict(operation=operation,length=length,wait_rc=wait_rc,
@@ -46,6 +58,9 @@ class RankCopyExecutor:
             raise CopyFailure('copy lacks terminal DMA stop proof',transport_safe=False)
         try:
             if receipt.result:raise CopyFailure('copy failed: '+str(receipt.result),transport_safe=True)
+            if self.measurement is not None:
+                self.measurement['completed']+=1
+                self.measurement['logical_bytes']+=length
             digest=NPUNVMETransferDigest()
             rc=self.lib.npu_nvme_get_transfer_digests(request,C.byref(digest),1)
             if rc:raise CopyFailure('copy digest unavailable',transport_safe=True)

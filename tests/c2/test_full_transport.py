@@ -32,6 +32,7 @@ class Native:
     def npu_nvme_submit_copy(self,ctx,raw,out):
         spec=C.cast(raw,C.POINTER(NPUNVMECopySpec)).contents
         self.calls.append(spec.operation)
+        self.payload=C.string_at(spec.source,spec.length)
         if not self.pending:C.memmove(spec.destination,spec.source,spec.length)
         return self._accept(spec,out)
     def npu_nvme_wait_request(self,*args): return -110 if self.pending else 0
@@ -49,7 +50,7 @@ class Native:
 
 def transport():
     t=FullTransport.__new__(FullTransport);t.lib=Native();t.ctx=C.pointer(NPUNVMEContext())
-    t.retained=[];t._buffers_lock=threading.Lock();t.observer=None
+    t.retained=[];t._buffers_lock=threading.Lock();t.observer=None;t.measurement=None
     t.acl=SimpleNamespace(aclrtMemcpy=lambda *args:pytest.fail('synchronous ACL path invoked'))
     return t
 
@@ -94,6 +95,35 @@ def test_inflight_timeout_does_not_invoke_observer_before_stop_proof():
     spec=NPUNVMECopySpec(C.sizeof(NPUNVMECopySpec),1,5,0,C.addressof(source),C.addressof(destination),7)
     with pytest.raises(TransferFailure):t._request(spec,(source,destination),copy=True)
     assert t.lib.releases==1 and t.retained==[(source,destination)]
+
+
+def test_measured_transfer_counts_real_completions_and_busy_rejections():
+    t=transport();events=[];t.observer=lambda name,**fields:events.append(name)
+    t.measurement=dict(submitted=0,completed=0,rejected=0,busy_rejected=0,submit_ns=0,wait_ns=0)
+    source=C.create_string_buffer(b'payload',7);target=C.create_string_buffer(7)
+    t.copy_h2d(C.addressof(target),source.raw,owner=target)
+    assert target.raw==b'payload' and t.measurement['submitted']==t.measurement['completed']==1
+    assert events==['native_submitted','native_completed']
+    t.lib.npu_nvme_submit_copy=lambda *args:-16
+    with pytest.raises(TransferFailure,match='-16'):t.copy_h2d(C.addressof(target),source.raw,owner=target)
+    assert t.measurement['rejected']==t.measurement['busy_rejected']==1
+    assert t.lib.releases==1
+
+
+def test_measured_rank_copy_retains_private_slot_until_consumer_releases():
+    from npu_nvme.d2.rank_copy_executor import RankCopyExecutor
+    executor=RankCopyExecutor.__new__(RankCopyExecutor)
+    executor.lib=Native();executor.ctx=C.pointer(NPUNVMEContext())
+    executor.unsafe=executor.closed=False;executor.lock=threading.RLock();executor.owners=[]
+    executor.buffer_generation=0;executor.descriptor={'chunk_bytes':8};executor.timeout_ms=100
+    executor.buffer=C.create_string_buffer(8);executor.base=C.addressof(executor.buffer)
+    executor.measurement=dict(submitted=0,completed=0,rejected=0,busy_rejected=0,
+                              submit_ns=0,wait_ns=0,logical_bytes=0)
+    source=C.create_string_buffer(b'payload',7)
+    with executor.d2h(C.addressof(source),7,owners=(source,)) as data:
+        assert bytes(data)==b'payload' and executor.buffer_generation==1
+    assert executor.measurement['submitted']==executor.measurement['completed']==1
+    assert executor.measurement['logical_bytes']==7 and executor.owners==[]
 
 
 def test_unproven_copy_prevents_target_discard():
