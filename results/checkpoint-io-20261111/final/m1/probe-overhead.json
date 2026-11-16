@@ -1,0 +1,44 @@
+{
+  "status": "screening_only",
+  "methods": [
+    {
+      "method": "none",
+      "baseline_seconds": [
+        0.659839323,
+        0.589758085
+      ],
+      "diagnostic_seconds": [
+        0.634589598,
+        0.600768738
+      ],
+      "median_ratio": 0.9886050723946443
+    },
+    {
+      "method": "checkpoint_io_sink",
+      "baseline_seconds": [
+        190.936387965,
+        186.385647846
+      ],
+      "diagnostic_seconds": [
+        189.257088478,
+        190.012069891
+      ],
+      "median_ratio": 1.0051603732970829
+    },
+    {
+      "method": "ours",
+      "baseline_seconds": [
+        552.237729163,
+        552.105644088
+      ],
+      "diagnostic_seconds": [
+        585.12189418,
+        578.080786714
+      ],
+      "median_ratio": 1.0532980131620913
+    }
+  ],
+  "perturbation_limit": 1.1,
+  "independent_diagnostic_processes_per_method": 1,
+  "limitation": "Two aligned windows from one diagnostic process per method do not establish the 10% observation-perturbation gate."
+}

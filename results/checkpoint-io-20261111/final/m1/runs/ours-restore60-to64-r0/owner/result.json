@@ -1,0 +1,71 @@
+{
+  "status": "pass",
+  "pid": 2187393,
+  "operations": [
+    {
+      "epoch": "79f3a3c7d39b4969bdf329ff43c84c91",
+      "generation": 61,
+      "kind": "operation",
+      "operation": "restore",
+      "sequence": 0,
+      "step": 60,
+      "receipt": {
+        "epoch": "79f3a3c7d39b4969bdf329ff43c84c91:0",
+        "generation": 61,
+        "manifest_sha256": "a36603b2b932c60fd82f62caf0b880c8b9a5c977413cfb250fc19d1056db0b78",
+        "world_size": 4,
+        "ranks": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "token": "46a53357342f0be0f003d2da04e17307312455277044a0f0805149c90f657fb0"
+      }
+    },
+    {
+      "epoch": "79f3a3c7d39b4969bdf329ff43c84c91",
+      "generation": null,
+      "kind": "operation",
+      "operation": "save",
+      "sequence": 1,
+      "step": 64,
+      "receipt": {
+        "request_id": "79f3a3c7d39b4969bdf329ff43c84c91:1",
+        "identity": {
+          "compute_dtype": "bfloat16",
+          "data_fixture": "checkpoint-recovery-fixed-text-v1",
+          "default_generator_seed": 42,
+          "dropout": 0,
+          "environment_id": "ad7bde5f24a4d6df1a5b328395e55ddec3d5421f134afb3631721f638e313c0d",
+          "framework_template_sha256": "b48e426de99fa7b5d7e1fb262861591ae6f27124469dbb986eb8e7b12ebce2d7",
+          "lr_horizon": 128,
+          "model": "Qwen3-8B",
+          "model_config_sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
+          "optimizer": "mindformers-1.7-qwen3-template",
+          "params_dtype": "float32",
+          "physical_npu_ids": [
+            4,
+            5,
+            6,
+            7
+          ],
+          "seed": 42,
+          "sequence_length": 128,
+          "state_scope": "full_state",
+          "strategy_sha256": "6fc9ea0d69ea8a21870a18b0322295ccea97c7b7d907528bf738f7278566ff9b",
+          "topology": {
+            "dp": 1,
+            "pp": 1,
+            "tp": 4
+          },
+          "weights_sha256": "da844ab63b97bf1b3c5416026bbc0b4dc1a34d8feea8a188ea2e81f0a1c3b541"
+        },
+        "generation": 63
+      }
+    }
+  ],
+  "closed": true,
+  "mount_errors": [],
+  "operation_count": 2
+}

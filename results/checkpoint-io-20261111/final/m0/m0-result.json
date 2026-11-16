@@ -1,0 +1,255 @@
+{
+  "status": "pass",
+  "acceptance": {
+    "status": "pass",
+    "runs": [
+      {
+        "name": "trajectory-none",
+        "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/trajectory-none",
+        "returncode": 0,
+        "result": {
+          "execution_status": "completed",
+          "validation_status": "pass",
+          "method": "none",
+          "final_step": 24
+        }
+      },
+      {
+        "name": "ours-source8",
+        "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-source8",
+        "returncode": 0,
+        "result": {
+          "execution_status": "completed",
+          "validation_status": "pass",
+          "method": "ours",
+          "final_step": 8
+        }
+      },
+      {
+        "name": "ours-explicit4",
+        "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-explicit4",
+        "returncode": 0,
+        "result": {
+          "execution_status": "completed",
+          "validation_status": "pass",
+          "method": "ours",
+          "final_step": 8
+        }
+      },
+      {
+        "name": "ours-latest8-to16",
+        "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-latest8-to16",
+        "returncode": 0,
+        "result": {
+          "execution_status": "completed",
+          "validation_status": "pass",
+          "method": "ours",
+          "final_step": 16
+        }
+      },
+      {
+        "name": "ours-latest16-to24",
+        "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-latest16-to24",
+        "returncode": 0,
+        "result": {
+          "execution_status": "completed",
+          "validation_status": "pass",
+          "method": "ours",
+          "final_step": 24
+        }
+      },
+      {
+        "name": "ours-publication-interruption",
+        "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-publication-interruption",
+        "returncode": 1,
+        "result": {
+          "execution_status": "completed",
+          "validation_status": "fail",
+          "method": "ours",
+          "error": "RuntimeError('training or owner failed / descendants retained')"
+        }
+      },
+      {
+        "name": "ours-publication-recovery",
+        "path": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-publication-recovery",
+        "returncode": 0,
+        "result": {
+          "execution_status": "completed",
+          "validation_status": "pass",
+          "method": "ours",
+          "final_step": 8
+        }
+      }
+    ],
+    "comparisons": [
+      {
+        "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-source8",
+        "status": "pass",
+        "ranks": [
+          {
+            "rank": 0,
+            "steps": 8,
+            "final_step": 8
+          },
+          {
+            "rank": 1,
+            "steps": 8,
+            "final_step": 8
+          },
+          {
+            "rank": 2,
+            "steps": 8,
+            "final_step": 8
+          },
+          {
+            "rank": 3,
+            "steps": 8,
+            "final_step": 8
+          }
+        ],
+        "loss_tolerance": {
+          "rtol": 1e-05,
+          "atol": 1e-06
+        },
+        "state_comparison": "exact SHA256 and geometry",
+        "controls_comparison": "exact"
+      },
+      {
+        "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-explicit4",
+        "status": "pass",
+        "ranks": [
+          {
+            "rank": 0,
+            "steps": 4,
+            "final_step": 8
+          },
+          {
+            "rank": 1,
+            "steps": 4,
+            "final_step": 8
+          },
+          {
+            "rank": 2,
+            "steps": 4,
+            "final_step": 8
+          },
+          {
+            "rank": 3,
+            "steps": 4,
+            "final_step": 8
+          }
+        ],
+        "loss_tolerance": {
+          "rtol": 1e-05,
+          "atol": 1e-06
+        },
+        "state_comparison": "exact SHA256 and geometry",
+        "controls_comparison": "exact"
+      },
+      {
+        "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-latest8-to16",
+        "status": "pass",
+        "ranks": [
+          {
+            "rank": 0,
+            "steps": 8,
+            "final_step": 16
+          },
+          {
+            "rank": 1,
+            "steps": 8,
+            "final_step": 16
+          },
+          {
+            "rank": 2,
+            "steps": 8,
+            "final_step": 16
+          },
+          {
+            "rank": 3,
+            "steps": 8,
+            "final_step": 16
+          }
+        ],
+        "loss_tolerance": {
+          "rtol": 1e-05,
+          "atol": 1e-06
+        },
+        "state_comparison": "exact SHA256 and geometry",
+        "controls_comparison": "exact"
+      },
+      {
+        "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-latest16-to24",
+        "status": "pass",
+        "ranks": [
+          {
+            "rank": 0,
+            "steps": 8,
+            "final_step": 24
+          },
+          {
+            "rank": 1,
+            "steps": 8,
+            "final_step": 24
+          },
+          {
+            "rank": 2,
+            "steps": 8,
+            "final_step": 24
+          },
+          {
+            "rank": 3,
+            "steps": 8,
+            "final_step": 24
+          }
+        ],
+        "loss_tolerance": {
+          "rtol": 1e-05,
+          "atol": 1e-06
+        },
+        "state_comparison": "exact SHA256 and geometry",
+        "controls_comparison": "exact"
+      },
+      {
+        "run": "/dev/shm/user7-aic-aiv-io-20261110/m0-retry/full-acceptance/ours-publication-recovery",
+        "status": "pass",
+        "ranks": [
+          {
+            "rank": 0,
+            "steps": 4,
+            "final_step": 8
+          },
+          {
+            "rank": 1,
+            "steps": 4,
+            "final_step": 8
+          },
+          {
+            "rank": 2,
+            "steps": 4,
+            "final_step": 8
+          },
+          {
+            "rank": 3,
+            "steps": 4,
+            "final_step": 8
+          }
+        ],
+        "loss_tolerance": {
+          "rtol": 1e-05,
+          "atol": 1e-06
+        },
+        "state_comparison": "exact SHA256 and geometry",
+        "controls_comparison": "exact"
+      }
+    ],
+    "scope": "targeted FULL correctness; no performance claim"
+  },
+  "admission": {
+    "npu_info": "+------------------------------------------------------------------------------------------------+\n| npu-smi 24.1.rc3                 Version: 24.1.rc3                                             |\n+---------------------------+---------------+----------------------------------------------------+\n| NPU   Name                | Health        | Power(W)    Temp(C)           Hugepages-Usage(page)|\n| Chip                      | Bus-Id        | AICore(%)   Memory-Usage(MB)  HBM-Usage(MB)        |\n+===========================+===============+====================================================+\n| 0     910B3               | OK            | 93.2        32                0    / 0             |\n| 0                         | 0000:C1:00.0  | 0           0    / 0          3401 / 65536         |\n+===========================+===============+====================================================+\n| 1     910B3               | OK            | 90.3        31                0    / 0             |\n| 0                         | 0000:C2:00.0  | 0           0    / 0          3398 / 65536         |\n+===========================+===============+====================================================+\n| 2     910B3               | OK            | 90.1        32                0    / 0             |\n| 0                         | 0000:81:00.0  | 0           0    / 0          3407 / 65536         |\n+===========================+===============+====================================================+\n| 3     910B3               | OK            | 90.5        32                0    / 0             |\n| 0                         | 0000:82:00.0  | 0           0    / 0          3406 / 65536         |\n+===========================+===============+====================================================+\n| 4     910B3               | OK            | 88.1        37                0    / 0             |\n| 0                         | 0000:01:00.0  | 0           0    / 0          3414 / 65536         |\n+===========================+===============+====================================================+\n| 5     910B3               | OK            | 97.6        36                0    / 0             |\n| 0                         | 0000:02:00.0  | 0           0    / 0          3414 / 65536         |\n+===========================+===============+====================================================+\n| 6     910B3               | OK            | 91.0        36                0    / 0             |\n| 0                         | 0000:41:00.0  | 0           0    / 0          3414 / 65536         |\n+===========================+===============+====================================================+\n| 7     910B3               | OK            | 91.8        37                0    / 0             |\n| 0                         | 0000:42:00.0  | 0           0    / 0          3414 / 65536         |\n+===========================+===============+====================================================+\n+---------------------------+---------------+----------------------------------------------------+\n| NPU     Chip              | Process id    | Process name             | Process memory(MB)      |\n+===========================+===============+====================================================+\n| No running processes found in NPU 0                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 1                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 2                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 3                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 4                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 5                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 6                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 7                                                            |\n+===========================+===============+====================================================+\n",
+    "output_tmpfs": "/dev/shm/user7-aic-aiv-io-20261110",
+    "durable_output": "/models/npu_nvme_exp/user7-stack/aic-aiv-io-20261110",
+    "tmpfs_free": 580499456000,
+    "durable_free": 12936339456
+  }
+}
