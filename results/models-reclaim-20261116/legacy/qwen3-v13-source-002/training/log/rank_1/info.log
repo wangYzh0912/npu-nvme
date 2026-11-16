@@ -1,0 +1,462 @@
+[INFO] 2026-09-11 21:17:46,205 [mindformers/tools/utils.py:165] set_output_path: set output path to '/models/npu_nvme_exp/user7-stack/qwen3-v13-source-002/training'
+[INFO] 2026-09-11 21:17:46,206 [mindformers/tools/utils.py:181] set_strategy_save_path: set strategy path to '/models/npu_nvme_exp/user7-stack/qwen3-v13-source-002/training/strategy/ckpt_strategy_rank_1.ckpt'
+[INFO] 2026-09-11 21:17:46,206 [mindformers/tools/utils.py:189] set_checkpoint_save_path: set checkpoint save path to `/models/npu_nvme_exp/user7-stack/qwen3-v13-source-002/training/checkpoint`
+[INFO] 2026-09-11 21:17:46,217 [mindformers/trainer/base_trainer.py:113] __init__: host_name: train06, host_ip: 11.11.10.28
+[INFO] 2026-09-11 21:17:46,217 [mindformers/trainer/base_trainer.py:119] __init__: Now Running Task is: text_generation, Model is: Qwen3
+[WARNING] 2026-09-11 21:17:46,217 [mindformers/trainer/base_trainer.py:149] __init__: Input model name is not in the supported list or unspecified.
+[WARNING] 2026-09-11 21:17:46,218 [mindformers/trainer/base_trainer.py:150] __init__: See the list of supported task and model name: ['common', 'glm4_9b']
+[WARNING] 2026-09-11 21:17:46,218 [mindformers/trainer/base_trainer.py:151] __init__: The default model config: /models/npu_nvme_exp/user7-stack/conda/lib/python3.11/site-packages/configs/general/run_general_task.yaml will now be used for the text_generation task 
+[INFO] 2026-09-11 21:17:46,219 [mindformers/trainer/trainer.py:1148] _init_model: ..........Init Model..........
+[INFO] 2026-09-11 21:17:46,219 [mindformers/trainer/trainer.py:1189] _init_callbacks: ..........Init Callbacks..........
+[INFO] 2026-09-11 21:17:46,219 [mindformers/trainer/trainer.py:328] __init__: ==========Trainer Init Success!==========
+[WARNING] 2026-09-11 21:17:46,220 [mindformers/trainer/trainer.py:1422] _warn_if_resume_training_is_string: The functionality of setting `resume_training` to a weight filename will be deprecated in future versions.
+[INFO] 2026-09-11 21:17:46,220 [mindformers/trainer/trainer.py:1148] _init_model: ..........Init Model..........
+[INFO] 2026-09-11 21:17:46,223 [mindformers/trainer/base_trainer.py:957] _train_dataset_preprocess: Got dataset config: dataset_strategy: [[1, 1], [1, 1], [1, 1], [1, 1], [1, 1, 1, 1]], column_names: ['input_ids', 'labels', 'loss_mask', 'position_ids', 'attention_mask'], construct_args_key: ['input_ids', 'labels', 'loss_mask', 'position_ids', 'attention_mask']
+[WARNING] 2026-09-11 21:17:46,223 [mindformers/trainer/base_trainer.py:871] _set_full_batch_with_strategy: `full_batch` will be deprecated in future interfaces, use `dataset_strategy` instead.
+[WARNING] 2026-09-11 21:17:46,223 [mindformers/trainer/base_trainer.py:316] _check_grad_accumulation_steps: The Lazy Inline compilation acceleration feature only works with using gradient_accumulation_steps > 1 when not in pipeline parallel mode (pipeline_stage = 1). Current pipeline stage=1 but gradient_accumulation_steps=1, the feature is disabled by default.
+[INFO] 2026-09-11 21:17:46,224 [mindformers/trainer/base_trainer.py:259] _check_global_batch_size_for_auto_parallel: The current parallel mode is semi_auto_parallel, full batch is False, batch size per card will be changed: per_batch_size = batch_size * micro_batch_interleave_num * gradient_accumulation_steps = 1 = 1 * 1 * 1).
+[INFO] 2026-09-11 21:17:46,224 [mindformers/trainer/base_trainer.py:265] _check_global_batch_size_for_auto_parallel: global_batch_size = per_batch_size * data_parallel = 1 * 1 = 1
+[INFO] 2026-09-11 21:17:46,224 [mindformers/trainer/base_trainer.py:1057] training_process: .........Build Dataset For Train..........
+[INFO] 2026-09-11 21:17:46,224 [mindformers/trainer/base_trainer.py:430] create_train_dataset: .........Build Dataset From Config..........
+[INFO] 2026-09-11 21:17:46,225 [mindformers/trainer/base_trainer.py:1061] training_process: Create train dataset finish, dataset size:11
+[INFO] 2026-09-11 21:17:46,225 [mindformers/trainer/utils.py:214] check_runner_config: Will be Training epochs:1, sink_size:1
+[INFO] 2026-09-11 21:17:46,225 [mindformers/trainer/utils.py:216] check_runner_config: Create training dataset finish, dataset size:11
+[INFO] 2026-09-11 21:17:46,226 [mindformers/trainer/base_trainer.py:1161] training_process: .........Build Net For Train..........
+[INFO] 2026-09-11 21:17:46,226 [mindformers/trainer/base_trainer.py:464] create_network: .........Build Network From Config..........
+[WARNING] 2026-09-11 21:17:46,228 [mindformers/models/model_config_utils.py:149] wrapper: Found unsupported HuggingFace arguments in Qwen3Config:
+[WARNING] 2026-09-11 21:17:46,228 [mindformers/models/model_config_utils.py:159] wrapper: +------------------------+---------------------------------------------+
+[WARNING] 2026-09-11 21:17:46,228 [mindformers/models/model_config_utils.py:160] wrapper: | Argument               | Status-Info                                 |
+[WARNING] 2026-09-11 21:17:46,228 [mindformers/models/model_config_utils.py:161] wrapper: |:-----------------------|:--------------------------------------------|
+[WARNING] 2026-09-11 21:17:46,229 [mindformers/models/model_config_utils.py:165] wrapper: | auto_map               | Useless                                     |
+[WARNING] 2026-09-11 21:17:46,229 [mindformers/models/model_config_utils.py:165] wrapper: | torch_dtype            | Useless, replace by compute_dtype           |
+[WARNING] 2026-09-11 21:17:46,229 [mindformers/models/model_config_utils.py:165] wrapper: | use_cache              | Useless, enable kv_cache by default in MF   |
+[WARNING] 2026-09-11 21:17:46,229 [mindformers/models/model_config_utils.py:165] wrapper: | transformers_version   | Useless                                     |
+[WARNING] 2026-09-11 21:17:46,229 [mindformers/models/model_config_utils.py:165] wrapper: | max_window_layers      | Useless                                     |
+[WARNING] 2026-09-11 21:17:46,229 [mindformers/models/model_config_utils.py:165] wrapper: | sliding_window         | Useless                                     |
+[WARNING] 2026-09-11 21:17:46,230 [mindformers/models/model_config_utils.py:165] wrapper: | use_sliding_window     | Useless                                     |
+[WARNING] 2026-09-11 21:17:46,230 [mindformers/models/model_config_utils.py:165] wrapper: | layer_types            | Useless                                     |
+[WARNING] 2026-09-11 21:17:46,230 [mindformers/models/model_config_utils.py:167] wrapper: +------------------------+---------------------------------------------+
+[INFO] 2026-09-11 21:17:46,249 [mindformers/parallel_core/transformer_config_utils.py:471] convert_to_transformer_config: These Keys of this model will do not need to be mapped: {'eos_token_id', 'top_k', 'model_type', 'mem_coeff', 'use_seq_parallel', 'multiple_of', 'seq_split_num', 'monitor_config', 'use_past', 'is_encoder_decoder', 'micro_batch_num', 'input_sliced_sig', 'bos_token_id', 'expert_parallel', 'temperature', 'quantization_config', 'top_p', 'pretrained_model_dir', 'rl_config', 'gradient_aggregation_group', 'do_sample', 'vocab_emb_dp', 'context_parallel', 'scaling_factor', 'dataset_config', 'ffn_dim_multiplier', 'return_extra_loss', 'pad_token_id', 'pipeline_stage', 'moe_config', '_name_or_path', 'qkv_concat', 'repetition_penalty', 'max_decode_length', 'architectures', 'quantization', 'tokenizer_class', 'type', 'checkpoint_name_or_path', 'is_sample_acceleration', 'context_parallel_algo', 'mindformers_version', 'optimizer_shard', 'model_parallel', 'data_parallel', 'ulysses_degree_in_cp'}
+[INFO] 2026-09-11 21:17:46,251 [mindformers/parallel_core/transformer_config_utils.py:520] convert_to_transformer_config: The converted TransformerConfig is: 
+{'batch_size': 1, 'parallel_config': None, 'pet_config': None, 'context_parallel_algo': 'colossalai_cp', 'is_dynamic': False, 'compute_dtype': mindspore.bfloat16, 'layernorm_compute_dtype': mindspore.float32, 'rotary_dtype': mindspore.float32, 'rotary_cos_format': 'rotate_half', 'bias_swiglu_fusion': False, 'mla_qkv_concat': True, 'use_contiguous_weight_layout_attention': False, 'use_interleaved_weight_layout_mlp': True, 'normalization': 'RMSNorm', 'fused_norm': True, 'add_bias_linear': False, 'add_mlp_fc1_bias_linear': None, 'add_mlp_fc2_bias_linear': None, 'gated_linear_unit': True, 'use_flash_attention': True, 'attention_pre_tokens': None, 'attention_next_tokens': None, 'rotary_seq_len_interpolation_factor': None, 'rope_scaling': None, 'use_rope_scaling': False, 'input_layout': 'BNSD', 'sparse_mode': 0, 'use_alibi_mask': False, 'use_attn_mask_compression': False, 'use_eod_attn_mask_compression': False, 'use_attention_mask': True, 'use_ring_attention': False, 'fp16_lm_cross_entropy': False, 'untie_embeddings_and_output_weights': True, 'hidden_act': 'silu', 'mask_func_type': 'attn_mask_fill', 'comp_comm_parallel': False, 'comp_comm_parallel_degree': 2, 'norm_topk_prob': True, 'use_fused_ops_topkrouter': False, 'use_shared_expert_gating': False, 'topk_method': 'greedy', 'npu_nums_per_device': 8, 'use_pad_tokens': True, 'callback_moe_droprate': False, 'moe_init_method_std': 0.01, 'first_k_dense_replace': None, 'moe_router_enable_expert_bias': False, 'moe_router_force_expert_balance': False, 'moe_router_score_function': 'softmax', 'moe_router_fusion': False, 'use_eod_reset': False, 'hidden_dropout': 0.0, 'residual_dtype': None, 'print_separate_loss': True, 'vocab_size': 151936, 'seq_length': 128, 'pad_token_id': 0, 'ignore_token_id': -100, 'max_position_embeddings': 40960, 'sandwich_norm': False, 'tie_word_embeddings': False, 'block_size': 32, 'num_blocks': 1024, 'parallel_decoding_params': None, 'pre_process': True, 'post_process': True, 'dispatch_global_max_bs': 0, 'attn_reduce_scatter': False, 'attn_allgather': False, 'attn_allreduce': True, 'ffn_reduce_scatter': False, 'ffn_allgather': False, 'ffn_allreduce': True, 'use_alltoall': False, 'use_fused_mla': False, 'quantization_config': None, 'disable_lazy_inline': True, 'data_parallel_size': 1, 'tensor_model_parallel_size': 4, 'pipeline_model_parallel_size': 1, 'virtual_pipeline_model_parallel_size': None, 'sequence_parallel': True, 'context_parallel_size': 1, 'hierarchical_context_parallel_sizes': 1, 'expert_model_parallel_size': 1, 'expert_tensor_parallel_size': None, 'micro_batch_num': 1, 'seq_split_num': 1, 'gradient_aggregation_group': 1, 'offset': 0, 'ulysses_degree_in_cp': 1, 'vocab_emb_dp': False, 'fp16': False, 'bf16': False, 'params_dtype': mindspore.float32, 'finalize_model_grads_func': None, 'grad_scale_func': None, 'grad_sync_func': None, 'param_sync_func': None, 'num_microbatches_with_partial_activation_checkpoints': None, 'cpu_offloading': False, 'cpu_offloading_num_layers': None, 'op_swap': None, 'default_prefetch': 1, 'num_layers': 36, 'mtp_num_layers': 0, 'mtp_loss_scaling_factor': None, 'hidden_size': 4096, 'num_attention_heads': 32, 'softmax_scale': None, 'num_query_groups': 8, 'ffn_hidden_size': 12288, 'kv_channels': 128, 'attention_dropout': 0.0, 'fp32_residual_connection': True, 'apply_residual_connection_post_layernorm': False, 'layernorm_epsilon': 1e-06, 'layernorm_zero_centered_gamma': False, 'add_qkv_bias': False, 'activation_func': 'gelu', 'num_moe_experts': None, 'rotary_interleaved': False, 'calculate_per_token_loss': None, 'multi_latent_attention': False, 'position_embedding_type': 'rope', 'rotary_base': 1000000, 'partial_rotary_factor': 1.0, 'qk_layernorm': False, 'init_method': <function init_method_normal.<locals>.init_ at 0xffff27614e00>, 'output_layer_init_method': <function scaled_init_method_normal.<locals>.init_ at 0xffff9bcab6a0>, 'init_method_std': 0.02, 'init_model_with_meta_device': False, 'apply_query_key_layer_scaling': False, 'attention_softmax_in_fp32': True, 'softmax_compute_dtype': mindspore.float32, 'disable_bf16_reduced_precision_matmul': False, 'bias_activation_fusion': False, 'masked_softmax_fusion': False, 'persist_layer_norm': False, 'memory_efficient_layer_norm': False, 'bias_dropout_fusion': False, 'apply_rope_fusion': False, 'recompute': True, 'select_recompute': False, 'parallel_optimizer_comm_recompute': True, 'select_comm_recompute': False, 'mp_comm_recompute': True, 'recompute_slice_activation': False, 'select_recompute_exclude': False, 'select_comm_recompute_exclude': False, 'moe_shared_expert_intermediate_size': None, 'moe_shared_expert_overlap': False, 'moe_layer_freq': 1, 'moe_ffn_hidden_size': 12288, 'moe_router_load_balancing_type': 'sub_seq_aux_loss', 'moe_router_topk': 2, 'moe_router_num_groups': None, 'moe_router_group_topk': None, 'moe_router_pre_softmax': False, 'moe_router_topk_scaling_factor': None, 'moe_router_dtype': mindspore.float32, 'moe_router_bias_update_rate': 0.001, 'moe_grouped_gemm': False, 'moe_aux_loss_coeff': 0.0, 'moe_z_loss_coeff': None, 'moe_input_jitter_eps': None, 'group_wise_a2a': False, 'moe_token_dispatcher_type': 'alltoall', 'moe_enable_deepep': False, 'moe_per_layer_logging': False, 'moe_expert_capacity_factor': None, 'moe_pad_expert_input_to_capacity': False, 'moe_token_drop_policy': 'probs', 'moe_permute_fusion': False, 'moe_apply_probs_on_input': False, 'shared_expert_num': 0, 'cp_comm_type': 'all_gather'}
+[INFO] 2026-09-11 21:17:46,251 [mindformers/version_control.py:103] decorator: The Lazy Inline compilation acceleration feature has been called, and the feature is disabled by default.
+[INFO] 2026-09-11 21:17:46,253 [mindformers/parallel_core/inference/parallel_state.py:297] initialize_moe_model_parallel: expert_model_parallel_size(1) is not equal to tensor_and_data_parallel_size(4), so we will use 4 as the MOE_tensor_parallel_size.
+[INFO] 2026-09-11 21:17:49,395 [mindformers/parallel_core/training_graph/transformer/utils.py:174] __init__: num_layers per stage: [[36]]
+[INFO] 2026-09-11 21:17:49,396 [mindformers/parallel_core/training_graph/transformer/utils.py:175] __init__: Accumulated num_layers per stage: [[36]]
+[INFO] 2026-09-11 21:17:49,396 [mindformers/parallel_core/training_graph/transformer/utils.py:177] __init__: Pipeline id list with start_stage: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+[INFO] 2026-09-11 21:17:49,396 [mindformers/parallel_core/training_graph/transformer/utils.py:178] __init__: Interleave id list: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+[INFO] 2026-09-11 21:17:49,396 [mindformers/parallel_core/training_graph/transformer/utils.py:196] __init__: Formative layer_recompute: [[36]]
+[INFO] 2026-09-11 21:17:49,397 [mindformers/parallel_core/training_graph/transformer/utils.py:198] __init__: The configuration of select_recompute_exclude and select_comm_recompute_exclude have the highest priority.
+[INFO] 2026-09-11 21:17:49,397 [mindformers/parallel_core/training_graph/transformer/utils.py:204] __init__: Formative select_recompute: {'mlp\\.shared_experts\\.mul': [[0]], 'mlp\\.shared_experts\\.activation_func\\.silu': [[0]], 'mlp\\.mul': [[0]], 'mlp\\.activation_func\\.silu': [[0]]}
+[INFO] 2026-09-11 21:17:49,397 [mindformers/parallel_core/training_graph/transformer/utils.py:205] __init__: Formative select_comm_recompute: {'.*\\.norm': [[0]]}
+[INFO] 2026-09-11 21:17:49,397 [mindformers/parallel_core/training_graph/transformer/utils.py:206] __init__: Formative select_recompute_exclude: {}
+[INFO] 2026-09-11 21:17:49,397 [mindformers/parallel_core/training_graph/transformer/utils.py:207] __init__: Formative select_comm_recompute_exclude: {}
+[INFO] 2026-09-11 21:17:49,534 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 0
+[INFO] 2026-09-11 21:17:49,628 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 1
+[INFO] 2026-09-11 21:17:49,715 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 2
+[INFO] 2026-09-11 21:17:49,800 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 3
+[INFO] 2026-09-11 21:17:49,884 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 4
+[INFO] 2026-09-11 21:17:49,967 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 5
+[INFO] 2026-09-11 21:17:50,050 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 6
+[INFO] 2026-09-11 21:17:50,133 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 7
+[INFO] 2026-09-11 21:17:50,216 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 8
+[INFO] 2026-09-11 21:17:50,299 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 9
+[INFO] 2026-09-11 21:17:50,382 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 10
+[INFO] 2026-09-11 21:17:50,464 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 11
+[INFO] 2026-09-11 21:17:50,546 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 12
+[INFO] 2026-09-11 21:17:50,629 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 13
+[INFO] 2026-09-11 21:17:50,712 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 14
+[INFO] 2026-09-11 21:17:50,795 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 15
+[INFO] 2026-09-11 21:17:50,877 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 16
+[INFO] 2026-09-11 21:17:50,962 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 17
+[INFO] 2026-09-11 21:17:51,045 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 18
+[INFO] 2026-09-11 21:17:51,127 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 19
+[INFO] 2026-09-11 21:17:51,210 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 20
+[INFO] 2026-09-11 21:17:51,293 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 21
+[INFO] 2026-09-11 21:17:51,376 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 22
+[INFO] 2026-09-11 21:17:51,458 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 23
+[INFO] 2026-09-11 21:17:51,542 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 24
+[INFO] 2026-09-11 21:17:51,625 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 25
+[INFO] 2026-09-11 21:17:51,707 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 26
+[INFO] 2026-09-11 21:17:51,789 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 27
+[INFO] 2026-09-11 21:17:51,872 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 28
+[INFO] 2026-09-11 21:17:51,954 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 29
+[INFO] 2026-09-11 21:17:52,038 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 30
+[INFO] 2026-09-11 21:17:52,121 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 31
+[INFO] 2026-09-11 21:17:52,206 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 32
+[INFO] 2026-09-11 21:17:52,559 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 33
+[INFO] 2026-09-11 21:17:52,644 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 34
+[INFO] 2026-09-11 21:17:52,729 [mindformers/parallel_core/training_graph/transformer/utils.py:413] set: Set full recompute at layer 35
+[INFO] 2026-09-11 21:17:52,761 [mindformers/generation/generation_config.py:242] from_pretrained: Loading Generate config from /models/Qwen3-8B/generation_config.json
+[INFO] 2026-09-11 21:17:52,762 [mindformers/trainer/base_trainer.py:478] create_network_without_param_init: Parameters are not initialized during model initialization.
+[INFO] 2026-09-11 21:17:52,763 [mindformers/utils/load_checkpoint_utils.py:84] get_load_path_after_hf_convert: .......Load Checkpoint format is hf safetensors, start convert to ms safetensors!.......
+[WARNING] 2026-09-11 21:17:52,763 [mindformers/utils/load_checkpoint_utils.py:494] process_hf_checkpoint: Notice: The converted path /models/npu_nvme_exp/user7-stack/qwen3-v13-source-002/training/qwen3_ms_converted_weight has already exist! The old converted weight will be overwritten!
+[INFO] 2026-09-11 21:17:52,764 [mindformers/utils/load_checkpoint_utils.py:497] process_hf_checkpoint: The Hugging Face checkpoint will be converted to MindSpore checkpoint at: '/models/npu_nvme_exp/user7-stack/qwen3-v13-source-002/training/qwen3_ms_converted_weight'.
+[INFO] 2026-09-11 21:17:52,764 [mindformers/tools/utils.py:744] barrier_world: Wait for the main rank to convert HuggingFace weight...
+[INFO] 2026-09-11 21:17:59,058 [mindformers/utils/load_checkpoint_utils.py:512] process_hf_checkpoint: Convert Hugging Face checkpoint successfully! The MindSpore checkpoint path is: '/models/npu_nvme_exp/user7-stack/qwen3-v13-source-002/training/qwen3_ms_converted_weight'.
+[INFO] 2026-09-11 21:17:59,080 [mindformers/trainer/base_trainer.py:733] count_parameters: Network Parameters: 8190 M.
+[INFO] 2026-09-11 21:17:59,080 [mindformers/trainer/base_trainer.py:1211] training_process: .........Build Optimizer For Train..........
+[INFO] 2026-09-11 21:17:59,080 [mindformers/trainer/base_trainer.py:584] create_optimizer_scheduler: .........Build Optimizer From Config..........
+[INFO] 2026-09-11 21:17:59,081 [mindformers/trainer/base_trainer.py:629] create_lr_scheduler: .........Build LR Schedule From Config..........
+[INFO] 2026-09-11 21:17:59,081 [mindformers/core/lr/lr_schedule.py:53] _get_lr_steps: Current warmup_ratio is 0, total_steps is 32, warmup_steps will be set to 0
+[INFO] 2026-09-11 21:17:59,082 [mindformers/trainer/base_trainer.py:667] create_lr_scheduler: warmup_lr_init is not set. The default value 0.0 will be applied.
+[WARNING] 2026-09-11 21:17:59,086 [mindformers/trainer/optimizer_grouped_parameters.py:79] get_optimizer_grouped_parameters: dynamic_lr_schedule will be reset and invalid when layer_scale is False.
+[INFO] 2026-09-11 21:17:59,092 [mindformers/trainer/optimizer_grouped_parameters.py:112] get_optimizer_grouped_parameters: Param groups = {
+  "decay": {
+    "weight_decay": 0.0,
+    "params": [
+      "embedding.word_embeddings.weight",
+      "decoder.layers.0.self_attention.linear_proj.weight",
+      "decoder.layers.0.self_attention.linear_qkv.weight",
+      "decoder.layers.0.mlp.linear_fc1.weight",
+      "decoder.layers.0.mlp.linear_fc2.weight",
+      "decoder.layers.1.self_attention.linear_proj.weight",
+      "decoder.layers.1.self_attention.linear_qkv.weight",
+      "decoder.layers.1.mlp.linear_fc1.weight",
+      "decoder.layers.1.mlp.linear_fc2.weight",
+      "decoder.layers.2.self_attention.linear_proj.weight",
+      "decoder.layers.2.self_attention.linear_qkv.weight",
+      "decoder.layers.2.mlp.linear_fc1.weight",
+      "decoder.layers.2.mlp.linear_fc2.weight",
+      "decoder.layers.3.self_attention.linear_proj.weight",
+      "decoder.layers.3.self_attention.linear_qkv.weight",
+      "decoder.layers.3.mlp.linear_fc1.weight",
+      "decoder.layers.3.mlp.linear_fc2.weight",
+      "decoder.layers.4.self_attention.linear_proj.weight",
+      "decoder.layers.4.self_attention.linear_qkv.weight",
+      "decoder.layers.4.mlp.linear_fc1.weight",
+      "decoder.layers.4.mlp.linear_fc2.weight",
+      "decoder.layers.5.self_attention.linear_proj.weight",
+      "decoder.layers.5.self_attention.linear_qkv.weight",
+      "decoder.layers.5.mlp.linear_fc1.weight",
+      "decoder.layers.5.mlp.linear_fc2.weight",
+      "decoder.layers.6.self_attention.linear_proj.weight",
+      "decoder.layers.6.self_attention.linear_qkv.weight",
+      "decoder.layers.6.mlp.linear_fc1.weight",
+      "decoder.layers.6.mlp.linear_fc2.weight",
+      "decoder.layers.7.self_attention.linear_proj.weight",
+      "decoder.layers.7.self_attention.linear_qkv.weight",
+      "decoder.layers.7.mlp.linear_fc1.weight",
+      "decoder.layers.7.mlp.linear_fc2.weight",
+      "decoder.layers.8.self_attention.linear_proj.weight",
+      "decoder.layers.8.self_attention.linear_qkv.weight",
+      "decoder.layers.8.mlp.linear_fc1.weight",
+      "decoder.layers.8.mlp.linear_fc2.weight",
+      "decoder.layers.9.self_attention.linear_proj.weight",
+      "decoder.layers.9.self_attention.linear_qkv.weight",
+      "decoder.layers.9.mlp.linear_fc1.weight",
+      "decoder.layers.9.mlp.linear_fc2.weight",
+      "decoder.layers.10.self_attention.linear_proj.weight",
+      "decoder.layers.10.self_attention.linear_qkv.weight",
+      "decoder.layers.10.mlp.linear_fc1.weight",
+      "decoder.layers.10.mlp.linear_fc2.weight",
+      "decoder.layers.11.self_attention.linear_proj.weight",
+      "decoder.layers.11.self_attention.linear_qkv.weight",
+      "decoder.layers.11.mlp.linear_fc1.weight",
+      "decoder.layers.11.mlp.linear_fc2.weight",
+      "decoder.layers.12.self_attention.linear_proj.weight",
+      "decoder.layers.12.self_attention.linear_qkv.weight",
+      "decoder.layers.12.mlp.linear_fc1.weight",
+      "decoder.layers.12.mlp.linear_fc2.weight",
+      "decoder.layers.13.self_attention.linear_proj.weight",
+      "decoder.layers.13.self_attention.linear_qkv.weight",
+      "decoder.layers.13.mlp.linear_fc1.weight",
+      "decoder.layers.13.mlp.linear_fc2.weight",
+      "decoder.layers.14.self_attention.linear_proj.weight",
+      "decoder.layers.14.self_attention.linear_qkv.weight",
+      "decoder.layers.14.mlp.linear_fc1.weight",
+      "decoder.layers.14.mlp.linear_fc2.weight",
+      "decoder.layers.15.self_attention.linear_proj.weight",
+      "decoder.layers.15.self_attention.linear_qkv.weight",
+      "decoder.layers.15.mlp.linear_fc1.weight",
+      "decoder.layers.15.mlp.linear_fc2.weight",
+      "decoder.layers.16.self_attention.linear_proj.weight",
+      "decoder.layers.16.self_attention.linear_qkv.weight",
+      "decoder.layers.16.mlp.linear_fc1.weight",
+      "decoder.layers.16.mlp.linear_fc2.weight",
+      "decoder.layers.17.self_attention.linear_proj.weight",
+      "decoder.layers.17.self_attention.linear_qkv.weight",
+      "decoder.layers.17.mlp.linear_fc1.weight",
+      "decoder.layers.17.mlp.linear_fc2.weight",
+      "decoder.layers.18.self_attention.linear_proj.weight",
+      "decoder.layers.18.self_attention.linear_qkv.weight",
+      "decoder.layers.18.mlp.linear_fc1.weight",
+      "decoder.layers.18.mlp.linear_fc2.weight",
+      "decoder.layers.19.self_attention.linear_proj.weight",
+      "decoder.layers.19.self_attention.linear_qkv.weight",
+      "decoder.layers.19.mlp.linear_fc1.weight",
+      "decoder.layers.19.mlp.linear_fc2.weight",
+      "decoder.layers.20.self_attention.linear_proj.weight",
+      "decoder.layers.20.self_attention.linear_qkv.weight",
+      "decoder.layers.20.mlp.linear_fc1.weight",
+      "decoder.layers.20.mlp.linear_fc2.weight",
+      "decoder.layers.21.self_attention.linear_proj.weight",
+      "decoder.layers.21.self_attention.linear_qkv.weight",
+      "decoder.layers.21.mlp.linear_fc1.weight",
+      "decoder.layers.21.mlp.linear_fc2.weight",
+      "decoder.layers.22.self_attention.linear_proj.weight",
+      "decoder.layers.22.self_attention.linear_qkv.weight",
+      "decoder.layers.22.mlp.linear_fc1.weight",
+      "decoder.layers.22.mlp.linear_fc2.weight",
+      "decoder.layers.23.self_attention.linear_proj.weight",
+      "decoder.layers.23.self_attention.linear_qkv.weight",
+      "decoder.layers.23.mlp.linear_fc1.weight",
+      "decoder.layers.23.mlp.linear_fc2.weight",
+      "decoder.layers.24.self_attention.linear_proj.weight",
+      "decoder.layers.24.self_attention.linear_qkv.weight",
+      "decoder.layers.24.mlp.linear_fc1.weight",
+      "decoder.layers.24.mlp.linear_fc2.weight",
+      "decoder.layers.25.self_attention.linear_proj.weight",
+      "decoder.layers.25.self_attention.linear_qkv.weight",
+      "decoder.layers.25.mlp.linear_fc1.weight",
+      "decoder.layers.25.mlp.linear_fc2.weight",
+      "decoder.layers.26.self_attention.linear_proj.weight",
+      "decoder.layers.26.self_attention.linear_qkv.weight",
+      "decoder.layers.26.mlp.linear_fc1.weight",
+      "decoder.layers.26.mlp.linear_fc2.weight",
+      "decoder.layers.27.self_attention.linear_proj.weight",
+      "decoder.layers.27.self_attention.linear_qkv.weight",
+      "decoder.layers.27.mlp.linear_fc1.weight",
+      "decoder.layers.27.mlp.linear_fc2.weight",
+      "decoder.layers.28.self_attention.linear_proj.weight",
+      "decoder.layers.28.self_attention.linear_qkv.weight",
+      "decoder.layers.28.mlp.linear_fc1.weight",
+      "decoder.layers.28.mlp.linear_fc2.weight",
+      "decoder.layers.29.self_attention.linear_proj.weight",
+      "decoder.layers.29.self_attention.linear_qkv.weight",
+      "decoder.layers.29.mlp.linear_fc1.weight",
+      "decoder.layers.29.mlp.linear_fc2.weight",
+      "decoder.layers.30.self_attention.linear_proj.weight",
+      "decoder.layers.30.self_attention.linear_qkv.weight",
+      "decoder.layers.30.mlp.linear_fc1.weight",
+      "decoder.layers.30.mlp.linear_fc2.weight",
+      "decoder.layers.31.self_attention.linear_proj.weight",
+      "decoder.layers.31.self_attention.linear_qkv.weight",
+      "decoder.layers.31.mlp.linear_fc1.weight",
+      "decoder.layers.31.mlp.linear_fc2.weight",
+      "decoder.layers.32.self_attention.linear_proj.weight",
+      "decoder.layers.32.self_attention.linear_qkv.weight",
+      "decoder.layers.32.mlp.linear_fc1.weight",
+      "decoder.layers.32.mlp.linear_fc2.weight",
+      "decoder.layers.33.self_attention.linear_proj.weight",
+      "decoder.layers.33.self_attention.linear_qkv.weight",
+      "decoder.layers.33.mlp.linear_fc1.weight",
+      "decoder.layers.33.mlp.linear_fc2.weight",
+      "decoder.layers.34.self_attention.linear_proj.weight",
+      "decoder.layers.34.self_attention.linear_qkv.weight",
+      "decoder.layers.34.mlp.linear_fc1.weight",
+      "decoder.layers.34.mlp.linear_fc2.weight",
+      "decoder.layers.35.self_attention.linear_proj.weight",
+      "decoder.layers.35.self_attention.linear_qkv.weight",
+      "decoder.layers.35.mlp.linear_fc1.weight",
+      "decoder.layers.35.mlp.linear_fc2.weight",
+      "output_layer.weight"
+    ]
+  },
+  "no_decay": {
+    "weight_decay": 0.0,
+    "params": [
+      "decoder.layers.0.input_layernorm.weight",
+      "decoder.layers.0.self_attention.q_layernorm.weight",
+      "decoder.layers.0.self_attention.k_layernorm.weight",
+      "decoder.layers.0.pre_mlp_layernorm.weight",
+      "decoder.layers.1.input_layernorm.weight",
+      "decoder.layers.1.self_attention.q_layernorm.weight",
+      "decoder.layers.1.self_attention.k_layernorm.weight",
+      "decoder.layers.1.pre_mlp_layernorm.weight",
+      "decoder.layers.2.input_layernorm.weight",
+      "decoder.layers.2.self_attention.q_layernorm.weight",
+      "decoder.layers.2.self_attention.k_layernorm.weight",
+      "decoder.layers.2.pre_mlp_layernorm.weight",
+      "decoder.layers.3.input_layernorm.weight",
+      "decoder.layers.3.self_attention.q_layernorm.weight",
+      "decoder.layers.3.self_attention.k_layernorm.weight",
+      "decoder.layers.3.pre_mlp_layernorm.weight",
+      "decoder.layers.4.input_layernorm.weight",
+      "decoder.layers.4.self_attention.q_layernorm.weight",
+      "decoder.layers.4.self_attention.k_layernorm.weight",
+      "decoder.layers.4.pre_mlp_layernorm.weight",
+      "decoder.layers.5.input_layernorm.weight",
+      "decoder.layers.5.self_attention.q_layernorm.weight",
+      "decoder.layers.5.self_attention.k_layernorm.weight",
+      "decoder.layers.5.pre_mlp_layernorm.weight",
+      "decoder.layers.6.input_layernorm.weight",
+      "decoder.layers.6.self_attention.q_layernorm.weight",
+      "decoder.layers.6.self_attention.k_layernorm.weight",
+      "decoder.layers.6.pre_mlp_layernorm.weight",
+      "decoder.layers.7.input_layernorm.weight",
+      "decoder.layers.7.self_attention.q_layernorm.weight",
+      "decoder.layers.7.self_attention.k_layernorm.weight",
+      "decoder.layers.7.pre_mlp_layernorm.weight",
+      "decoder.layers.8.input_layernorm.weight",
+      "decoder.layers.8.self_attention.q_layernorm.weight",
+      "decoder.layers.8.self_attention.k_layernorm.weight",
+      "decoder.layers.8.pre_mlp_layernorm.weight",
+      "decoder.layers.9.input_layernorm.weight",
+      "decoder.layers.9.self_attention.q_layernorm.weight",
+      "decoder.layers.9.self_attention.k_layernorm.weight",
+      "decoder.layers.9.pre_mlp_layernorm.weight",
+      "decoder.layers.10.input_layernorm.weight",
+      "decoder.layers.10.self_attention.q_layernorm.weight",
+      "decoder.layers.10.self_attention.k_layernorm.weight",
+      "decoder.layers.10.pre_mlp_layernorm.weight",
+      "decoder.layers.11.input_layernorm.weight",
+      "decoder.layers.11.self_attention.q_layernorm.weight",
+      "decoder.layers.11.self_attention.k_layernorm.weight",
+      "decoder.layers.11.pre_mlp_layernorm.weight",
+      "decoder.layers.12.input_layernorm.weight",
+      "decoder.layers.12.self_attention.q_layernorm.weight",
+      "decoder.layers.12.self_attention.k_layernorm.weight",
+      "decoder.layers.12.pre_mlp_layernorm.weight",
+      "decoder.layers.13.input_layernorm.weight",
+      "decoder.layers.13.self_attention.q_layernorm.weight",
+      "decoder.layers.13.self_attention.k_layernorm.weight",
+      "decoder.layers.13.pre_mlp_layernorm.weight",
+      "decoder.layers.14.input_layernorm.weight",
+      "decoder.layers.14.self_attention.q_layernorm.weight",
+      "decoder.layers.14.self_attention.k_layernorm.weight",
+      "decoder.layers.14.pre_mlp_layernorm.weight",
+      "decoder.layers.15.input_layernorm.weight",
+      "decoder.layers.15.self_attention.q_layernorm.weight",
+      "decoder.layers.15.self_attention.k_layernorm.weight",
+      "decoder.layers.15.pre_mlp_layernorm.weight",
+      "decoder.layers.16.input_layernorm.weight",
+      "decoder.layers.16.self_attention.q_layernorm.weight",
+      "decoder.layers.16.self_attention.k_layernorm.weight",
+      "decoder.layers.16.pre_mlp_layernorm.weight",
+      "decoder.layers.17.input_layernorm.weight",
+      "decoder.layers.17.self_attention.q_layernorm.weight",
+      "decoder.layers.17.self_attention.k_layernorm.weight",
+      "decoder.layers.17.pre_mlp_layernorm.weight",
+      "decoder.layers.18.input_layernorm.weight",
+      "decoder.layers.18.self_attention.q_layernorm.weight",
+      "decoder.layers.18.self_attention.k_layernorm.weight",
+      "decoder.layers.18.pre_mlp_layernorm.weight",
+      "decoder.layers.19.input_layernorm.weight",
+      "decoder.layers.19.self_attention.q_layernorm.weight",
+      "decoder.layers.19.self_attention.k_layernorm.weight",
+      "decoder.layers.19.pre_mlp_layernorm.weight",
+      "decoder.layers.20.input_layernorm.weight",
+      "decoder.layers.20.self_attention.q_layernorm.weight",
+      "decoder.layers.20.self_attention.k_layernorm.weight",
+      "decoder.layers.20.pre_mlp_layernorm.weight",
+      "decoder.layers.21.input_layernorm.weight",
+      "decoder.layers.21.self_attention.q_layernorm.weight",
+      "decoder.layers.21.self_attention.k_layernorm.weight",
+      "decoder.layers.21.pre_mlp_layernorm.weight",
+      "decoder.layers.22.input_layernorm.weight",
+      "decoder.layers.22.self_attention.q_layernorm.weight",
+      "decoder.layers.22.self_attention.k_layernorm.weight",
+      "decoder.layers.22.pre_mlp_layernorm.weight",
+      "decoder.layers.23.input_layernorm.weight",
+      "decoder.layers.23.self_attention.q_layernorm.weight",
+      "decoder.layers.23.self_attention.k_layernorm.weight",
+      "decoder.layers.23.pre_mlp_layernorm.weight",
+      "decoder.layers.24.input_layernorm.weight",
+      "decoder.layers.24.self_attention.q_layernorm.weight",
+      "decoder.layers.24.self_attention.k_layernorm.weight",
+      "decoder.layers.24.pre_mlp_layernorm.weight",
+      "decoder.layers.25.input_layernorm.weight",
+      "decoder.layers.25.self_attention.q_layernorm.weight",
+      "decoder.layers.25.self_attention.k_layernorm.weight",
+      "decoder.layers.25.pre_mlp_layernorm.weight",
+      "decoder.layers.26.input_layernorm.weight",
+      "decoder.layers.26.self_attention.q_layernorm.weight",
+      "decoder.layers.26.self_attention.k_layernorm.weight",
+      "decoder.layers.26.pre_mlp_layernorm.weight",
+      "decoder.layers.27.input_layernorm.weight",
+      "decoder.layers.27.self_attention.q_layernorm.weight",
+      "decoder.layers.27.self_attention.k_layernorm.weight",
+      "decoder.layers.27.pre_mlp_layernorm.weight",
+      "decoder.layers.28.input_layernorm.weight",
+      "decoder.layers.28.self_attention.q_layernorm.weight",
+      "decoder.layers.28.self_attention.k_layernorm.weight",
+      "decoder.layers.28.pre_mlp_layernorm.weight",
+      "decoder.layers.29.input_layernorm.weight",
+      "decoder.layers.29.self_attention.q_layernorm.weight",
+      "decoder.layers.29.self_attention.k_layernorm.weight",
+      "decoder.layers.29.pre_mlp_layernorm.weight",
+      "decoder.layers.30.input_layernorm.weight",
+      "decoder.layers.30.self_attention.q_layernorm.weight",
+      "decoder.layers.30.self_attention.k_layernorm.weight",
+      "decoder.layers.30.pre_mlp_layernorm.weight",
+      "decoder.layers.31.input_layernorm.weight",
+      "decoder.layers.31.self_attention.q_layernorm.weight",
+      "decoder.layers.31.self_attention.k_layernorm.weight",
+      "decoder.layers.31.pre_mlp_layernorm.weight",
+      "decoder.layers.32.input_layernorm.weight",
+      "decoder.layers.32.self_attention.q_layernorm.weight",
+      "decoder.layers.32.self_attention.k_layernorm.weight",
+      "decoder.layers.32.pre_mlp_layernorm.weight",
+      "decoder.layers.33.input_layernorm.weight",
+      "decoder.layers.33.self_attention.q_layernorm.weight",
+      "decoder.layers.33.self_attention.k_layernorm.weight",
+      "decoder.layers.33.pre_mlp_layernorm.weight",
+      "decoder.layers.34.input_layernorm.weight",
+      "decoder.layers.34.self_attention.q_layernorm.weight",
+      "decoder.layers.34.self_attention.k_layernorm.weight",
+      "decoder.layers.34.pre_mlp_layernorm.weight",
+      "decoder.layers.35.input_layernorm.weight",
+      "decoder.layers.35.self_attention.q_layernorm.weight",
+      "decoder.layers.35.self_attention.k_layernorm.weight",
+      "decoder.layers.35.pre_mlp_layernorm.weight",
+      "decoder.final_layernorm.weight"
+    ]
+  }
+}
+[INFO] 2026-09-11 21:17:59,092 [mindformers/core/optim/build_optim.py:39] get_tft_wrapped_cls: tft is not valid
+[INFO] 2026-09-11 21:17:59,311 [mindformers/trainer/base_trainer.py:623] create_optimizer_scheduler_without_param_init: Parameters are not initialized during optimizer initialization.
+[INFO] 2026-09-11 21:17:59,311 [mindformers/trainer/base_trainer.py:1221] training_process: .........Build Running Wrapper From Config For Train..........
+[INFO] 2026-09-11 21:17:59,311 [mindformers/trainer/base_trainer.py:672] create_model_wrapper: .........Build Model Wrapper for Train From Config..........
+[INFO] 2026-09-11 21:17:59,322 [mindformers/trainer/base_trainer.py:1238] training_process: .........Build Callbacks For Train..........
+[INFO] 2026-09-11 21:17:59,323 [mindformers/trainer/base_trainer.py:1289] training_process: Recommend using weights in the safetensors format.
+[INFO] 2026-09-11 21:17:59,324 [mindformers/core/callback/callback.py:1304] __init__: Integrated_save is changed to False when using auto_parallel.
+[INFO] 2026-09-11 21:17:59,325 [mindformers/trainer/base_trainer.py:1362] training_process: .........Starting Init Train Model..........
+[INFO] 2026-09-11 21:17:59,325 [mindformers/utils/load_checkpoint_utils.py:257] load_checkpoint_with_safetensors: ......Start load checkpoint from safetensors......
+[INFO] 2026-09-11 21:17:59,326 [mindformers/utils/load_checkpoint_utils.py:262] load_checkpoint_with_safetensors: Load checkpoint from /models/npu_nvme_exp/user7-stack/qwen3-v13-source-002/training/qwen3_ms_converted_weight.
+[INFO] 2026-09-11 21:17:59,326 [mindformers/utils/load_checkpoint_utils.py:280] load_checkpoint_with_safetensors: ......Use multi checkpoint file mode......
+[INFO] 2026-09-11 21:17:59,326 [mindformers/checkpoint/utils.py:439] compile_model: .........Compiling model.........
+[INFO] 2026-09-11 21:20:42,461 [mindformers/checkpoint/utils.py:456] compile_model: Time spent compiling the model: 163.13 seconds
+[INFO] 2026-09-11 21:20:58,453 [mindformers/utils/load_checkpoint_utils.py:618] get_merged_dst_strategy_path: merge dst strategy finished.
+[INFO] 2026-09-11 21:20:58,482 [mindformers/utils/load_checkpoint_utils.py:413] load_safetensors_checkpoint: ......Start load distributed checkpoint to model......
+[INFO] 2026-09-11 21:21:29,006 [mindformers/utils/load_checkpoint_utils.py:437] load_safetensors_checkpoint: load checkpoint unified: /models/npu_nvme_exp/user7-stack/qwen3-v13-source-002/training/qwen3_ms_converted_weight
+[INFO] 2026-09-11 21:21:29,010 [mindformers/trainer/base_trainer.py:1442] training_process: .........Model Compiling, Please Wait a Moment...........
+[INFO] 2026-09-11 21:21:29,010 [mindformers/trainer/base_trainer.py:1444] training_process: .........train network delay initialize..........
+[INFO] 2026-09-11 21:21:29,030 [mindformers/trainer/base_trainer.py:1447] training_process: .........optimizer delay initialize..........
+[INFO] 2026-09-11 21:21:29,283 [mindformers/trainer/base_trainer.py:1449] training_process: .........Starting Training Model..........
+[INFO] 2026-09-11 21:21:54,878 [mindformers/core/callback/callback.py:470] _calculate_model_flops: Full model flops is 1482065707008, Shard model flops is 1460322435072.
+[INFO] 2026-09-11 21:21:54,880 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    1/   11], loss: 0.760953, per_step_time: 24337ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [16.585358], train_throughput_per_npu: 0.015T
+[INFO] 2026-09-11 21:21:54,882 [mindformers/core/callback/callback.py:560] print_output_info:    9.1% |████                                              | 0.01027 samples/s/p  0:04:03 }
+[INFO] 2026-09-11 21:21:56,455 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    2/   11], loss: 0.749205, per_step_time: 621ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [16.451426], train_throughput_per_npu: 0.596T
+[INFO] 2026-09-11 21:21:56,462 [mindformers/core/callback/callback.py:560] print_output_info:   18.2% |█████████                                         | 0.40215 samples/s/p  0:00:05 }
+[INFO] 2026-09-11 21:21:57,057 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    3/   11], loss: 0.726853, per_step_time: 575ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [16.138592], train_throughput_per_npu: 0.644T
+[INFO] 2026-09-11 21:21:57,058 [mindformers/core/callback/callback.py:560] print_output_info:   27.3% |█████████████                                     | 0.43436 samples/s/p  0:00:04 }
+[INFO] 2026-09-11 21:21:57,692 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    4/   11], loss: 0.717433, per_step_time: 624ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [15.891543], train_throughput_per_npu: 0.593T
+[INFO] 2026-09-11 21:21:57,693 [mindformers/core/callback/callback.py:560] print_output_info:   36.4% |██████████████████                                | 0.40021 samples/s/p  0:00:04 }
+[INFO] 2026-09-11 21:21:58,294 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    5/   11], loss: 0.633773, per_step_time: 593ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [14.002733], train_throughput_per_npu: 0.624T
+[INFO] 2026-09-11 21:21:58,296 [mindformers/core/callback/callback.py:560] print_output_info:   45.5% |██████████████████████                            | 0.42122 samples/s/p  0:00:03 }
+[INFO] 2026-09-11 21:21:58,890 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    6/   11], loss: 0.629069, per_step_time: 586ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [13.973028], train_throughput_per_npu: 0.631T
+[INFO] 2026-09-11 21:21:58,892 [mindformers/core/callback/callback.py:560] print_output_info:   54.5% |███████████████████████████                       | 0.42596 samples/s/p  0:00:02 }
+[INFO] 2026-09-11 21:21:59,497 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    7/   11], loss: 0.607278, per_step_time: 597ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [13.418738], train_throughput_per_npu: 0.620T
+[INFO] 2026-09-11 21:21:59,499 [mindformers/core/callback/callback.py:560] print_output_info:   63.6% |███████████████████████████████                   | 0.41819 samples/s/p  0:00:02 }
+[INFO] 2026-09-11 21:22:00,086 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    8/   11], loss: 0.601853, per_step_time: 579ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [13.148215], train_throughput_per_npu: 0.639T
+[INFO] 2026-09-11 21:22:00,087 [mindformers/core/callback/callback.py:560] print_output_info:   72.7% |████████████████████████████████████              | 0.43106 samples/s/p  0:00:01 }
+[INFO] 2026-09-11 21:22:00,088 [mindformers/core/callback/callback.py:1435] save_checkpoint: ......Saving ckpt......
+[INFO] 2026-09-11 21:22:00,088 [mindformers/core/callback/callback.py:1494] save_checkpoint: global_batch_size: 1
+[INFO] 2026-09-11 21:22:00,089 [mindformers/core/callback/callback.py:1495] save_checkpoint: epoch_num: 8
+[INFO] 2026-09-11 21:22:00,089 [mindformers/core/callback/callback.py:1496] save_checkpoint: step_num: 8
+[INFO] 2026-09-11 21:22:00,089 [mindformers/core/callback/callback.py:1497] save_checkpoint: global_step: 8
+[INFO] 2026-09-11 21:22:23,763 [mindformers/core/callback/callback.py:1350] output_if_exists: Finish saving ckpt of epoch 8 step 1 using 23.384 seconds
+[INFO] 2026-09-11 21:22:52,049 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[    9/   11], loss: 0.446992, per_step_time: 2737ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [9.610822], train_throughput_per_npu: 0.135T
+[INFO] 2026-09-11 21:22:52,051 [mindformers/core/callback/callback.py:560] print_output_info:   81.8% |████████████████████████████████████████          | 0.09132 samples/s/p  0:00:05 }
+[INFO] 2026-09-11 21:22:53,026 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[   10/   11], loss: 0.436722, per_step_time: 967ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [9.395354], train_throughput_per_npu: 0.383T
+[INFO] 2026-09-11 21:22:53,027 [mindformers/core/callback/callback.py:560] print_output_info:   90.9% |█████████████████████████████████████████████     | 0.25840 samples/s/p  0:00:00 }
+[INFO] 2026-09-11 21:22:53,729 [mindformers/core/callback/callback.py:544] print_output_info: { Epoch:[  1/  1], step:[   11/   11], loss: 0.425019, per_step_time: 694ms, lr: 1e-06, overflow cond: False, loss_scale: 1.0, global_norm: [9.289402], train_throughput_per_npu: 0.534T
+[INFO] 2026-09-11 21:22:53,730 [mindformers/core/callback/callback.py:560] print_output_info:   100.0% |██████████████████████████████████████████████████| 0.36022 samples/s/p  0:00:00 }
+[INFO] 2026-09-11 21:23:17,777 [mindformers/core/callback/callback.py:1435] save_checkpoint: ......Saving ckpt......
+[INFO] 2026-09-11 21:23:17,778 [mindformers/core/callback/callback.py:1494] save_checkpoint: global_batch_size: 1
+[INFO] 2026-09-11 21:23:17,778 [mindformers/core/callback/callback.py:1495] save_checkpoint: epoch_num: 11
+[INFO] 2026-09-11 21:23:17,778 [mindformers/core/callback/callback.py:1496] save_checkpoint: step_num: 11
+[INFO] 2026-09-11 21:23:17,778 [mindformers/core/callback/callback.py:1497] save_checkpoint: global_step: 11
+[INFO] 2026-09-11 21:23:48,595 [mindformers/core/callback/callback.py:1350] output_if_exists: Finish saving ckpt of epoch 11 step 1 using 29.311 seconds
+[INFO] 2026-09-11 21:23:48,596 [mindformers/trainer/base_trainer.py:1458] training_process: .........Training Over!.............
