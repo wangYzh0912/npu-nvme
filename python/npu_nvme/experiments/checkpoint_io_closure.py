@@ -85,6 +85,23 @@ def parse_hbm(text):
     return result
 
 
+def process_tree(roots, *, proc_root=Path('/proc')):
+    """Discover supervisor descendants even when workers call setsid()."""
+    children={};identities={}
+    for path in Path(proc_root).glob('[0-9]*/stat'):
+        try:fields=path.read_text().rsplit(')',1)[1].split()
+        except (FileNotFoundError,ProcessLookupError):continue
+        if fields[0]=='Z':continue
+        pid=int(path.parent.name);parent=int(fields[1])
+        identities[pid]=int(fields[19]);children.setdefault(parent,[]).append(pid)
+    found={};pending=list(roots)
+    while pending:
+        pid=pending.pop()
+        if pid in found or pid not in identities:continue
+        found[pid]=identities[pid];pending.extend(children.get(pid,()))
+    return found
+
+
 class ResourceSampler:
     """Supervisor-owned 1 Hz samples; observed maxima are lower bounds on peaks."""
     def __init__(self, path):
@@ -93,19 +110,20 @@ class ResourceSampler:
     def due(self):
         return time.monotonic_ns()-self.last_ns>=10**9
 
-    def sample(self, pids):
+    def sample(self, roots):
         now=time.monotonic_ns()
         if now-self.last_ns<10**9:return
         self.last_ns=now;processes=[]
-        for pid in sorted(set(pids)):
+        identities=process_tree(roots)
+        for pid in sorted(identities):
             try:status=Path('/proc',str(pid),'status').read_text()
-            except FileNotFoundError:continue  # exited between process discovery and sampling
+            except (FileNotFoundError,ProcessLookupError):continue
             values={}
             for line in status.splitlines():
                 key,_,value=line.partition(':')
                 if key in ('VmRSS','VmHWM','VmSize','RssAnon','RssFile','RssShmem'):
                     values[key+'_kib']=int(value.split()[0])
-            processes.append(dict(pid=pid,**values))
+            processes.append(dict(pid=pid,start_ticks=identities[pid],**values))
         smi=subprocess.check_output(['npu-smi','info'],text=True,timeout=30)
         hbm=parse_hbm(smi)
         row=dict(begin_ns=now,end_ns=time.monotonic_ns(),processes=processes,

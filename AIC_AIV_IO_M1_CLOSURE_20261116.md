@@ -13,8 +13,8 @@ TrainingCheckpoint、RankSession、单 NVMe owner 到既有 ABI3 传输。
 - 只用既有登记 raw83 的 [256,1280) GiB 范围，绝不格式化。
 - 新执行分支 codex/checkpoint-io-m1-closure-20261116 从 266bb35f 派生。
   源身份、候选二进制哈希、全部 E2 顺序在首个训练进程前登记；运行中禁止修改源或 HEAD。
-- 默认原始目录 /dev/shm/user7-aic-aiv-io-closure-20261116；
-  持久证据 /home/user7/npu-nvme-evidence/aic-aiv-io-20261116。
+- 默认原始目录 /dev/shm/user7-aic-aiv-io-closure-20261116-r1；
+  持久证据 /home/user7/npu-nvme-evidence/aic-aiv-io-20261116-r1。
   每个进程前检查设备/lease、96 GiB tmpfs 和 8 GiB 持久空间。
 - 顺序 E1 → E4 → E2/E3。E4 先行可尽早暴露本机 profiler 支持问题；
   它始终是独立进程，绝不参与正式性能统计。任一门槛失败即停止后续运行。
@@ -112,3 +112,10 @@ result.json 持续记录 active_run、阶段、错误和各 gate。每个完成�
 
 启动前只读 preflight 通过：NPU4–7 空闲，tmpfs 约277.6 GiB、
 持久目录约9.6 GiB 可用。硬件是否通过只以本轮 result.json 的完成门槛为准。
+
+首个 E1/T0 启动检查复现：MindSpore worker 调用 setsid，按 master 进程组采样
+漏掉四个 rank。原始尝试 aic-aiv-io-20261116 保留，不进入正式统计；让它正常
+完成安全关闭，再由覆盖门槛拒绝。运行中的源/HEAD 不变。
+修正在独立工作树验证：改为 supervisor 的完整 PPID 子树，不受 session/process-group
+变化影响；记录进程内核 start ticks。新增两个回归用例后357项通过，
+对当前四个 live rank 的只读采样确认覆盖齐全。修正后以 -r1 新目录重新执行全队列。

@@ -24,8 +24,8 @@ from npu_nvme.experiments.checkpoint_io_events import read_events
 from npu_nvme.experiments.checkpoint_io_closure import (complete_timeline,lifecycle_gate,
     overhead_gate,device_summary,dependency_bound)
 
-DEFAULT_RAW=Path('/dev/shm/user7-aic-aiv-io-closure-20261116')
-DEFAULT_RESULTS=Path('/home/user7/npu-nvme-evidence/aic-aiv-io-20261116')
+DEFAULT_RAW=Path('/dev/shm/user7-aic-aiv-io-closure-20261116-r1')
+DEFAULT_RESULTS=Path('/home/user7/npu-nvme-evidence/aic-aiv-io-20261116-r1')
 ORDERS=(METHODS,('checkpoint_io_sink','ours','none'),('ours','none','checkpoint_io_sink'))
 
 

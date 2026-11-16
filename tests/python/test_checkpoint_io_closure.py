@@ -8,6 +8,7 @@ from npu_nvme.experiments.checkpoint_io import FIELDS
 from npu_nvme.experiments.checkpoint_io_closure import (Boundary,boundary_coverage,
     complete_timeline,overhead_gate,parse_hbm,native_snapshot,verify_drained,lifecycle_gate)
 from npu_nvme.experiments.checkpoint_io_closure import device_summary,dependency_bound
+from npu_nvme.experiments.checkpoint_io_closure import process_tree
 from tools.checkpoint_io_closure import schedule
 from tools.checkpoint_io import archive_run
 
@@ -126,6 +127,23 @@ def test_hbm_parser_preserves_physical_mapping_and_rejects_missing_devices():
     result=parse_hbm(text)
     assert result['6']==dict(used_mib=3406,total_mib=65536)
     with pytest.raises(ValueError,match='4..7'):parse_hbm(text.replace('7 910B3','8 910B3'))
+
+
+def test_process_tree_includes_workers_in_independent_sessions(tmp_path):
+    for pid,parent,group in ((100,1,100),(101,100,101),(102,100,102),(103,101,101),(200,1,200)):
+        directory=tmp_path/str(pid);directory.mkdir()
+        fields=['S',str(parent),str(group),str(group)]+['0']*15+[str(pid*1000)]
+        (directory/'stat').write_text(str(pid)+' (python worker) '+' '.join(fields))
+    assert process_tree([100],proc_root=tmp_path)=={100:100000,101:101000,102:102000,103:103000}
+
+
+def test_process_tree_ignores_exited_processes_but_rejects_invalid_records(tmp_path):
+    directory=tmp_path/'100';directory.mkdir()
+    fields=['Z','1','100','100']+['0']*15+['1000']
+    path=directory/'stat';path.write_text('100 (python) '+' '.join(fields))
+    assert process_tree([100],proc_root=tmp_path)=={}
+    path.write_text('invalid')
+    with pytest.raises(IndexError):process_tree([100],proc_root=tmp_path)
 
 
 def test_native_counter_scope_and_errors_are_explicit():

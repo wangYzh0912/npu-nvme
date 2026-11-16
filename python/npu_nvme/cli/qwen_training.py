@@ -162,7 +162,7 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 sampler=ResourceSampler(output/'resource-samples.jsonl')
             while training.poll() is None:
                 if sampler and sampler.due():
-                    try:sampler.sample([os.getpid()]+[member['pid'] for child in children for member in members(child.pid)])
+                    try:sampler.sample([os.getpid()])
                     except Exception as error:
                         # Observation failure fails acceptance, after existing DMA owners close normally.
                         sample_error=error;sampler=None
