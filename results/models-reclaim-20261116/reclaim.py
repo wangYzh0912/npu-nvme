@@ -40,10 +40,9 @@ def main():
             or remote['status'] != 'pass'
             or remote['cleanup_plan_sha256'] != hashlib.sha256(content).hexdigest()):
         raise ValueError('remote archival proof does not cover this exact payload plan')
-    with (BASE / 'hardware-campaign.lock').open('a+') as lock:
+    # Filesystem payload cleanup has its own owner; it does not use NPU/raw media.
+    with (ARCHIVE / '.reclaim.lock').open('a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        if (BASE / 'hardware-campaign.lease.json').exists():
-            raise RuntimeError('hardware campaign has a lease')
         selected = [verify_payload(row) for row in plan['payloads']]
         identities = {identity for _, identity in selected}
         if len(identities) != 32:

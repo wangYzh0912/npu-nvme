@@ -1,4 +1,5 @@
 import importlib.util
+import fcntl
 from pathlib import Path
 import tempfile
 import unittest
@@ -55,6 +56,20 @@ class OrchestrationTests(unittest.TestCase):
                 reclaim.verify_payload(row)
             with self.assertRaisesRegex(ValueError, 'outside exact'):
                 reclaim.verify_payload(dict(row, path=str(root / 'Qwen3-8B/weights.safetensors')))
+
+    def test_idle_devices_do_not_override_an_existing_hardware_flock(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            lock_path = root / 'hardware.lock'
+            idle = chr(10).join('No running processes found in NPU ' + str(i) for i in range(4, 8))
+            config = dict(npu_ids=[4, 5, 6, 7], hardware_lock=str(lock_path))
+            saved = []
+            with lock_path.open('a+') as owner:
+                fcntl.flock(owner, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with patch.object(continuation, 'BASE', root), patch.object(continuation, 'save', side_effect=lambda p, v: saved.append(v)), patch.object(continuation.subprocess, 'check_output', return_value=idle), patch.object(continuation.time, 'sleep', side_effect=lambda _: fcntl.flock(owner, fcntl.LOCK_UN)):
+                    continuation.wait_for_idle(config)
+            self.assertEqual([r['hardware_lock_available'] for r in saved], [False, True])
+            self.assertEqual([r['status'] for r in saved], ['waiting_for_hardware', 'ready'])
 
 
 if __name__ == '__main__':

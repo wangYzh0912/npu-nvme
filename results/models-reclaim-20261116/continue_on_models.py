@@ -5,6 +5,7 @@ The former tmpfs E1 timings keep their original storage identity. All newly
 executed restores, profiler captures and A/B runs use /models output paths.
 """
 import copy
+import fcntl
 import hashlib
 import json
 import os
@@ -30,10 +31,17 @@ def wait_for_idle(config):
         info = subprocess.check_output(['npu-smi', 'info'], text=True, timeout=30)
         lease = Path(config['hardware_lock']).with_suffix('.lease.json')
         idle = all(f'No running processes found in NPU {device}' in info for device in config['npu_ids'])
-        ready = idle and not lease.exists()
+        with Path(config['hardware_lock']).open('a+') as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                lock_available = False
+            else:
+                lock_available = True
+        ready = idle and not lease.exists() and lock_available
         save(status, dict(status='ready' if ready else 'waiting_for_hardware',
             pid=os.getpid(), updated_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
-            devices=config['npu_ids'], devices_idle=idle, lease_present=lease.exists(),
+            devices=config['npu_ids'], devices_idle=idle, lease_present=lease.exists(), hardware_lock_available=lock_available,
             npu_info=info, behavior='Wait without terminating or changing other workloads. Recheck admission before each run.'))
         if ready:
             return
@@ -66,6 +74,16 @@ def main():
         raise ValueError('expected three completed E1 saves and no active run')
     if (BASE / 'raw').exists() or (BASE / 'evidence').exists():
         raise FileExistsError('continuation output already exists; inspect it before retry')
+    staged = BASE / 'relocated-e1'
+    staged.mkdir(parents=True, exist_ok=False)
+    save(BASE / 'execution/preparation.json', dict(status='hashing_and_relocating_e1', pid=os.getpid()))
+    before = file_map(OLD_RAW)
+    save(BASE / 'execution/relocation-source-files.json', before)
+    subprocess.run(['cp', '-a', str(OLD_RAW) + '/.', str(staged) + '/'], check=True)
+    if file_map(staged) != before:
+        raise ValueError('relocated E1 files differ by path, size or full SHA256')
+    save(BASE / 'execution/preparation.json', dict(status='relocation_verified_waiting_for_hardware',
+        files=len(before), logical_bytes=sum(row['bytes'] for row in before.values()), pid=os.getpid()))
     config = base_config(ROOT / 'config/qwen_training.json')
     wait_for_idle(config)
     campaign = ModelsCampaign(config, BASE / 'raw', BASE / 'evidence')
@@ -83,9 +101,9 @@ def main():
         if campaign.identity != old['source_identity'] or campaign.binaries != old['binary_sha256']:
             raise ValueError('frozen execution source or binaries differ from completed E1')
         campaign.frozen()
-        before = file_map(OLD_RAW)
         save(campaign.out / 'relocation-source-files.json', before)
-        subprocess.run(['cp', '-a', str(OLD_RAW) + '/.', str(campaign.raw) + '/'], check=True)
+        campaign.raw.rmdir()
+        staged.rename(campaign.raw)
         after = file_map(campaign.raw)
         if after != before:
             raise ValueError('relocated E1 files differ by path, size or full SHA256')
