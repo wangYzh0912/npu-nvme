@@ -1,0 +1,21 @@
+{
+  "execution_status": "completed",
+  "validation_status": "fail",
+  "method": "checkpoint_io_sink",
+  "lifecycle": {
+    "supervisor_begin_ns": 3477018898553564,
+    "training_launch_ns": 3477045423661578,
+    "children_exited_ns": 3477294814734561,
+    "safe_close_end_ns": 3477294940787793
+  },
+  "error": "RuntimeError('training or owner failed / descendants retained')",
+  "end_to_end": {
+    "launch_to_safe_close_seconds": 276.042234229,
+    "tokens": 4096,
+    "tokens_per_second": 14.838309113967059,
+    "includes": "supervisor preflight, owner startup/mount, worker startup, compilation, initial/final validation, training and close/drain",
+    "children_remaining": [],
+    "retained": [],
+    "lease_released": true
+  }
+}
