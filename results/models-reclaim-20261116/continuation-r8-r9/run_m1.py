@@ -14,7 +14,7 @@ PREVIOUS = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r2
 BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r9')
 LIBRARY = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r5/execution/native-build/libnpu_nvme.so.3.0')
 HUGEPAGES = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r8/execution/hugepages')
-EXPECTED_COMMIT = '7b5cf9accaa25c687ef7668e3b0e9b5b08276b15'
+EXPECTED_COMMIT = 'e227968cdbf126d0f14bf5525916af361959246f'
 SHM_BASE = 82000
 DPDK_ARGS = f'--iova-mode=va --huge-dir={HUGEPAGES}'
 
