@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import pwd
 import signal
 import socket
 import subprocess
@@ -18,6 +19,22 @@ from npu_nvme.runtime import training_catalog as catalog
 from npu_nvme.runtime.qwen_config import resolve,METHODS
 
 ROOT=Path(__file__).resolve().parents[3]
+
+
+def profiler_worker_identity(config, env, output):
+    """Run device-profiler workers as the owner of their selected CANN stack."""
+    if not config.get('io_experiment',{}).get('device_profile'):
+        return None,env
+    toolkit=Path(env['ASCEND_HOME_PATH'])
+    uid=toolkit.stat().st_uid
+    if uid==os.geteuid():return None,env
+    if os.geteuid()!=0:
+        raise PermissionError('device profiler must run as the selected CANN owner')
+    account=pwd.getpwuid(uid)
+    groups=os.getgrouplist(account.pw_name,account.pw_gid)
+    os.chown(output,uid,account.pw_gid)
+    child_env=dict(env,HOME=account.pw_dir,USER=account.pw_name,LOGNAME=account.pw_name)
+    return dict(user=uid,group=account.pw_gid,extra_groups=groups),child_env
 
 
 def write(path,value):
@@ -107,10 +124,11 @@ def run_fit(config, output, *, restore='latest', resume=False):
             deadline=time.monotonic()+config['timeout_seconds']
             owned_lease=dict(status='running',run=str(output),pid=os.getpid(),children=[])
             write(lease,owned_lease);lease_owned=True
-            def launch(argv,name):
+            def launch(argv,name,*,identity=None,child_env=None):
                 log=stack.enter_context((output/f'{name}.log').open('w'))
-                child=subprocess.Popen(argv,cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT,
-                    start_new_session=True,pass_fds=(lock.fileno(),))
+                child=subprocess.Popen(argv,cwd=ROOT,env=env if child_env is None else child_env,
+                    stdout=log,stderr=subprocess.STDOUT,start_new_session=True,
+                    pass_fds=(lock.fileno(),),**(identity or {}))
                 children.append(child);owned_lease['children'].append(dict(pid=child.pid,process_group=child.pid))
                 write(lease,owned_lease);write(output/f'{name}-command.json',argv)
                 if closure:result['lifecycle'][name+'_launch_ns']=time.monotonic_ns()
@@ -151,9 +169,11 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 raise
             write(output/'run-config.json',config)
             sock=socket.socket();sock.bind(('127.0.0.1',0));port=sock.getsockname()[1];sock.close()
+            identity,worker_env=profiler_worker_identity(config,env,output)
             training=launch(prefix+['-m','mindspore.parallel.cluster.run','--worker_num=4','--local_worker_num=4',
                 '--master_addr=127.0.0.1','--master_port='+str(port),'--join=True','--cluster_time_out=300',
-                '--log_dir='+str(output/'msrun-log'),'python','-m','npu_nvme.workloads.qwen','--config',str(output/'run-config.json')],'training')
+                '--log_dir='+str(output/'msrun-log'),'python','-m','npu_nvme.workloads.qwen','--config',str(output/'run-config.json')],
+                'training',identity=identity,child_env=worker_env)
             released=not resume
             sampler=None
             sample_error=None
