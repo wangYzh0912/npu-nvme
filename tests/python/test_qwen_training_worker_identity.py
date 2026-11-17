@@ -62,3 +62,21 @@ def test_profiled_raw_owner_does_not_inherit_copy_rank_dpdk_args():
 def test_non_profiled_or_sink_only_environment_is_preserved(config):
     env={'NPU_NVME_DPDK_ARGS':'--iova-mode=va','PATH':'/usr/bin'}
     assert qwen_training.raw_owner_environment(config,env) is env
+
+
+def test_profiler_raw_owner_socket_uses_selected_cann_group(monkeypatch,tmp_path):
+    toolkit=tmp_path/'toolkit';toolkit.mkdir()
+    original_stat=Path.stat
+    monkeypatch.setattr(Path,'stat',lambda self:SimpleNamespace(st_uid=22633)
+        if self==toolkit else original_stat(self))
+    monkeypatch.setattr(qwen_training.pwd,'getpwuid',lambda uid:SimpleNamespace(pw_gid=22633))
+    config={'method':'ours','io_experiment':{'device_profile':True}}
+    assert qwen_training.profiler_socket_group(config,{'ASCEND_HOME_PATH':str(toolkit)})==22633
+
+
+@pytest.mark.parametrize('config',[
+    {'method':'ours','io_experiment':{'device_profile':False}},
+    {'method':'checkpoint_io_sink','io_experiment':{'device_profile':True}},
+])
+def test_unprofiled_and_sink_only_owner_socket_remains_private(config):
+    assert qwen_training.profiler_socket_group(config,{}) is None

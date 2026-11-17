@@ -65,7 +65,11 @@ def main():
             report.update(status='pass',catalog=region.current['state'] if region.current else None,header=region.header)
             return
         listener=socket.socket(socket.AF_UNIX);listener.bind(c['socket'])
-        os.chmod(c['socket'],0o600);listener.listen(4)
+        if c.get('rank_socket_gid') is None:
+            os.chmod(c['socket'],0o600)
+        else:
+            os.chown(c['socket'],-1,c['rank_socket_gid']);os.chmod(c['socket'],0o660)
+        listener.listen(4)
         deadline=time.monotonic()+c['timeout_seconds']
         state=region.current['state'] if region.current else dict(receipts=[],generations=[])
         retained={row['generation'] for row in state['generations']}

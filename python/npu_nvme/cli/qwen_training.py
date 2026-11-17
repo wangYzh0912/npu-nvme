@@ -47,6 +47,14 @@ def raw_owner_environment(config, env):
     return owner_env
 
 
+def profiler_socket_group(config, env):
+    """Grant the profiler worker group access to the root-owned raw-owner socket."""
+    if config.get('method')!='ours' or not config.get('io_experiment',{}).get('device_profile'):
+        return None
+    uid=Path(env['ASCEND_HOME_PATH']).stat().st_uid
+    return pwd.getpwuid(uid).pw_gid
+
+
 def write(path,value):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
     temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps(value,indent=2)+'\n');temporary.replace(path)
@@ -153,7 +161,8 @@ def run_fit(config, output, *, restore='latest', resume=False):
                     strategy=json.loads(Path(config['strategy']).read_text()),
                     retention=config['retention'],owner_shm_id=config['shm_base'],rank_shm_base=config['shm_base']+1,
                     timeout_seconds=config['timeout_seconds'],operation_timeout_seconds=config['operation_timeout_seconds'],
-                    copy_timeout_ms=config['copy_timeout_ms'],depth=4,chunk_bytes=4<<20,host_tensor_budget_bytes=2<<30)
+                    copy_timeout_ms=config['copy_timeout_ms'],depth=4,chunk_bytes=4<<20,host_tensor_budget_bytes=2<<30,
+                    rank_socket_gid=profiler_socket_group(config,env))
                 config['d2_connection']=str(output/'connection.json');write(config['d2_connection'],connection)
                 connection['sink_only']=config['method']=='checkpoint_io_sink'
                 connection['run_id']=config['run_id']
