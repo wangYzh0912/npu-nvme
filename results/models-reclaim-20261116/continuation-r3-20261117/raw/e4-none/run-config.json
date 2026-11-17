@@ -1,0 +1,66 @@
+{
+  "model": "/models/Qwen3-8B",
+  "method": "none",
+  "stop_step": 32,
+  "lr_horizon": 128,
+  "seq_length": 128,
+  "checkpoint_interval": 4,
+  "retention": 3,
+  "timeout_seconds": 14400,
+  "operation_timeout_seconds": 1800,
+  "copy_timeout_ms": 30000,
+  "shm_base": 79000,
+  "strategy": "/tmp/npu-nvme-checkpoint-io-closure/config/qwen_runtime_schema.json",
+  "region": "/tmp/npu-nvme-checkpoint-io-closure/config/d2_qwen_region.json",
+  "hardware_lock": "/models/npu_nvme_exp/user7-stack/hardware-campaign.lock",
+  "host_headroom_bytes": 17179869184,
+  "hbm_headroom_bytes": 1073741824,
+  "schema_version": 2,
+  "environment_manifest": "/models/npu_nvme_exp/user7-stack/full-closure-abi3-20261021-005/environments.json",
+  "npu_ids": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "checkpoint_root": "/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r3/raw/e4-none/checkpoints",
+  "io_experiment": {
+    "closure": true,
+    "events": true,
+    "skip_periodic_state": true,
+    "device_profile": true,
+    "event_root": "/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r3/raw/e4-none/io-events"
+  },
+  "identity": {
+    "model": "Qwen3-8B",
+    "model_config_sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
+    "physical_npu_ids": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "topology": {
+      "tp": 4,
+      "dp": 1,
+      "pp": 1
+    },
+    "seed": 42,
+    "default_generator_seed": 42,
+    "sequence_length": 128,
+    "state_scope": "full_state",
+    "params_dtype": "float32",
+    "compute_dtype": "bfloat16",
+    "dropout": 0,
+    "lr_horizon": 128,
+    "strategy_sha256": "6fc9ea0d69ea8a21870a18b0322295ccea97c7b7d907528bf738f7278566ff9b",
+    "data_fixture": "checkpoint-recovery-fixed-text-v1",
+    "optimizer": "mindformers-1.7-qwen3-template",
+    "weights_sha256": "da844ab63b97bf1b3c5416026bbc0b4dc1a34d8feea8a188ea2e81f0a1c3b541",
+    "framework_template_sha256": "b48e426de99fa7b5d7e1fb262861591ae6f27124469dbb986eb8e7b12ebce2d7",
+    "environment_id": "ad7bde5f24a4d6df1a5b328395e55ddec3d5421f134afb3631721f638e313c0d"
+  },
+  "output": "/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r3/raw/e4-none",
+  "run_id": "47bbd3a3db164a7180913c0a5f99de0a",
+  "start_step": 0
+}
