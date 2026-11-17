@@ -11,7 +11,7 @@ import time
 
 ROOT = Path('/tmp/npu-nvme-checkpoint-io-closure-owner-env')
 PREVIOUS = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r2')
-BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r9')
+BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r10')
 LIBRARY = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r5/execution/native-build/libnpu_nvme.so.3.0')
 HUGEPAGES = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r8/execution/hugepages')
 EXPECTED_COMMIT = 'e227968cdbf126d0f14bf5525916af361959246f'
@@ -84,7 +84,7 @@ def main():
             restored_result.get('end_to_end', {}).get('lease_released') is not True):
         raise ValueError('step 28 to 32 restore did not safely pass')
     if (BASE / 'raw').exists() or (BASE / 'evidence').exists():
-        raise FileExistsError('M1 r9 raw/evidence output exists; inspect it before retry')
+        raise FileExistsError('M1 r10 raw/evidence output exists; inspect it before retry')
     if not HUGEPAGES.is_dir() or not LIBRARY.is_file():
         raise FileNotFoundError('private hugepage mount or rebuilt ABI3 library is missing')
     if source_identity(ROOT)['observed_commit'] != EXPECTED_COMMIT:
