@@ -73,9 +73,9 @@ def main():
             restored_result.get('final_step') != 32 or
             restored_result.get('end_to_end', {}).get('lease_released') is not True):
         raise ValueError('step 28 to 32 restore did not safely pass')
-    if BASE.exists():
-        raise FileExistsError('M1 r3 output exists; inspect it before retry')
-    (BASE / 'execution').mkdir(parents=True)
+    if (BASE / 'raw').exists() or (BASE / 'evidence').exists():
+        raise FileExistsError('M1 r3 raw/evidence output exists; inspect it before retry')
+    (BASE / 'execution').mkdir(parents=True, exist_ok=True)
     config = base_config(ROOT / 'config/qwen_training.json')
     if source_identity(ROOT)['observed_commit'] != EXPECTED_COMMIT:
         raise RuntimeError('profiler-owner fix source commit differs')
