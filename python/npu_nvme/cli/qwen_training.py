@@ -33,6 +33,11 @@ def profiler_worker_identity(config, env, output):
     account=pwd.getpwuid(uid)
     groups=os.getgrouplist(account.pw_name,account.pw_gid)
     os.chown(output,uid,account.pw_gid)
+    event_root=config.get('io_experiment',{}).get('event_root')
+    if event_root:
+        event_root=Path(event_root)
+        event_root.mkdir(parents=True,exist_ok=True)
+        os.chown(event_root,uid,account.pw_gid)
     child_env=dict(env,HOME=account.pw_dir,USER=account.pw_name,LOGNAME=account.pw_name)
     return dict(user=uid,group=account.pw_gid,extra_groups=groups),child_env
 
