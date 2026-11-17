@@ -18,3 +18,11 @@ The queue stopped at the first E4 profiling run (`e4-none`), so `e1=pass`, while
 The candidate CANN installation belongs to UID 22633 but the training ranks ran as root. The distributed job exited; the supervisor reports no remaining children or retained resources and released its hardware lease. NPU 4–7 were idle at inspection. No profiler CSV/trace was collected, so this is not an E4 result and no A/B observer matrix ran.
 
 The raw failure result and archived failed-run evidence are included here. A follow-up profiling execution must run the profiler under the CANN-owning UID while preserving the root-owned raw owner lifecycle, or otherwise satisfy the runtime's ownership check. The frozen E1 results should remain unchanged; no claim is made that E4/E2/E3 passed.
+
+## Profiler ownership fix and continuation
+
+The runner now identifies the owner of the selected `ASCEND_HOME_PATH` and starts only the MindSpore distributed training worker under that UID/GID when device profiling is requested. The supervisor and raw owner remain root processes. The child receives the matching supplementary groups and HOME/USER/LOGNAME, and the run output directory is owned by the worker so rank logs and profiler exports are writable. If a non-root supervisor cannot match the toolkit owner, profiling fails explicitly before launch.
+
+The fix is frozen as `7666596964ef4b76d7100b7e00b47a158904ef8a`, separate from the already-passed E1 source commit. A CPU-only subprocess probe under UID 22633 successfully imported MindSpore's profiler CANN version check and returned `8.3.RC1`. Regression results: Python/D1/D2 337 passed, C2 23 passed, including 25 targeted runner/configuration/acceptance tests. The first broad C2 invocation used a missing default `build/libnpu_nvme.so` path; rerunning against the unchanged, already-accepted candidate library passed all C2 tests.
+
+`continue_after_profiler_fix.py` starts a new `/models/...-r3` continuation. It imports the passed E1/restore gate with explicit old source identity, copies only the four initial T0 state/control sidecars needed as the E4/E2 oracle, then runs E4 and E2/E3 with the new source commit. It waits for NPU 4–7, the hardware flock and lease before initialization and before every run; it does not terminate other workloads. The first failed E4 record in r2 remains preserved.
