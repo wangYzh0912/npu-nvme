@@ -9,10 +9,15 @@ static NPUNVMEContext *native_owner;
 
 static int open_native_owner_file(const char *path) {
     int fd = open(path, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
-    if (fd >= 0 || errno != ENOENT) return fd;
+    if (fd >= 0) return fd;
+    if (errno == EACCES)
+        return open(path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+    if (errno != ENOENT) return -1;
     fd = open(path, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0666);
     if (fd >= 0 || errno != EEXIST) return fd;
-    return open(path, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
+    fd = open(path, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
+    if (fd >= 0 || errno != EACCES) return fd;
+    return open(path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
 }
 
 /* ACL uses visible ordinals; cross-process ownership keys must use physical IDs. */

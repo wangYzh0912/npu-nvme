@@ -448,6 +448,7 @@ int main(int argc, char **argv) {
         char path[] = "/tmp/npu-nvme-owner-regression-XXXXXX";
         int created = mkstemp(path);
         assert(created >= 0);
+        assert(fchmod(created, 0444) == 0);
         close(created);
         if (geteuid() == 0) {
             const char *uid_text = getenv("SUDO_UID");
@@ -457,6 +458,9 @@ int main(int argc, char **argv) {
         }
         int owner_fd = open_native_owner_file(path);
         assert(owner_fd >= 0);
+        assert((fcntl(owner_fd, F_GETFL) & O_ACCMODE) == O_RDONLY);
+        assert(flock(owner_fd, LOCK_EX | LOCK_NB) == 0);
+        assert(flock(owner_fd, LOCK_UN) == 0);
         close(owner_fd);
         assert(unlink(path) == 0);
     } else if (!strcmp(argv[1], "concurrent_close")) {
