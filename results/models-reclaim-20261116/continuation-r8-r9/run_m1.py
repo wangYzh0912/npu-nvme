@@ -91,6 +91,12 @@ def main():
         raise RuntimeError('role-specific DPDK source commit differs')
 
     (BASE / 'execution').mkdir(parents=True, exist_ok=True)
+    launch = dict(source_commit=EXPECTED_COMMIT, native_library=str(LIBRARY),
+        native_library_sha256=catalog.digest_file(LIBRARY), dpdk_args=DPDK_ARGS,
+        shm_base=SHM_BASE, private_hugetlbfs=str(HUGEPAGES),
+        hugetlbfs_mount=dict(fstype='hugetlbfs', pagesize='2M', uid=22633,
+            gid=22633, mode='0700'), system_hugepage_count_changed=False)
+    (BASE / 'execution/launch.json').write_text(json.dumps(launch, indent=2) + '\n')
     manifest_path = Path('/models/npu_nvme_exp/user7-stack/full-closure-abi3-20261021-005/environments.json')
     manifest = json.loads(manifest_path.read_text())
     manifest['profiles']['candidate']['library'] = str(LIBRARY)
