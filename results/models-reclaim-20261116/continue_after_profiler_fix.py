@@ -10,7 +10,7 @@ import time
 
 ROOT = Path('/tmp/npu-nvme-checkpoint-io-closure')
 PREVIOUS = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r2')
-BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r5')
+BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r6')
 EXPECTED_COMMIT = '6e147e7e3e97172bf13edb6cc611d2f37b1d9bce'
 sys.path[:0] = [str(ROOT / 'python'), str(ROOT)]
 from tools.checkpoint_io import base_config, save
@@ -74,9 +74,9 @@ def main():
             restored_result.get('end_to_end', {}).get('lease_released') is not True):
         raise ValueError('step 28 to 32 restore did not safely pass')
     if (BASE / 'raw').exists() or (BASE / 'evidence').exists():
-        raise FileExistsError('M1 r5 raw/evidence output exists; inspect it before retry')
+        raise FileExistsError('M1 r6 raw/evidence output exists; inspect it before retry')
     (BASE / 'execution').mkdir(parents=True, exist_ok=True)
-    library=BASE/'execution/native-build/libnpu_nvme.so.3.0'
+    library=Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r5/execution/native-build/libnpu_nvme.so.3.0')
     if not library.is_file():
         raise FileNotFoundError('rebuilt cross-UID native owner-lock library is missing')
     original_manifest=Path('/models/npu_nvme_exp/user7-stack/full-closure-abi3-20261021-005/environments.json')
