@@ -10,8 +10,8 @@ import time
 
 ROOT = Path('/tmp/npu-nvme-checkpoint-io-closure')
 PREVIOUS = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r2')
-BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r4')
-EXPECTED_COMMIT = '7666596964ef4b76d7100b7e00b47a158904ef8a'
+BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r5')
+EXPECTED_COMMIT = '6e147e7e3e97172bf13edb6cc611d2f37b1d9bce'
 sys.path[:0] = [str(ROOT / 'python'), str(ROOT)]
 from tools.checkpoint_io import base_config, save
 from tools.checkpoint_io_closure import Campaign, schedule
@@ -74,7 +74,7 @@ def main():
             restored_result.get('end_to_end', {}).get('lease_released') is not True):
         raise ValueError('step 28 to 32 restore did not safely pass')
     if (BASE / 'raw').exists() or (BASE / 'evidence').exists():
-        raise FileExistsError('M1 r4 raw/evidence output exists; inspect it before retry')
+        raise FileExistsError('M1 r5 raw/evidence output exists; inspect it before retry')
     (BASE / 'execution').mkdir(parents=True, exist_ok=True)
     config = base_config(ROOT / 'config/qwen_training.json')
     if source_identity(ROOT)['observed_commit'] != EXPECTED_COMMIT:
