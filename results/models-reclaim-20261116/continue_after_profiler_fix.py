@@ -10,7 +10,7 @@ import time
 
 ROOT = Path('/tmp/npu-nvme-checkpoint-io-closure')
 PREVIOUS = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r2')
-BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r3')
+BASE = Path('/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r4')
 EXPECTED_COMMIT = '7666596964ef4b76d7100b7e00b47a158904ef8a'
 sys.path[:0] = [str(ROOT / 'python'), str(ROOT)]
 from tools.checkpoint_io import base_config, save
@@ -74,7 +74,7 @@ def main():
             restored_result.get('end_to_end', {}).get('lease_released') is not True):
         raise ValueError('step 28 to 32 restore did not safely pass')
     if (BASE / 'raw').exists() or (BASE / 'evidence').exists():
-        raise FileExistsError('M1 r3 raw/evidence output exists; inspect it before retry')
+        raise FileExistsError('M1 r4 raw/evidence output exists; inspect it before retry')
     (BASE / 'execution').mkdir(parents=True, exist_ok=True)
     config = base_config(ROOT / 'config/qwen_training.json')
     if source_identity(ROOT)['observed_commit'] != EXPECTED_COMMIT:
@@ -89,13 +89,20 @@ def main():
         source_rank = oracle_source / f'rank_{rank}'
         target_rank = oracle / f'rank_{rank}'
         target_rank.mkdir()
-        for kind in ('state', 'control'):
-            source = source_rank / f'{kind}-initial.json'
+        for name in ('training.json','state-initial.json','control-initial.json',
+                     'state-step-32.json','control-step-32.json'):
+            source = source_rank / name
             target = target_rank / source.name
             shutil.copy2(source, target)
+            if catalog.digest_file(source) != catalog.digest_file(target):
+                raise ValueError('copied E1 oracle evidence digest differs: '+str(source))
             oracle_rows.append(dict(path=str(target.relative_to(campaign.raw)),
                 bytes=target.stat().st_size, sha256=catalog.digest_file(target),
                 source_sha256=catalog.digest_file(source)))
+    for rank in range(4):
+        report=catalog.read_checked(oracle/f'rank_{rank}/training.json')
+        if report.get('status')!='pass' or report.get('final_step')!=32:
+            raise ValueError('T0 comparison oracle requires a passed full 32-step trajectory')
     prior_comparisons = [row for row in previous['comparisons'] if row.get('status') == 'pass']
     restore_comparison = next((row for row in prior_comparisons
         if row.get('stage') == 'e1' and row.get('method') == 'fresh_restore28'), None)
