@@ -1,0 +1,58 @@
+{
+  "status": "pass",
+  "pid": 3482265,
+  "rank": 1,
+  "phase": "idle",
+  "socket_buffers": {
+    "send": 212992,
+    "receive": 212992
+  },
+  "operation": "restore",
+  "step": 28,
+  "sequence": 0,
+  "last_copy_receipt": null,
+  "native": {
+    "counters": {
+      "nvme_submit_count": 0,
+      "nvme_complete_count": 0,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 0,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 0,
+      "request_ring_depth": 0,
+      "request_ring_peak": 0,
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "stream_sync_fallback_count": 0,
+      "spdk_retry_count": 0,
+      "completion_error_count": 0,
+      "reactor_cpu_us": 4437049
+    },
+    "retained_buffer_sets": 0,
+    "scopes": {
+      "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+      "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+      "nvme_submit_count": "native SPDK commands, including metadata and flush",
+      "async_dma_submit_count": "native asynchronous DMA submissions",
+      "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+    },
+    "unavailable": [
+      "global native pending high-water",
+      "reactor wake notifications (polling API)"
+    ]
+  },
+  "copy_api": {
+    "submitted": 0,
+    "completed": 0,
+    "rejected": 0,
+    "busy_rejected": 0,
+    "logical_bytes": 0,
+    "submit_ns": 0,
+    "wait_ns": 0,
+    "scope": "rank copy API calls; no retries or wake notifications"
+  },
+  "close_begin_ns": 3437324800553680,
+  "closed": true,
+  "close_end_ns": 3437325163620349
+}

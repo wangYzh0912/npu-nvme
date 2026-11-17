@@ -1,0 +1,21 @@
+{
+  "execution_status": "completed",
+  "validation_status": "fail",
+  "method": "none",
+  "lifecycle": {
+    "supervisor_begin_ns": 3437385681194410,
+    "training_launch_ns": 3437410835060249,
+    "children_exited_ns": 3437708440183498,
+    "safe_close_end_ns": 3437708561965387
+  },
+  "error": "RuntimeError('training or owner failed / descendants retained')",
+  "end_to_end": {
+    "launch_to_safe_close_seconds": 322.880770977,
+    "tokens": 4096,
+    "tokens_per_second": 12.685797260722515,
+    "includes": "supervisor preflight, owner startup/mount, worker startup, compilation, initial/final validation, training and close/drain",
+    "children_remaining": [],
+    "retained": [],
+    "lease_released": true
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "status": "pass",
+  "pid": 3482039,
+  "operations": [
+    {
+      "epoch": "91d4f3324fec4c78a0e525430247a8b5",
+      "generation": 104,
+      "kind": "operation",
+      "operation": "restore",
+      "sequence": 0,
+      "step": 28,
+      "receipt": {
+        "epoch": "91d4f3324fec4c78a0e525430247a8b5:0",
+        "generation": 104,
+        "manifest_sha256": "a065a43af935d96e4f3a34a8722f04e1091f80ec560d77309bc07a663a60ab0f",
+        "world_size": 4,
+        "ranks": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "token": "abf0c3b9ac9a19dd0bac5c5979551c353c2aadbd57ec43e81675bd7c03a1adb1"
+      }
+    }
+  ],
+  "closed": true,
+  "mount_errors": [],
+  "socket_buffers": {
+    "0": {
+      "send": 212992,
+      "receive": 212992
+    },
+    "3": {
+      "send": 212992,
+      "receive": 212992
+    },
+    "2": {
+      "send": 212992,
+      "receive": 212992
+    },
+    "1": {
+      "send": 212992,
+      "receive": 212992
+    }
+  },
+  "operation_count": 1,
+  "close_begin_ns": 3437325152124222,
+  "native": {
+    "counters": {
+      "nvme_submit_count": 27417,
+      "nvme_complete_count": 27417,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 1,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 1,
+      "request_ring_depth": 0,
+      "request_ring_peak": 0,
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "stream_sync_fallback_count": 0,
+      "spdk_retry_count": 0,
+      "completion_error_count": 0,
+      "reactor_cpu_us": 52103484
+    },
+    "retained_buffer_sets": 0,
+    "scopes": {
+      "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+      "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+      "nvme_submit_count": "native SPDK commands, including metadata and flush",
+      "async_dma_submit_count": "native asynchronous DMA submissions",
+      "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+    },
+    "unavailable": [
+      "global native pending high-water",
+      "reactor wake notifications (polling API)"
+    ]
+  },
+  "transfer_api": {
+    "submitted": 27417,
+    "completed": 27417,
+    "rejected": 0,
+    "busy_rejected": 0,
+    "submit_ns": 455933878,
+    "wait_ns": 320447189801,
+    "scope": "Python transfer/copy API calls; native SPDK commands counted separately"
+  },
+  "close_end_ns": 3437325238236205
+}
