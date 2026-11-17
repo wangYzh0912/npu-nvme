@@ -37,6 +37,16 @@ def profiler_worker_identity(config, env, output):
     return dict(user=uid,group=account.pw_gid,extra_groups=groups),child_env
 
 
+def raw_owner_environment(config, env):
+    """Keep profiler-only copy-rank DPDK arguments off the PCI owner."""
+    experiment=config.get('io_experiment',{})
+    if config.get('method')!='ours' or not experiment.get('device_profile'):
+        return env
+    owner_env=dict(env)
+    owner_env.pop('NPU_NVME_DPDK_ARGS',None)
+    return owner_env
+
+
 def write(path,value):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
     temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps(value,indent=2)+'\n');temporary.replace(path)
@@ -150,7 +160,8 @@ def run_fit(config, output, *, restore='latest', resume=False):
                 connection['io_event_root']=str(output/'io-events') if experiment.get('events') else None
                 write(config['d2_connection'],connection)
                 if config['method']=='ours':
-                    owner=launch(prefix+[str(ROOT/'tools/training_owner.py'),'--connection',config['d2_connection'],'--out',str(output/'owner')],'owner')
+                    owner=launch(prefix+[str(ROOT/'tools/training_owner.py'),'--connection',config['d2_connection'],'--out',str(output/'owner')],
+                        'owner',child_env=raw_owner_environment(config,env))
                     while not (output/'owner/ready.json').exists():
                         if owner.poll() is not None:raise RuntimeError('owner initialization failed')
                         if time.monotonic()>deadline:raise TimeoutError('owner readiness timeout')

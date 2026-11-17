@@ -45,3 +45,20 @@ def test_non_root_cannot_silently_profile_as_wrong_cann_owner(monkeypatch,tmp_pa
         qwen_training.profiler_worker_identity(
             {'io_experiment':{'device_profile':True}},
             {'ASCEND_HOME_PATH':str(toolkit)},tmp_path)
+
+
+def test_profiled_raw_owner_does_not_inherit_copy_rank_dpdk_args():
+    env={'NPU_NVME_DPDK_ARGS':'--iova-mode=va --huge-dir=/private/hugepages','PATH':'/usr/bin'}
+    owner_env=qwen_training.raw_owner_environment(
+        {'method':'ours','io_experiment':{'device_profile':True}},env)
+    assert owner_env=={'PATH':'/usr/bin'}
+    assert env['NPU_NVME_DPDK_ARGS'].startswith('--iova-mode=va')
+
+
+@pytest.mark.parametrize('config',[
+    {'method':'ours','io_experiment':{'device_profile':False}},
+    {'method':'checkpoint_io_sink','io_experiment':{'device_profile':True}},
+])
+def test_non_profiled_or_sink_only_environment_is_preserved(config):
+    env={'NPU_NVME_DPDK_ARGS':'--iova-mode=va','PATH':'/usr/bin'}
+    assert qwen_training.raw_owner_environment(config,env) is env
