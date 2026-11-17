@@ -76,7 +76,16 @@ def main():
     if (BASE / 'raw').exists() or (BASE / 'evidence').exists():
         raise FileExistsError('M1 r5 raw/evidence output exists; inspect it before retry')
     (BASE / 'execution').mkdir(parents=True, exist_ok=True)
+    library=BASE/'execution/native-build/libnpu_nvme.so.3.0'
+    if not library.is_file():
+        raise FileNotFoundError('rebuilt cross-UID native owner-lock library is missing')
+    original_manifest=Path('/models/npu_nvme_exp/user7-stack/full-closure-abi3-20261021-005/environments.json')
+    manifest=json.loads(original_manifest.read_text())
+    manifest['profiles']['candidate']['library']=str(library)
+    manifest_path=BASE/'execution/environments.json'
+    write(manifest_path,manifest)
     config = base_config(ROOT / 'config/qwen_training.json')
+    config['environment_manifest']=str(manifest_path)
     if source_identity(ROOT)['observed_commit'] != EXPECTED_COMMIT:
         raise RuntimeError('profiler-owner fix source commit differs')
     admission_wait(config)
@@ -117,6 +126,8 @@ def main():
             note='E1 was completed under its separately recorded frozen source. E4/E2/E3 use the new frozen profiler-owner fix commit.'),
         e1_initial_oracle=dict(source=str(oracle_source),copied_files=oracle_rows),
         continuation=dict(fixed_source_commit=EXPECTED_COMMIT,
+            native_library=str(library),native_library_sha256=catalog.digest_file(library),
+            original_abi3_library_preserved=True,
             profiler_worker_uid=os.stat('/models/npu_nvme_exp/user7-stack/cann-install/ascend-toolkit/latest').st_uid,
             previous_profiler_failure=str(PREVIOUS / 'evidence/failed/e4-none'),
             output_filesystem='/models', raw_format_authorized=False))
