@@ -1,0 +1,23 @@
+{
+  "status": "pass",
+  "existing_regression": {
+    "passed": 8,
+    "deselected": 45,
+    "seconds": 38.63,
+    "command": "PYTHONPATH=python:. /usr/bin/python3 -m pytest -q tests/c2/test_full_transport.py tests/regression/test_c_host_safety.py -k 'timeout or late_completion or lost_completion or write_completion or close_retry or early_release'",
+    "scope": "CPU Python and ASan/UBSan production C with external hardware calls stubbed"
+  },
+  "metric_id_regression": {
+    "passed": 2,
+    "seconds": 1.38,
+    "command": "/usr/bin/python3 -m pytest -q tests/python/test_checkpoint_report_metric_ids.py",
+    "scope": "SQLite fixture with shuffled string IDs and four HBM stack rows"
+  },
+  "native_screen": "pass",
+  "short_qwen_continuation": "pass",
+  "restored_state_and_controls": "exact on all four ranks",
+  "loss_trajectory": "16 loss entries exactly match uninterrupted oracle",
+  "phase_clock_coverage": "pass with approximate host clock mapping",
+  "hardware_lease": "released and lock acquisition verified",
+  "reclaimed_converted_cache_bytes": 16381531173
+}

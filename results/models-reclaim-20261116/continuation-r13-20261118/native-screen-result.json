@@ -1,0 +1,249 @@
+{
+  "status": "pass",
+  "pid": 943693,
+  "closed": true,
+  "phases": [
+    {
+      "name": "request_count_4k",
+      "target_writes": 66560,
+      "bytes_per_write": 4096,
+      "completed_writes": 66560,
+      "begin_ns": 3571276710985125,
+      "end_ns": 3571351834054908,
+      "seconds": 75.123069783,
+      "native_before": {
+        "counters": {
+          "nvme_submit_count": 1650,
+          "nvme_complete_count": 1650,
+          "nvme_outstanding": 0,
+          "nvme_outstanding_peak": 1,
+          "dma_inflight": 0,
+          "dma_inflight_peak": 1,
+          "request_ring_depth": 0,
+          "request_ring_peak": 0,
+          "async_dma_submit_count": 0,
+          "async_event_query_count": 0,
+          "async_event_query_error_count": 0,
+          "stream_sync_fallback_count": 0,
+          "spdk_retry_count": 0,
+          "completion_error_count": 0,
+          "reactor_cpu_us": 57645
+        },
+        "retained_buffer_sets": 0,
+        "scopes": {
+          "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+          "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+          "nvme_submit_count": "native SPDK commands, including metadata and flush",
+          "async_dma_submit_count": "native asynchronous DMA submissions",
+          "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+        },
+        "unavailable": [
+          "global native pending high-water",
+          "reactor wake notifications (polling API)"
+        ]
+      },
+      "native_after": {
+        "counters": {
+          "nvme_submit_count": 68211,
+          "nvme_complete_count": 68211,
+          "nvme_outstanding": 0,
+          "nvme_outstanding_peak": 1,
+          "dma_inflight": 0,
+          "dma_inflight_peak": 1,
+          "request_ring_depth": 0,
+          "request_ring_peak": 1,
+          "async_dma_submit_count": 0,
+          "async_event_query_count": 0,
+          "async_event_query_error_count": 0,
+          "stream_sync_fallback_count": 0,
+          "spdk_retry_count": 0,
+          "completion_error_count": 0,
+          "reactor_cpu_us": 535965
+        },
+        "retained_buffer_sets": 0,
+        "scopes": {
+          "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+          "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+          "nvme_submit_count": "native SPDK commands, including metadata and flush",
+          "async_dma_submit_count": "native asynchronous DMA submissions",
+          "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+        },
+        "unavailable": [
+          "global native pending high-water",
+          "reactor wake notifications (polling API)"
+        ]
+      },
+      "latency_ms": {
+        "minimum": 1.044894,
+        "maximum": 1.243414,
+        "median": 1.097974,
+        "p99": 1.109694
+      }
+    },
+    {
+      "name": "chunk_path_4m",
+      "target_writes": 512,
+      "bytes_per_write": 4194304,
+      "completed_writes": 512,
+      "begin_ns": 3571351845427191,
+      "end_ns": 3571358222064588,
+      "seconds": 6.376637397,
+      "native_before": {
+        "counters": {
+          "nvme_submit_count": 68211,
+          "nvme_complete_count": 68211,
+          "nvme_outstanding": 0,
+          "nvme_outstanding_peak": 1,
+          "dma_inflight": 0,
+          "dma_inflight_peak": 1,
+          "request_ring_depth": 0,
+          "request_ring_peak": 1,
+          "async_dma_submit_count": 0,
+          "async_event_query_count": 0,
+          "async_event_query_error_count": 0,
+          "stream_sync_fallback_count": 0,
+          "spdk_retry_count": 0,
+          "completion_error_count": 0,
+          "reactor_cpu_us": 536012
+        },
+        "retained_buffer_sets": 0,
+        "scopes": {
+          "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+          "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+          "nvme_submit_count": "native SPDK commands, including metadata and flush",
+          "async_dma_submit_count": "native asynchronous DMA submissions",
+          "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+        },
+        "unavailable": [
+          "global native pending high-water",
+          "reactor wake notifications (polling API)"
+        ]
+      },
+      "native_after": {
+        "counters": {
+          "nvme_submit_count": 68724,
+          "nvme_complete_count": 68724,
+          "nvme_outstanding": 0,
+          "nvme_outstanding_peak": 1,
+          "dma_inflight": 0,
+          "dma_inflight_peak": 1,
+          "request_ring_depth": 0,
+          "request_ring_peak": 1,
+          "async_dma_submit_count": 0,
+          "async_event_query_count": 0,
+          "async_event_query_error_count": 0,
+          "stream_sync_fallback_count": 0,
+          "spdk_retry_count": 0,
+          "completion_error_count": 0,
+          "reactor_cpu_us": 790940
+        },
+        "retained_buffer_sets": 0,
+        "scopes": {
+          "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+          "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+          "nvme_submit_count": "native SPDK commands, including metadata and flush",
+          "async_dma_submit_count": "native asynchronous DMA submissions",
+          "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+        },
+        "unavailable": [
+          "global native pending high-water",
+          "reactor wake notifications (polling API)"
+        ]
+      },
+      "latency_ms": {
+        "minimum": 12.355567,
+        "maximum": 13.630271,
+        "median": 12.366377,
+        "p99": 12.422997
+      }
+    }
+  ],
+  "limits": {
+    "small_writes": 66560,
+    "small_bytes": 4096,
+    "large_writes": 512,
+    "large_bytes": 4194304,
+    "admission_seconds": 300,
+    "request_timeout_ms": 60000
+  },
+  "scope": "single native host-owner; no NPU, training or cumulative-TB equivalence",
+  "identity": {
+    "source_commit": "0069af02b77ae1931dd7c1fec93e8920768b288e",
+    "library": "/models/npu_nvme_exp/user7-stack/aic-aiv-io-closure-20261116-r5/execution/native-build/libnpu_nvme.so.3.0",
+    "library_sha256": "7d37304203e1cf6e7760cfbe8796cb8d2396e355dce76a1611b8b307ab73543d",
+    "region": "/tmp/npu-nvme-checkpoint-io-closure-owner-env/config/d2_qwen_region.json",
+    "region_sha256": "aca80303bd06c0eb54ade3b19f5d38e970f3794f2f6090007ac7bd71e88ef717",
+    "script_sha256": "ffbc229fcf72e5f50edede0b3af5b52a9d24727d2179ac8c0e37cf51f5259949"
+  },
+  "scratch": {
+    "offset": 668167827456,
+    "length": 4194304,
+    "protected_extents": 154670,
+    "publication": "none; no format or catalog mutation"
+  },
+  "header_before_sha256": "16447b80eda6e8df5c8842b960c6fdac77bfc8b81f66d25e8395d9b2b4531090",
+  "before": {
+    "counters": {
+      "nvme_submit_count": 1650,
+      "nvme_complete_count": 1650,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 1,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 1,
+      "request_ring_depth": 0,
+      "request_ring_peak": 0,
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "stream_sync_fallback_count": 0,
+      "spdk_retry_count": 0,
+      "completion_error_count": 0,
+      "reactor_cpu_us": 57631
+    },
+    "retained_buffer_sets": 0,
+    "scopes": {
+      "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+      "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+      "nvme_submit_count": "native SPDK commands, including metadata and flush",
+      "async_dma_submit_count": "native asynchronous DMA submissions",
+      "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+    },
+    "unavailable": [
+      "global native pending high-water",
+      "reactor wake notifications (polling API)"
+    ]
+  },
+  "header_after_sha256": "16447b80eda6e8df5c8842b960c6fdac77bfc8b81f66d25e8395d9b2b4531090",
+  "after": {
+    "counters": {
+      "nvme_submit_count": 68725,
+      "nvme_complete_count": 68725,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 1,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 1,
+      "request_ring_depth": 0,
+      "request_ring_peak": 1,
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "stream_sync_fallback_count": 0,
+      "spdk_retry_count": 0,
+      "completion_error_count": 0,
+      "reactor_cpu_us": 790965
+    },
+    "retained_buffer_sets": 0,
+    "scopes": {
+      "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+      "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+      "nvme_submit_count": "native SPDK commands, including metadata and flush",
+      "async_dma_submit_count": "native asynchronous DMA submissions",
+      "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+    },
+    "unavailable": [
+      "global native pending high-water",
+      "reactor wake notifications (polling API)"
+    ]
+  },
+  "end_ns": 3571358296081567
+}

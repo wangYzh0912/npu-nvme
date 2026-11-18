@@ -5,8 +5,8 @@ The Qwen run used NPU4-7, TP4, full state, sequence length 128, fixed seed 42.
 
 ## Finding
 
-The previously observed M1 failure is a native NVMe write request that did not
-complete before the 60-second default wait expired. In the failed step-56 run,
+The previously observed M1 failure is a native NVMe write request whose
+completion was not observed before the 60-second default wait expired. In the failed step-56 run,
 rank 2 on physical NPU6 began the 4 MiB payload for chunk 5221 and had no
 `native_submitted`, `native_completed`, `owner_payload_end`, or `source_safe`
 event afterward. The outstanding request and borrowed DMA buffer were retained;
@@ -15,20 +15,28 @@ peer EOF. Native counters were 357,752 submitted, 357,751 completed, one
 outstanding request, one DMA in flight, and one retained buffer set.
 
 This locates the failing boundary at host-to-NVMe payload submission/completion.
-The logs and kernel journal available for that run did not identify why the
-device command stalled. The 60-second wait is not evidence that the storage
+The `native_submitted` event is emitted retrospectively after successful
+completion; its absence alone does not establish whether a request was admitted.
+The final native submitted/completed counters establish an outstanding SPDK
+command, but do not distinguish a device stall from a completion-polling failure.
+The logs and kernel journal available for that run did not identify that cause.
+The 60-second wait is not evidence that the storage
 command is safe to release, so no timeout change or source workaround was made.
 
-A reduced Qwen3-8B continuation then restored step 52 / generation 13, trained
-four steps, saved step 56 / generation 15, validated all four ranks, and closed
+A reduced Qwen3-8B continuation then restored step 52 / catalog generation 13
+(raw generation 142), trained four steps, saved step 56 / catalog generation 15
+(raw generation 143), validated all four ranks, and closed
 with zero outstanding requests, DMA operations, or retained buffers. It did
 not reproduce the stall. One passing continuation does not close the cumulative
 high-volume failure condition or complete M1 acceptance.
 
 All four ranks completed step 56 with loss 0.0123657668 and no overflow. The
-owner closed cleanly with 53,197/53,197 native NVMe commands and 53,200/53,200
+owner closed cleanly with 53,197/53,197 data-qpair NVMe commands and 53,200/53,200
 transfer API calls completed; retry/error counts, outstanding requests,
 in-flight DMA, and retained-buffer sets were all zero.
+The native counters omit metadata-qpair commands, including flush. The legacy
+snapshot scope string saying that flush is included is inaccurate; Python API
+counts include the three flush calls, explaining the difference here.
 
 ## Checkpoint Phases
 
@@ -59,9 +67,15 @@ Their median durations across four ranks were:
 | Complete/publish collective | 0.399 s | Commit and rank completion |
 
 The restore operation is 1004.76 s per rank and all ranks reported readiness,
-then released the restore pin. This continuation did not instrument restore
-internals as separate timed stages, so no per-stage restore attribution is
-claimed. Resource admission recorded 6,223,298,562 bytes required HBM scratch
+then released the restore pin. The raw event stream also recorded chunk and
+readiness stages; the initial report omitted them because the root-owned stream
+had not yet been analyzed. The corrected
+[restore event analysis](../continuation-r13-20261118/step52-restore-event-summary.json)
+shows a 1004.59 s owner window: 1.21 s setup, 983.16 s chunk stream, and 20.21 s
+after the final chunk until global readiness. Rank transfers occur in sequence,
+each spanning about 243-247 s. These host intervals include read, verification,
+IPC, application and acknowledgement; they are not device-only I/O time.
+Resource admission recorded 622,329,856 bytes required HBM scratch
 per rank and 7,751,925,760 bytes required host headroom; these are admission
 estimates, not measured peaks.
 
@@ -101,15 +115,18 @@ control summary is in [`control-window-summary.csv`](control-window-summary.csv)
 and the 10 ms sampled timeline is in
 [`control-timeseries-10ms.csv`](control-timeseries-10ms.csv).
 
-| Control window | Median duration (3 repeats) | Mean AIC PMU | Mean AIV PMU | Observed card HBM read/write |
+| Control window | Median duration (3 repeats) | Median AIC window mean | Median AIV window mean | Observed card HBM read/write |
 | --- | ---: | ---: | ---: | ---: |
 | AIC-only, 4096x4096 BF16 matmul, 120 iterations | 119.57 ms | 49.27% | 0% | Median of repeat-window means: 356 / 1613 MiB/s |
 | AIV-only, 16M-element BF16 vector add, 120 iterations | 239.47 ms | 0% | 1.43% | 195 / 814 MiB/s |
 | Serial pair | 357.29 ms | 16.63% | 1.17% | 14,135 / 2500 MiB/s |
 | Two-stream pair | 349.02 ms | 17.22% | 1.98% | 6317 / 1879 MiB/s |
 
-The two-stream median was 2.3% faster than serial in this small fixed-order
+The two-stream median was 2.3% lower than serial in this small fixed-order
 control, while both AIC and AIV PMU were active within the same control windows.
+These durations include device synchronization, D2H output reads, NumPy output
+validation, and an extra reference vector operation. They are not isolated
+kernel or stream timing, and the difference cannot establish a device speedup.
 Three repeats are insufficient to claim a stable co-run speedup or exact kernel
 overlap. HBM values are measured device-wide totals; they are not split into
 per-engine bandwidth. Each window spans only 6-18 HBM timestamps, and repeated

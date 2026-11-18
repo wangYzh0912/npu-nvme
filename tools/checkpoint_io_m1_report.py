@@ -31,6 +31,7 @@ def write_control(control_json, database, out_dir):
     result = read_json(control_json)
     conn = sqlite3.connect(database)
     conn.execute('PRAGMA temp_store=MEMORY')
+    ids = {value: key for key, value in conn.execute('SELECT id,value FROM STRING_IDS')}
     windows = result['windows']
     rows = []
     for window in windows:
@@ -39,7 +40,7 @@ def write_control(control_json, database, out_dir):
         item = dict(mode=window['mode'], repeat=window['repeat'],
                     elapsed_ms=window['elapsed_ms'], aic_iterations=window['aic_iterations'],
                     aiv_iterations=window['aiv_iterations'])
-        for core_type, label in ((2, 'aic'), (3, 'aiv')):
+        for core_type, label in ((ids['AIC'], 'aic'), (ids['AIV'], 'aiv')):
             values = [r[0] for r in conn.execute(
                 'SELECT usage FROM SAMPLE_PMU_TIMELINE '
                 'WHERE timestampNs BETWEEN ? AND ? AND coreType=?',
@@ -48,7 +49,7 @@ def write_control(control_json, database, out_dir):
             item[f'{label}_pmu_mean_pct'] = sum(values) / len(values) if values else None
             item[f'{label}_pmu_p95_pct'] = percentile(values, .95)
             item[f'{label}_pmu_max_pct'] = max(values) if values else None
-        for metric, label in ((12, 'hbm_read'), (13, 'hbm_write')):
+        for metric, label in ((ids['read'], 'hbm_read'), (ids['write'], 'hbm_write')):
             values = [r[0] / (1024 * 1024) for r in conn.execute(
                 'SELECT SUM(bandwidth) FROM HBM '
                 'WHERE timestampNs BETWEEN ? AND ? AND type=? GROUP BY timestampNs',
@@ -74,14 +75,14 @@ def write_control(control_json, database, out_dir):
     buckets = defaultdict(lambda: defaultdict(list))
     query_start = min(a for a, _, _ in phases)
     query_end = max(b for _, b, _ in phases)
-    for core_type, metric in ((2, 'aic_pmu_pct'), (3, 'aiv_pmu_pct')):
+    for core_type, metric in ((ids['AIC'], 'aic_pmu_pct'), (ids['AIV'], 'aiv_pmu_pct')):
         for timestamp, value in conn.execute(
                 'SELECT timestampNs,usage FROM SAMPLE_PMU_TIMELINE '
                 'WHERE timestampNs BETWEEN ? AND ? AND coreType=?',
                 (query_start, query_end, core_type)):
             bucket = (timestamp - session_start) // bucket_ns
             buckets[bucket][metric].append(value)
-    for metric_id, metric in ((12, 'card_hbm_read_mib_s'), (13, 'card_hbm_write_mib_s')):
+    for metric_id, metric in ((ids['read'], 'card_hbm_read_mib_s'), (ids['write'], 'card_hbm_write_mib_s')):
         for timestamp, value in conn.execute(
                 'SELECT timestampNs,SUM(bandwidth) FROM HBM '
                 'WHERE timestampNs BETWEEN ? AND ? AND type=? GROUP BY timestampNs',
@@ -273,7 +274,7 @@ def write_continuation(raw_root, out_dir):
         'save_operation_median_seconds': percentile(save_seconds, .5),
         'save_boundary_seconds_by_rank': boundary_seconds,
         'save_stage_rows': len(stage_rows),
-        'restore_stage_detail': 'not instrumented in this continuation; operation duration only',
+        'restore_stage_detail': 'operation durations here; chunk/readiness events analyzed by checkpoint_io_restore_events.py',
     }
 
 
@@ -303,12 +304,15 @@ def main():
     continuation_inputs = sorted(args.continuation_raw.glob('rank_*/training.json'))
     continuation_inputs += sorted(args.continuation_raw.glob('rank_*/d2-operation-*.json'))
     continuation_inputs.append(args.continuation_raw / 'owner' / 'result.json')
+    conn = sqlite3.connect(args.control_db)
+    metric_ids = {value: str(key) for key, value in conn.execute('SELECT id,value FROM STRING_IDS')}
+    conn.close()
     summary = {
         'control_status': 'pass',
         'control_windows': control_rows,
         'control_timeseries_10ms_rows': len(control_series),
-        'control_core_type_mapping': {'2': 'AIC', '3': 'AIV'},
-        'control_hbm_type_mapping': {'12': 'read', '13': 'write'},
+        'control_core_type_mapping': {metric_ids[name]: name for name in ('AIC', 'AIV')},
+        'control_hbm_type_mapping': {metric_ids[name]: name for name in ('read', 'write')},
         'e4_profiler_scope': 'rank-local task intervals, save-focused steps 28-32',
         'e4_task_activity_by_rank': e4_activity,
         'e4_checkpoint_step28': {

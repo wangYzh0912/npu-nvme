@@ -1,0 +1,131 @@
+{
+  "status": "pass",
+  "pid": 944315,
+  "operations": [
+    {
+      "epoch": "a39e89ce7cef44e7bc606f957f95da3d",
+      "generation": 143,
+      "kind": "operation",
+      "operation": "restore",
+      "sequence": 0,
+      "step": 56,
+      "receipt": {
+        "epoch": "a39e89ce7cef44e7bc606f957f95da3d:0",
+        "generation": 143,
+        "manifest_sha256": "1e97d05f04502232dd3cbf73b2387da32d1cacdb10081b9e243f450f4015f968",
+        "world_size": 4,
+        "ranks": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "token": "1e9f99f703d0fe41717e68a4299afa9a7af7d5d667f17907a36e322541592f0f"
+      }
+    },
+    {
+      "epoch": "a39e89ce7cef44e7bc606f957f95da3d",
+      "generation": null,
+      "kind": "operation",
+      "operation": "save",
+      "sequence": 1,
+      "step": 60,
+      "receipt": {
+        "request_id": "a39e89ce7cef44e7bc606f957f95da3d:1",
+        "identity": {
+          "compute_dtype": "bfloat16",
+          "data_fixture": "checkpoint-recovery-fixed-text-v1",
+          "default_generator_seed": 42,
+          "dropout": 0,
+          "environment_id": "983ea0f374eead773801a7578dd29b5f60c4e9496fa226724817f8236f34e86c",
+          "framework_template_sha256": "b48e426de99fa7b5d7e1fb262861591ae6f27124469dbb986eb8e7b12ebce2d7",
+          "lr_horizon": 128,
+          "model": "Qwen3-8B",
+          "model_config_sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
+          "optimizer": "mindformers-1.7-qwen3-template",
+          "params_dtype": "float32",
+          "physical_npu_ids": [
+            4,
+            5,
+            6,
+            7
+          ],
+          "seed": 42,
+          "sequence_length": 128,
+          "state_scope": "full_state",
+          "strategy_sha256": "6fc9ea0d69ea8a21870a18b0322295ccea97c7b7d907528bf738f7278566ff9b",
+          "topology": {
+            "dp": 1,
+            "pp": 1,
+            "tp": 4
+          },
+          "weights_sha256": "da844ab63b97bf1b3c5416026bbc0b4dc1a34d8feea8a188ea2e81f0a1c3b541"
+        },
+        "generation": 144
+      }
+    }
+  ],
+  "closed": true,
+  "mount_errors": [],
+  "socket_buffers": {
+    "1": {
+      "send": 212992,
+      "receive": 212992
+    },
+    "3": {
+      "send": 212992,
+      "receive": 212992
+    },
+    "0": {
+      "send": 212992,
+      "receive": 212992
+    },
+    "2": {
+      "send": 212992,
+      "receive": 212992
+    }
+  },
+  "operation_count": 2,
+  "close_begin_ns": 3573252045822834,
+  "native": {
+    "counters": {
+      "nvme_submit_count": 53197,
+      "nvme_complete_count": 53197,
+      "nvme_outstanding": 0,
+      "nvme_outstanding_peak": 1,
+      "dma_inflight": 0,
+      "dma_inflight_peak": 1,
+      "request_ring_depth": 0,
+      "request_ring_peak": 1,
+      "async_dma_submit_count": 0,
+      "async_event_query_count": 0,
+      "async_event_query_error_count": 0,
+      "stream_sync_fallback_count": 0,
+      "spdk_retry_count": 0,
+      "completion_error_count": 0,
+      "reactor_cpu_us": 69618824
+    },
+    "retained_buffer_sets": 0,
+    "scopes": {
+      "request_ring_depth": "queued writes only; excludes copies, reads and active requests",
+      "request_ring_peak": "high-water of queued writes only; not global pending high-water",
+      "nvme_submit_count": "native SPDK commands, including metadata and flush",
+      "async_dma_submit_count": "native asynchronous DMA submissions",
+      "reactor_cpu_us": "reactor thread CPU time; cumulative since context open"
+    },
+    "unavailable": [
+      "global native pending high-water",
+      "reactor wake notifications (polling API)"
+    ]
+  },
+  "transfer_api": {
+    "submitted": 53200,
+    "completed": 53200,
+    "rejected": 0,
+    "busy_rejected": 0,
+    "submit_ns": 1053121795,
+    "wait_ns": 605471445230,
+    "scope": "Python transfer/copy API calls; native SPDK commands counted separately"
+  },
+  "close_end_ns": 3573252154533414
+}
